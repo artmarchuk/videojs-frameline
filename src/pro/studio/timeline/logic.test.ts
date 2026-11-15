@@ -386,13 +386,35 @@ describe('handleBox: anchored on the outer edge', () => {
     expect(handleBox('out', 60, 60, 1200).tabRight).toBe(1209);
   });
 
-  it('never lets the two targets overlap, even for a one-frame range', () => {
-    for (const hit of [24, 44]) {
-      const oneFrame = handleBox('out', 10 + 1 / 24, 60, 1200, hit);
-      const inBox = handleBox('in', 10, 60, 1200, hit);
-      expect(inBox.hitRight).toBeLessThanOrEqual(oneFrame.hitLeft);
-      expect(inBox.hitRight - inBox.hitLeft).toBe(hit);
-      expect(oneFrame.hitRight - oneFrame.hitLeft).toBe(hit);
-    }
+  it('slides a target back inside the player when it would pass the edge', () => {
+    const room = { left: 28, right: 28 };
+    const first = handleBox('in', 0, 60, 300, { hit: 44, room });
+    expect(first.hitLeft).toBe(-28);
+    expect(first.hitRight - first.hitLeft).toBe(44);
+    expect(first.hitRight).toBeGreaterThanOrEqual(first.anchor);
+    const last = handleBox('out', 60, 60, 300, { hit: 44, room });
+    expect(last.hitRight).toBe(328);
+    expect(last.hitRight - last.hitLeft).toBe(44);
+    expect(last.hitLeft).toBeLessThanOrEqual(last.anchor);
+  });
+
+  it('keeps targets outward, 44 wide, away from the edges', () => {
+    const inBox = handleBox('in', 30, 60, 300, { hit: 44, room: { left: 28, right: 28 }, otherX: 300 });
+    expect(inBox.hitRight).toBe(inBox.anchor);
+    expect(inBox.hitRight - inBox.hitLeft).toBe(44);
+  });
+
+  it('splits an overlap halfway between the anchors, so the nearer handle gets the press', () => {
+    const room = { left: 28, right: 28 };
+    // A range of 10 px at the start: In at 0, Out at 10.
+    const inBox = handleBox('in', 0, 60, 300, { hit: 44, room, otherX: 10 });
+    const outBox = handleBox('out', 2, 60, 300, { hit: 44, room, otherX: 0 });
+    expect(inBox.hitRight).toBeLessThanOrEqual(outBox.hitLeft);
+    expect(inBox.hitRight).toBe(5); // halfway between 0 and 10
+    expect(outBox.hitLeft).toBeGreaterThanOrEqual(5);
+    // Away from the edges, a one-frame range never overlaps at all.
+    const a = handleBox('in', 10, 60, 1200, { hit: 44, otherX: 200.8 });
+    const b = handleBox('out', 10 + 1 / 24, 60, 1200, { hit: 44, otherX: 200 });
+    expect(a.hitRight).toBeLessThanOrEqual(b.hitLeft);
   });
 });

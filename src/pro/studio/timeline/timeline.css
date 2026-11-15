@@ -25,16 +25,16 @@
   }
 
   /*
-   * Narrow and touch: the handle's target is 44px wide and grows outward, so the gutter plus the dock's 15px side
-   * padding must hold it, or the part past the player's edge would be clipped (15 + 29 = 44).
+   * Narrow and touch: a handle's 44px target uses the dock's 15px side padding and this gutter, and slides back over
+   * the track by the rest (see `handleBox`), so it never passes the player's edge. 13px keeps the timeline wide.
    */
   .pro-skin[data-dock-size="narrow"] .pro-timeline {
-    --tl-gutter: 29px;
+    --tl-gutter: 13px;
   }
 
   @media (pointer: coarse) {
     .pro-skin .pro-timeline {
-      --tl-gutter: 29px;
+      --tl-gutter: 13px;
     }
   }
 
@@ -390,18 +390,17 @@
     content: "";
     position: absolute;
     inset-block: 0;
+    left: var(--tab-left, 0px);
     width: var(--tl-handle-width);
     background-color: currentColor;
     transition: background-color var(--pro-duration) var(--pro-ease);
   }
 
   .pro-skin .pro-tl-handle[data-handle="in"]::after {
-    right: 0;
     border-radius: 4px 0 0 4px;
   }
 
   .pro-skin .pro-tl-handle[data-handle="out"]::after {
-    left: 0;
     border-radius: 0 4px 4px 0;
   }
 
@@ -411,20 +410,12 @@
     }
   }
 
-  /* Touch: a 44px by 44px target, grown outwards and up and down, not over the range. */
+  /* Touch: 44px tall (up and down); the width is set from `handleBox`, 44px, kept inside the player. */
   @media (pointer: coarse) {
     .pro-skin .pro-tl-handle::before {
       content: "";
       position: absolute;
-      inset-block: -10px;
-    }
-
-    .pro-skin .pro-tl-handle[data-handle="in"]::before {
-      inset-inline: -20px 0;
-    }
-
-    .pro-skin .pro-tl-handle[data-handle="out"]::before {
-      inset-inline: 0 -20px;
+      inset: -10px 0;
     }
   }
 

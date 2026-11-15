@@ -249,23 +249,51 @@ export interface HandleBox {
   /** Left and right edges of the visible tab. The In tab ends on the anchor, the Out tab starts on it. */
   tabLeft: number;
   tabRight: number;
-  /** Left and right edges of the target. It grows away from the range, so the two targets never meet. */
+  /** Left and right edges of the target. */
   hitLeft: number;
   hitRight: number;
+}
+
+export interface HandleBoxOptions {
+  /** The target's width: 24 px, 44 px on touch. */
+  hit?: number;
+  /** The tab's width. */
+  tab?: number;
+  /** How far the player's box reaches past the track on each side, in pixels (the gutter plus the dock padding). */
+  room?: { left: number; right: number };
+  /** The x of the other handle's point, so the two targets split an overlap halfway. */
+  otherX?: number;
 }
 
 /**
  * Where a handle is, anchored on its outer edge as in editing tools: the In handle's right edge is on the In point
  * and its body hangs to the left, outside the range; the Out handle's left edge is on the Out point and its body
- * hangs to the right. `hit` is the target's width (24 px, 44 px on touch). Because both targets grow away from the
- * range, they cannot overlap while In is before Out, however short the range; the handle being dragged keeps the
- * pointer through pointer capture, so there is nothing to arbitrate.
+ * hangs to the right.
+ *
+ * The target grows away from the range. Near an end of the track it would pass the player's edge, where the page
+ * would get the touch, so it is slid back inside `room`, which makes it reach a little over the track instead. When
+ * the two targets then meet (a very short range near an end), they split the overlap halfway between the two
+ * anchors: a fresh press goes to the handle whose anchor is nearer. A handle being dragged keeps the pointer
+ * through pointer capture, so it always wins.
  */
-export function handleBox(which: 'in' | 'out', time: number, duration: number, width: number, hit = 24, tab = HANDLE_TAB_PX): HandleBox {
+export function handleBox(which: 'in' | 'out', time: number, duration: number, width: number, options: HandleBoxOptions = {}): HandleBox {
+  const { hit = 24, tab = HANDLE_TAB_PX, room, otherX } = options;
   const anchor = timeToX(time, duration, width);
-  return which === 'in'
-    ? { anchor, tabLeft: anchor - tab, tabRight: anchor, hitLeft: anchor - hit, hitRight: anchor }
-    : { anchor, tabLeft: anchor, tabRight: anchor + tab, hitLeft: anchor, hitRight: anchor + hit };
+  const mid = otherX === undefined ? null : (anchor + otherX) / 2;
+  if (which === 'in') {
+    let hitLeft = anchor - hit;
+    if (room && hitLeft < -room.left) hitLeft = -room.left;
+    let hitRight = hitLeft + hit;
+    if (hitRight < anchor) hitRight = anchor;
+    if (mid !== null && mid >= anchor) hitRight = Math.min(hitRight, mid);
+    return { anchor, tabLeft: anchor - tab, tabRight: anchor, hitLeft, hitRight };
+  }
+  let hitRight = anchor + hit;
+  if (room && hitRight > width + room.right) hitRight = width + room.right;
+  let hitLeft = hitRight - hit;
+  if (hitLeft > anchor) hitLeft = anchor;
+  if (mid !== null && mid <= anchor) hitLeft = Math.max(hitLeft, mid);
+  return { anchor, tabLeft: anchor, tabRight: anchor + tab, hitLeft, hitRight };
 }
 
 /** The time a handle dragged to `x` lands on: the start of the frame under the pointer, within the clip. */

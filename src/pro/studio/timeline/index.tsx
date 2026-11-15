@@ -326,6 +326,40 @@ const MarkerPins = memo(function MarkerPins({
   );
 });
 
+/** True on touch-first devices, where the handles' targets are 44 px wide instead of 24. */
+function useCoarsePointer(): boolean {
+  const [coarse, setCoarse] = useState(() => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+  useEffect(() => {
+    if (typeof matchMedia !== 'function') return;
+    const query = matchMedia('(pointer: coarse)');
+    const update = () => setCoarse(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return coarse;
+}
+
+/**
+ * How far the player's box reaches past the track on each side: the timeline's gutter plus the dock's side padding.
+ * A handle's target may use that room, and not more: past the player's edge the page would get the touch.
+ */
+function useRoom(track: { current: HTMLElement | null }, width: number): { left: number; right: number } {
+  const [room, setRoom] = useState({ left: 0, right: 0 });
+  // A passive effect, not a layout effect: the slider's ref is a composed one, which is not attached yet while a
+  // child's layout effects run.
+  useEffect(() => {
+    const element = track.current;
+    const player = element?.closest<HTMLElement>('.pro-skin');
+    if (!element || !player) return;
+    const a = element.getBoundingClientRect();
+    const b = player.getBoundingClientRect();
+    const next = { left: Math.max(0, Math.round(a.left - b.left)), right: Math.max(0, Math.round(b.right - a.right)) };
+    setRoom((current) => (current.left === next.left && current.right === next.right ? current : next));
+  }, [track, width]);
+  return room;
+}
+
 /** How far from the playhead's centre a press still grabs the playhead rather than a marker pin, in pixels. */
 const PLAYHEAD_GRAB_PX = 10;
 
@@ -472,7 +506,14 @@ function RangeHandle({
     if (!move.rejected) setDraft({ in: move.in, out: move.out });
   };
 
-  const box = handleBox(which, value, duration, width);
+  const coarse = useCoarsePointer();
+  const room = useRoom(root, width);
+  const otherValue = handleValue(which === 'in' ? 'out' : 'in', points, duration);
+  const box = handleBox(which, value, duration, width, {
+    hit: coarse ? 44 : 24,
+    room,
+    otherX: timeToX(otherValue, duration, width),
+  });
   const bubbleX = dragTime === null ? 0 : clampBubble(timeToX(dragTime, duration, width), 92, width);
 
   return (
@@ -491,7 +532,7 @@ function RangeHandle({
         aria-valuemax={Number(duration.toFixed(3))}
         aria-valuenow={Number(value.toFixed(3))}
         aria-valuetext={set ? format(value) : which === 'in' ? t.startOfVideo : t.endOfVideo}
-        style={{ left: box.hitLeft }}
+        style={{ left: box.hitLeft, width: box.hitRight - box.hitLeft, '--tab-left': `${box.tabLeft - box.hitLeft}px` } as CSSProperties}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={(event) => {
