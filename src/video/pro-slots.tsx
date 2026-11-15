@@ -4,11 +4,13 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 
 /**
  * Named places in the control bar where lazily loaded pro modules put their controls, in this order:
- * `timeline` (in place of the seek bar), `transport-start` (before play), `transport-end` (after play), `time` (after volume), `tools` (before captions).
+ * `timeline` (in place of the seek bar), `time-start` (before the transport group; the timecode on narrow players),
+ * `transport-start` (before play), `transport-end` (after play), `time` (after the transport group), `tools` (the Tools
+ * disclosure), and `tray` (right after it in the focus order; laid out as a row of its own under the main row).
  * The Share tier renders none of this. Each slot is an element with `display: contents`, so what is portalled into it
  * takes part in the bar's layout and sits at that point of the focus order.
  */
-export type ProSlotName = 'timeline' | 'transport-start' | 'transport-end' | 'time' | 'tools';
+export type ProSlotName = 'timeline' | 'time-start' | 'transport-start' | 'transport-end' | 'time' | 'tools' | 'tray';
 
 interface ProSlotsValue {
   nodes: Partial<Record<ProSlotName, HTMLElement | null>>;

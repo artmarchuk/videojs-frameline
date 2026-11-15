@@ -13,62 +13,92 @@ import { CurrentTime, DurationTime, TimeGroup } from './shared/time';
 import { TimeSlider, type ThumbnailSlot } from './shared/time-slider';
 import { BufferingIndicator } from './shared/video-feedback';
 import { Volume } from './shared/volume';
+import { strings } from './strings';
+
+export interface VideoControlsProps extends ThumbnailSlot {
+  toolbarStart?: ReactNode;
+  toolbarEnd?: ReactNode;
+  /** Pro tiers: the row is grouped (Transport, then host and pro slots, then Playback) and pro modules fill the slots. */
+  pro?: boolean;
+  /** Dock layout: the bar is a panel below the picture. It never hides, and there is no centre play button. */
+  dock?: boolean;
+}
 
 /**
- * The control bar. Two layouts, chosen by the bar's own width:
+ * The control bar.
  *
+ * Share, by the bar's own width:
  * - wide: one row. Play, volume, elapsed, seek bar, total, captions, settings, PiP, fullscreen.
- * - stacked (medium and narrow): the seek bar gets its own full-width row above the buttons, where it is far easier
- *   to hit than a short bar squeezed between buttons.
+ * - stacked (medium and narrow, and always in the dock): the seek bar gets its own full-width row above the buttons.
+ *
+ * Pro tiers: timeline row, then the main row (Transport, timecode, Tools, spacer, Playback), then the Tools tray.
+ * Everything pro is portalled into the slots by lazily loaded modules; only the Share controls are rendered here.
  *
  * The children are rendered in the order they appear, so the focus order always matches the visual order.
  */
-export function VideoControls({
-  renderThumbnail,
-  toolbarStart,
-  toolbarEnd,
-  forceStacked = false,
-  timelineSlot = false,
-}: ThumbnailSlot & { toolbarStart?: ReactNode; toolbarEnd?: ReactNode; forceStacked?: boolean; timelineSlot?: boolean } = {}) {
+export function VideoControls({ renderThumbnail, toolbarStart, toolbarEnd, pro = false, dock = false }: VideoControlsProps = {}) {
   const bar = useRef<HTMLDivElement>(null);
   const narrow = useStacked(bar);
-  // Pro tiers add too many controls for one row, so they always give the seek bar its own row.
-  const stacked = forceStacked || narrow;
+  const stacked = pro || dock || narrow;
 
   return (
-    <Controls.Root>
-      <BufferingIndicator />
+    <Controls.Root visibility={dock ? 'always' : 'auto'}>
+      {!dock && <BufferingIndicator />}
       <Controls.Content className={'pro-controls'}>
         <Tooltip.Provider>
-          <CenterPlayButton />
-          <div ref={bar} className={'pro-bar'} data-layout={stacked ? 'stacked' : 'wide'}>
-            {/* Pro tiers put their ruler timeline here, in place of the seek bar. */}
-            {timelineSlot ? <ProSlot name="timeline" /> : stacked && <TimeSlider renderThumbnail={renderThumbnail} />}
+          {!dock && <CenterPlayButton />}
+          {/* `data-interactive` keeps the player's tap gestures off the dock: a click between buttons does nothing. */}
+          <div ref={bar} className={'pro-bar'} data-layout={stacked ? 'stacked' : 'wide'} data-interactive={dock ? '' : undefined}>
+            {pro ? <ProSlot name="timeline" /> : stacked && <TimeSlider renderThumbnail={renderThumbnail} />}
             <Controls.Group className={'pro-bar-row'}>
-              <ProSlot name="transport-start" />
-              <PlayButton />
-              <ProSlot name="transport-end" />
-              <Volume />
-              <ProSlot name="time" />
-              {toolbarStart}
-              {stacked ? (
+              {pro ? (
                 <>
-                  <TimeGroup />
+                  <ProSlot name="time-start" />
+                  <div className={'pro-transport'} role="group" aria-label={strings.transport}>
+                    <ProSlot name="transport-start" />
+                    <PlayButton />
+                    <ProSlot name="transport-end" />
+                  </div>
+                  <ProSlot name="time" />
+                  {toolbarStart}
+                  <span className={'pro-bar-break'} />
+                  <ProSlot name="tools" />
+                  {/* The tray follows its button in the focus order; the styles lay it out as a row of its own below. */}
+                  <ProSlot name="tray" />
                   <span className={'pro-bar-spacer'} />
+                  {toolbarEnd}
+                  <div className={'pro-playback'} role="group" aria-label={strings.playback}>
+                    <Volume />
+                    <CaptionsToggle />
+                    <SettingsMenu />
+                    <PiPButton />
+                    <FullscreenButton />
+                  </div>
                 </>
               ) : (
                 <>
-                  <CurrentTime />
-                  <TimeSlider renderThumbnail={renderThumbnail} />
-                  <DurationTime />
+                  <PlayButton />
+                  <Volume />
+                  {toolbarStart}
+                  {stacked ? (
+                    <>
+                      <TimeGroup />
+                      <span className={'pro-bar-spacer'} />
+                    </>
+                  ) : (
+                    <>
+                      <CurrentTime />
+                      <TimeSlider renderThumbnail={renderThumbnail} />
+                      <DurationTime />
+                    </>
+                  )}
+                  {toolbarEnd}
+                  <CaptionsToggle />
+                  <SettingsMenu />
+                  <PiPButton />
+                  <FullscreenButton />
                 </>
               )}
-              <ProSlot name="tools" />
-              {toolbarEnd}
-              <CaptionsToggle />
-              <SettingsMenu />
-              <PiPButton />
-              <FullscreenButton />
             </Controls.Group>
           </div>
         </Tooltip.Provider>

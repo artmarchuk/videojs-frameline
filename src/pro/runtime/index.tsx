@@ -34,6 +34,7 @@ const STUDIO_FLAGS = ['channels', 'gainGamma', 'zoom', 'infoHud'] as const satis
 export interface ProRuntimeProps extends ProCallbacks {
   tier: Tier;
   density: string;
+  layout: string;
   features: Readonly<FeatureFlags>;
   fps: number;
   startTimecode?: string | undefined;
@@ -54,6 +55,7 @@ export interface ProRuntimeProps extends ProCallbacks {
 export default function ProRuntime({
   tier,
   density,
+  layout,
   features,
   fps,
   startTimecode,
@@ -117,6 +119,7 @@ export default function ProRuntime({
             dropFrame={dropFrame}
             markers={markers}
             video={video}
+            anchor={anchor}
             onCopyLink={onCopyLink}
             onPosterFrame={onPosterFrame}
           />
@@ -126,6 +129,7 @@ export default function ProRuntime({
           <DebugReadout
             tier={tier}
             density={density}
+            layout={layout}
             features={features}
             fps={fps}
             startFrames={startFrames}

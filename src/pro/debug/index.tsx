@@ -10,6 +10,7 @@ import { formatTimecode } from '../timecode';
 export interface DebugReadoutProps {
   tier: Tier;
   density: string;
+  layout: string;
   features: Readonly<FeatureFlags>;
   fps: number;
   startFrames: number;
@@ -28,7 +29,7 @@ function summarise(features: Readonly<FeatureFlags>): string {
  * Development readout, shown only with `debug` or `?debug`. Each value is read through its own selector, so the
  * rows that change every frame re-render this panel and nothing else. Frame numbers are best effort.
  */
-export default function DebugReadout({ tier, density, features, fps, startFrames, video, skinRenders }: DebugReadoutProps) {
+export default function DebugReadout({ tier, density, layout, features, fps, startFrames, video, skinRenders }: DebugReadoutProps) {
   const frame = useProStore((state) => state.frame);
   const mediaTime = useProStore((state) => state.mediaTime);
   const source = useProStore((state) => state.clockSource);
@@ -45,6 +46,7 @@ export default function DebugReadout({ tier, density, features, fps, startFrames
   const rows: [string, string][] = [
     ['tier', tier],
     ['density', density],
+    ['layout', layout],
     ['features', summarise(features) || 'none'],
     ['fps', String(fps)],
     ['frame', String(frame)],

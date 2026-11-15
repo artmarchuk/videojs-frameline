@@ -45,6 +45,66 @@
     pointer-events: none;
   }
 
+  /* ---------- Dock layout: the picture's stage, and the controls in a panel below it ---------- */
+
+  /*
+   * The skin is a column: the stage, then the dock. The aspect ratio (--pro-stage-ratio, default 16 / 9) applies to
+   * the stage; the skin's height is stage plus dock. When the host fixes the skin's height (or in fullscreen), the
+   * dock keeps its height and the stage takes what is left, with the picture letterboxed inside it.
+   */
+  .pro-skin[data-layout="dock"] {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--pro-surface-1);
+    /* Captions sit at the bottom of the picture; no controls to clear. */
+    --media-caption-controls-y: calc(var(--media-spacing) * -3);
+  }
+
+  .pro-skin .pro-stage {
+    position: relative;
+    flex: 0 1 auto;
+    width: 100%;
+    min-height: 0;
+    aspect-ratio: var(--pro-stage-ratio, 16 / 9);
+    overflow: hidden;
+    background-color: var(--pro-surface-0);
+  }
+
+  .pro-skin:fullscreen .pro-stage {
+    flex: 1 1 0;
+    aspect-ratio: auto;
+  }
+
+  .pro-skin[data-layout="dock"] .pro-controls {
+    position: relative;
+    inset: auto;
+    flex: none;
+    pointer-events: auto;
+  }
+
+  .pro-skin[data-layout="dock"] .pro-bar {
+    position: static;
+    gap: calc(var(--media-spacing) * 3);
+    padding: calc(var(--media-spacing) * 3.5) calc(var(--media-spacing) * 4);
+    border-top: 1px solid var(--pro-line);
+    background-color: var(--pro-surface-1);
+    background-image: none;
+  }
+
+  .pro-skin[data-layout="dock"] .pro-bar[data-layout="stacked"] .media-time-slider::before {
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .pro-skin .pro-transport,
+  .pro-skin .pro-playback {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: var(--pro-density-gap);
+  }
+
   /* ---------- Poster and overlay layer ---------- */
 
   .pro-skin .media-poster {
@@ -590,7 +650,7 @@
   .pro-skin .media-time-slider-chapter-title {
     min-width: 0;
     overflow: hidden;
-    color: var(--pro-text-dim);
+    color: var(--pro-text-dim-raised);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -733,6 +793,12 @@
     color: var(--pro-text-dim);
     font: inherit;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* On the tooltip's lighter surface the dim text steps up to keep 4.5:1. */
+  .pro-skin .media-tooltip-popup .media-tooltip-shortcut,
+  .pro-skin .media-tooltip-popup .pro-kbd {
+    color: var(--pro-text-dim-raised);
   }
 
   /* ---------- Settings menu ---------- */

@@ -6,7 +6,16 @@ import { lazy, Suspense, useCallback, useMemo, useRef, useState, type ReactNode 
 
 import { VideoSkin, type VideoSkinProps } from '../video/skin';
 import { warnOnce } from './dev';
-import { guideAttribute, hasProFeatures, isTier, resolveFeatures, type FeatureOverrides, type Tier } from './features';
+import {
+  guideAttribute,
+  hasProFeatures,
+  isTier,
+  resolveFeatures,
+  resolveLayout,
+  type FeatureOverrides,
+  type Layout,
+  type Tier,
+} from './features';
 import type { CopyLinkInfo, PosterFrameInfo } from './review/controller';
 import type { FrameInfo, InOutRange, Marker } from './store';
 import { DEFAULT_FPS, isValidFps } from './fps';
@@ -32,8 +41,8 @@ type InternalSkinProps =
   | 'toolbarEnd'
   | 'overlay'
   | 'extras'
-  | 'proSlots'
-  | 'stackedBar'
+  | 'proBar'
+  | 'layout'
   | 'arrowSeekWhilePlayingOnly';
 
 export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
@@ -52,6 +61,12 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   dropFrame?: boolean;
   /** Markers for the timeline. Times in seconds; `end` makes a range marker. */
   markers?: Marker[];
+  /**
+   * `'dock'` puts the controls in a panel below the picture, where they never cover it (also in fullscreen) and never
+   * hide; `'overlay'` puts them over the picture. Default: `'overlay'` for Share, `'dock'` for Review and Studio.
+   * In the dock layout the aspect ratio applies to the picture's stage, and the component's height is stage plus dock.
+   */
+  layout?: Layout;
   /** Spacing of the controls. Touch devices always get `'comfortable'` with 44 px targets. */
   density?: Density;
   /** Show the debug readout. Also switched on by `?debug` in the page URL. */
@@ -97,6 +112,7 @@ export function ProSkin({
   dropFrame,
   markers,
   density = 'comfortable',
+  layout,
   debug = false,
   slots,
   onInOutChange,
@@ -120,6 +136,7 @@ export function ProSkin({
   }
 
   const safeDensity: Density = density === 'compact' ? 'compact' : 'comfortable';
+  const safeLayout = resolveLayout(safeTier, layout);
 
   const wantsDebug = debug || debugInUrl();
   // resolveFeatures memoises by value, so a new `features` object with the same content gives the same result.
@@ -138,7 +155,7 @@ export function ProSkin({
   for (const id of overlays) guideAttributes[guideAttribute(id)] = '';
 
   const pro = hasProFeatures(features);
-  // Any Review control in the bar means the pro bar layout: seek bar on its own row, slots for the controls.
+  // Any Review control in the bar means the pro bar: timeline row, grouped main row, slots for the pro controls.
   const proBar =
     features.timecode ||
     features.frameStep ||
@@ -156,8 +173,8 @@ export function ProSkin({
       data-tier={safeTier}
       data-density={safeDensity}
       data-bar={proBar ? 'pro' : undefined}
-      proSlots={proBar}
-      stackedBar={proBar}
+      proBar={proBar}
+      layout={safeLayout}
       arrowSeekWhilePlayingOnly={features.frameStep}
       toolbarStart={slots?.toolbarStart}
       toolbarEnd={slots?.toolbarEnd}
@@ -168,6 +185,7 @@ export function ProSkin({
             <ProRuntime
               tier={safeTier}
               density={safeDensity}
+              layout={safeLayout}
               features={features}
               fps={safeFps}
               startTimecode={startTimecode}

@@ -10,6 +10,8 @@ export const strings = {
   shortcutsOr: 'or',
   pictureInPicture: 'Picture-in-picture',
   retry: 'Retry',
+  transport: 'Transport',
+  playback: 'Playback',
   shortcut: {
     playPause: 'Play or pause',
     mute: 'Mute or unmute',

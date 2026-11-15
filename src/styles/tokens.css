@@ -21,7 +21,8 @@
     --pro-line: #333336; /* hairlines, dividers */
     --pro-track: #85858c; /* unfilled slider track over footage (Share overlay): 3:1 on the scrim over a white frame */
     --pro-text: #f2f2f4; /* primary text and icons; the playhead */
-    --pro-text-dim: #9a9aa0; /* secondary text */
+    --pro-text-dim: #9a9aa0; /* secondary text on surface-0 to surface-2 */
+    --pro-text-dim-raised: #b2b2b8; /* secondary text on surface-3: tooltips, hovered controls (4.5:1 there) */
     --pro-accent: var(--media-accent-color, #5b9dff);
     --pro-accent-ink: var(--media-accent-text-color, #0b1220); /* text and icons placed on the accent */
     --pro-range: #4d7bc1; /* the not-yet-played part of the range band */
@@ -157,6 +158,7 @@
       --pro-track: CanvasText;
       --pro-text: CanvasText;
       --pro-text-dim: CanvasText;
+      --pro-text-dim-raised: CanvasText;
       --pro-accent: Highlight;
       --pro-accent-ink: HighlightText;
       --pro-scrim: Canvas;
