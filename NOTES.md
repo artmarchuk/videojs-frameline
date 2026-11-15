@@ -783,3 +783,6 @@ Studio, range set, View menu open, headless Chrome 2x (`design/screenshots/step-
 
 ### Step 6c checks
 Tests 172 passing, build passes. Platform zones screenshot: `zones-tiktok.png` (top 12.5%, bottom 34.4%).
+
+### Step 6c public-URL checks (https://videojs-pro.vercel.app)
+Viewer gate run on the public URL in headless Chrome: tab order Seek, Play, Mute, Volume, time, captions, Settings, PiP, Fullscreen; Space, K, J, L, arrows, M, 0-9, Home, captions `C` and the help dialog (`Shift+?`, focus in and back) work; 40 px targets; no horizontal overflow at 1440 and 320; **no pro chunk requested** (Studio requests `runtime`, `studio` JS and CSS only). Studio chunk names for 6c: `runtime-_dcTh6Bf.js`, `studio-DGHWJDs5.js`.
