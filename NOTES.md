@@ -15,6 +15,7 @@ Read this at the start of every step, along with `specs/PROJECT-OVERVIEW.md` and
 | Transitive `@videojs/*` | `media`, `store`, `utils`, `spf`, `hlsjs-video`, `native-hls-video`, all 10.4.0 |
 | `video.js` (transitive, from `@videojs/core`) | 10.4.0: the v10 pointer package that throws coded errors for v8 patterns. **Not v8.** |
 | `@videojs/html` | not installed (React skin); npm latest is 10.4.0 |
+| Video.js skill (Claude Code plugin `videojs@videojs`) | 0.4.0, user scope, enabled; skills `videojs:videojs`, `videojs:videojs-skin`, `videojs:videojs-ui` |
 | Vercel CLI | the deploy script runs `vercel@64`; the latest is 65.16.0 |
 
 Docs versus installed version: npm `latest` is 10.4.0, and the bundled docs (`node_modules/@videojs/react/docs/llms.txt`) say "Bundled with `@videojs/react` v10.4.0". The `next` tag is an old `10.0.0-rc.5`. The live docs site does not print a version, so a mismatch there can't be ruled out (see Unverified).
@@ -44,7 +45,6 @@ Docs versus installed version: npm `latest` is 10.4.0, and the bundled docs (`no
 ## Unverified
 
 - **Playback on the live URL** was checked in Chrome on `/preview.html`: it plays at 1920×1080 unmuted at full volume, fullscreen works, and the English and Japanese subtitle tracks and chapters are present. Not checked: actually hearing the audio, captions rendering on screen, Safari and Firefox.
-- The Video.js skill install (`claude plugin marketplace add videojs/skills`, `claude plugin install videojs@videojs`): auto mode blocked it, so the author has to run it. Not yet confirmed installed.
 - The version shown on the live docs site.
 - A truly clean browser session (the Chrome used is the author's own profile, though the site needs no login), and a mobile viewport.
 - Build warnings, harmless so far: chunk size over 500 kB, and a Rolldown note on `"use no memo"` in `react-compiler-runtime`.
