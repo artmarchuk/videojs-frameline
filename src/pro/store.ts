@@ -6,7 +6,7 @@
  * - In and out points are clamped to `[0, duration]` (only to `>= 0` while the duration is unknown).
  * - In is always before out. Setting one past the other **swaps** them, so the mark the user just made is kept.
  *   Setting a point exactly onto the other is rejected (a zero-length range has no use).
- * - Clearing in and out resets `loopMode` from `'range'` to `'off'`.
+ * - Clearing in and out resets `loopMode` from `'range'` to `'off'`. A range exists while either point is set.
  * - Only overlays the host allowed can be switched on.
  */
 import type { GuideId } from './features';
@@ -74,6 +74,8 @@ export interface ProStore {
   subscribe(listener: () => void): () => void;
   setIn(time: number): void;
   setOut(time: number): void;
+  clearIn(): void;
+  clearOut(): void;
   clearInOut(): void;
   setLoopMode(mode: LoopMode): void;
   toggleTimeDisplay(): void;
@@ -166,6 +168,16 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
 
     setIn: (time) => setPoint('in', time),
     setOut: (time) => setPoint('out', time),
+
+    clearIn() {
+      const empty = state.outPoint === null;
+      commitRange(null, state.outPoint, empty && state.loopMode === 'range' ? { loopMode: 'off' } : {});
+    },
+
+    clearOut() {
+      const empty = state.inPoint === null;
+      commitRange(state.inPoint, null, empty && state.loopMode === 'range' ? { loopMode: 'off' } : {});
+    },
 
     clearInOut() {
       commitRange(null, null, state.loopMode === 'range' ? { loopMode: 'off' } : {});

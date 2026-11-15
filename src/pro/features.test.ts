@@ -23,6 +23,10 @@ describe('resolveFeatures', () => {
     const review = resolveFeatures('review');
     expect(review).toMatchObject({ timecode: true, frameStep: true, inOut: true, loop: true, markers: true });
     expect(review).toMatchObject({ shotNav: true, grabFrame: true, copyTimecodeLink: true, platformZones: true });
+    expect(review.posterFrame).toBe(true);
+    expect(resolveFeatures('share').posterFrame).toBe(false);
+    expect(resolveFeatures('studio').posterFrame).toBe(true);
+    expect(resolveFeatures('review', { posterFrame: false }).posterFrame).toBe(false);
     expect(review).toMatchObject({ channels: false, gainGamma: false, zoom: false, infoHud: false, debug: false });
     expect(review.guides).toEqual([...GUIDE_IDS]);
 

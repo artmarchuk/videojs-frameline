@@ -34,6 +34,8 @@ export interface FeatureFlags {
   grabFrame: boolean;
   /** Copy a link to the current timecode. */
   copyTimecodeLink: boolean;
+  /** Use the current frame as the poster: fires an event; the host app saves it. */
+  posterFrame: boolean;
   /** Guides and masks: `false`, or the list of guide ids the end user may switch on. */
   guides: false | readonly GuideId[];
   /** Approximate platform UI zones for Shorts, Reels and TikTok. */
@@ -64,6 +66,7 @@ const OFF: FeatureFlags = {
   shotNav: false,
   grabFrame: false,
   copyTimecodeLink: false,
+  posterFrame: false,
   guides: false,
   platformZones: false,
   channels: false,
@@ -83,6 +86,7 @@ const REVIEW: FeatureFlags = {
   shotNav: true,
   grabFrame: true,
   copyTimecodeLink: true,
+  posterFrame: true,
   guides: ALL_GUIDES,
   platformZones: true,
 };

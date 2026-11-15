@@ -51,6 +51,17 @@ describe('pro store', () => {
     expect(store.getState().loopMode).toBe('whole');
   });
 
+  it('clears one point at a time and keeps looping while a point remains', () => {
+    const store = createProStore();
+    store.setIn(1);
+    store.setOut(2);
+    store.setLoopMode('range');
+    store.clearIn();
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: 2, loopMode: 'range' });
+    store.clearOut();
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null, loopMode: 'off' });
+  });
+
   it('fires onInOutChange only when the range changes', () => {
     const store = createProStore();
     const onInOutChange = vi.fn();
