@@ -777,3 +777,9 @@ Differences kept, with the reason:
 5. Under 350 px (the accepted three rows at 320) the cut segment is not shown and In/Out/Loop take a full row; the mockup has no 320 case.
 6. The mockup's card has a 1 px border and 10 px radius around picture and dock; ours is the preview page's frame (1 px line, the skin's radius).
 Screenshots: `design/screenshots/step-6c/studio-390.png`, `studio-320.png` (before the change: `*-before.png`), Chrome headless, touch emulation, 2x.
+
+### F6: Studio at 1024 px
+Studio, range set, View menu open, headless Chrome 2x (`design/screenshots/step-6c/studio-1024*.png`). Looked for clipping, overlaps, crowding: the main row fits on one row with the cut buttons, Loop, Reset range, Markers, Capture, View, the divider, Captions, Settings, volume (icon only) and Fullscreen; no element passes the player's edge (checked by script: none) and the page does not scroll sideways. The View menu opens upward over the picture, two columns, fully inside the player, and its first item has the highlight. Nothing needed fixing within the accepted breakpoints.
+
+### Step 6c checks
+Tests 172 passing, build passes. Platform zones screenshot: `zones-tiktok.png` (top 12.5%, bottom 34.4%).
