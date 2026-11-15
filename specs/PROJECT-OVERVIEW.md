@@ -6,7 +6,7 @@ Read this file at the start of every step, together with `NOTES.md` and that ste
 
 **Video.js PRO is a player skin for video creators.** It is a tool for people who make video, not a prettier consumer player. The author's brand is UX and product design for tools that let people create and build things, and this project must read as exactly that.
 
-**Test for every decision** (feature, layout, copy, colour, demo content): does it help someone make, check, review or deliver a video? If yes, it earns its place. If it only helps someone watch, it belongs in the Share tier or it is cut.
+**Test for every decision** (feature, layout, copy, colour, demo content): does it help someone make, check, review or deliver a video? If yes, it earns its place. If it only helps someone watch, it belongs in the Viewer tier or it is cut.
 
 ## Ultimate goal
 
@@ -24,51 +24,52 @@ What wins: a distinct point of view with real craft, not a restyle of a consumer
 
 One skin, three tiers. A developer building a video tool picks a tier and switches single features on or off.
 
-| Tier | For | What it adds |
+| Tier | For | What it is |
 | --- | --- | --- |
-| **Share** | The creator's client or audience; how work leaves the tool | A clean player: play/pause, seek bar, time, volume/mute, captions, settings, fullscreen. Ships no pro code |
-| **Review** | The creator checking and reviewing work | Frame-accurate transport, timecode, in/out and loops, markers, guides and crop masks, frame grab |
-| **Studio** | The creator inspecting the image | Channel view, gain/gamma, zoom to pixels (contest subset) |
+| **Viewer** | The creator's client or audience; how work leaves the tool | A clean player with overlay controls on the picture: play/pause, seek bar, time, volume/mute, captions, settings, fullscreen. Ships no pro code |
+| **Studio** | The creator making, checking and reviewing video | A professional monitor: controls in a dock **below** the picture, a compact ruler timeline with draggable In/Out handles, frame-accurate transport, timecode, markers, guides and crop masks, frame grab, and (step 7) image inspection |
+
+There are two tiers on purpose. Finer control comes from feature flags, so a host can turn a single feature on over Viewer or off over Studio.
 
 ### Customisation layers (coarse to fine)
 
-1. **Tier**: `tier="share" | "review" | "studio"` sets the default bundle and layout.
+1. **Tier**: `tier="viewer" | "studio"` sets the default bundle and layout.
 2. **Feature flags**: override single features, such as `features={{ timecode: true, guides: ['title-safe','9:16'], scopes: false }}`.
-3. **View menu (end user)**: show or hide the overlays and tools the developer allowed; remembered per browser.
+3. **View menu (end user)**: show or hide the guides (and, in step 7, the image tools) the developer allowed; remembered per browser.
 4. **Slots and events**: host app adds its own controls (`toolbar-start`, `toolbar-end`, `overlay`) and listens to `inout:change`, `marker:select`, `frame:change`.
 5. **Tokens**: the 8 public `--media-*` tokens plus our own `--pro-*` tokens, and `density="comfortable" | "compact"`.
 
-Only enabled modules load. Share must stay as light as a stock skin.
+Only enabled modules load. Viewer must stay as light as a stock skin.
 
 ## Full feature list
 
 Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** means after the contest. Do not build [Later] items unless a step says so.
 
 ### Transport and time
-- Timecode `HH:MM:SS:FF` with a frames/seconds toggle [Review] [Contest]
-- Frame step back/forward (`,` `.` and `←` `→` while paused) [Review] [Contest]
-- Jump ±N frames (default 10) [Review] [Contest]
-- In and out points (`I` / `O`), play in-to-out, loop range [Review] [Contest]
-- Previous / next cut, from markers or chapters [Review] [Contest]
-- Markers and range markers on the timeline [Review] [Contest]
-- Frame-accurate hover scrubbing with preview [Review] [Contest, best effort with Mux storyboard thumbnails]
+- Timecode `HH:MM:SS:FF` with a frames/seconds toggle [Studio] [Contest]
+- Frame step back/forward (`,` `.` and `←` `→` while paused) [Studio] [Contest]
+- Jump ±N frames (default 10) [Studio] [Contest]
+- In and out points: draggable handles on the timeline (always present, like a work-area bar), `I` / `O` at the playhead, arrow keys on a focused handle; loop range [Studio] [Contest]
+- Previous / next cut, from markers or chapters [Studio] [Contest]
+- Markers on the ruler: one pin type, optional end time; host data, shown and navigated by the skin [Studio] [Contest]
+- Frame-accurate hover scrubbing with preview [Studio] [Contest, best effort with Mux storyboard thumbnails]
 - Ping-pong loop, loop ±N seconds around the playhead [Studio] [Later]
 - JKL shuttle 2×/4×/8× [Studio] [Later] (reverse is not supported in Chrome or Firefox; would be simulated)
 - Playback stats: dropped frames, real fps [Studio] [Later]
 
 ### Guides and overlays
-- Title-safe and action-safe zones [Review] [Contest]
-- Format centre crosshair [Review] [Contest]
-- Rule-of-thirds and proportional grids [Review] [Contest]
-- Aspect masks: 9:16, 4:5, 1:1, 2.39, 1.85 [Review] [Contest]
-- Platform UI zones for Shorts, Reels and TikTok (approximate, labelled so) [Review] [Contest]
+- Title-safe and action-safe zones [Studio] [Contest]
+- Format centre crosshair [Studio] [Contest]
+- Rule-of-thirds and proportional grids [Studio] [Contest]
+- Aspect masks: 9:16, 4:5, 1:1, 2.39, 1.85 [Studio] [Contest]
+- Platform UI zones for Shorts, Reels and TikTok (approximate, labelled so) [Studio] [Contest]
 - Region of interest; info HUD (file, resolution, fps, rendition, take or version label) [Studio] [Later]
 
 ### Creator actions
-- Grab frame (download PNG or copy; needs CORS, which Mux provides) [Review] [Contest]
-- Use frame as poster (emits an event with the time; host app saves it) [Review] [Contest]
-- Copy link at timecode (URL fragment plus an event) [Review] [Contest]
-- Time-coded comments: the skin shows markers and fires events; the host app stores comments [Review] [Contest, markers and events only]
+- Grab frame (download PNG or copy; needs CORS, which Mux provides) [Studio] [Contest]
+- Use frame as poster (emits an event with the time; host app saves it) [Studio] [Contest]
+- Copy link at timecode (URL fragment plus an event) [Studio] [Contest]
+- Time-coded comments: the skin shows markers and fires events; the host app stores comments [Studio] [Contest, markers and events only]
 
 ### Image inspection
 - Channel view: R, G, B, luma (SVG `feColorMatrix`, no pixel reading) [Studio] [Contest]
@@ -88,7 +89,7 @@ Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** me
 
 ## Look
 
-Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no monospace, no slashed zeros) with tabular numerals for all changing numbers, and one soft blue accent (`#5B9DFF`) **reserved** for the most important indications: the played part of the range band, the In/Out handles, the focus ring and a selected marker. Toggled-on states use a lighter graphite, Play is a neutral filled button, the playhead is white. Controls live in a **dock below the picture** in the Review and Studio tiers (never over it, also in fullscreen); the Share tier keeps an overlay. Secondary tools (Range, Capture, View) sit behind one disclosure control, so the default view stays quiet. The timeline is a ruler with compact seconds-first labels (`10s`, `1:30`) and a white playhead with a full-timecode bubble. Guides are white at reduced opacity with a dark outline so they read over any footage; verify every guide over bright footage. Treat the look as a creator's tool, not a media-site player.
+Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no monospace, no slashed zeros) with tabular numerals for all changing numbers, and one soft blue accent (`#5B9DFF`) **reserved** for the most important indications: the played part of the range band, the In/Out handles, the focus ring and a selected marker. Toggled-on states use a lighter graphite, Play is a neutral filled button, the playhead is white. Controls live in a **dock below the picture** in the Studio tier (never over it, also in fullscreen); the Viewer tier keeps an overlay. The main row follows the pro-monitor convention: timecode on the left, transport in the centre, Markers, Capture and View menus plus playback on the right. The picture gets the room; the timeline is compact (about 46 px) with a white playhead and no permanent bubble. The ruler uses compact seconds-first labels (`10s`, `1:30`); the full timecode shows in the toolbar field and in the hover bubble. Guides are white at reduced opacity with a dark outline so they read over any footage; verify every guide over bright footage. Treat the look as a creator's tool, not a media-site player.
 
 ## Hard rules
 
@@ -103,15 +104,15 @@ Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no m
 
 ## Nine steps
 
-1. Environment and pipeline: scaffold, git, skill, deploy.
-2. Skin foundation and Share tier: gate-proof player. **A submittable build exists after this step.**
-3. Pro core: config, state, frame clock.
-4. Review transport: timecode, frame step, in/out, loop, grab frame, copy link, previous/next cut.
-5. Ruler timeline: ticks, timecode bubble, in/out range, markers.
-6. View menu and guides: safe areas, grids, masks, platform zones.
-7. Studio subset: channels, gain/gamma, zoom.
+1. Environment and pipeline: scaffold, git, skill, deploy. *(done)*
+2. Skin foundation and Viewer tier: gate-proof player. **A submittable build exists after this step.** *(done)*
+3. Pro core: config, state, frame clock. *(done)*
+4. Review transport: timecode, frame step, in/out, loop, grab frame, copy link, previous/next cut. *(done; its controls are rearranged in step 6)*
+5. Ruler timeline, and 5b: dock layout and restyle. *(done; the timeline and toolbar are reworked in step 6)*
+6. **Viewer and Studio rework, then View menu and guides** (two parts, `step-6-viewer-studio-rework-and-guides.md`): two tiers, compact timeline, range handles, one marker pin, new main row; then guides, crop masks, platform zones, remembered choices.
+7. Studio image tools: channels, gain/gamma, zoom (an "Image" section in the View menu).
 8. Configurator page and demo video.
-9. Hardening and audit: keyboard, phone, bright and dark footage, reduced motion, deploy.
+9. Hardening and audit: keyboard, phone, bright and dark footage, reduced motion, Firefox and Safari, deploy.
 
 Then Monday 07:00 to 09:00 Nicosia: the author polishes, embeds on artoix.com and submits.
 
