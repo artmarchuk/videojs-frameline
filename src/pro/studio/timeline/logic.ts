@@ -193,9 +193,6 @@ export function clampBubble(center: number, bubbleWidth: number, containerWidth:
 /** More markers than this still render, with a development warning. */
 export const MARKER_SOFT_LIMIT = 200;
 
-/** Half the width of a pin: a pin at 0 or at the duration is moved in by this much, so it stays whole. */
-const PIN_HALF = 4;
-
 /** One marker on the ruler: a pin at its time, and a line to `endX` when the marker has an end time. */
 export interface MarkerPin {
   key: string;
@@ -226,7 +223,8 @@ export function validMarkers(markers: readonly Marker[]): Marker[] {
 export function layoutMarkers(markers: readonly Marker[], duration: number, width: number): MarkerPin[] {
   if (!(duration > 0) || !(width > 0)) return [];
   return validMarkers(markers).map((marker, index) => {
-    const x = clamp(timeToX(marker.time, duration, width), PIN_HALF, Math.max(PIN_HALF, width - PIN_HALF));
+    // Exactly on its time: a marker at 0 lines up with the playhead at 0. The gutter around the track holds the pin's half width.
+    const x = timeToX(marker.time, duration, width);
     const hasEnd = marker.end !== undefined && Number.isFinite(marker.end) && marker.end > marker.time;
     return { key: markerKey(marker, index), x, endX: hasEnd ? Math.max(x, timeToX(marker.end!, duration, width)) : null, marker };
   });

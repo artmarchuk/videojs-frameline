@@ -191,10 +191,10 @@ describe('layoutMarkers', () => {
     expect(pins.map((pin) => pin.marker.time)).toEqual([20, 20.3, 20.6, 40]);
   });
 
-  it('keeps pins at 0 and at the duration fully inside', () => {
+  it('puts pins exactly on 0 and on the duration (the gutter holds them whole)', () => {
     const pins = layoutMarkers([m(0), m(60), m(59, { end: 70 })], 60, 600);
-    expect(pins[0]!.x).toBe(4);
-    expect(pins[2]!.x).toBe(596);
+    expect(pins[0]!.x).toBe(0);
+    expect(pins[2]!.x).toBe(600);
     expect(pins[1]!.endX).toBe(600);
   });
 
@@ -205,14 +205,14 @@ describe('layoutMarkers', () => {
   it('ignores bad times and sorts by time', () => {
     const pins = layoutMarkers([m(50), m(Number.NaN), m(-1), m(5), m(500)], 60, 600);
     expect(pins.map((pin) => pin.marker.time)).toEqual([5, 50, 500]);
-    expect(pins[2]!.x).toBe(596); // past the end: drawn at the end
+    expect(pins[2]!.x).toBe(600); // past the end: drawn at the end
   });
 
   it('handles 200 markers, and more: still one pin each, all inside', () => {
     const many = Array.from({ length: 250 }, (_, i) => m((i / 250) * 60));
     const pins = layoutMarkers(many, 60, 320);
     expect(pins).toHaveLength(250);
-    expect(pins.every((pin) => pin.x >= 4 && pin.x <= 316)).toBe(true);
+    expect(pins.every((pin) => pin.x >= 0 && pin.x <= 320)).toBe(true);
     expect(new Set(pins.map((pin) => pin.key)).size).toBe(250);
   });
 

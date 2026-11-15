@@ -786,3 +786,7 @@ Tests 172 passing, build passes. Platform zones screenshot: `zones-tiktok.png` (
 
 ### Step 6c public-URL checks (https://videojs-pro.vercel.app)
 Viewer gate run on the public URL in headless Chrome: tab order Seek, Play, Mute, Volume, time, captions, Settings, PiP, Fullscreen; Space, K, J, L, arrows, M, 0-9, Home, captions `C` and the help dialog (`Shift+?`, focus in and back) work; 40 px targets; no horizontal overflow at 1440 and 320; **no pro chunk requested** (Studio requests `runtime`, `studio` JS and CSS only). Studio chunk names for 6c: `runtime-_dcTh6Bf.js`, `studio-DGHWJDs5.js`.
+
+### 6c follow-up: playhead as one shape, marker at 0
+- The playhead's head and line were two shapes, each with its own outline, so a dark seam showed where they met. They are one shape now: the line starts inside the head in the same colour, and a single `drop-shadow` outline goes around the union.
+- A marker at 0 was drawn 4 px to the right of the playhead at 0: `layoutMarkers` clamped every pin inward by half a pin. That clamp is removed; a pin sits exactly on its time (a marker at 0 or at the end is on the same x as the playhead there), and the gutter around the track holds the half pin. Measured at 1440: playhead centre 108, pin centre 108, track left 108.
