@@ -76,6 +76,7 @@ export function VideoSkin({
         toolbarStart={toolbarStart}
         toolbarEnd={toolbarEnd}
         forceStacked={stackedBar}
+        timelineSlot={proSlots}
       />
 
       <VideoHotkeys arrowSeekWhilePlayingOnly={arrowSeekWhilePlayingOnly} />
@@ -97,7 +98,7 @@ export function VideoSkin({
       data-density="comfortable"
       {...props}
     >
-      <ShortcutsProvider>{proSlots ? <ProSlotsProvider>{body}</ProSlotsProvider> : body}</ShortcutsProvider>
+      <ShortcutsProvider>{proSlots ? <ProSlotsProvider renderThumbnail={renderThumbnail}>{body}</ProSlotsProvider> : body}</ShortcutsProvider>
     </ContainerPrimitive>
   );
 }

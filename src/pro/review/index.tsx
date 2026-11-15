@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { cn } from '@/lib/resolve-class-name';
 
 import { PipEnterIcon } from '../../video/icons';
-import { useProSlot } from '../../video/pro-slots';
+import { useProSlot, useProThumbnailRenderer } from '../../video/pro-slots';
 import { Button } from '../../video/shared/button';
 import { useShortcutsDialog, type ShortcutRow } from '../../video/shared/shortcuts-dialog';
 import { ButtonTooltip } from '../../video/shared/tooltip';
@@ -35,6 +35,8 @@ import {
   StepForwardIcon,
 } from './icons';
 import { reviewStrings as t } from './strings';
+import { Timeline, type TimelineProps } from './timeline';
+import { validMarkers } from './timeline/logic';
 import { useCuts } from './use-cuts';
 
 export interface ReviewLayerProps {
@@ -67,6 +69,9 @@ function Review({ features, fps, startFrames, dropFrame, markers, video, onCopyL
   const controller = useReviewController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink, onPosterFrame });
   const paused = usePlayer(selectPlayback)?.paused ?? true;
 
+  const timeline = useProSlot('timeline');
+  const renderThumbnail = useProThumbnailRenderer<TimelineProps['renderThumbnail']>();
+  const shownMarkers = features.markers ? markers : NO_MARKERS;
   const transportStart = useProSlot('transport-start');
   const transportEnd = useProSlot('transport-end');
   const time = useProSlot('time');
@@ -80,6 +85,19 @@ function Review({ features, fps, startFrames, dropFrame, markers, video, onCopyL
     <>
       <ReviewHotkeys controller={controller} features={features} paused={paused} />
       <HelpRows features={features} />
+
+      {timeline &&
+        createPortal(
+          <Timeline
+            controller={controller}
+            fps={fps}
+            markers={shownMarkers}
+            range={features.inOut || features.loop}
+            video={video}
+            renderThumbnail={renderThumbnail}
+          />,
+          timeline
+        )}
 
       {transportStart &&
         createPortal(
@@ -129,7 +147,7 @@ function Review({ features, fps, startFrames, dropFrame, markers, video, onCopyL
           <>
             {range && <RangeGroup controller={controller} features={features} fps={fps} />}
             {actions && <ActionsGroup controller={controller} features={features} />}
-            <MoreMenu controller={controller} features={features} fps={fps} />
+            <MoreMenu controller={controller} features={features} fps={fps} markers={shownMarkers} />
           </>,
           tools
         )}
@@ -365,7 +383,19 @@ function MoreItem({
  * The More menu. It always holds the less-used actions (Play range, Clear range, Copy frame image). On narrow
  * players it also holds everything from the Range and Actions groups, which are hidden there.
  */
-function MoreMenu({ controller, features, fps }: { controller: ReviewController; features: Readonly<FeatureFlags>; fps: number }) {
+function MoreMenu({
+  controller,
+  features,
+  fps,
+  markers,
+}: {
+  controller: ReviewController;
+  features: Readonly<FeatureFlags>;
+  fps: number;
+  markers: readonly Marker[];
+}) {
+  const duration = useProStore((state) => state.duration);
+  const listed = useMemo(() => validMarkers(markers, duration), [markers, duration]);
   const { hasRange, looping } = useRangeState();
   const pip = usePlayer(selectPiP);
 
@@ -422,6 +452,25 @@ function MoreMenu({ controller, features, fps }: { controller: ReviewController;
               }}
             />
           )}
+          {listed.length > 0 && (
+            <div className={'pro-more-section'} role="group" aria-label={t.markers}>
+              <div className={'pro-more-heading'} aria-hidden="true">
+                {t.markers}
+              </div>
+              {listed.map((marker, index) => (
+                <Menu.Item
+                  key={marker.id ?? `${index}:${marker.time}`}
+                  className={'media-menu-item pro-more-marker'}
+                  onSelect={() => controller.goToMarker(marker)}
+                >
+                  <span className={'pro-more-marker-label'}>{marker.label}</span>
+                  <span className={'media-menu-hint'}>
+                    <span className={'media-menu-hint-label'}>{controller.timecode(framesFromSeconds(marker.time, fps))}</span>
+                  </span>
+                </Menu.Item>
+              ))}
+            </div>
+          )}
         </Menu.Content>
       </Menu.Popup>
     </Menu.Root>
@@ -472,8 +521,13 @@ function HelpRows({ features }: { features: Readonly<FeatureFlags> }) {
       list.push({ keys: ['Shift', 'I', 'O'], label: t.help.clearInOut });
     }
     if (features.loop) list.push({ keys: ['R'], label: t.help.loop });
-    if (features.shotNav) list.push({ keys: ['[', ']'], label: t.help.cuts });
+    if (features.shotNav) list.push({ keys: ['[', ']'], label: features.markers ? t.help.cutsMarkers : t.help.cuts });
     if (features.grabFrame) list.push({ keys: ['G'], label: t.help.grab });
+    if (features.inOut) {
+      list.push({ keys: ['←', '→'], label: t.help.handles });
+      list.push({ keys: ['Shift', '←', '→'], label: t.help.handlesJump });
+      list.push({ keys: ['Delete'], label: t.help.handlesClear });
+    }
     return list;
   }, [features]);
 

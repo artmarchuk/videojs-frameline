@@ -50,6 +50,14 @@ export const reviewStrings = {
   poster: 'Use frame as poster',
   posterSet: (timecode: string) => `Poster frame: ${timecode}`,
 
+  seek: 'Seek',
+  inPoint: 'In point',
+  outPoint: 'Out point',
+  inMoved: (timecode: string) => `In point moved to ${timecode}`,
+  outMoved: (timecode: string) => `Out point moved to ${timecode}`,
+  markers: 'Markers',
+  markerCount: (count: number) => `${count} markers`,
+
   more: 'More',
   pictureInPicture: 'Picture-in-picture',
 
@@ -62,5 +70,9 @@ export const reviewStrings = {
     loop: 'Loop range',
     cuts: 'Previous, next cut',
     grab: 'Grab frame',
+    cutsMarkers: 'Previous, next cut or marker; every marker is in the Markers list',
+    handles: 'On an In or Out handle: move it one frame',
+    handlesJump: 'On a handle: move it 10 frames',
+    handlesClear: 'On a handle: clear the point',
   },
 } as const;

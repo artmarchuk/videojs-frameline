@@ -20,6 +20,7 @@ import {
   type Cut,
 } from './logic';
 import { reviewStrings as t } from './strings';
+import { snapFrame } from './timeline/logic';
 
 export interface CopyLinkInfo {
   url: string;
@@ -59,6 +60,14 @@ export interface ReviewController {
   copyFrameImage(): void;
   copyLink(): void;
   usePoster(): void;
+  /** The frame the user is on: the one just asked for while that seek is fresh, otherwise the clock's. */
+  currentFrame(): number;
+  /** Seeks to the frame that contains `time`, with the same half-frame offset as stepping. */
+  seekToTime(time: number): void;
+  /** Seeks `seconds` from the current position, snapped to a frame. */
+  seekBy(seconds: number): void;
+  /** Seeks to a marker and reports it as selected. */
+  goToMarker(marker: Marker): void;
 }
 
 /** How long a just-requested frame is trusted over the clock, which needs a moment to catch up after a seek. */
@@ -346,9 +355,29 @@ function createController(store: ProStore, latest: { current: ReviewOptions }, r
     }
   };
 
+  const seekToTime = (time: number) => {
+    const { video, fps } = opts();
+    if (!video || !Number.isFinite(time)) return;
+    seekToFrame(snapFrame(Math.max(0, time), video.duration || 0, fps));
+  };
+
   return {
     timecode,
     step,
+    currentFrame,
+    seekToTime,
+
+    seekBy(seconds) {
+      const { video } = opts();
+      if (video) seekToTime(video.currentTime + seconds);
+    },
+
+    goToMarker(marker) {
+      seekToTime(marker.time);
+      store.selectMarker(marker);
+      announceFrameSoon();
+    },
+
     jump: (direction) => step(direction * JUMP_FRAMES),
 
     goToCut(direction) {

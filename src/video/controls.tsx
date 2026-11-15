@@ -28,7 +28,8 @@ export function VideoControls({
   toolbarStart,
   toolbarEnd,
   forceStacked = false,
-}: ThumbnailSlot & { toolbarStart?: ReactNode; toolbarEnd?: ReactNode; forceStacked?: boolean } = {}) {
+  timelineSlot = false,
+}: ThumbnailSlot & { toolbarStart?: ReactNode; toolbarEnd?: ReactNode; forceStacked?: boolean; timelineSlot?: boolean } = {}) {
   const bar = useRef<HTMLDivElement>(null);
   const narrow = useStacked(bar);
   // Pro tiers add too many controls for one row, so they always give the seek bar its own row.
@@ -41,7 +42,8 @@ export function VideoControls({
         <Tooltip.Provider>
           <CenterPlayButton />
           <div ref={bar} className={'pro-bar'} data-layout={stacked ? 'stacked' : 'wide'}>
-            {stacked && <TimeSlider renderThumbnail={renderThumbnail} />}
+            {/* Pro tiers put their ruler timeline here, in place of the seek bar. */}
+            {timelineSlot ? <ProSlot name="timeline" /> : stacked && <TimeSlider renderThumbnail={renderThumbnail} />}
             <Controls.Group className={'pro-bar-row'}>
               <ProSlot name="transport-start" />
               <PlayButton />

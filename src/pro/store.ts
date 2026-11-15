@@ -61,6 +61,8 @@ export interface ProState {
   clockPrecision: FrameClockPrecision | null;
   /** Media duration in seconds; 0 while unknown. */
   duration: number;
+  /** The marker the user last selected (timeline, Markers list, or previous/next cut); drawn in the accent. */
+  selectedMarker: Marker | null;
 }
 
 export interface ProCallbacks {
@@ -117,6 +119,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     clockSource: null,
     clockPrecision: null,
     duration: 0,
+    selectedMarker: null,
   };
   let allowed = new Set<string>(options.allowedOverlays ?? []);
   let callbacks: ProCallbacks = {};
@@ -230,6 +233,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     },
 
     selectMarker(marker) {
+      if (marker !== state.selectedMarker) commit({ selectedMarker: marker });
       callbacks.onMarkerSelect?.(marker);
     },
 
