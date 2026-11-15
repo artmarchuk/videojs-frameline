@@ -28,6 +28,7 @@ import {
   buildTicks,
   chooseTicks,
   clampBubble,
+  handleBox,
   handleDragTime,
   handleKeyTarget,
   handleValue,
@@ -38,8 +39,7 @@ import {
   resolveHandleMove,
   snapFrame,
   snapSeekTime,
-  timeToPercent,
-  timeToX,
+    timeToX,
   type MarkerPin,
   type RangePoints,
 } from './logic';
@@ -350,7 +350,7 @@ function RangeHandle({
   const store = useProStoreApi();
   const announce = useAnnounce();
   const element = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ base: RangePoints; left: number; time: number; moved: boolean; magnets: number[] } | null>(null);
+  const drag = useRef<{ base: RangePoints; left: number; offset: number; time: number; moved: boolean; magnets: number[] } | null>(null);
   const [dragTime, setDragTime] = useState<number | null>(null);
   const timer = useRef(0);
 
@@ -370,6 +370,7 @@ function RangeHandle({
     const node = element.current;
     if (!node) return;
     const onKeyDown = (event: KeyboardEvent) => {
+      delete node.dataset.pointer;
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       const now = latest.current;
       const state = store.getState();
@@ -424,14 +425,19 @@ function RangeHandle({
     const track = root.current;
     if (!track) return;
     const state = store.getState();
+    const left = track.getBoundingClientRect().left;
     drag.current = {
       base: { in: state.inPoint, out: state.outPoint },
-      left: track.getBoundingClientRect().left,
+      left,
+      // Where on the handle it was grabbed: the drag moves the ANCHOR edge, so the handle does not jump to the pointer.
+      offset: event.clientX - left - timeToX(value, duration, width),
       time: value,
       moved: false,
       // The handle is pulled onto the playhead and onto markers when it comes within a few pixels of them.
       magnets: [secondsFromFrames(controller.currentFrame(), fps), ...markers.map((marker) => marker.time)],
     };
+    // The focus ring is for the keyboard: a press with the pointer does not show it (see `data-pointer`).
+    event.currentTarget.dataset.pointer = '';
     event.currentTarget.setPointerCapture(event.pointerId);
     event.currentTarget.focus({ preventScroll: true });
     setDragTime(value);
@@ -441,7 +447,7 @@ function RangeHandle({
     const current = drag.current;
     if (!current) return;
     event.stopPropagation();
-    const time = handleDragTime(event.clientX - current.left, width, duration, fps, current.magnets);
+    const time = handleDragTime(event.clientX - current.left - current.offset, width, duration, fps, current.magnets);
     if (time === current.time) return;
     const move = resolveHandleMove(which, time, current.base, duration, fps);
     current.time = time;
@@ -450,6 +456,7 @@ function RangeHandle({
     if (!move.rejected) setDraft({ in: move.in, out: move.out });
   };
 
+  const box = handleBox(which, value, duration, width);
   const bubbleX = dragTime === null ? 0 : clampBubble(timeToX(dragTime, duration, width), 92, width);
 
   return (
@@ -468,7 +475,7 @@ function RangeHandle({
         aria-valuemax={Number(duration.toFixed(3))}
         aria-valuenow={Number(value.toFixed(3))}
         aria-valuetext={set ? format(value) : which === 'in' ? t.startOfVideo : t.endOfVideo}
-        style={{ left: `${timeToPercent(value, duration > 0 ? duration : 1)}%` }}
+        style={{ left: box.hitLeft }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={(event) => {

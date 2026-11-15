@@ -242,6 +242,34 @@ export interface RangePoints {
 /** How close, in pixels, a dragged handle must come to the playhead or a marker to jump onto it. */
 export const MAGNET_PX = 5;
 
+/** Width of a handle's tab, in pixels. */
+export const HANDLE_TAB_PX = 9;
+
+export interface HandleBox {
+  /** The x of the point itself: the edge of the range. */
+  anchor: number;
+  /** Left and right edges of the visible tab. The In tab ends on the anchor, the Out tab starts on it. */
+  tabLeft: number;
+  tabRight: number;
+  /** Left and right edges of the target. It grows away from the range, so the two targets never meet. */
+  hitLeft: number;
+  hitRight: number;
+}
+
+/**
+ * Where a handle is, anchored on its outer edge as in editing tools: the In handle's right edge is on the In point
+ * and its body hangs to the left, outside the range; the Out handle's left edge is on the Out point and its body
+ * hangs to the right. `hit` is the target's width (24 px, 44 px on touch). Because both targets grow away from the
+ * range, they cannot overlap while In is before Out, however short the range; the handle being dragged keeps the
+ * pointer through pointer capture, so there is nothing to arbitrate.
+ */
+export function handleBox(which: 'in' | 'out', time: number, duration: number, width: number, hit = 24, tab = HANDLE_TAB_PX): HandleBox {
+  const anchor = timeToX(time, duration, width);
+  return which === 'in'
+    ? { anchor, tabLeft: anchor - tab, tabRight: anchor, hitLeft: anchor - hit, hitRight: anchor }
+    : { anchor, tabLeft: anchor, tabRight: anchor + tab, hitLeft: anchor, hitRight: anchor + hit };
+}
+
 /** The time a handle dragged to `x` lands on: the start of the frame under the pointer, within the clip. */
 export function handleTimeFromX(x: number, width: number, duration: number, fps: number): number {
   return secondsFromFrames(snapFrame(xToTime(x, duration, width), duration, fps), fps);

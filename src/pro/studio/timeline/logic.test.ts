@@ -9,6 +9,7 @@ import {
   chooseTicks,
   clampBubble,
   formatRulerLabel,
+  handleBox,
   handleDragTime,
   handleKeyTarget,
   handleTimeFromX,
@@ -363,5 +364,35 @@ describe('clampBubble', () => {
 
   it('centres a bubble wider than its container', () => {
     expect(clampBubble(10, 92, 80)).toBe(40);
+  });
+});
+
+describe('handleBox: anchored on the outer edge', () => {
+  it('puts the In tab left of its point and the Out tab right of it', () => {
+    const inBox = handleBox('in', 10, 60, 1200);
+    const outBox = handleBox('out', 30, 60, 1200);
+    expect(inBox.anchor).toBe(200);
+    expect(inBox.tabRight).toBe(200);
+    expect(inBox.tabLeft).toBe(191);
+    expect(outBox.anchor).toBe(600);
+    expect(outBox.tabLeft).toBe(600);
+    expect(outBox.tabRight).toBe(609);
+  });
+
+  it('keeps unset handles at the very ends, outside the track', () => {
+    expect(handleBox('in', 0, 60, 1200).tabRight).toBe(0);
+    expect(handleBox('in', 0, 60, 1200).tabLeft).toBe(-9);
+    expect(handleBox('out', 60, 60, 1200).tabLeft).toBe(1200);
+    expect(handleBox('out', 60, 60, 1200).tabRight).toBe(1209);
+  });
+
+  it('never lets the two targets overlap, even for a one-frame range', () => {
+    for (const hit of [24, 44]) {
+      const oneFrame = handleBox('out', 10 + 1 / 24, 60, 1200, hit);
+      const inBox = handleBox('in', 10, 60, 1200, hit);
+      expect(inBox.hitRight).toBeLessThanOrEqual(oneFrame.hitLeft);
+      expect(inBox.hitRight - inBox.hitLeft).toBe(hit);
+      expect(oneFrame.hitRight - oneFrame.hitLeft).toBe(hit);
+    }
   });
 });

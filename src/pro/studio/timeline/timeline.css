@@ -13,11 +13,15 @@
     --tl-buffer-top: calc(var(--tl-track-top) + var(--tl-track) + 1px);
     --tl-height: calc(var(--tl-buffer-top) + 5px); /* 46px */
     --tl-handle-width: 9px;
+    --tl-gutter: calc(var(--media-spacing) * 3); /* 12px, at least one handle width */
     --tl-handle-over: var(--media-spacing); /* the handles and the playhead reach 4px past the track */
     --tl-bubble-width: calc(var(--media-spacing) * 22); /* 88px: 00:00:00:00 at 12px */
     flex: none;
     width: 100%;
     min-width: 0;
+    /* A gutter at least one handle wide on each side: an unset handle sits just outside the track, fully visible. */
+    padding-inline: var(--tl-gutter);
+    box-sizing: border-box;
   }
 
   .pro-skin .pro-timeline[data-display="seconds"] {
@@ -311,7 +315,7 @@
    * A handle's focus ring is drawn around its tab, not around its larger target: at the ends of the track the
    * target reaches into the dock's padding, where a ring around it would be cut off by the player's edge.
    */
-  .pro-skin .pro-tl-handle:focus-visible::after {
+  .pro-skin .pro-tl-handle:focus-visible:not([data-pointer])::after {
     outline: var(--pro-focus-width) solid var(--pro-accent);
     outline-offset: var(--pro-focus-offset);
     box-shadow: 0 0 0 var(--pro-focus-offset) var(--pro-surface-0);
@@ -337,10 +341,11 @@
   /* ---------- Range handles ---------- */
 
   /*
-   * A handle is a 9px-wide, 24px-tall tab with its outer corners rounded, always present. The element is a 24px
-   * target that sits mostly on the outer side of its point, so a click inside the range still seeks; the tab is
-   * drawn in ::after, 6px over the range and 3px outside it. Neutral while the point is not set (the handle then
-   * rests at its end of the track); the accent once it is.
+   * A handle is a 9px-wide, 24px-tall tab with its outer corners rounded, always present, anchored on its OUTER
+   * edge: the In tab ends on the In point and hangs left, the Out tab starts on the Out point and hangs right, so
+   * the range edge is exact and the handle never covers the range. The element is a 24px target that grows away
+   * from the range (its `left` is set from `handleBox`). Neutral while the point is not set (the handle then rests
+   * just outside its end of the track); the accent once it is.
    */
   .pro-skin .pro-tl-handle {
     position: absolute;
@@ -360,14 +365,6 @@
     color: var(--pro-accent);
   }
 
-  .pro-skin .pro-tl-handle[data-handle="in"] {
-    transform: translateX(-18px);
-  }
-
-  .pro-skin .pro-tl-handle[data-handle="out"] {
-    transform: translateX(-6px);
-  }
-
   .pro-skin .pro-tl-handle::after {
     content: "";
     position: absolute;
@@ -378,7 +375,7 @@
   }
 
   .pro-skin .pro-tl-handle[data-handle="in"]::after {
-    left: 15px;
+    right: 0;
     border-radius: 4px 0 0 4px;
   }
 
