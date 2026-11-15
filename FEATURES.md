@@ -1,6 +1,6 @@
 # Frameline: features
 
-Frameline is a Video.js v10 skin for video creators. This file lists what it does, where to find each thing, and the git tag in which it first shipped. It is written from the code; every step updates it.
+Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarchuk.me](https://artmarchuk.me)). This file lists what it does, where to find each thing, and the git tag in which it first shipped. It is written from the code; every step updates it.
 
 "Since" is the first tag that contains the feature. Steps 3 and 4 had no tag of their own, so their features first appear in `step-5-timeline`.
 

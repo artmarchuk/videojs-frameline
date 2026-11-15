@@ -2,9 +2,9 @@
 
 Frameline is a player skin for Video.js v10 (React, plain CSS) built for the tools video creators use: editors, AI video generators, and review platforms. One skin has two tiers: **Viewer**, the clean player a creator's client or audience gets, and **Studio**, the creator's own monitor for making, checking and reviewing video. Finer control comes from feature flags: switch a single feature on over Viewer, or off over Studio.
 
-**Live:** https://videojs-frameline.vercel.app is the configurator page: pick a tier, switch features, copy the snippet. The player alone, as a monitor, is at [`/preview.html`](https://videojs-frameline.vercel.app/preview.html).
+**Live:** https://frameline.artmarchuk.me is the configurator page: pick a tier, switch features, copy the snippet. The player alone, as a monitor, is at [`/preview.html`](https://frameline.artmarchuk.me/preview.html).
 
-**What it does:** see [FEATURES.md](FEATURES.md) for the full list, with where to find each thing. **Licence:** Apache 2.0.
+**What it does:** see [FEATURES.md](FEATURES.md) for the full list, with where to find each thing. **Author:** Artem Marchuk, [artmarchuk.me](https://artmarchuk.me). **Licence:** Apache 2.0.
 
 ## Install and run
 
@@ -394,7 +394,7 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
 
 ## Licence
 
-Apache 2.0. See [LICENSE](LICENSE).
+Apache 2.0, copyright 2026 Artem Marchuk. See [LICENSE](LICENSE).
 
 ## Learn more
 

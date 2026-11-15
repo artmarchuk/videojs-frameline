@@ -6,7 +6,7 @@ Read this file at the start of every step, together with `NOTES.md` and that ste
 
 ## North star
 
-**Frameline is a player skin for video creators.** It is a tool for people who make video, not a prettier consumer player. The author's brand is UX and product design for tools that let people create and build things, and this project must read as exactly that.
+**Frameline is a player skin for video creators.** It is a tool for people who make video, not a prettier consumer player. The author is Artem Marchuk; the author's brand is UX and product design for tools that let people create and build things, and this project must read as exactly that.
 
 **Test for every decision** (feature, layout, copy, colour, demo content): does it help someone make, check, review or deliver a video? If yes, it earns its place. If it only helps someone watch, it belongs in the Viewer tier or it is cut.
 
