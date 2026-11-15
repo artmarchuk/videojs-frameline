@@ -1,0 +1,232 @@
+/*
+ * Review tier styles. Loaded with the Review module, never by the Share tier. Tokens only.
+ * Bar layout by the player's own width:
+ *   >= 1360px  Range and Actions inline, with the range readout
+ *   >= 1100px  Range and Actions inline, Play range inline, volume slider and PiP button kept
+ *   >=  880px  Range and Actions inline
+ *   <   880px  Range and Actions collapse into the More menu
+ * The row wraps, so nothing can overflow at any width.
+ */
+@layer components {
+  .pro-skin[data-bar="pro"] .pro-bar-row {
+    flex-wrap: wrap;
+    row-gap: var(--pro-density-gap);
+  }
+
+  .pro-skin .pro-group {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: var(--pro-density-gap);
+  }
+
+  .pro-skin .pro-group:empty {
+    display: none;
+  }
+
+  .pro-skin .pro-group:dir(rtl) {
+    flex-direction: row-reverse;
+  }
+
+  @supports not selector(:dir(rtl)) {
+    .pro-skin .pro-group:where([dir="rtl"] *) {
+      flex-direction: row-reverse;
+    }
+  }
+
+  /* A little air between groups, on the 4px grid. */
+  .pro-skin .pro-group-inline {
+    margin-inline: var(--media-spacing);
+  }
+
+  .pro-skin .pro-tool-icon {
+    display: grid;
+  }
+
+  .pro-skin .pro-tool-icon > svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .pro-skin .media-menu-icon > svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* "On" and "set" states use the accent, and each also has a non-colour cue: aria-pressed plus an underline. */
+  .pro-skin .pro-tool[data-pressed],
+  .pro-skin .pro-tool-set {
+    color: var(--pro-accent);
+  }
+
+  .pro-skin .pro-tool[data-pressed]::after,
+  .pro-skin .pro-tool-set::after {
+    content: "";
+    position: absolute;
+    inset-inline: calc(var(--media-spacing) * 2);
+    bottom: var(--media-spacing);
+    height: 2px;
+    border-radius: var(--pro-radius-sm);
+    background-color: currentColor;
+  }
+
+  /* ---------- Timecode ---------- */
+
+  /* The Share time display gives way to the timecode once it is mounted. */
+  .pro-skin:has([data-pro-timecode]) .media-time-group {
+    display: none;
+  }
+
+  .pro-skin .pro-timecode {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    min-height: max(24px, calc(var(--media-spacing) * 7));
+    padding-inline: calc(var(--media-spacing) * 2);
+    border: 1px solid var(--pro-line);
+    border-radius: var(--pro-radius);
+    background-color: var(--pro-surface-1);
+    color: var(--pro-text);
+    cursor: pointer;
+    font-family: var(--pro-font-mono);
+    font-size: var(--pro-text-sm);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    line-height: 1;
+    outline: none;
+    white-space: nowrap;
+    transition: background-color var(--pro-duration) var(--pro-ease);
+  }
+
+  @media (pointer: coarse) {
+    .pro-skin .pro-timecode {
+      min-height: var(--pro-control-size);
+    }
+  }
+
+  @media (hover: hover) {
+    .pro-skin .pro-timecode:hover {
+      background-color: var(--pro-surface-2);
+    }
+  }
+
+  .pro-skin .pro-timecode:focus-visible {
+    outline: var(--pro-focus-width) solid var(--pro-accent);
+    outline-offset: var(--pro-focus-offset);
+    box-shadow: var(--pro-focus-halo);
+  }
+
+  .pro-skin .pro-timecode-values {
+    display: flex;
+    gap: calc(var(--media-spacing) * 1.5);
+    direction: ltr;
+  }
+
+  .pro-skin .pro-timecode-approx {
+    margin-inline-end: var(--media-spacing);
+    color: var(--pro-text-dim);
+  }
+
+  .pro-skin .pro-timecode-separator,
+  .pro-skin .pro-timecode-total {
+    color: var(--pro-text-dim);
+  }
+
+  .pro-skin .pro-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  /* ---------- Range readout ---------- */
+
+  .pro-skin .pro-range-readout {
+    flex-shrink: 0;
+    padding-inline: var(--media-spacing);
+    color: var(--pro-text);
+    direction: ltr;
+    font-family: var(--pro-font-mono);
+    font-size: var(--pro-text-xs);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .pro-skin .pro-range-label {
+    color: var(--pro-text-dim);
+  }
+
+  .pro-skin .pro-more-readout {
+    padding: calc(var(--media-spacing) * 2);
+    border-bottom: 1px solid var(--pro-line);
+  }
+
+  /* ---------- Responsive: inline groups versus the More menu ---------- */
+
+  .pro-skin .pro-group-inline .pro-range-readout,
+  .pro-skin .pro-tool-xl {
+    display: none;
+  }
+
+  @container media-root (width >= 1100px) {
+    .pro-skin .pro-tool-xl {
+      display: grid;
+    }
+
+    .pro-skin .pro-more-below-xl {
+      display: none;
+    }
+  }
+
+  @container media-root (width >= 1360px) {
+    .pro-skin .pro-group-inline .pro-range-readout {
+      display: inline;
+    }
+  }
+
+  @container media-root (width >= 880px) {
+    .pro-skin .pro-more-collapsed {
+      display: none;
+    }
+  }
+
+  @container media-root (width < 880px) {
+    .pro-skin .pro-group-inline {
+      display: none;
+    }
+  }
+
+  /* The pro bar has less room: below 1100px the volume slider and the PiP button step aside (PiP moves into More). */
+  @container media-root (width < 1100px) {
+    .pro-skin[data-bar="pro"] .media-volume-slider,
+    .pro-skin[data-bar="pro"] .media-pip-button {
+      display: none;
+    }
+  }
+
+  .pro-skin .pro-more-popup {
+    min-width: calc(var(--media-spacing) * 60);
+  }
+
+  /* ---------- Toast ---------- */
+
+  .pro-skin .pro-toast {
+    position: absolute;
+    top: calc(var(--media-spacing) * 3);
+    left: 50%;
+    z-index: var(--pro-z-controls);
+    max-width: calc(100% - var(--media-spacing) * 6);
+    padding: calc(var(--media-spacing) * 1.5) calc(var(--media-spacing) * 3);
+    border: 1px solid var(--pro-line);
+    border-radius: var(--pro-radius);
+    background-color: var(--pro-surface-1);
+    color: var(--pro-text);
+    font-size: var(--pro-text-sm);
+    pointer-events: none;
+    text-align: center;
+    transform: translateX(-50%);
+  }
+}

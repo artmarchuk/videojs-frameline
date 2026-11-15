@@ -7,6 +7,7 @@ import { lazy, Suspense, useCallback, useMemo, useRef, useState, type ReactNode 
 import { VideoSkin, type VideoSkinProps } from '../video/skin';
 import { warnOnce } from './dev';
 import { guideAttribute, hasProFeatures, isTier, resolveFeatures, type FeatureOverrides, type Tier } from './features';
+import type { CopyLinkInfo, PosterFrameInfo } from './review/controller';
 import type { FrameInfo, InOutRange, Marker } from './store';
 import { DEFAULT_FPS, isValidFps } from './fps';
 
@@ -25,7 +26,17 @@ export interface ProSkinSlots {
   overlay?: ReactNode;
 }
 
-export interface ProSkinProps extends Omit<VideoSkinProps, 'children' | 'toolbarStart' | 'toolbarEnd' | 'overlay' | 'extras'> {
+type InternalSkinProps =
+  | 'children'
+  | 'toolbarStart'
+  | 'toolbarEnd'
+  | 'overlay'
+  | 'extras'
+  | 'proSlots'
+  | 'stackedBar'
+  | 'arrowSeekWhilePlayingOnly';
+
+export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   /** Which bundle of features to start from. Default `'share'`: the clean player, with no pro code loaded. */
   tier?: Tier;
   /** Single features switched on or off on top of the tier, for example `{ grabFrame: false, guides: ['9:16'] }`. */
@@ -53,6 +64,10 @@ export interface ProSkinProps extends Omit<VideoSkinProps, 'children' | 'toolbar
   onMarkerSelect?: (marker: Marker) => void;
   /** Fires when the current frame number changes. Best effort: see the README on frame accuracy. */
   onFrameChange?: (frame: FrameInfo) => void;
+  /** Fires after a link to the current frame was copied. `url` carries the position as `#t=HH:MM:SS:FF`. */
+  onCopyLink?: (info: CopyLinkInfo) => void;
+  /** Fires when the user picks the current frame as the poster. The host app saves it; the skin stores nothing. */
+  onPosterFrame?: (info: PosterFrameInfo) => void;
   /** The media element, as in the Share skin: for example `<MuxVideo src="…" />`. */
   children: ReactNode;
 }
@@ -79,14 +94,16 @@ export function ProSkin({
   features: overrides,
   fps = DEFAULT_FPS,
   startTimecode,
-  dropFrame: _dropFrame,
-  markers: _markers,
+  dropFrame,
+  markers,
   density = 'comfortable',
   debug = false,
   slots,
   onInOutChange,
   onMarkerSelect,
   onFrameChange,
+  onCopyLink,
+  onPosterFrame,
   children,
   ...skinProps
 }: ProSkinProps) {
@@ -121,6 +138,16 @@ export function ProSkin({
   for (const id of overlays) guideAttributes[guideAttribute(id)] = '';
 
   const pro = hasProFeatures(features);
+  // Any Review control in the bar means the pro bar layout: seek bar on its own row, slots for the controls.
+  const proBar =
+    features.timecode ||
+    features.frameStep ||
+    features.shotNav ||
+    features.inOut ||
+    features.loop ||
+    features.grabFrame ||
+    features.copyTimecodeLink ||
+    features.posterFrame;
 
   return (
     <VideoSkin
@@ -128,6 +155,10 @@ export function ProSkin({
       {...guideAttributes}
       data-tier={safeTier}
       data-density={safeDensity}
+      data-bar={proBar ? 'pro' : undefined}
+      proSlots={proBar}
+      stackedBar={proBar}
+      arrowSeekWhilePlayingOnly={features.frameStep}
       toolbarStart={slots?.toolbarStart}
       toolbarEnd={slots?.toolbarEnd}
       overlay={slots?.overlay}
@@ -140,6 +171,10 @@ export function ProSkin({
               features={features}
               fps={safeFps}
               startTimecode={startTimecode}
+              dropFrame={dropFrame}
+              markers={markers}
+              onCopyLink={onCopyLink}
+              onPosterFrame={onPosterFrame}
               skinRenders={renders}
               onOverlaysChange={onOverlaysChange}
               onInOutChange={onInOutChange}

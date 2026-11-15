@@ -5,7 +5,8 @@ import { lazy, Suspense, useEffect, useRef, useState, type RefObject } from 'rea
 import { ProStoreContext } from '../context';
 import type { FeatureFlags, Tier } from '../features';
 import { useFrameClock } from '../frame-clock';
-import { createProStore, type ProCallbacks } from '../store';
+import type { CopyLinkInfo, PosterFrameInfo } from '../review/controller';
+import { createProStore, type Marker, type ProCallbacks } from '../store';
 import { parseTimecode } from '../timecode';
 import { useVideoElement } from '../use-video-element';
 import { warnOnce } from '../dev';
@@ -23,9 +24,11 @@ const REVIEW_FLAGS = [
   'shotNav',
   'grabFrame',
   'copyTimecodeLink',
+  'posterFrame',
   'guides',
   'platformZones',
 ] as const satisfies readonly (keyof FeatureFlags)[];
+const NO_MARKERS: readonly Marker[] = [];
 const STUDIO_FLAGS = ['channels', 'gainGamma', 'zoom', 'infoHud'] as const satisfies readonly (keyof FeatureFlags)[];
 
 export interface ProRuntimeProps extends ProCallbacks {
@@ -34,6 +37,10 @@ export interface ProRuntimeProps extends ProCallbacks {
   features: Readonly<FeatureFlags>;
   fps: number;
   startTimecode?: string | undefined;
+  dropFrame?: boolean | undefined;
+  markers?: readonly Marker[] | undefined;
+  onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
+  onPosterFrame?: ((info: PosterFrameInfo) => void) | undefined;
   /** Counts renders of `ProSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
   skinRenders: RefObject<number>;
   /** Reports the active overlay ids so `ProSkin` can put one `data-guide-*` attribute per overlay on the container. */
@@ -50,6 +57,10 @@ export default function ProRuntime({
   features,
   fps,
   startTimecode,
+  dropFrame = false,
+  markers = NO_MARKERS,
+  onCopyLink,
+  onPosterFrame,
   skinRenders,
   onOverlaysChange,
   onInOutChange,
@@ -98,7 +109,18 @@ export default function ProRuntime({
       <span ref={anchor} hidden />
       <FrameClock video={video} fps={fps} />
       <Suspense fallback={null}>
-        {review && <ReviewLayer features={features} />}
+        {review && (
+          <ReviewLayer
+            features={features}
+            fps={fps}
+            startFrames={startFrames}
+            dropFrame={dropFrame}
+            markers={markers}
+            video={video}
+            onCopyLink={onCopyLink}
+            onPosterFrame={onPosterFrame}
+          />
+        )}
         {studio && <StudioLayer features={features} />}
         {features.debug && (
           <DebugReadout
