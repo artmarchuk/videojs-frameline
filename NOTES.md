@@ -893,3 +893,6 @@ Unit tests: 192 passing (19 new: scale at devicePixelRatio 1 and 2, 100% smaller
 - **A video smaller than the stage** (100% below Fit) is unit-tested; no such source was played.
 - **Screen reader:** announcements were read from the live region's text.
 - **Windows and Linux:** that `preventDefault` on `Alt+←` stops the browser's Back while zoomed was not run there.
+
+### Step 7 public-URL checks (https://videojs-pro.vercel.app)
+Viewer gate in headless Chrome at 1440 and 320: tab order (Seek, Play, Mute, Volume, time, captions, Settings, PiP, Fullscreen; the 320 px set is shorter as before), `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**. The Viewer's DOM (every element's tag, classes and role) is identical to the step 6d deploy, with no `.pro-picture`; `Z` and `Alt+arrows` do nothing there. Studio: `scripts/browser-checks/zoom.js` passes at device scale factor 1 and 2.
