@@ -113,6 +113,20 @@ function Section({ section, actions }: { section: ViewMenuSection; actions: View
 }
 
 /**
+ * Video.js focuses the first CHECKED radio item when a menu opens (installed `menu.js`, `getInitialHighlightItem`),
+ * which here is "Crop: None" in the right column. Keyboard order has to follow reading order (WCAG 2.4.3), so on open
+ * we focus the first item ourselves. This runs one animation frame before the stock highlight, which then sees an
+ * item already highlighted and leaves it alone.
+ */
+function focusFirstOnOpen(open: boolean) {
+  if (!open) return;
+  requestAnimationFrame(() => {
+    const first = document.querySelector<HTMLElement>('.pro-view-popup [role^="menuitem"]:not([aria-disabled="true"])');
+    first?.focus({ preventScroll: true });
+  });
+}
+
+/**
  * The View menu: safe areas and composition guides (independent), one crop mask, one platform's zones, and a footer
  * that hides or shows them all. Two columns on a wide player, one scrolling column on a narrow one. The host's
  * `features` decide what is offered; a section with nothing left is not shown. Toggling keeps the menu open; Escape
@@ -138,7 +152,7 @@ export function ViewMenu({ allowed, actions, extra }: { allowed: AllowedView; ac
   );
 
   return (
-    <Menu.Root side="top" align="end">
+    <Menu.Root side="top" align="end" onOpenChange={focusFirstOnOpen}>
       <ButtonTooltip label={<span>{t.view}</span>}>
         <Menu.Trigger render={<Button />} className={'pro-tool pro-tool-menu'} aria-label={t.viewCount(count)} data-pro-menu="view">
           <span className={'media-button-icon pro-tool-icon'}>

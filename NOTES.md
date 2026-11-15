@@ -745,3 +745,9 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 - The version shown on the live docs site.
 - A truly clean browser session (the Chrome used is the author's own profile, though the site needs no login), and a mobile viewport.
 - Build warnings, harmless so far: chunk size over 500 kB, and a Rolldown note on `"use no memo"` in `react-compiler-runtime`.
+
+## Step 6c
+
+### F2: View menu focus order
+- The DOM was already in reading order (left column, right column, footer). The cause was Video.js: `menu.js` (`getInitialHighlightItem`) focuses the first **checked radio item** when a menu opens, which here was "Crop: None". Items and arrow order were fine.
+- Fix: `Menu.Root onOpenChange` focuses the first enabled menu item one animation frame later than... earlier than Video.js's own highlight (it registers its frame after ours and skips when an item is already highlighted). Checked in Chrome on the production build: Enter and Space open on "Title safe"; Down walks Title safe, Action safe, Thirds, Centre, Crop None…9:16, Zones None…TikTok, Hide guides; also correct with a crop and zone checked; Escape returns focus to View. The script is `scripts/browser-checks/view-menu-focus.js` (the repo has no DOM test environment, so this one is a browser check, not a vitest).
