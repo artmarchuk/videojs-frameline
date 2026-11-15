@@ -8,13 +8,14 @@
 
 Video.js PRO is a player skin for the Video.js v10 player, made for **video creators**. It is for the tools people use to make video: web editors, AI video generators, and review and approval platforms. It gives those tools a professional preview monitor with frame-accurate transport, timecode, in/out loops, safe areas, platform crop guides, frame grabs and channel views. It is built for the Video.js Skins Design Challenge (deadline Monday 17 Nov 2026, 09:59 Nicosia time).
 
-One skin, three tiers:
+One skin, two tiers:
 
-- **Share**: the clean player a creator's client or audience gets. It ships no pro code.
-- **Review**: feedback and editing features (timecode, frame step, in/out, markers, guides).
-- **Studio**: image inspection (channels, gain/gamma, zoom).
+- **Viewer**: the clean player a creator's client or audience gets. It ships no pro code.
+- **Studio**: the creator's monitor: dock below the picture, ruler timeline with In/Out handles, frame-accurate transport, timecode, markers, capture, guides and (step 7) image inspection.
 
-Test for every decision: does it help someone make, check, review or deliver a video? If it only helps someone watch, it belongs in Share or it is cut.
+Finer control comes from feature flags: a host turns a single feature on over Viewer or off over Studio.
+
+Test for every decision: does it help someone make, check, review or deliver a video? If it only helps someone watch, it belongs in Viewer or it is cut.
 
 ## Hard rules
 

@@ -2,6 +2,8 @@
 
 Read this at the start of every step, along with `specs/PROJECT-OVERVIEW.md` and the step's requirements file.
 
+**Tier names.** Until step 6 there were three tiers: Share, Review and Studio. Step 6 merged Review and Studio into **Studio** and renamed Share to **Viewer**. The sections for steps 2 to 5b below were renamed with the code, so "Studio" there means what was then called Review (the old Studio tier had no UI). Things step 6 removed are still described in those sections as history: the Tools tray, the Tools button, the playhead's permanent bubble, the marker lane and its cluster badges, Play range, `toolsOpen`. The git tag `step-2-share-gate` keeps its name.
+
 ## Versions (step 1, 15 Nov 2026)
 
 | What | Version |
@@ -21,7 +23,7 @@ Read this at the start of every step, along with `specs/PROJECT-OVERVIEW.md` and
 
 Docs versus installed version: npm `latest` is 10.4.0, and the bundled docs (`node_modules/@videojs/react/docs/llms.txt`) say "Bundled with `@videojs/react` v10.4.0". The `next` tag is an old `10.0.0-rc.5`. The live docs site does not print a version, so a mismatch there can't be ruled out (see Unverified).
 
-## Step 2: Skin foundation and Share tier (15 Nov 2026)
+## Step 2: Skin foundation and Viewer tier (15 Nov 2026)
 
 ### What the scaffold already gave us
 
@@ -49,7 +51,7 @@ Container, poster, error dialog, controls with auto-hide, time slider with chapt
 - There is no `Popover` around the settings menu: `Menu.Popup` is the popup. `Popover` exists but is not needed.
 - Hotkey custom mechanism is the `useHotkey` hook, not a prop on `Hotkey`.
 - `Hotkey` has no "seek 5 s" default: the default step is 10 s, so `←` / `→` pass `value={±5}`.
-- The scaffold bound `I` to picture-in-picture; removed, because the Review tier needs `I`.
+- The scaffold bound `I` to picture-in-picture; removed, because the Studio tier needs `I`.
 - `--media-border-radius` is the player's corner radius (docs), and `--media-border-color` is the hairline around the player. We map them to `--pro-radius` and `--pro-frame-line`.
 - Extra tokens beyond the brief: `--pro-track` (slider track, added to reach 3:1), `--pro-scrim-alpha` and `--pro-scrim`, `--pro-frame-line`, `--pro-density-control/gap/pad`, `--pro-control-size`, `--pro-slider-hit`, focus and layer tokens.
 
@@ -113,7 +115,7 @@ The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the 
 
 ### Where pro state lives, and why
 
-A small separate store next to the player (`src/pro/store.ts`), created once per `ProSkin`, read through a React context and `useSyncExternalStore` with selectors. Reasons: Video.js has no documented custom-feature API; the skin does not own `createPlayer`, so it could not add a feature even if there were one; and a separate store keeps every pro byte out of the Share path.
+A small separate store next to the player (`src/pro/store.ts`), created once per `ProSkin`, read through a React context and `useSyncExternalStore` with selectors. Reasons: Video.js has no documented custom-feature API; the skin does not own `createPlayer`, so it could not add a feature even if there were one; and a separate store keeps every pro byte out of the Viewer path.
 
 The `<video>` element is found by querying the player container (`useVideoElement`), re-run when `useMedia()` changes and when the container's children change.
 
@@ -141,14 +143,14 @@ The `<video>` element is found by querying the player container (`useVideoElemen
 
 | Chunk | Raw | Gzip | Loaded when |
 | --- | --- | --- | --- |
-| `preview-*.js` (Share path: React, Video.js with the Mux/HLS engine, the Share skin, `ProSkin` wrapper and flag resolver) | 963.0 kB | 284.1 kB | always |
+| `preview-*.js` (Viewer path: React, Video.js with the Mux/HLS engine, the Viewer skin, `ProSkin` wrapper and flag resolver) | 963.0 kB | 284.1 kB | always |
 | `preview-*.css` (skin styles; byte-identical to the step 2 tag) | 30.7 kB | 5.6 kB | always |
 | `runtime-*.js` (store, frame clock, timecode) | 7.7 kB | 3.3 kB | any pro feature or debug is on |
-| `review-*.js`, `studio-*.js` (empty until steps 4 to 7) | 47 B each | 86 B each | a feature of that tier is on |
+| `studio-*.js` (empty until steps 4 to 7) | 47 B each | 86 B each | a feature of that tier is on |
 | `debug-*.js` + `debug-*.css` | 1.3 kB + 0.7 kB | 0.8 kB + 0.4 kB | `debug` or `?debug` |
 | `dev-tier-switch-*.js` (preview app only) | 0.4 kB | 0.3 kB | `?debug` |
 
-Checked on the public URL without `?debug`: no pro chunk is requested. The Share chunk contains none of the store, clock, timecode or debug code (searched for their identifiers). It does contain the flag resolver and tier table, which `ProSkin` needs to decide what to load. The Share path grew by about 4.7 kB raw over step 2. We have not measured the Share skin alone against a stock skin; almost all of the 963 kB is Video.js and its streaming engine.
+Checked on the public URL without `?debug`: no pro chunk is requested. The Viewer chunk contains none of the store, clock, timecode or debug code (searched for their identifiers). It does contain the flag resolver and tier table, which `ProSkin` needs to decide what to load. The Viewer path grew by about 4.7 kB raw over step 2. We have not measured the Viewer skin alone against a stock skin; almost all of the 963 kB is Video.js and its streaming engine.
 
 ### Checks
 
@@ -157,19 +159,19 @@ Checked on the public URL without `?debug`: no pro chunk is requested. The Share
 - **Frame clock** (Chrome on macOS, 30 fps demo stream, no burned-in frame counter): source `rvfc`, precision `frame`. Seeking to 18 known frame times while paused gave the expected frame 16 times; the 2 misses were long seeks that had not finished within the 450 ms the test waited, and they showed the previous frame, not an off-by-one. Seeking to frame 300 on the public URL gave frame 300, media time 10.000, timecode 00:00:10:00.
 - **Step 2 regression:** the keyboard-only checks were re-run on the public URL and pass (play, pause, seek, mute, captions, free keys, help dialog and focus return). Skin CSS is byte-identical to the `step-2-share-gate` tag.
 
-## Step 4: Review transport (15 Nov 2026)
+## Step 4: Studio transport (15 Nov 2026)
 
 ### Verified APIs
 
-- `useHotkey({ keys, onActivate, action, repeatable, disabled })` for every Review key. Patterns match modifiers exactly, so `.` and `>` (Shift+.) do not collide, and Ctrl/Cmd/Alt combinations are left to the browser.
+- `useHotkey({ keys, onActivate, action, repeatable, disabled })` for every Studio key. Patterns match modifiers exactly, so `.` and `>` (Shift+.) do not collide, and Ctrl/Cmd/Alt combinations are left to the browser.
 - `Menu.Root / Trigger / Popup / Content / Item (onSelect, disabled)` for the More menu; `Menu.Popup` is the popup, there is no separate `Popover`.
 - `Tooltip` with a custom `label` node on plain buttons (`ButtonTooltip label={…}`).
 - `usePlayer(selectPlayback)` for `paused`; `usePlayer(selectPiP)`.
 - The `<video>` element is reached through `useVideoElement` (step 3); `drawImage(video)` on a canvas works for the HLS stream.
 
-### How the Review controls get into the bar
+### How the Studio controls get into the bar
 
-The Share bar renders four empty slots (`transport-start`, `transport-end`, `time`, `tools`) only when `ProSkin` asks for them. The lazy Review module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Share path. With any Review control on, the seek bar always has its own row, and the button row wraps.
+The Viewer bar renders four empty slots (`transport-start`, `transport-end`, `time`, `tools`) only when `ProSkin` asks for them. The lazy Studio module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Viewer path. With any Studio control on, the seek bar always has its own row, and the button row wraps.
 
 ### Decisions
 
@@ -182,10 +184,10 @@ The Share bar renders four empty slots (`transport-start`, `transport-end`, `tim
 - **Cut list:** chapter starts when the media has a chapters track, otherwise the `markers` prop. Cuts are compared by frame. For 750 ms after a cut jump, the next press counts from that cut, so pressing "previous" twice moves two cuts even during playback.
 - **Grab frame** is one button that downloads the PNG; "Copy frame image" is a separate item in More. One press for the common task, and no nested menu.
 - **Link format:** `#t=HH:MM:SS:FF`, always the timecode on screen (start offset and drop-frame included), whatever `timeDisplay` is, because a timecode names a frame and seconds do not. Other hash content is kept. Plain seconds are accepted when reading.
-- **Announcements:** one polite live region owned by the Review module. Video.js's `StatusAnnouncer` cannot speak custom text, so it keeps the built-in actions and ours carries the pro ones. Results a sighted user needs ("Link copied", capture refused) also show as a short toast.
+- **Announcements:** one polite live region owned by the Studio module. Video.js's `StatusAnnouncer` cannot speak custom text, so it keeps the built-in actions and ours carries the pro ones. Results a sighted user needs ("Link copied", capture refused) also show as a short toast.
 - **Timecode button:** named "Time in seconds" with `aria-pressed`; the current value is its description, read on focus. It is not a live region.
 - **Bar breakpoints (player width):** under 880 px Range and Actions live in More; from 880 px they are inline; from 1100 px Play range, the volume slider and the PiP button are also inline; from 1360 px the range readout is inline. Under 1100 px PiP is in More.
-- The Review layer needs no title for file names yet: grabbed files are named `frame_<timecode>.png`.
+- The Studio layer needs no title for file names yet: grabbed files are named `frame_<timecode>.png`.
 
 ### Checks (Chrome on macOS, through page scripts; the browser window was hidden, see Unverified)
 
@@ -193,7 +195,7 @@ The Share bar renders four empty slots (`transport-start`, `transport-end`, `tim
 | --- | --- |
 | Step 30 forward, 30 back (buttons locally, `.` `,` on the public URL) | Returns to the start frame both times (500→530→500, 200→230→200) |
 | `,` `.` `←` `→` (paused) `Shift+←/→` | ±1 and ±10 frames, exact |
-| `←` `→` while playing in Review | Seek 5 s, as in Share |
+| `←` `→` while playing in Studio | Seek 5 s, as in Viewer |
 | `.` while playing | Pauses, then steps |
 | Start edge | No movement, announces "Start" |
 | Timecode in the bar against the debug readout | Identical |
@@ -207,20 +209,20 @@ The Share bar renders four empty slots (`transport-start`, `transport-end`, `tim
 | Grab frame, source without CORS (`?media=nocors`) | No file; "This video's host does not allow frame capture." announced and shown |
 | Copy link, then open it | `…#t=00:00:12:05`; reopened on frame 293 at 24 fps, paused, other hash data kept |
 | Poster frame | Announces the timecode |
-| Help dialog | 11 rows in Share, 19 in Review |
+| Help dialog | 11 rows in Viewer, 19 in Studio |
 | More menu by keyboard | Opens, focus moves in, arrows move the highlight, disabled items do nothing |
-| Share tier | No slots, no pro chunk requested, pro keys do nothing, keyboard checks pass on the public URL |
+| Viewer tier | No slots, no pro chunk requested, pro keys do nothing, keyboard checks pass on the public URL |
 
 ### Chunk sizes (gzip)
 
 | Chunk | Step 3 | Step 4 |
 | --- | --- | --- |
-| Share path JS | 284.1 kB (963.0 kB raw) | 284.6 kB (964.7 kB raw) |
+| Viewer path JS | 284.1 kB (963.0 kB raw) | 284.6 kB (964.7 kB raw) |
 | Skin CSS | 5.6 kB | 5.6 kB |
 | Pro runtime | 3.3 kB | 3.5 kB |
-| Review JS + CSS | 86 B | 7.6 kB + 1.2 kB |
+| Studio JS + CSS | 86 B | 7.6 kB + 1.2 kB |
 
-The Share path grew by 1.7 kB raw: the bar slots, the "arrows only while playing" switch and the extra help rows are hooks that have to live in the Share skin. No Review logic is in it (searched for its identifiers).
+The Viewer path grew by 1.7 kB raw: the bar slots, the "arrows only while playing" switch and the extra help rows are hooks that have to live in the Viewer skin. No Studio logic is in it (searched for its identifiers).
 
 ## Step 5: Ruler timeline (15 Nov 2026)
 
@@ -237,8 +239,8 @@ Built with the step 5b look from the start (the author's instruction): system ty
 
 ### How it is built
 
-- `src/pro/review/timeline/`: `logic.ts` (pure), `index.tsx`, `timeline.css`. It is part of the lazily loaded Review chunk, not a chunk of its own: no flag turns the timeline off on its own, so a second request would only add a flash.
-- The Share bar renders a `timeline` slot instead of its seek bar when pro controls are on; the Review module portals the timeline into it.
+- `src/pro/studio/timeline/`: `logic.ts` (pure), `index.tsx`, `timeline.css`. It is part of the lazily loaded Studio chunk, not a chunk of its own: no flag turns the timeline off on its own, so a second request would only add a flash.
+- The Viewer bar renders a `timeline` slot instead of its seek bar when pro controls are on; the Studio module portals the timeline into it.
 - **Ticks** are drawn on one `<canvas>` at device-pixel positions (crisp at any DPR; two device pixels wide from 3x). Only the labels of major ticks are DOM text (at most width / 80). Redrawn on `ResizeObserver`, duration or fps change.
 - **Tick chooser:** steps 1, 2, 5, 10 frames (only those that divide a second at the given rate), then 1, 2, 5, 10, 15, 30 s, 1, 2, 5, 10, 15, 30 min, 1 h and up. Minor ticks at least 6 px apart; labelled ticks at least 80 px apart and always on whole seconds. A labelled interval that leaves room for a middle level is preferred when it is at most twice the smallest that fits (60 s at 1166 px: 1 s, 5 s, 10 s).
 - **Ruler labels** (5b.6): `0s`, `10s` when the clip is under a minute; `0:30`, `1:30` otherwise; `1:00:00` only for positions of an hour or more, so a zero hours field never shows. The ruler counts from zero; `startTimecode` applies to the bubble, field and readouts, not to the ruler.
@@ -250,7 +252,7 @@ Built with the step 5b look from the start (the author's instruction): system ty
 ### Decisions
 
 - **Slider keys, one behaviour:** on the focused seek slider `←` `→` (and `↑` `↓`, as on any slider) step one frame while paused and seek 5 s while playing; `Shift` jumps 10 frames. These replace the stock 1 s / 10 s arrow steps, and are prevented so the global map does not also fire. `Home`, `End`, `PageUp`, `PageDown` stay stock (start, end, ±10 s), then snap.
-- **Frame snapping:** a `seeking` listener moves every seek in Review and Studio (timeline, slider keys, `J` `L`, number keys, `Home` `End`) to the middle of the frame it lands in, with the step 4 function. It runs inside the `seeking` event, so the browser does one seek. Scrubbing stays as smooth as stock: Video.js already throttles drag seeks to one per 100 ms. `End` therefore lands on the last frame, not on "ended".
+- **Frame snapping:** a `seeking` listener moves every seek in Studio (timeline, slider keys, `J` `L`, number keys, `Home` `End`) to the middle of the frame it lands in, with the step 4 function. It runs inside the `seeking` event, so the browser does one seek. Scrubbing stays as smooth as stock: Video.js already throttles drag seeks to one per 100 ms. `End` therefore lands on the last frame, not on "ended".
 - The quiet hover bubble and thumbnail float above the timeline; over a marker the marker's tooltip replaces them.
 - Toggled-on tool buttons use `--pro-on`, not the accent (5b.2), already here.
 
@@ -271,7 +273,7 @@ Built with the step 5b look from the start (the author's instruction): system ty
 | Reduced motion (emulated) | No element of the skin has a transition or animation duration above 0 |
 | Long video | A one-hour duration (the element's `duration` overridden in the page): labels `0:00 10:00 … 50:00` at 1280 px, `0:00 30:00` at 320 px. 10 s: `0s … 9s` with frame ticks |
 | Bar height | 170 px at 1280 px wide (34% of a 504 px picture). **At 360 px: 242 px on a 176 px picture; the bar is taller than the video and its top is clipped.** Not tightened: step 5b moves the controls into a dock below the picture, which removes the problem |
-| Share tier | Tab order, play/pause, seek keys, mute, volume, captions, help dialog and focus return, free keys: all as in step 2. No pro chunk requested. 320 px: nothing overflows |
+| Viewer tier | Tab order, play/pause, seek keys, mute, volume, captions, help dialog and focus return, free keys: all as in step 2. No pro chunk requested. 320 px: nothing overflows |
 
 ### Moodboard comparison
 
@@ -285,13 +287,13 @@ Fourteen icon buttons of equal weight in one strip with no grouping; the eye fin
 
 | Chunk | Step 4 | Step 5 |
 | --- | --- | --- |
-| Share path JS | 284.6 kB (964.7 kB raw) | 285.0 kB (965.8 kB raw) |
+| Viewer path JS | 284.6 kB (964.7 kB raw) | 285.0 kB (965.8 kB raw) |
 | Skin CSS | 5.6 kB | 5.9 kB (31.6 kB raw: new tokens) |
 | Monospace font | 4.9 kB | removed |
 | Pro runtime | 3.5 kB | 3.5 kB |
-| Review JS + CSS | 7.6 kB + 1.2 kB | 12.2 kB + 2.9 kB |
+| Studio JS + CSS | 7.6 kB + 1.2 kB | 12.2 kB + 2.9 kB |
 
-The Share JS grew by 1.1 kB raw. About half is the skin (the `timeline` slot and passing `renderThumbnail` to pro modules); the rest is the preview app (sample markers, event handlers). No timeline code is in it (searched for `chooseTicks`, `snapSeekTime`, `pro-tl-`).
+The Viewer JS grew by 1.1 kB raw. About half is the skin (the `timeline` slot and passing `renderThumbnail` to pro modules); the rest is the preview app (sample markers, event handlers). No timeline code is in it (searched for `chooseTicks`, `snapSeekTime`, `pro-tl-`).
 
 ### How screenshots were taken
 
@@ -299,7 +301,7 @@ The Claude-in-Chrome window was not used. Screenshots and behaviour checks ran i
 
 ## Step 5b: Dock layout, Tools tray and restyle (15 Nov 2026)
 
-### What I thought was wrong with the old Review bar (written before changing it, from the first real screenshots)
+### What I thought was wrong with the old Studio bar (written before changing it, from the first real screenshots)
 
 See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (fourteen equal buttons), controls over the picture and taller than it on a phone, an invisible range, lime and monospace louder than the footage, a small player on a white page.
 
@@ -313,11 +315,11 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 
 ### How it is built
 
-- `ProSkin layout="dock" | "overlay"`; default `overlay` for Share and `dock` for Review and Studio (`resolveLayout`, tested). `data-layout` on the container; shown in the debug readout.
-- Dock structure, in the Share skin so that Share can dock too without pro code: `Container` > `.pro-stage` (media, poster, overlay layer, pro layers, indicators) + the control bar as a static panel. The skin is a flex column; the stage has `aspect-ratio: var(--pro-stage-ratio, 16 / 9)` and may shrink, the dock may not. With a fixed height (or fullscreen) the stage takes what is left and the picture is letterboxed.
-- The pro bar's main row is rendered by the Share skin as groups with slots: `time-start`, Transport (`transport-start`, Play, `transport-end`), `time`, host slot, `tools`, `tray`, spacer, host slot, Playback. The Review module fills the slots.
+- `ProSkin layout="dock" | "overlay"`; default `overlay` for Viewer and `dock` for Studio (`resolveLayout`, tested). `data-layout` on the container; shown in the debug readout.
+- Dock structure, in the Viewer skin so that Viewer can dock too without pro code: `Container` > `.pro-stage` (media, poster, overlay layer, pro layers, indicators) + the control bar as a static panel. The skin is a flex column; the stage has `aspect-ratio: var(--pro-stage-ratio, 16 / 9)` and may shrink, the dock may not. With a fixed height (or fullscreen) the stage takes what is left and the picture is letterboxed.
+- The pro bar's main row is rendered by the Viewer skin as groups with slots: `time-start`, Transport (`transport-start`, Play, `transport-end`), `time`, host slot, `tools`, `tray`, spacer, host slot, Playback. The Studio module fills the slots.
 - **Tray position:** in the DOM the tray comes right after the Tools button (so Tab goes Tools → tray → Playback, as the brief asks); CSS `order` lays it out as a full-width row under the main row.
-- **Narrow order:** below 560 px (680 px on touch) the order of controls changes (timecode, step, Play, cut), so the DOM changes with it. The Review module measures the container, picks `wide`, `medium` or `narrow` (`chooseDockSize`, tested) and writes `data-dock-size` on the container. Everything else is container queries.
+- **Narrow order:** below 560 px (680 px on touch) the order of controls changes (timecode, step, Play, cut), so the DOM changes with it. The Studio module measures the container, picks `wide`, `medium` or `narrow` (`chooseDockSize`, tested) and writes `data-dock-size` on the container. Everything else is container queries.
 - `toolsOpen` is in the pro store (default closed, `setToolsOpen`, tested). Persistence comes in step 6.
 - `--pro-frame-border: 1` draws a 1 px hairline and a 10 px radius around the player. Default: none. The preview page sets it.
 
@@ -331,12 +333,12 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 - **Ruler at a narrow width:** the mockup shows a tick per second at 326 px; the 6 px rule gives a tick every 2 s there. The rule won.
 - **Toggled-on (`--pro-on`) against the control fill is only 1.48:1**, too little for a state. "On" buttons in the dock also draw a short bar in the text colour (8.4:1). Loop uses it.
 - **Dim text on `--pro-surface-3` is 4.05:1** with the proposed `--pro-text-dim`. Added `--pro-text-dim-raised` (#B2B2B8, 5.37:1) for dim text in tooltips and on hovered controls.
-- `--pro-track` (the unfilled track over footage in the Share overlay) moved to a neutral #85858C; the dock's track is `--pro-surface-2` as specified.
+- `--pro-track` (the unfilled track over footage in the Viewer overlay) moved to a neutral #85858C; the dock's track is `--pro-surface-2` as specified.
 - In/Out buttons no longer light up when a point is set: they are not toggles, and the band shows the range.
 - The timecode field shows the current frame only; the total moved to its tooltip and its accessible description.
 - **Seconds-only ruler labels** are used up to and including 60 s (the mockup's 60 s clip reads `0s … 50s`).
-- The preview page **opens in the Review tier** (`?tier=share` for Share), since the page is now a monitor. `?layout=dock|overlay` and `?density=compact` are also read.
-- Also changed beyond the brief: tooltips lost their keycap chips everywhere (Share too), popups got one soft shadow, the Share playhead is white, the Share primary dialog button is neutral, captions-on and PiP-on use `--pro-on`.
+- The preview page **opens in the Studio tier** (`?tier=viewer` for Viewer), since the page is now a monitor. `?layout=dock|overlay` and `?density=compact` are also read.
+- Also changed beyond the brief: tooltips lost their keycap chips everywhere (Viewer too), popups got one soft shadow, the Viewer playhead is white, the Viewer primary dialog button is neutral, captions-on and PiP-on use `--pro-on`.
 
 ### Contrast (computed by `node scripts/contrast.mjs`)
 
@@ -360,7 +362,7 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 | accent (progress fill) on scrim over white frame | 5.20:1 | 3 | PASS |
 | slider track (--pro-track) on surface-0 | 5.26:1 | 3 | PASS |
 | slider track (--pro-track) on scrim over white | 3.86:1 | 3 | PASS |
-| Share playhead (text) on scrim over white | 12.66:1 | 3 | PASS |
+| Viewer playhead (text) on scrim over white | 12.66:1 | 3 | PASS |
 | focus ring: accent on surface-0 | 7.08:1 | 3 | PASS |
 | focus ring: accent on surface-1 (dock) | 6.11:1 | 3 | PASS |
 | focus ring: accent on surface-2 | 5.11:1 | 3 | PASS |
@@ -412,8 +414,8 @@ Measured in Chrome on macOS (SF Pro through `-apple-system`): with `font-variant
 | Click on the picture / on the dock | Picture toggles play; a click between dock buttons does nothing |
 | Fixed-height host | Skin forced to the window size: stage 0–680, dock 680–900, dock fully visible, picture letterboxed |
 | **Fullscreen** | **Not driven: headless Chrome refuses `requestFullscreen` ("not granted").** The request goes to the container that holds stage and dock (docs), and the fixed-height case above is the same layout. The author should press `F` once |
-| Share tier, new palette (step 2 gate re-run) | Keyboard only: tab order Player, Play, Mute, Volume, Seek, time, Captions, Settings, PiP, Fullscreen; `K`/`Space`, `←` `→` 5 s, `J` `L` 10 s, `5`, `Home`, `M`, `↓`, `C`, `Shift+?` (11 rows, focus in, `Esc`, focus back). Free keys (`I O , . [ ] R G Shift+←/→`) do nothing. No pro chunk requested. Narrow embed 320 px: stacked bar, nothing overflows, same keys pass |
-| Share with `layout="dock"`, Review with `layout="overlay"` | Both render and work (screenshots) |
+| Viewer tier, new palette (step 2 gate re-run) | Keyboard only: tab order Player, Play, Mute, Volume, Seek, time, Captions, Settings, PiP, Fullscreen; `K`/`Space`, `←` `→` 5 s, `J` `L` 10 s, `5`, `Home`, `M`, `↓`, `C`, `Shift+?` (11 rows, focus in, `Esc`, focus back). Free keys (`I O , . [ ] R G Shift+←/→`) do nothing. No pro chunk requested. Narrow embed 320 px: stacked bar, nothing overflows, same keys pass |
+| Viewer with `layout="dock"`, Studio with `layout="overlay"` | Both render and work (screenshots) |
 | Touch emulation, 390 px | Narrow layout, 44 px controls, no horizontal overflow |
 | Reduced motion (emulated) | No transition or animation above 0 ms |
 | Captions on the stage | Not looked at with a captions track showing in the dock layout; the lift for overlay controls is switched off there |
@@ -422,20 +424,126 @@ Measured in Chrome on macOS (SF Pro through `-apple-system`): with `font-variant
 
 | Chunk | Step 5 | Step 5b |
 | --- | --- | --- |
-| Share path JS | 285.0 kB (965.8 kB raw) | 285.6 kB (967.7 kB raw) |
+| Viewer path JS | 285.0 kB (965.8 kB raw) | 285.6 kB (967.7 kB raw) |
 | Skin CSS (with the preview page's own CSS) | 5.9 kB (31.6 kB raw) | 6.4 kB (34.6 kB raw) |
 | Pro runtime | 3.5 kB | 3.6 kB |
-| Review JS + CSS | 12.2 kB + 2.9 kB | 13.2 kB + 3.9 kB |
+| Studio JS + CSS | 12.2 kB + 2.9 kB | 13.2 kB + 3.9 kB |
 
-The Share JS grew 1.9 kB raw. It is one bundle with the preview page, whose new top bar and switches are part of that; the skin's share (the grouped pro row, the stage wrapper, the layout resolver, two strings) is roughly half. That is more than "a few hundred bytes"; none of it is Review logic (searched for `pro-tray`, `toolsSummary`, `chooseDockSize`, `pro-tl-`). The CSS growth is the dock rules (about 1 kB) and the preview page.
+The Viewer JS grew 1.9 kB raw. It is one bundle with the preview page, whose new top bar and switches are part of that; the skin's share (the grouped pro row, the stage wrapper, the layout resolver, two strings) is roughly half. That is more than "a few hundred bytes"; none of it is Studio logic (searched for `pro-tray`, `toolsSummary`, `chooseDockSize`, `pro-tl-`). The CSS growth is the dock rules (about 1 kB) and the preview page.
 
 ### Screenshots
 
-`design/screenshots/step-5b/`, taken in headless Google Chrome at 2x as in step 5: Review and Studio at 1440x900, 1100x800, 800x800, 390x800 and 320x700 with the tray closed and open; focus rings on the seek thumb, the In handle, Play and the timecode field; the playhead inside and outside the band, and an open range; the ruler at 10 s, 60 s and 10 min; loop on; the Markers menu; compact density; the fixed-height (fullscreen-like) layout; Share at 1440 and 390; the two layout overrides; touch emulation at 390. **Not captured: real fullscreen.**
+`design/screenshots/step-5b/`, taken in headless Google Chrome at 2x as in step 5: Studio at 1440x900, 1100x800, 800x800, 390x800 and 320x700 with the tray closed and open; focus rings on the seek thumb, the In handle, Play and the timecode field; the playhead inside and outside the band, and an open range; the ruler at 10 s, 60 s and 10 min; loop on; the Markers menu; compact density; the fixed-height (fullscreen-like) layout; Viewer at 1440 and 390; the two layout overrides; touch emulation at 390. **Not captured: real fullscreen.**
+
+## Step 6, Part A: Viewer and Studio rework (15 Nov 2026)
+
+### What differed from the mockups before the rework (looked at in the step 5b screenshots)
+
+The 5b build had a three-row dock about 163 px tall (220 px with the tray open) against the mockup's 116 px; a white time bubble riding the playhead; a separate marker lane with flags, bars and count badges; bracket-shaped handles that appeared only once a point was set; an accent progress fill with no range; a "Range, Capture, View" disclosure button that looked like a dropdown; the timecode in the centre with an fps label; a 1200 px page; three tier segments.
+
+### Verified APIs (`@videojs/react` 10.4.0, `docs/reference/components/menu.md` and `dist/dev/ui/menu/*.js`)
+
+- `Menu.Root (side, align, closeOnEscape, closeOnOutsideClick) / Trigger / Popup / Content / Item (onSelect) / CheckboxItem (checked, onCheckedChange) / RadioGroup / RadioItem (value) / ItemIndicator / Group / GroupLabel / Separator`. There is no separate `Popover` around a menu: `Menu.Popup` is the positioned popup. Roles `menu`, `menuitem`, `menuitemcheckbox`, `menuitemradio` with `aria-checked` come from the parts.
+- `Menu.Trigger` sets `aria-haspopup="menu"` and `aria-expanded` itself (seen in the DOM). Arrow keys move the highlight, Enter or Space selects, Escape closes and focus returns to the trigger (tested). The docs mention type-ahead ("type-ahead search" under `data-highlighted`); not tested by hand. `Home`/`End` in a menu were not tested.
+- `Menu.Item` and `Menu.RadioItem` close the menu on select (`completeMenuItemSelection`); `Menu.CheckboxItem` does not. A `RadioItem`'s `onClick` that calls `preventDefault()` skips both the value change and the close, which is how Part B keeps the View menu open.
+- Root menus in one player container form a popup group: opening one closes the other (docs).
+- `TimeSlider.Markers` exists but draws the cues of a text track; our markers are a prop, so it is not used (as in step 5).
+- `usePlayer(selectVolume)`: `muted`, `mutedAvailability`, `setMuted(muted)` (`docs/reference/api/feature-volume.md`), used for the Mute item in the settings menu.
+
+### How it is built
+
+- **Tiers:** `Tier = 'viewer' | 'studio'`. `src/pro/review/` became `src/pro/studio/` (the old empty `studio/` module is gone); one lazy `studio-*.js` chunk and one `studio-*.css`. `resolveFeatures('share' | 'review')` warns and falls back to Viewer, like any unknown tier.
+- **Main row:** rendered by the Viewer skin as a three-column grid (`minmax(max-content, 1fr) auto minmax(max-content, 1fr)`) with slots `time`, `transport-start`, `transport-end`, `range`, `range-narrow`, `tools`; the Studio module portals into them. The side columns share the free space, so the transport is centred; when there is no room for that the sides keep their content width and the transport moves off-centre, not off-screen.
+- **Narrow arrangement** changes the order of the controls, so the module measures the container and writes `data-dock-size="narrow" | "wide"` (`isNarrowDock`, tested); everything else is container queries.
+- **Markers in the settings menu (narrow):** the settings menu lives in the Viewer chunk and menu parts need the menu's React context, so a portal would not work. The Studio module hands a ready element (`MarkersSubmenu`, props only) to the skin through the slots context (`useSetProSettingsItems`), and `SettingsMenu` renders it inside its own tree. Mute is a plain item of the Viewer skin, shown by CSS on the narrow dock only.
+- **Timeline:** 46 px (22 px ruler, 2 px gap, 16 px track, buffered line at 41 px); 40 px in compact density. No accent fill without a range: the track is neutral and the white playhead carries the position.
+- **Ruler labels and the playhead's head:** labels are painted above the head with `mix-blend-mode: difference`. `--pro-ruler-label` (#B8B8C0) is chosen so the blended colour on the dock equals `--pro-text-dim`; where the white head passes under a label the text turns dark (10.2:1), so the label stays readable and the head stays whole. Forced-colours mode switches the blending off.
+- **Handles:** always rendered. Value = the point, or the track's own end while the point is `null`. The store now treats In at 0 and Out at the duration as "not set" (`null`), after its swap and reject rules. On top of that the handle logic treats In on frame 0 and Out on the last frame as unset (`isAtOwnEnd`), which is the brief's "within one frame". `I` on the first frame or `O` on the last does the same and says "In is at the start already" / "Out is at the end already".
+- **Magnets:** `handleDragTime` pulls a dragged handle onto the playhead or a marker when it is within 5 px (the nearest wins), and rounds to that frame. The magnet list is read once, at pointer-down.
+- **Loop** is on or off. `loopMode` still says what loops (`'range'` or `'whole'`) and the store keeps it in step as points come and go. The whole video loops from the `ended` event. Clearing the range no longer switches Loop off.
+- **Selected marker:** `deselectMarker()` in the store; the Studio module calls it when the frame changes to anything but the marker's frame, ignoring frame changes while a seek is running.
+- **Chapters** are read with their titles (`useChapters`) for the Markers menu; a chapter start that appears in two tracks (the stream's own and the host's `<track>`) is listed once.
+
+### Decisions, and where I chose differently from the brief or the mockups
+
+- **Breakpoints (the brief's cannot hold).** Measured, the full main row (timecode, "of", transport, Loop, Reset, three menu buttons with badges and chevrons, divider, captions, settings, mute, slider, fullscreen, gaps, padding) needs about 1034 px, and about 640 px after shedding everything the brief lists. So: volume slider under **1040** (not 900), "of duration" under 980, captions under 880, chevrons and a narrower timecode field under 840, count badges and the divider under 740; **narrow under 640** (not 560). Between 560 and 640 the one-row arrangement would overlap (seen in a screenshot at 608 px: Reset range sat on the Markers button).
+- **Touch is always narrow** (the brief: "below 560 px, or `(pointer: coarse)`"), also on a wide tablet, where the two rows are spread across the width.
+- **Picture-in-picture** has no button in the Studio row (the mockup and 6.7 list none): it is an item of the settings menu at every width. The Viewer keeps its PiP button.
+- **Viewer volume:** the mockup shows only a mute button. The slider is still there, 0 px wide, and slides out when the pointer is over the volume control or focus is inside it (it stays in the tab order). Reason: volume is one of the gate's essential controls. On touch it stays closed.
+- **Viewer layout:** always the seek bar on its own row (the old one-row wide layout is gone, with `useStacked`). Tab order is now Seek, Play, Mute, Volume, time toggle, Captions, Settings, PiP, Fullscreen. 40 px targets. White fill and a 12 px round white thumb; no accent.
+- **Viewer scrim:** full strength under the button row and most of the seek bar, then a longer fade than before (the mockup's is a plain gradient to zero, which leaves the bar's top on bare footage).
+- **Markers menu** also appears when there are chapters but no markers (named "Chapters"). The badge counts markers only.
+- **View button (Part A):** present, `aria-disabled`, "View. Coming next".
+- **320 px:** In, Out, Loop take a row of their own and the four menu buttons the next (three rows), because seven 40 px targets do not fit in 264 px. Step buttons are 40x44 on the narrow dock; everything else 44x44. The cut buttons step aside under 350 px (as in 5b).
+- **Focus ring of a handle** is drawn around its 9 px tab, not its 24 px target: at the ends of the track the target reaches into the dock padding and a ring around it was clipped by the player's edge.
+- **Reset range** hands focus to Loop when it removes itself.
+- `Narrow.dc.html` was not in `design/mockups/` (deleted in the working tree); the narrow layout was built from `Studio, narrow.png`.
+- Icons: kept; added a bookmark. Reset range uses the existing close icon, checks the existing check icon. Removed unused ones (mark in/out, play range, clear range, copy image, link, poster, more).
+
+### Contrast (new or changed rows; `node scripts/contrast.mjs`, all pass)
+
+| Pair | Ratio | Minimum |
+| --- | --- | --- |
+| playhead (text) over the unplayed band | 3.82:1 | 3 |
+| playhead (text) over the played band (accent): its dark outline is what shows there | 2.44:1 (outline 7.08:1) | 3 for the outline |
+| playhead over the neutral track | 12.45:1 | 3 |
+| active handle (accent) against the dock / the neutral track | 6.11:1 / 5.11:1 | 3 |
+| active handle against the unplayed band (same hue family; the handle stands 4 px proud of the track) | 1.57:1 | decorative |
+| **idle handle (`--pro-handle-idle` #77777E) against the dock / the neutral track** | **3.74:1 / 3.13:1** | 3 |
+| ruler label, blended, on the dock | 5.95:1 | 4.5 |
+| ruler label, blended, over the white playhead head | 10.24:1 | 4.5 |
+| hover hairline (text at 45%) over the track / the dock | 3.79:1 / 4.07:1 | 3 |
+| Viewer progress fill (white) against the unfilled track | 3.28:1 | 3 |
+| Viewer fill and thumb on the scrim over a white frame | 12.66:1 | 3 |
+| text on a highlighted Studio menu item (`--pro-on`) | 8.39:1 | 4.5 |
+| dim-raised text on that highlight: 4.45:1, so hints take the text colour on a highlighted item | - | - |
+| Loop on (`--pro-on`) against the dock: 1.77:1 alone, so it keeps the short bar in the text colour (8.39:1) | - | 3 for the bar |
+
+### Checks (headless Google Chrome via Playwright, 2x; local production build unless noted)
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 119 passing. New or rewritten: tiers (no `share`/`review`), unset semantics, loop follows the range, no `toolsOpen`, magnets, `isAtOwnEnd`, handle keys from unset, one pin per marker, `end` spans, 250 markers, narrow rule |
+| 1440x900 | Stage 720 px, dock 117 px, timeline 46 px; the page does not scroll |
+| 1100x800, 800x800, 700, 680 | One row, no overflow |
+| 390x800, 320x700 | Narrow arrangement, no horizontal overflow |
+| Tab order (Studio, no range) | Seek, In point, Out point, Time in seconds, Previous cut, Step back, Play, Step forward, Next cut, Loop, Markers, Capture, View, Captions, Settings, Mute, Volume, Fullscreen. Reset range sits after Loop when a range is set |
+| `I`, `O` | "In point set at 00:00:20:00", "Out point set at 00:00:50:00"; Reset range appears |
+| Handle keys | `→` then `Shift+→`: In 00:00:20:11. `Home` on In: "Start", "In point cleared". `→` from unset: 00:00:00:01. `Delete` on Out: "End". `←` on an unset Out: one frame before the last. `Shift+I`, `Shift+O`: "Range reset", Reset range gone |
+| Mouse drag | In handle dragged to 25%: bubble 00:00:27:23, committed on release, "In point set at…". Out handle dragged from its idle end to 60%: 00:01:06:20 |
+| Magnets | In dragged to 3 px from the playhead (00:00:50:00) landed on 00:00:50:00; to 4 px from the 34 s marker landed on 00:00:34:00. Whether it *feels* right needs a hand on a mouse |
+| Unset by pointer | Dragging In past the start: "Range reset". Double-click on a handle unsets it |
+| Marker pin | Hover: "Logo too small 00:00:08:12"; click seeks to frame 252 and selects it (accent); stepping one frame drops the selection |
+| Markers menu (keyboard) | `aria-haspopup="menu"`, `aria-expanded` false→true, focus moves to the first item, arrow keys move the highlight, Escape closes and focus returns to the button. Lists 7 markers and the chapters; Enter on an item seeks and focus returns |
+| Capture menu (keyboard) | Same behaviour; items Grab frame (G), Copy frame image, Copy link at timecode, Use frame as poster |
+| Loop with no range | "Loop on: the whole video"; playing from 110.6 s wrapped to the start and kept playing |
+| Touch emulation (Chrome, `hasTouch`, coarse pointer, CDP touch events, 390 px) | Narrow layout; targets 44x44 (step and cut 40x44); handle target 44x44; dragging the Out handle diagonally moved it and the page (made 2400 px tall) did not scroll; scrubbing the track seeks; In button sets In at the playhead; settings lists Mute and Markers |
+| Viewer gate (keyboard only, 1440 and 320) | Tab order as above; `K`/`Space`, `←` `→` 5 s, `J` `L` 10 s, `5`, `Home`, `M`, `↓`, `C`, `Shift+?` (11 rows, focus in, `Esc`, focus back). Free keys (`I O , . [ ] R G Shift+←/→ Shift+V`) do nothing. No overflow at 320 px. Volume slider opens on focus (64 px) |
+| Viewer loads no pro code | No `runtime-*`, `studio-*` or `debug-*` request in Viewer; Studio requests `runtime-*.js`, `studio-*.js`, `studio-*.css` |
+
+### Chunk sizes (raw / gzip -9)
+
+| Chunk | Step 5b | Step 6a |
+| --- | --- | --- |
+| Viewer path JS (`preview-*.js`) | 967,713 / 284,710 B | 968,072 / 284,726 B (+359 B raw) |
+| Skin CSS (with the preview page's) | 34.6 kB / 6.4 kB | 36.2 kB / 6.6 kB |
+| Pro runtime | 8.55 kB / 3.55 kB | 8.50 kB / 3.57 kB |
+| Studio JS (was `review-*.js`) | 40.2 kB / 13.35 kB | 37.4 kB / 12.3 kB |
+| Studio CSS | 22.0 kB / 3.8 kB | 19.3 kB / 3.5 kB |
+
+(Step 5b's notes gave 285.6 kB gzip for the Viewer JS; that was Vite's figure, which reads about 4 kB higher than `gzip -9`. Both builds were measured the same way here.)
+
+### Removed
+
+The Tools tray, the Tools disclosure button, group labels, the range readout, Play range (and its loop-engine branch), `toolsOpen`/`setToolsOpen`, the playhead bubble, the marker lane, cluster badges and their layout, the open-range fade, the accent progress fill, `dock-logic.ts` (`chooseDockSize`, `toolsSummary`), `formatRangeLength`, `use-stacked.ts`, the Viewer's one-row layout, eight unused icons, and the tests of all of these.
+
+### Screenshots
+
+`design/screenshots/step-6/`, headless Google Chrome at 2x as before, each opened and looked at: Studio with and without a range and Viewer at 1440, 1100, 800, 390 and 320; Studio at 680, 700, 760, 860, 900, 1000; the hover bubble; Markers and Capture menus at 1440, Capture at 390; focus rings on the In handle, an idle Out handle, the Markers and Capture buttons; compact density; touch emulation at 390; the Viewer's volume slider open.
 
 ## Deployed URL
 
-- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. The monitor page: `/preview.html` (opens in Review; `?tier=share`, `?tier=studio`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
+- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
@@ -450,7 +558,7 @@ The Share JS grew 1.9 kB raw. It is one bundle with the preview page, whose new 
 - Step 2: the control bar shows before playback starts (a tool shows its controls). Hosts can restore the stock behaviour with `--media-controls-before-start: hidden`.
 - Step 2: the centre play button is a duplicate of the bar's play button, so it is `aria-hidden` and out of the tab order. It shows before playback, and on touch whenever controls are visible.
 - Step 2: the volume control is an inline horizontal slider, not the scaffold's hover popover.
-- Step 2: AirPlay and Cast buttons, the title and the centre seek buttons were removed. They are not in the Share control list.
+- Step 2: AirPlay and Cast buttons, the title and the centre seek buttons were removed. They are not in the Viewer control list.
 - Step 2: no `@scope` and no CSS nesting, to hold the browser floor. `:dir(rtl)` has an attribute fallback for Chrome 111–119.
 - Step 2: the mono font was JetBrains Mono 500. **Removed in step 5** (5b.2): the skin uses the system UI stack only.
 - Step 2: icons are our own drawings (no base set), in `src/video/icons/`.
@@ -459,25 +567,33 @@ The Share JS grew 1.9 kB raw. It is one bundle with the preview page, whose new 
 
 ## Later
 
-- Persist `toolsOpen` with the other View choices (step 6).
 - The overlay layer covers the stage, not the picture: step 6 guides must be positioned on the picture's rectangle when the stage is letterboxed.
-- A `layout="overlay"` Review bar still covers a small player; consider a compact overlay variant if a host needs it.
+- A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
 - Give `ProSkin` a title for grabbed file names (`<title>_<timecode>.png`).
 - Stop the Out frame flashing at the loop point (jump one frame earlier) if it bothers in use.
-- Translate the Review strings (`src/pro/review/strings.ts`).
+- Translate the Studio strings (`src/pro/studio/strings.ts`).
 - Persist View choices (overlays, time display) per browser: step 6. `activeOverlays` is a set of ids and `timeDisplay` a string, so both serialise directly.
-- Measure the Share skin's own weight against a stock Video.js skin.
+- Measure the Viewer skin's own weight against a stock Video.js skin.
 - Redraw the settings icon: it reads a little like a sun.
 - AirPlay and Cast buttons (removed in step 2), with custom icons.
 - Translate `src/video/strings.ts` through Video.js i18n (`Text` tokens) so the help dialog follows the locale.
 - Soften the top edge of the control-bar scrim.
 
-- Code-split the preview bundle: `preview-*.js` is 972 kB minified, and Vite warns about it. Check whether the Share tier stays "as light as a stock skin" in step 2.
+- Code-split the preview bundle: `preview-*.js` is 972 kB minified, and Vite warns about it. Check whether the Viewer tier stays "as light as a stock skin" in step 2.
 - Tailwind, Base UI and Heroicons are devDependencies of the workbench shell only. The skin itself is plain CSS; keep it that way.
 - Consider pinning the non-Video.js dependencies exactly before submission.
 - Update the deploy script's `vercel@64` if Vercel 64 causes problems; 65 is current.
 
 ## Unverified
+
+- **Step 6a: real fullscreen with the new dock.** Headless Chrome still refuses fullscreen; the layout is the same flex column as in 5b.
+- **Step 6a: how the magnetic snap feels**, and dragging in general, with a real mouse or finger. Positions were checked from script.
+- **Step 6a: Firefox and Safari.** `mix-blend-mode: difference` on the ruler labels, `:has()`, `color-mix()` and container queries are inside the browser floor on paper; only Chrome was run.
+- **Step 6a: a real touch device.** Touch was emulated in Chrome. On a wide tablet the narrow arrangement is used (as the brief asks) and was not looked at.
+- **Step 6a: Copy frame image, Copy link, Use frame as poster from the new Capture menu** were not pressed in this run; the actions are the step 4 ones, unchanged.
+- **Step 6a: menu type-ahead, `Home`/`End` in a menu.** Documented by Video.js, not tried.
+- **Step 6a: screen reader.** Names, roles, values and the live region's text were read from the DOM, not heard.
+- **Step 6a: a source without chapters and with markers** (the Markers menu without the Chapters heading, `[` `]` on markers) was not run in the browser; unit-tested.
 
 - **Step 5b: real fullscreen with the dock.** Headless Chrome refuses fullscreen. Verified instead: the documented fullscreen target and the fixed-height layout.
 - **Step 5b: Firefox, Safari, Windows and Android fonts, a real phone.** Chrome on macOS only; touch was emulated.
@@ -488,7 +604,7 @@ The Share JS grew 1.9 kB raw. It is one bundle with the preview page, whose new 
 - **Step 5: `onCopyLink` and `onPosterFrame` in the event log** were not pressed in the step 5 run (checked in step 5b).
 - **Step 5: the one-hour case** used an overridden `duration` on the element, not a real one-hour file.
 - **Step 5: screen reader.** Names, values and announcements were read from the DOM, not heard.
-- **Step 4: nothing was looked at.** The Chrome window was hidden for the whole step (0×0 viewport, screenshots timed out), so the Review bar's appearance, the new icons, the wrapping and breakpoints, focus rings, tooltips and the toast were never seen. Behaviour was tested through page scripts. This needs a visual pass before step 5.
+- **Step 4: nothing was looked at.** The Chrome window was hidden for the whole step (0×0 viewport, screenshots timed out), so the Studio bar's appearance, the new icons, the wrapping and breakpoints, focus rings, tooltips and the toast were never seen. Behaviour was tested through page scripts. This needs a visual pass before step 5.
 - **Step 4: mouse-only range and loop** was exercised by clicking buttons from script, not with a real pointer. **320 px layout**, **touch**, **Firefox** and **Safari** were not run.
 - **Step 4: Copy frame image** gave no result in the hidden window: neither success nor failure was announced, so the clipboard call probably never settled. Untested in a visible window.
 - **Step 4: copy link** was tested with the clipboard call replaced by a stub; the real clipboard was not written.
