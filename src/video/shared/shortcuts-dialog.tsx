@@ -10,6 +10,9 @@ import { Button } from './button';
 interface ShortcutsContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** Rows added by the active pro tier, listed after the Share map. */
+  extraRows: ShortcutRow[];
+  setExtraRows: (rows: ShortcutRow[]) => void;
 }
 
 const ShortcutsContext = createContext<ShortcutsContextValue | null>(null);
@@ -47,7 +50,8 @@ export function ShortcutsProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [open]);
 
-  const value = useMemo(() => ({ open, setOpen }), [open, setOpen]);
+  const [extraRows, setExtraRows] = useState<ShortcutRow[]>([]);
+  const value = useMemo(() => ({ open, setOpen, extraRows, setExtraRows }), [open, setOpen, extraRows]);
   return <ShortcutsContext.Provider value={value}>{children}</ShortcutsContext.Provider>;
 }
 
@@ -82,8 +86,9 @@ export const SHARE_SHORTCUTS: ShortcutRow[] = [
  * The shortcut help dialog. It is a real dialog: focus moves in, Escape closes it, and focus returns to where it was.
  * `Shift+?` toggles it.
  */
-export function ShortcutsDialog({ rows = SHARE_SHORTCUTS }: { rows?: ShortcutRow[] } = {}) {
-  const { open, setOpen } = useShortcutsDialog();
+export function ShortcutsDialog() {
+  const { open, setOpen, extraRows } = useShortcutsDialog();
+  const rows = extraRows.length ? [...SHARE_SHORTCUTS, ...extraRows] : SHARE_SHORTCUTS;
   const toggle = useCallback(() => setOpen(!open), [open, setOpen]);
 
   // `?` is what a keyboard reports for the shifted key; `Shift+/` covers layouts and tools that report the base key.

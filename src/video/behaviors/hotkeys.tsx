@@ -1,16 +1,32 @@
 /** @jsxImportSource react */
 
-import { Hotkey } from '@videojs/react';
+import { Hotkey, selectPlayback, usePlayer } from '@videojs/react';
 
 export interface VideoHotkeysProps {
   disabled?: boolean | undefined;
+  /** Pro tiers: the arrow keys seek only while playing; while paused the Review tier uses them to step frames. */
+  arrowSeekWhilePlayingOnly?: boolean | undefined;
+}
+
+function ArrowSeek({ disabled = false }: { disabled?: boolean }) {
+  return (
+    <>
+      <Hotkey disabled={disabled} keys="ArrowRight" action="seekStep" value={5} />
+      <Hotkey disabled={disabled} keys="ArrowLeft" action="seekStep" value={-5} />
+    </>
+  );
+}
+
+function ArrowSeekWhilePlaying({ disabled = false }: { disabled?: boolean }) {
+  const playback = usePlayer(selectPlayback);
+  return <ArrowSeek disabled={disabled || Boolean(playback?.paused)} />;
 }
 
 /**
  * The YouTube keyboard map, kept in every tier. `I`, `O`, `,`, `.` and `Shift+←/→` are deliberately left free for the
  * Review tier. `Shift+?` (the help dialog) is registered by `ShortcutsDialog`.
  */
-export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
+export function VideoHotkeys({ disabled = false, arrowSeekWhilePlayingOnly = false }: VideoHotkeysProps = {}) {
   return (
     <>
       <Hotkey disabled={disabled} keys="Space" action="togglePaused" />
@@ -18,8 +34,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
       <Hotkey disabled={disabled} keys="m" action="toggleMuted" />
       <Hotkey disabled={disabled} keys="f" action="toggleFullscreen" />
       <Hotkey disabled={disabled} keys="c" action="toggleSubtitles" />
-      <Hotkey disabled={disabled} keys="ArrowRight" action="seekStep" value={5} />
-      <Hotkey disabled={disabled} keys="ArrowLeft" action="seekStep" value={-5} />
+      {arrowSeekWhilePlayingOnly ? <ArrowSeekWhilePlaying disabled={disabled} /> : <ArrowSeek disabled={disabled} />}
       <Hotkey disabled={disabled} keys="l" action="seekStep" value={10} />
       <Hotkey disabled={disabled} keys="j" action="seekStep" value={-10} />
       <Hotkey disabled={disabled} keys="ArrowUp" action="volumeStep" />

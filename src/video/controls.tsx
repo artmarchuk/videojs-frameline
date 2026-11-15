@@ -4,6 +4,7 @@ import { Controls, Tooltip } from '@videojs/react';
 import { useRef, type ReactNode } from 'react';
 
 import { useStacked } from './hooks/use-stacked';
+import { ProSlot } from './pro-slots';
 import { CaptionsToggle } from './shared/captions-button';
 import { CenterPlayButton, PlayButton } from './shared/play-button';
 import { FullscreenButton, PiPButton } from './shared/screen-controls';
@@ -26,9 +27,12 @@ export function VideoControls({
   renderThumbnail,
   toolbarStart,
   toolbarEnd,
-}: ThumbnailSlot & { toolbarStart?: ReactNode; toolbarEnd?: ReactNode } = {}) {
+  forceStacked = false,
+}: ThumbnailSlot & { toolbarStart?: ReactNode; toolbarEnd?: ReactNode; forceStacked?: boolean } = {}) {
   const bar = useRef<HTMLDivElement>(null);
-  const stacked = useStacked(bar);
+  const narrow = useStacked(bar);
+  // Pro tiers add too many controls for one row, so they always give the seek bar its own row.
+  const stacked = forceStacked || narrow;
 
   return (
     <Controls.Root>
@@ -39,8 +43,11 @@ export function VideoControls({
           <div ref={bar} className={'pro-bar'} data-layout={stacked ? 'stacked' : 'wide'}>
             {stacked && <TimeSlider renderThumbnail={renderThumbnail} />}
             <Controls.Group className={'pro-bar-row'}>
+              <ProSlot name="transport-start" />
               <PlayButton />
+              <ProSlot name="transport-end" />
               <Volume />
+              <ProSlot name="time" />
               {toolbarStart}
               {stacked ? (
                 <>
@@ -54,6 +61,7 @@ export function VideoControls({
                   <DurationTime />
                 </>
               )}
+              <ProSlot name="tools" />
               {toolbarEnd}
               <CaptionsToggle />
               <SettingsMenu />

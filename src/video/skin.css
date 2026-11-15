@@ -240,6 +240,11 @@
     min-width: 0;
   }
 
+  /* Slots for pro controls: the element itself takes no part in layout. */
+  .pro-skin .pro-slot {
+    display: contents;
+  }
+
   .pro-skin .pro-bar-spacer {
     flex: 1;
   }
