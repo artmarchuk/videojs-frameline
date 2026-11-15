@@ -17,6 +17,14 @@ const DEBUG = QUERY.has('debug');
 const START_TIER = TIERS.find((tier) => tier === QUERY.get('tier')) ?? 'studio';
 // `?layout=dock|overlay` overrides the tier's default layout, to check both layouts in any tier.
 const LAYOUT = QUERY.get('layout') === 'dock' ? 'dock' : QUERY.get('layout') === 'overlay' ? 'overlay' : undefined;
+// `?guides=title-safe,9:16` restricts the View menu to those ids (`?guides=0` removes it) and `?zones=0` switches the
+// platform zones off: the host's side of the feature flags, for checking that they win over remembered choices.
+const GUIDES = QUERY.get('guides');
+const FEATURES = {
+  ...(GUIDES === null ? {} : { guides: GUIDES === '0' ? false : GUIDES.split(',') }),
+  ...(QUERY.get('zones') === '0' ? { platformZones: false } : {}),
+};
+
 const START_DENSITY: Density = QUERY.get('density') === 'compact' ? 'compact' : 'comfortable';
 
 const TIER_LABELS: Record<Tier, string> = { viewer: 'Viewer', studio: 'Studio' };
@@ -72,6 +80,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
             onCopyLink: (info: unknown) => log('link:copy', info),
             onPosterFrame: (info: unknown) => log('poster:frame', info),
             onFrameChange: (frame: unknown) => log('frame:change', frame),
+            onViewChange: (view: unknown) => log('view:change', view),
           }
         : {},
     [log]
@@ -91,7 +100,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
       </header>
       <div className="monitor-stage">
         <VideoPlayer poster={MEDIA.poster}>
-          <ProSkin tier={tier} density={density} layout={LAYOUT} fps={MEDIA.fps} markers={MEDIA.markers} {...handlers}>
+          <ProSkin tier={tier} density={density} layout={LAYOUT} features={FEATURES} fps={MEDIA.fps} markers={MEDIA.markers} {...handlers}>
             <MuxVideo {...media} src={MEDIA.src} playsInline crossOrigin={MEDIA.noCors ? undefined : ''}>
               {MEDIA.chapters && <track kind="chapters" label="English" srcLang="en" src={MEDIA.chapters} default />}
             </MuxVideo>

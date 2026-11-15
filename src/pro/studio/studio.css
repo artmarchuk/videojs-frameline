@@ -382,6 +382,101 @@
     text-overflow: ellipsis;
   }
 
+  /* ---------- The View menu ---------- */
+
+  /* Two columns on a wide player; one scrolling column on a narrow one. */
+  .pro-skin .media-menu-popup.pro-view-popup {
+    width: min(calc(var(--media-spacing) * 140), var(--media-menu-available-width, 100cqw));
+  }
+
+  .pro-skin .media-menu-popup.pro-view-popup[data-columns="1"] {
+    width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
+  }
+
+  .pro-skin .pro-view-columns {
+    display: flex;
+    flex: none;
+    gap: calc(var(--media-spacing) * 1.5);
+  }
+
+  .pro-skin .pro-view-column {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .pro-skin .pro-view-column + .pro-view-column {
+    padding-inline-start: calc(var(--media-spacing) * 1.5);
+    border-inline-start: 1px solid var(--pro-divider);
+  }
+
+  /* The leading mark: a check for a guide that is on, a dot for the chosen crop or platform. */
+  .pro-skin .pro-menu-mark {
+    display: grid;
+    flex: none;
+    place-items: center start;
+    width: calc(var(--media-spacing) * 3);
+    height: calc(var(--media-spacing) * 4);
+  }
+
+  .pro-skin .pro-menu-check {
+    width: calc(var(--media-spacing) * 3.5);
+    height: calc(var(--media-spacing) * 3.5);
+  }
+
+  .pro-skin .pro-menu-dot {
+    width: 6px;
+    height: 6px;
+    margin-inline-start: 3px;
+    border-radius: 50%;
+    background-color: var(--pro-text);
+  }
+
+  /* A dim word after an item's name: "Approximate", "Broadcast, 90%". */
+  .pro-skin .pro-menu-sub {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--pro-text-dim-raised);
+    font-size: var(--pro-text-xs);
+    text-overflow: ellipsis;
+  }
+
+  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .pro-menu-sub {
+    color: var(--pro-text);
+  }
+
+  .pro-skin .pro-menu-note {
+    margin: var(--media-spacing) 0 0;
+    padding: var(--media-spacing) calc(var(--media-spacing) * 2.5) calc(var(--media-spacing) * 1.5);
+    color: var(--pro-text-dim-raised);
+    font-size: var(--pro-text-xs);
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  .pro-skin .pro-menu-popup .media-menu-item[aria-disabled="true"] {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  @container media-root (width < 640px) {
+    .pro-skin .media-menu-popup.pro-view-popup,
+    .pro-skin .media-menu-popup.pro-view-popup[data-columns="1"] {
+      width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
+    }
+
+    .pro-skin .pro-view-columns {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .pro-skin .pro-view-column + .pro-view-column {
+      padding-inline-start: 0;
+      border-inline-start: 0;
+    }
+  }
+
   /* ---------- Responsive: one row that sheds ---------- */
 
   @container media-root (width < 1040px) {

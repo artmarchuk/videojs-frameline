@@ -18,12 +18,16 @@ import type { Marker } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import { AnnouncerProvider, useAnnounce } from './announcer';
 import { useStudioController, type CopyLinkInfo, type PosterFrameInfo, type StudioController } from './controller';
-import { BookmarkIcon, EyeIcon, GrabFrameIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
+import { BookmarkIcon, GrabFrameIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
 import { isNarrowDock } from './logic';
 import { studioStrings as t } from './strings';
 import { Timeline, type TimelineProps } from './timeline';
 import { snapFrame, validMarkers } from './timeline/logic';
+import { allowedView, hasViewMenu } from '../view';
+import { Guides } from './guides';
+import { usePictureRect } from './guides/use-picture-rect';
 import { useChapters, useCuts, type Chapter } from './use-cuts';
+import { useViewActions, ViewMenu, type ViewActions } from './view-menu';
 
 export interface StudioLayerProps {
   features: Readonly<FeatureFlags>;
@@ -111,6 +115,12 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const narrow = useNarrowDock(anchor);
   useMarkerDeselect(video, fps);
 
+  // Guides: what the host allows, where the picture is, and the actions the menu and `Shift+V` share.
+  const allowed = useMemo(() => allowedView(features), [features]);
+  const viewMenu = hasViewMenu(allowed);
+  const picture = usePictureRect(video, anchor);
+  const viewActions = useViewActions();
+
   const timeline = useProSlot('timeline');
   const renderThumbnail = useProThumbnailRenderer<TimelineProps['renderThumbnail']>();
   const shownMarkers = features.markers ? markers : NO_MARKERS;
@@ -146,8 +156,9 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
   return (
     <>
-      <StudioHotkeys controller={controller} features={features} paused={paused} />
-      <HelpRows features={features} />
+      <StudioHotkeys controller={controller} features={features} paused={paused} viewActions={viewMenu ? viewActions : null} />
+      <HelpRows features={features} guides={viewMenu} />
+      {viewMenu && <Guides rect={picture.rect} layer={picture.layer} />}
 
       {timeline &&
         createPortal(
@@ -204,7 +215,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
               <MarkersMenu markers={listed} chapters={listedChapters} controller={controller} fps={fps} />
             )}
             {capture && <CaptureMenu controller={controller} features={features} />}
-            {features.guides !== false && <ViewButton />}
+            {viewMenu && <ViewMenu allowed={allowed} actions={viewActions} />}
           </>,
           tools
         )}
@@ -299,7 +310,7 @@ function TimecodeField({ controller, fps, dropFrame }: { controller: StudioContr
   const tip = (
     <span>
       {seconds ? t.switchToTimecode : t.switchToSeconds}
-      {approximate ? `. ≈ ${t.approximate}` : ''}
+      {approximate ? `. ≈ ${t.approximateClock}` : ''}
     </span>
   );
 
@@ -519,27 +530,22 @@ function CaptureMenu({ controller, features }: { controller: StudioController; f
   );
 }
 
-/** The View menu's place in the row. The menu itself (guides, crops, platform zones) comes next; until then it says so. */
-function ViewButton() {
-  return (
-    <ButtonTooltip label={<span>{t.viewSoon}</span>}>
-      <Button type="button" className={'pro-tool pro-tool-menu'} aria-label={`${t.view}. ${t.viewSoon}`} aria-haspopup="menu" aria-expanded="false" aria-disabled="true" data-pro-menu="view">
-        <span className={'media-button-icon pro-tool-icon'}>
-          <EyeIcon />
-        </span>
-        <span className={'pro-tool-word'}>{t.view}</span>
-        <ChevronIcon className={'pro-chevron-down'} />
-      </Button>
-    </ButtonTooltip>
-  );
-}
-
 /**
  * Studio shortcuts. Each is registered only while its feature is on. None changes what a Viewer key does during
  * playback: `←` and `→` step frames only while paused, and seek 5 seconds (the Viewer map) while playing.
  * Patterns match modifiers exactly, so Ctrl, Cmd and Alt combinations stay with the browser.
  */
-function StudioHotkeys({ controller, features, paused }: { controller: StudioController; features: Readonly<FeatureFlags>; paused: boolean }) {
+function StudioHotkeys({
+  controller,
+  features,
+  paused,
+  viewActions,
+}: {
+  controller: StudioController;
+  features: Readonly<FeatureFlags>;
+  paused: boolean;
+  viewActions: ViewActions | null;
+}) {
   const noStep = !features.frameStep;
   const noInOut = !features.inOut;
   const noCuts = !features.shotNav;
@@ -558,12 +564,14 @@ function StudioHotkeys({ controller, features, paused }: { controller: StudioCon
   useHotkey({ keys: '[', action: 'previousCut', repeatable: false, disabled: noCuts, onActivate: () => controller.goToCut('previous') });
   useHotkey({ keys: ']', action: 'nextCut', repeatable: false, disabled: noCuts, onActivate: () => controller.goToCut('next') });
   useHotkey({ keys: 'g', action: 'grabFrame', repeatable: false, disabled: !features.grabFrame, onActivate: controller.grabFrame });
+  // Shift alone with V; the hotkey layer ignores keys typed into text fields and matches modifiers exactly.
+  useHotkey({ keys: 'Shift+v', action: 'toggleGuides', repeatable: false, disabled: !viewActions, onActivate: () => viewActions?.toggleHidden() });
 
   return null;
 }
 
 /** Adds the live Studio shortcuts to the `Shift+?` help dialog, and removes them when the tier goes away. */
-function HelpRows({ features }: { features: Readonly<FeatureFlags> }) {
+function HelpRows({ features, guides }: { features: Readonly<FeatureFlags>; guides: boolean }) {
   const { setExtraRows } = useShortcutsDialog();
 
   const rows = useMemo(() => {
@@ -585,8 +593,9 @@ function HelpRows({ features }: { features: Readonly<FeatureFlags> }) {
       list.push({ keys: ['Shift', '←', '→'], label: t.help.handlesJump });
       list.push({ keys: ['Delete'], label: t.help.handlesClear });
     }
+    if (guides) list.push({ keys: ['Shift', 'V'], label: t.help.guides });
     return list;
-  }, [features]);
+  }, [features, guides]);
 
   useEffect(() => {
     setExtraRows(rows);

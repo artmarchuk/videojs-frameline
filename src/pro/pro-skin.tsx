@@ -7,7 +7,6 @@ import { lazy, Suspense, useCallback, useMemo, useRef, useState, type ReactNode 
 import { VideoSkin, type VideoSkinProps } from '../video/skin';
 import { warnOnce } from './dev';
 import {
-  guideAttribute,
   hasProFeatures,
   isTier,
   resolveFeatures,
@@ -18,6 +17,7 @@ import {
 } from './features';
 import type { CopyLinkInfo, PosterFrameInfo } from './studio/controller';
 import type { FrameInfo, InOutRange, Marker } from './store';
+import type { EffectiveView } from './view';
 import { DEFAULT_FPS, isValidFps } from './fps';
 
 // The pro runtime (store, frame clock, the Studio layer) is a separate chunk. The Viewer tier never requests it.
@@ -89,6 +89,17 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   onCopyLink?: (info: CopyLinkInfo) => void;
   /** Fires when the user picks the current frame as the poster. The host app saves it; the skin stores nothing. */
   onPosterFrame?: (info: PosterFrameInfo) => void;
+  /**
+   * Fires when the guides that are drawn change: `guides` (ids), `crop` and `zones` (an id or `null`). Not fired for
+   * the remembered set the player starts with.
+   */
+  onViewChange?: (view: EffectiveView) => void;
+  /**
+   * Remember the end user's View choices (guides, crop, zones) and the time display in this browser's
+   * `localStorage`. `true` (default) uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off.
+   * The `features` always win over a remembered value.
+   */
+  persist?: boolean | string;
   /** The media element, as in the Viewer skin: for example `<MuxVideo src="…" />`. */
   children: ReactNode;
 }
@@ -126,6 +137,8 @@ export function ProSkin({
   onFrameChange,
   onCopyLink,
   onPosterFrame,
+  onViewChange,
+  persist = true,
   children,
   ...skinProps
 }: ProSkinProps) {
@@ -152,13 +165,13 @@ export function ProSkin({
     [safeTier, wantsDebug, JSON.stringify(overrides ?? null)]
   );
 
-  const [overlays, setOverlays] = useState<readonly string[]>([]);
-  const onOverlaysChange = useCallback((ids: readonly string[]) => {
-    setOverlays((current) => (current.length === ids.length && current.every((id, i) => id === ids[i]) ? current : ids));
+  const [guideAttributes, setGuideAttributes] = useState<Record<string, string>>({});
+  const onViewAttributes = useCallback((next: Record<string, string>) => {
+    setGuideAttributes((current) => {
+      const keys = Object.keys(next);
+      return keys.length === Object.keys(current).length && keys.every((name) => current[name] === next[name]) ? current : next;
+    });
   }, []);
-
-  const guideAttributes: Record<string, string> = {};
-  for (const id of overlays) guideAttributes[guideAttribute(id)] = '';
 
   const pro = hasProFeatures(features);
   // Any Studio control in the bar means the pro bar: the timeline row and the three-column main row with its slots.
@@ -202,7 +215,9 @@ export function ProSkin({
               onCopyLink={onCopyLink}
               onPosterFrame={onPosterFrame}
               skinRenders={renders}
-              onOverlaysChange={onOverlaysChange}
+              onViewAttributes={onViewAttributes}
+              persist={persist}
+              onViewChange={onViewChange}
               onInOutChange={onInOutChange}
               onMarkerSelect={onMarkerSelect}
               onFrameChange={onFrameChange}

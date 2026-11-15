@@ -9,6 +9,7 @@ import type { CopyLinkInfo, PosterFrameInfo } from '../studio/controller';
 import { createProStore, type Marker, type ProCallbacks } from '../store';
 import { parseTimecode } from '../timecode';
 import { useVideoElement } from '../use-video-element';
+import { allowedView, readRemembered, storageKey, viewAttributes, writeRemembered } from '../view';
 import { warnOnce } from '../dev';
 
 const StudioLayer = lazy(() => import('../studio'));
@@ -46,8 +47,10 @@ export interface ProRuntimeProps extends ProCallbacks {
   onPosterFrame?: ((info: PosterFrameInfo) => void) | undefined;
   /** Counts renders of `ProSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
   skinRenders: RefObject<number>;
-  /** Reports the active overlay ids so `ProSkin` can put one `data-guide-*` attribute per overlay on the container. */
-  onOverlaysChange: (ids: readonly string[]) => void;
+  /** Reports the container attributes of the guides that are drawn: `data-guide-*`, `data-crop`, `data-zones`. */
+  onViewAttributes: (attributes: Record<string, string>) => void;
+  /** Remember the View choices and the time display per browser: the default key, a key of the host's, or not at all. */
+  persist?: boolean | string | undefined;
 }
 
 /**
@@ -66,39 +69,61 @@ export default function ProRuntime({
   onCopyLink,
   onPosterFrame,
   skinRenders,
-  onOverlaysChange,
+  onViewAttributes,
+  persist,
   onInOutChange,
   onMarkerSelect,
   onFrameChange,
+  onViewChange,
 }: ProRuntimeProps) {
   // One store per ProSkin instance, created on first render and kept for the life of the component.
-  const [store] = useState(() => createProStore({ allowedOverlays: features.guides || [] }));
+  // It starts from the choices remembered in this browser, read here (not in an effect) so the first render already
+  // has them and nothing flashes. Storage can be blocked or empty; then it starts empty, and nothing depends on it.
+  const key = storageKey(persist);
+  const [store] = useState(() => {
+    const allowed = allowedView(features);
+    const remembered = readRemembered(key, allowed);
+    return createProStore({ allowedView: allowed, view: remembered.view, timeDisplay: remembered.timeDisplay ?? 'timecode' });
+  });
   const anchor = useRef<HTMLSpanElement>(null);
   const video = useVideoElement(anchor);
 
   useEffect(() => {
-    store.setCallbacks({ onInOutChange, onMarkerSelect, onFrameChange });
-  }, [store, onInOutChange, onMarkerSelect, onFrameChange]);
+    store.setCallbacks({ onInOutChange, onMarkerSelect, onFrameChange, onViewChange });
+  }, [store, onInOutChange, onMarkerSelect, onFrameChange, onViewChange]);
 
+  // The host's features always win: what is no longer allowed is switched off.
   useEffect(() => {
-    store.setAllowedOverlays(features.guides || []);
-  }, [store, features.guides]);
+    store.setAllowedView(allowedView(features));
+  }, [store, features]);
 
-  // Mirror the active overlays up to the container's data attributes.
+  // Remember the View choices and the time display.
   useEffect(() => {
-    let last = store.getState().activeOverlays;
-    onOverlaysChange([...last]);
+    if (!key) return;
+    let last = store.getState();
+    return store.subscribe(() => {
+      const next = store.getState();
+      if (next.view === last.view && next.timeDisplay === last.timeDisplay) return;
+      last = next;
+      writeRemembered(key, next.view, next.timeDisplay);
+    });
+  }, [store, key]);
+
+  // Mirror the guides that are drawn up to the container's data attributes.
+  useEffect(() => {
+    let last = store.getState().view;
+    onViewAttributes(viewAttributes(last));
     const unsubscribe = store.subscribe(() => {
-      const next = store.getState().activeOverlays;
+      const next = store.getState().view;
       if (next === last) return;
       last = next;
-      onOverlaysChange([...next]);
+      onViewAttributes(viewAttributes(next));
     });
     return () => {
       unsubscribe();
-      onOverlaysChange([]);
+      onViewAttributes({});
     };
-  }, [store, onOverlaysChange]);
+  }, [store, onViewAttributes]);
 
   // Offset for the displayed timecode, in frames. An unreadable value warns once and counts as zero.
   const parsedStart = startTimecode === undefined ? 0 : parseTimecode(startTimecode, fps);
