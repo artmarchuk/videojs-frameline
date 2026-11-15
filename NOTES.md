@@ -16,6 +16,7 @@ Read this at the start of every step, along with `specs/PROJECT-OVERVIEW.md` and
 | `video.js` (transitive, from `@videojs/core`) | 10.4.0: the v10 pointer package that throws coded errors for v8 patterns. **Not v8.** |
 | `@videojs/html` | not installed (React skin); npm latest is 10.4.0 |
 | Video.js skill (Claude Code plugin `videojs@videojs`) | 0.4.0, user scope, enabled; skills `videojs:videojs`, `videojs:videojs-skin`, `videojs:videojs-ui` |
+| Vitest (devDependency, pinned) | 5.1.0 |
 | Vercel CLI | the deploy script runs `vercel@64`; the latest is 65.16.0 |
 
 Docs versus installed version: npm `latest` is 10.4.0, and the bundled docs (`node_modules/@videojs/react/docs/llms.txt`) say "Bundled with `@videojs/react` v10.4.0". The `next` tag is an old `10.0.0-rc.5`. The live docs site does not print a version, so a mismatch there can't be ruled out (see Unverified).
@@ -101,6 +102,61 @@ The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the 
 | Screen reader | **Not tested** (no VoiceOver pass). Accessible names verified in the accessibility tree |
 | Browsers | Chrome only. **Firefox and Safari not tested** |
 
+## Step 3: Pro core (15 Nov 2026)
+
+### Verified APIs
+
+- `createPlayer({ features })` builds the store; `VideoPlayer` from `@videojs/react/video` is the preset player. The host creates the player, not the skin.
+- `usePlayer(selector)` and `usePlayer()` (store access); `useMedia()` returns a media handle that only guarantees `play()` and the event methods. It is not always the `<video>` element.
+- `@videojs/core` exports `definePlayerFeature`, but its features are marked `@internal` in the source and no React doc page describes writing a custom feature. Docs only describe combining the shipped features.
+- `HTMLVideoElement.requestVideoFrameCallback` and `getVideoPlaybackQuality()` are browser APIs, typed in the DOM lib.
+
+### Where pro state lives, and why
+
+A small separate store next to the player (`src/pro/store.ts`), created once per `ProSkin`, read through a React context and `useSyncExternalStore` with selectors. Reasons: Video.js has no documented custom-feature API; the skin does not own `createPlayer`, so it could not add a feature even if there were one; and a separate store keeps every pro byte out of the Share path.
+
+The `<video>` element is found by querying the player container (`useVideoElement`), re-run when `useMedia()` changes and when the container's children change.
+
+### Decisions
+
+- **In past out:** the points are swapped, so the mark the user just made is kept. Setting a point exactly onto the other is rejected.
+- **Fractional rates:** `fps` is a plain number. 23.976, 29.97 and 59.94 are recognised by value (within 0.01), so `29.97` and `30000 / 1001` both resolve to the exact rational. Seconds-to-frames uses the exact rate; timecode digits use the nominal count (24, 30, 60).
+- **Rounding:** `framesFromSeconds` floors after adding 0.01 frame, so `25 / 24` s is frame 25 and not 24. For `requestVideoFrameCallback` media times (frame start times) the clock uses the nearest frame, as the brief asks.
+- **Bad input:** an invalid `fps` falls back to 24; negative or non-finite frame numbers clamp to 0; `parseTimecode` returns `null`. Drop-frame text that names a skipped frame number (`00:01:00;00`) is `null`.
+- **Guide attributes:** `9:16` becomes `data-guide-9-16`, `2.39` becomes `data-guide-2-39`, because `:` and `.` are awkward in CSS selectors.
+- **Slots:** `toolbarStart` sits after play and volume; `toolbarEnd` sits before captions; `overlay` goes inside the `aria-hidden` overlay layer.
+- **After a seek or pause** the clock waits 120 ms for a presented frame, then falls back to `currentTime`, so the reading is never stale.
+- `debug` is a feature flag that `?debug` or the `debug` prop switches on; that alone loads the pro runtime, in any tier.
+- The demo stream is 30 fps, not 24: the clock reported media times in steps of 1/30 s. `media.ts` now passes `fps: 30`. Our own video (step 8) is 24 fps.
+
+### Differences from the brief
+
+- `features` accepts `guides: true` (all guides) as well as `false` or a list.
+- The store also holds `duration`, `clockSource` and `clockPrecision`, and has `selectMarker`, `setFrame`, `setClock`, `setDuration`, `setAllowedOverlays` and `setCallbacks` besides the listed actions.
+- `useFrameClock(videoEl, fps)` writes to the store and returns nothing; `source` and `precision` are read from the store.
+- `startTimecode`, `dropFrame` and `markers` are accepted but not used yet (no timecode display or timeline until steps 4 and 5). The debug readout shows a timecode with the `startTimecode` offset.
+- `nearestFrame` was added next to `framesFromSeconds`.
+
+### Chunk sizes (production build, gzip)
+
+| Chunk | Raw | Gzip | Loaded when |
+| --- | --- | --- | --- |
+| `preview-*.js` (Share path: React, Video.js with the Mux/HLS engine, the Share skin, `ProSkin` wrapper and flag resolver) | 963.0 kB | 284.1 kB | always |
+| `preview-*.css` (skin styles; byte-identical to the step 2 tag) | 30.7 kB | 5.6 kB | always |
+| `runtime-*.js` (store, frame clock, timecode) | 7.7 kB | 3.3 kB | any pro feature or debug is on |
+| `review-*.js`, `studio-*.js` (empty until steps 4 to 7) | 47 B each | 86 B each | a feature of that tier is on |
+| `debug-*.js` + `debug-*.css` | 1.3 kB + 0.7 kB | 0.8 kB + 0.4 kB | `debug` or `?debug` |
+| `dev-tier-switch-*.js` (preview app only) | 0.4 kB | 0.3 kB | `?debug` |
+
+Checked on the public URL without `?debug`: no pro chunk is requested. The Share chunk contains none of the store, clock, timecode or debug code (searched for their identifiers). It does contain the flag resolver and tier table, which `ProSkin` needs to decide what to load. The Share path grew by about 4.7 kB raw over step 2. We have not measured the Share skin alone against a stock skin; almost all of the 963 kB is Video.js and its streaming engine.
+
+### Checks
+
+- **Tests:** `npm test`, 37 passing: timecode (24, 25, 30, 50, 60, 23.976, 29.97 non-drop and drop-frame, 59.94 drop-frame, round trips, bad input), `resolveFeatures`, store invariants, guides filter, per-instance stores.
+- **Render check** (public URL, `?debug`, 2 s of playback): the skin's render count stayed at 4 while the readout's went from 6 to 61. Locally: skin 2, readout 126. The skin does not re-render per frame.
+- **Frame clock** (Chrome on macOS, 30 fps demo stream, no burned-in frame counter): source `rvfc`, precision `frame`. Seeking to 18 known frame times while paused gave the expected frame 16 times; the 2 misses were long seeks that had not finished within the 450 ms the test waited, and they showed the previous frame, not an off-by-one. Seeking to frame 300 on the public URL gave frame 300, media time 10.000, timecode 00:00:10:00.
+- **Step 2 regression:** the keyboard-only checks were re-run on the public URL and pass (play, pause, seek, mute, captions, free keys, help dialog and focus return). Skin CSS is byte-identical to the `step-2-share-gate` tag.
+
 ## Deployed URL
 
 - https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. Player alone: `/preview.html`.
@@ -127,6 +183,8 @@ The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the 
 
 ## Later
 
+- Persist View choices (overlays, time display) per browser: step 6. `activeOverlays` is a set of ids and `timeDisplay` a string, so both serialise directly.
+- Measure the Share skin's own weight against a stock Video.js skin.
 - Redraw the settings icon: it reads a little like a sun.
 - AirPlay and Cast buttons (removed in step 2), with custom icons.
 - Translate `src/video/strings.ts` through Video.js i18n (`Text` tokens) so the help dialog follows the locale.
@@ -139,6 +197,11 @@ The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the 
 
 ## Unverified
 
+- **Step 3: frame numbers against a burned-in frame counter.** The demo stream has none. Our own 24 fps video (step 8) should carry one so this can be checked.
+- **Step 3: frame clock in Firefox and Safari.** Firefox before 132 has no `requestVideoFrameCallback` and will use the approximate fallback; neither browser was run.
+- **Step 3: phone-width re-check after step 3.** The Chrome window became hidden (0×0 viewport, screenshots timed out), so the layout could not be looked at again. The bar markup changed only by two optional slots and the CSS is unchanged.
+- **Step 3: two `ProSkin` players on one page** were not rendered together; per-instance state is covered by a unit test on the store.
+- **Step 3: dropped-frame counts** in the readout were high (the hidden window throttles rendering), so they say nothing about real playback.
 - **Fullscreen after the reskin** (see the gate table): the browser session refused all fullscreen requests.
 - **Touch**: 44 px targets, tap, double-tap, tap-to-play on iOS Safari. The HTML package has a known iOS tap issue; we use React, but this is still untested.
 - **Reduced motion**, **screen reader**, **Firefox**, **Safari**, and the browser floor versions (Chrome 111, Firefox 121, Safari 16.4).
