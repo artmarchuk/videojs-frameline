@@ -5,6 +5,8 @@ import type { Marker } from '@/pro';
 
 export interface PreviewMedia {
   src: string;
+  /** File name and format for the page's top bar. */
+  info?: string;
   poster?: string;
   /** Frames per second of the source. The player cannot detect it. */
   fps?: number;
@@ -19,6 +21,7 @@ export interface PreviewMedia {
 const DEFAULT: PreviewMedia = {
   src: 'https://stream.mux.com/83EzHOvVzVN01AsrD01BCpiH02Pj3S8mfzBOu101w2nHC5s.m3u8',
   poster: 'https://image.mux.com/83EzHOvVzVN01AsrD01BCpiH02Pj3S8mfzBOu101w2nHC5s/thumbnail.webp?time=69',
+  info: 'cosmic-dawn-trailer.m3u8 · 1920×1080 · 30 fps',
   chapters: './cosmic-dawn-chapters.vtt',
   // Measured: the frame clock reports media times in steps of 1/30 s for this stream.
   fps: 30,
