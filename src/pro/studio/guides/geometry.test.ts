@@ -169,10 +169,20 @@ describe('platform zones', () => {
     }
   });
 
+  it('uses the largest unsafe margin where sources disagree', () => {
+    const [top, bottom, rail] = PLATFORM_ZONES.tiktok.zones.map((zone) => zone.rect);
+    expect(top!.height).toBe(12.5);
+    expect(bottom!.height).toBeCloseTo(34.4);
+    expect(rail!.width).toBe(16);
+    expect(PLATFORM_ZONES.shorts.zones[0]!.rect.height).toBe(19.8);
+    expect(PLATFORM_ZONES.reels.zones[0]!.rect.height).toBe(15.5);
+    expect(PLATFORM_ZONES.reels.zones[2]!.rect.width).toBe(21);
+  });
+
   it('places a zone inside the 9:16 frame of a 16:9 picture', () => {
     const frame = cropMask(1280, 720, 9 / 16)!.rect;
     const top = percentToRect(PLATFORM_ZONES.tiktok.zones[0]!.rect, frame);
-    expect(top).toEqual({ x: 437.5, y: 0, width: 405, height: 720 * 0.08 });
+    expect(top).toEqual({ x: 437.5, y: 0, width: 405, height: 720 * 0.125 });
     const rail = percentToRect({ x: 84, y: 38, width: 16, height: 40 }, frame);
     expect(rail.x + rail.width).toBeCloseTo(842.5);
   });

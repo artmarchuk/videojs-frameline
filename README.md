@@ -194,7 +194,7 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 | Footer | Hide guides / Show guides, `Shift+V` | Switches everything off, and brings the same set back |
 
 - Toggling keeps the menu open, so several guides can be switched in one visit. Escape closes it and focus returns to the View button, whose badge counts what is on (its accessible name says "View, 3 guides on").
-- **Platform zones are approximate**, and the menu says so on every platform. Apps change their layouts, and the layout depends on the caption and on whether the video is an ad; check the platform's current guidance before you deliver. The numbers are in one file, `src/pro/studio/guides/platform-zones.ts`, in percent of the 9:16 frame.
+- **Platform zones are approximate**, and the menu says so on every platform. Apps change their layouts, and the layout depends on the caption and on whether the video is an ad; check the platform's current guidance before you deliver. Where sources disagree, the largest unsafe margin is used, so a guide never promises space the app may cover. The numbers are in one file, `src/pro/studio/guides/platform-zones.ts`, in percent of the 9:16 frame.
 - Zones are drawn inside the 9:16 frame: the whole picture when the video is 9:16, otherwise a centred 9:16 crop. So **choosing a platform turns on the 9:16 crop**, and choosing another crop clears the zones.
 - Labels (Title safe, Action safe, the zone names) are hidden on a picture narrower than 480 px.
 
