@@ -15,7 +15,7 @@ const warned = new Set<string>();
 export function warnOnce(message: string): void {
   if (!isDev() || warned.has(message)) return;
   warned.add(message);
-  console.warn(`[videojs-pro] ${message}`);
+  console.warn(`[frameline] ${message}`);
 }
 
 /** Test helper: forget which warnings were already shown. */

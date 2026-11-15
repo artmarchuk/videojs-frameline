@@ -1,5 +1,5 @@
 /**
- * The pro store: a small external store, created once per `ProSkin`. Pure: no React, no DOM.
+ * The pro store: a small external store, created once per `FramelineSkin`. Pure: no React, no DOM.
  * Two players on one page each have their own store; nothing here is module-level state.
  *
  * Invariants kept here, not in components:

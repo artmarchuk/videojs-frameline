@@ -3,7 +3,7 @@ import type { ReactNode, SVGProps } from 'react';
 export type IconProps = Omit<SVGProps<SVGSVGElement>, 'children'>;
 
 /**
- * Shared frame for the Video.js PRO icon family: 24×24 grid, 1.5px stroke, round caps and joins, `currentColor`.
+ * Shared frame for the Frameline icon family: 24×24 grid, 1.5px stroke, round caps and joins, `currentColor`.
  * It has no fixed size; the control that holds it sets width and height. Icons are decorative, so the SVG is
  * `aria-hidden` and the button carries the accessible name.
  */

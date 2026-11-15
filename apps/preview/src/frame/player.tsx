@@ -2,7 +2,7 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer } from '@videojs/react/video';
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
-import { ProSkin, TIERS, type Density, type Tier } from '@/pro';
+import { FramelineSkin, TIERS, type Density, type Tier } from '@/pro';
 
 import type { PlaybackProps } from '../shell/params';
 
@@ -91,7 +91,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
     <>
       <header className="monitor-bar">
         <div className="monitor-title">
-          <h1>Video.js PRO</h1>
+          <h1>Frameline</h1>
           {MEDIA.info && <p>{MEDIA.info}</p>}
         </div>
         <div className="monitor-switches">
@@ -101,11 +101,11 @@ export function Player({ media }: { media?: PlaybackProps }) {
       </header>
       <div className="monitor-stage">
         <VideoPlayer poster={MEDIA.poster}>
-          <ProSkin tier={tier} density={density} layout={LAYOUT} features={FEATURES} fps={MEDIA.fps} markers={MEDIA.markers} {...handlers}>
+          <FramelineSkin tier={tier} density={density} layout={LAYOUT} features={FEATURES} fps={MEDIA.fps} markers={MEDIA.markers} {...handlers}>
             <MuxVideo {...media} src={MEDIA.src} playsInline crossOrigin={MEDIA.noCors ? undefined : ''}>
               {MEDIA.chapters && <track kind="chapters" label="English" srcLang="en" src={MEDIA.chapters} default />}
             </MuxVideo>
-          </ProSkin>
+          </FramelineSkin>
         </VideoPlayer>
       </div>
       {DEBUG && (

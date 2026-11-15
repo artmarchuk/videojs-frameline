@@ -40,7 +40,7 @@ export interface ProRuntimeProps extends ProCallbacks {
   dropFrame?: boolean | undefined;
   markers?: readonly Marker[] | undefined;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
-  /** Counts renders of `ProSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
+  /** Counts renders of `FramelineSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
   skinRenders: RefObject<number>;
   /** Reports the container attributes of the guides that are drawn (`data-guide-*`, `data-crop`, `data-zones`) and `data-zoom`. */
   onViewAttributes: (attributes: Record<string, string>) => void;
@@ -50,7 +50,7 @@ export interface ProRuntimeProps extends ProCallbacks {
 
 /**
  * Everything pro that is not the Viewer skin: the store, the frame clock, and the lazily loaded Studio layer.
- * This module is itself loaded lazily by `ProSkin`, so the Viewer tier never downloads it.
+ * This module is itself loaded lazily by `FramelineSkin`, so the Viewer tier never downloads it.
  */
 export default function ProRuntime({
   tier,
@@ -70,7 +70,7 @@ export default function ProRuntime({
   onFrameChange,
   onGuidesChange,
 }: ProRuntimeProps) {
-  // One store per ProSkin instance, created on first render and kept for the life of the component.
+  // One store per FramelineSkin instance, created on first render and kept for the life of the component.
   // It starts from the choices remembered in this browser, read here (not in an effect) so the first render already
   // has them and nothing flashes. Storage can be blocked or empty; then it starts empty, and nothing depends on it.
   const key = storageKey(persist);

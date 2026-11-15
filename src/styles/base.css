@@ -84,7 +84,7 @@
   /* Lift captions above the control bar while it is visible (WebKit and Blink only). */
   .media-skin[data-theme="pro"] video::-webkit-media-text-track-container {
     translate: 0 var(--media-caption-track-y);
-    transition: translate var(--pro-duration) ease-out;
+    transition: translate var(--fl-duration) ease-out;
   }
 
   .media-skin[data-theme="pro"][data-controls-visible] {

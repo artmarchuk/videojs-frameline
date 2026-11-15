@@ -4,6 +4,8 @@ Read this at the start of every step, along with `specs/PROJECT-OVERVIEW.md` and
 
 **Tier names.** Until step 6 there were three tiers: Share, Review and Studio. Step 6 merged Review and Studio into **Studio** and renamed Share to **Viewer**. The sections for steps 2 to 5b below were renamed with the code, so "Studio" there means what was then called Review (the old Studio tier had no UI). Things step 6 removed are still described in those sections as history: the Tools tray, the Tools button, the playhead's permanent bubble, the marker lane and its cluster badges, Play range, `toolsOpen`. The git tag `step-2-share-gate` keeps its name.
 
+**The skin is now Frameline.** Step 8 renamed Video.js PRO to **Frameline** ("Frameline — a Video.js skin for video creators"). The text below was renamed with the code: `ProSkin` is `FramelineSkin`, the `--pro-*` tokens are `--fl-*`, the storage key `videojs-pro:v1` is `frameline:v1`, the package is `videojs-frameline`. Not renamed: the Vercel project and URL (`videojs-pro.vercel.app`), the repo folder, `src/pro/`, the `.pro-*` classes and `data-pro-*` attributes, and the old step files in `specs/`.
+
 **View is now Guides.** Step 7b renamed the View menu to **Guides** and moved zoom to a button of its own. Sections up to step 7 still say "View menu", `onViewChange`, `view:change`, `ViewMenu` and `view-menu-focus.js`: read them as Guides menu, `onGuidesChange`, `guides:change`, `GuidesMenu` and `guides-menu-focus.js`. Step 7's Zoom group in the View menu, its three levels and `Alt+arrows` are history too (see step 7b).
 
 ## Versions (step 1, 15 Nov 2026)
@@ -54,8 +56,8 @@ Container, poster, error dialog, controls with auto-hide, time slider with chapt
 - Hotkey custom mechanism is the `useHotkey` hook, not a prop on `Hotkey`.
 - `Hotkey` has no "seek 5 s" default: the default step is 10 s, so `←` / `→` pass `value={±5}`.
 - The scaffold bound `I` to picture-in-picture; removed, because the Studio tier needs `I`.
-- `--media-border-radius` is the player's corner radius (docs), and `--media-border-color` is the hairline around the player. We map them to `--pro-radius` and `--pro-frame-line`.
-- Extra tokens beyond the brief: `--pro-track` (slider track, added to reach 3:1), `--pro-scrim-alpha` and `--pro-scrim`, `--pro-frame-line`, `--pro-density-control/gap/pad`, `--pro-control-size`, `--pro-slider-hit`, focus and layer tokens.
+- `--media-border-radius` is the player's corner radius (docs), and `--media-border-color` is the hairline around the player. We map them to `--fl-radius` and `--fl-frame-line`.
+- Extra tokens beyond the brief: `--fl-track` (slider track, added to reach 3:1), `--fl-scrim-alpha` and `--fl-scrim`, `--fl-frame-line`, `--fl-density-control/gap/pad`, `--fl-control-size`, `--fl-slider-hit`, focus and layer tokens.
 
 ### Contrast (computed by `node scripts/contrast.mjs`)
 
@@ -73,13 +75,13 @@ Container, poster, error dialog, controls with auto-hide, time slider with chapt
 | accent on surface-1 | 15.48:1 | 3 | PASS |
 | accent on surface-2 | 14.14:1 | 3 | PASS |
 | accent-ink on accent | 16.56:1 | 4.5 | PASS |
-| slider track (--pro-track) on surface-0 | 5.04:1 | 3 | PASS |
-| slider track (--pro-track) on scrim over white | 3.74:1 | 3 | PASS |
+| slider track (--fl-track) on surface-0 | 5.04:1 | 3 | PASS |
+| slider track (--fl-track) on scrim over white | 3.74:1 | 3 | PASS |
 | hairline (line) on surface-1, decorative | 1.34:1 | - | PASS |
 | focus ring halo: accent vs surface-0 halo | 16.56:1 | 3 | PASS |
 | focus ring halo: surface-0 halo vs white frame | 19.57:1 | 3 | PASS |
 
-The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the full-strength part of the scrim, so the "over white frame" rows are the worst case. Proposed token values were kept; only `--pro-track` (#7A828E) was added (the unfilled track; the buffered range uses `--pro-text-dim`), because the hairline colour is too dark for a slider track (first try #5C6470 gave 2.43:1 over white).
+The scrim is `--fl-surface-0` at 88% opacity. Text and icons sit only over the full-strength part of the scrim, so the "over white frame" rows are the worst case. Proposed token values were kept; only `--fl-track` (#7A828E) was added (the unfilled track; the buffered range uses `--fl-text-dim`), because the hairline colour is too dark for a slider track (first try #5C6470 gave 2.43:1 over white).
 
 ### Gate checklist (public URL, Chrome on macOS, 15 Nov 2026)
 
@@ -97,7 +99,7 @@ The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the 
 | Phone viewport | Layout only: 320 px and 360 px wide players checked in the workbench. **44 px targets, tap and double-tap not tested**: the session could not emulate a coarse pointer or resize the window. Needs a real phone |
 | Narrow embed, 320 px | Pass: nothing overflows; settings menu and help dialog stay inside and scroll |
 | Bright and dark frame | Pass: checked with the video forced to pure white; controls, time and focus rings legible |
-| Reduced motion | **Not tested in a browser.** By construction every transition uses `--pro-duration` or `--pro-duration-fade`, both set to 0 ms, and the spinner animation is removed |
+| Reduced motion | **Not tested in a browser.** By construction every transition uses `--fl-duration` or `--fl-duration-fade`, both set to 0 ms, and the spinner animation is removed |
 | Captions | Pass: button and `C` toggle; track menu lists English and Japanese; cue styled with `::cue` |
 | Error dialog | Pass: appears on a bad source (`/preview.html?media=error`). Retry closes it and reloads the source (new network requests seen). See Unverified for the still-broken-source case |
 | Source without captions | Pass (`?media=plain`): captions button hidden |
@@ -117,7 +119,7 @@ The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the 
 
 ### Where pro state lives, and why
 
-A small separate store next to the player (`src/pro/store.ts`), created once per `ProSkin`, read through a React context and `useSyncExternalStore` with selectors. Reasons: Video.js has no documented custom-feature API; the skin does not own `createPlayer`, so it could not add a feature even if there were one; and a separate store keeps every pro byte out of the Viewer path.
+A small separate store next to the player (`src/pro/store.ts`), created once per `FramelineSkin`, read through a React context and `useSyncExternalStore` with selectors. Reasons: Video.js has no documented custom-feature API; the skin does not own `createPlayer`, so it could not add a feature even if there were one; and a separate store keeps every pro byte out of the Viewer path.
 
 The `<video>` element is found by querying the player container (`useVideoElement`), re-run when `useMedia()` changes and when the container's children change.
 
@@ -145,14 +147,14 @@ The `<video>` element is found by querying the player container (`useVideoElemen
 
 | Chunk | Raw | Gzip | Loaded when |
 | --- | --- | --- | --- |
-| `preview-*.js` (Viewer path: React, Video.js with the Mux/HLS engine, the Viewer skin, `ProSkin` wrapper and flag resolver) | 963.0 kB | 284.1 kB | always |
+| `preview-*.js` (Viewer path: React, Video.js with the Mux/HLS engine, the Viewer skin, `FramelineSkin` wrapper and flag resolver) | 963.0 kB | 284.1 kB | always |
 | `preview-*.css` (skin styles; byte-identical to the step 2 tag) | 30.7 kB | 5.6 kB | always |
 | `runtime-*.js` (store, frame clock, timecode) | 7.7 kB | 3.3 kB | any pro feature or debug is on |
 | `studio-*.js` (empty until steps 4 to 7) | 47 B each | 86 B each | a feature of that tier is on |
 | `debug-*.js` + `debug-*.css` | 1.3 kB + 0.7 kB | 0.8 kB + 0.4 kB | `debug` or `?debug` |
 | `dev-tier-switch-*.js` (preview app only) | 0.4 kB | 0.3 kB | `?debug` |
 
-Checked on the public URL without `?debug`: no pro chunk is requested. The Viewer chunk contains none of the store, clock, timecode or debug code (searched for their identifiers). It does contain the flag resolver and tier table, which `ProSkin` needs to decide what to load. The Viewer path grew by about 4.7 kB raw over step 2. We have not measured the Viewer skin alone against a stock skin; almost all of the 963 kB is Video.js and its streaming engine.
+Checked on the public URL without `?debug`: no pro chunk is requested. The Viewer chunk contains none of the store, clock, timecode or debug code (searched for their identifiers). It does contain the flag resolver and tier table, which `FramelineSkin` needs to decide what to load. The Viewer path grew by about 4.7 kB raw over step 2. We have not measured the Viewer skin alone against a stock skin; almost all of the 963 kB is Video.js and its streaming engine.
 
 ### Checks
 
@@ -173,7 +175,7 @@ Checked on the public URL without `?debug`: no pro chunk is requested. The Viewe
 
 ### How the Studio controls get into the bar
 
-The Viewer bar renders four empty slots (`transport-start`, `transport-end`, `time`, `tools`) only when `ProSkin` asks for them. The lazy Studio module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Viewer path. With any Studio control on, the seek bar always has its own row, and the button row wraps.
+The Viewer bar renders four empty slots (`transport-start`, `transport-end`, `time`, `tools`) only when `FramelineSkin` asks for them. The lazy Studio module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Viewer path. With any Studio control on, the seek bar always has its own row, and the button row wraps.
 
 ### Decisions
 
@@ -255,7 +257,7 @@ Built with the step 5b look from the start (the author's instruction): system ty
 - **Slider keys, one behaviour:** on the focused seek slider `←` `→` (and `↑` `↓`, as on any slider) step one frame while paused and seek 5 s while playing; `Shift` jumps 10 frames. These replace the stock 1 s / 10 s arrow steps, and are prevented so the global map does not also fire. `Home`, `End`, `PageUp`, `PageDown` stay stock (start, end, ±10 s), then snap.
 - **Frame snapping:** a `seeking` listener moves every seek in Studio (timeline, slider keys, `J` `L`, number keys, `Home` `End`) to the middle of the frame it lands in, with the step 4 function. It runs inside the `seeking` event, so the browser does one seek. Scrubbing stays as smooth as stock: Video.js already throttles drag seeks to one per 100 ms. `End` therefore lands on the last frame, not on "ended".
 - The quiet hover bubble and thumbnail float above the timeline; over a marker the marker's tooltip replaces them.
-- Toggled-on tool buttons use `--pro-on`, not the accent (5b.2), already here.
+- Toggled-on tool buttons use `--fl-on`, not the accent (5b.2), already here.
 
 ### Checks (headless Google Chrome 1280x800 unless noted, driven by Playwright; see "How screenshots were taken")
 
@@ -316,13 +318,13 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 
 ### How it is built
 
-- `ProSkin layout="dock" | "overlay"`; default `overlay` for Viewer and `dock` for Studio (`resolveLayout`, tested). `data-layout` on the container; shown in the debug readout.
-- Dock structure, in the Viewer skin so that Viewer can dock too without pro code: `Container` > `.pro-stage` (media, poster, overlay layer, pro layers, indicators) + the control bar as a static panel. The skin is a flex column; the stage has `aspect-ratio: var(--pro-stage-ratio, 16 / 9)` and may shrink, the dock may not. With a fixed height (or fullscreen) the stage takes what is left and the picture is letterboxed.
+- `FramelineSkin layout="dock" | "overlay"`; default `overlay` for Viewer and `dock` for Studio (`resolveLayout`, tested). `data-layout` on the container; shown in the debug readout.
+- Dock structure, in the Viewer skin so that Viewer can dock too without pro code: `Container` > `.pro-stage` (media, poster, overlay layer, pro layers, indicators) + the control bar as a static panel. The skin is a flex column; the stage has `aspect-ratio: var(--fl-stage-ratio, 16 / 9)` and may shrink, the dock may not. With a fixed height (or fullscreen) the stage takes what is left and the picture is letterboxed.
 - The pro bar's main row is rendered by the Viewer skin as groups with slots: `time-start`, Transport (`transport-start`, Play, `transport-end`), `time`, host slot, `tools`, `tray`, spacer, host slot, Playback. The Studio module fills the slots.
 - **Tray position:** in the DOM the tray comes right after the Tools button (so Tab goes Tools → tray → Playback, as the brief asks); CSS `order` lays it out as a full-width row under the main row.
 - **Narrow order:** below 560 px (680 px on touch) the order of controls changes (timecode, step, Play, cut), so the DOM changes with it. The Studio module measures the container, picks `wide`, `medium` or `narrow` (`chooseDockSize`, tested) and writes `data-dock-size` on the container. Everything else is container queries.
 - `toolsOpen` is in the pro store (default closed, `setToolsOpen`, tested). Persistence comes in step 6.
-- `--pro-frame-border: 1` draws a 1 px hairline and a 10 px radius around the player. Default: none. The preview page sets it.
+- `--fl-frame-border: 1` draws a 1 px hairline and a 10 px radius around the player. Default: none. The preview page sets it.
 
 ### Decisions, and where I chose differently from the brief or the mockups
 
@@ -332,14 +334,14 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 - **Narrow row 2** is Tools, Mute, Settings, Fullscreen: Settings fits, and it holds captions, speed and PiP, so no separate More menu is needed. Under 352 px the Tools label is the short one and the range readout shows the length only.
 - **320 px:** four 40 px buttons do not fit beside Play and the timecode (they would be 31 px wide). Under 350 px the previous/next cut buttons step aside; step, Play, timecode, Tools, Mute, Settings and Fullscreen stay, all 44 px tall and at least 40 px wide. `[` `]` and the Markers menu still work. The brief asked me to say so.
 - **Ruler at a narrow width:** the mockup shows a tick per second at 326 px; the 6 px rule gives a tick every 2 s there. The rule won.
-- **Toggled-on (`--pro-on`) against the control fill is only 1.48:1**, too little for a state. "On" buttons in the dock also draw a short bar in the text colour (8.4:1). Loop uses it.
-- **Dim text on `--pro-surface-3` is 4.05:1** with the proposed `--pro-text-dim`. Added `--pro-text-dim-raised` (#B2B2B8, 5.37:1) for dim text in tooltips and on hovered controls.
-- `--pro-track` (the unfilled track over footage in the Viewer overlay) moved to a neutral #85858C; the dock's track is `--pro-surface-2` as specified.
+- **Toggled-on (`--fl-on`) against the control fill is only 1.48:1**, too little for a state. "On" buttons in the dock also draw a short bar in the text colour (8.4:1). Loop uses it.
+- **Dim text on `--fl-surface-3` is 4.05:1** with the proposed `--fl-text-dim`. Added `--fl-text-dim-raised` (#B2B2B8, 5.37:1) for dim text in tooltips and on hovered controls.
+- `--fl-track` (the unfilled track over footage in the Viewer overlay) moved to a neutral #85858C; the dock's track is `--fl-surface-2` as specified.
 - In/Out buttons no longer light up when a point is set: they are not toggles, and the band shows the range.
 - The timecode field shows the current frame only; the total moved to its tooltip and its accessible description.
 - **Seconds-only ruler labels** are used up to and including 60 s (the mockup's 60 s clip reads `0s … 50s`).
 - The preview page **opens in the Studio tier** (`?tier=viewer` for Viewer), since the page is now a monitor. `?layout=dock|overlay` and `?density=compact` are also read.
-- Also changed beyond the brief: tooltips lost their keycap chips everywhere (Viewer too), popups got one soft shadow, the Viewer playhead is white, the Viewer primary dialog button is neutral, captions-on and PiP-on use `--pro-on`.
+- Also changed beyond the brief: tooltips lost their keycap chips everywhere (Viewer too), popups got one soft shadow, the Viewer playhead is white, the Viewer primary dialog button is neutral, captions-on and PiP-on use `--fl-on`.
 
 ### Contrast (computed by `node scripts/contrast.mjs`)
 
@@ -349,7 +351,7 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 | text on surface-1 (dock, menus) | 14.89:1 | 4.5 | PASS |
 | text on surface-2 (controls) | 12.45:1 | 4.5 | PASS |
 | text on surface-3 (hover, tooltips, badges) | 10.13:1 | 4.5 | PASS |
-| text on --pro-on (a toggle that is on) | 8.39:1 | 4.5 | PASS |
+| text on --fl-on (a toggle that is on) | 8.39:1 | 4.5 | PASS |
 | text-dim on surface-0 (fps label) | 6.89:1 | 4.5 | PASS |
 | text-dim on surface-1 (labels, ruler labels) | 5.95:1 | 4.5 | PASS |
 | text-dim on surface-2 (controls) | 4.97:1 | 4.5 | PASS |
@@ -361,19 +363,19 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 | text on scrim (0.88) over white frame | 12.66:1 | 4.5 | PASS |
 | text-dim on scrim (0.88) over white frame | 5.06:1 | 4.5 | PASS |
 | accent (progress fill) on scrim over white frame | 5.20:1 | 3 | PASS |
-| slider track (--pro-track) on surface-0 | 5.26:1 | 3 | PASS |
-| slider track (--pro-track) on scrim over white | 3.86:1 | 3 | PASS |
+| slider track (--fl-track) on surface-0 | 5.26:1 | 3 | PASS |
+| slider track (--fl-track) on scrim over white | 3.86:1 | 3 | PASS |
 | Viewer playhead (text) on scrim over white | 12.66:1 | 3 | PASS |
 | focus ring: accent on surface-0 | 7.08:1 | 3 | PASS |
 | focus ring: accent on surface-1 (dock) | 6.11:1 | 3 | PASS |
 | focus ring: accent on surface-2 | 5.11:1 | 3 | PASS |
-| focus ring: accent on --pro-on | 3.45:1 | 3 | PASS |
+| focus ring: accent on --fl-on | 3.45:1 | 3 | PASS |
 | focus ring halo: surface-0 vs white frame | 19.28:1 | 3 | PASS |
-| playhead (text) over the unplayed band (--pro-range) | 3.82:1 | 3 | PASS |
+| playhead (text) over the unplayed band (--fl-range) | 3.82:1 | 3 | PASS |
 | playhead (text) over the played band (accent) | 2.44:1 | - | PASS |
 | playhead outline (surface-0) over the played band (accent) | 7.08:1 | 3 | PASS |
 | playhead (text) over the neutral track (surface-2) | 12.45:1 | 3 | PASS |
-| unplayed band (--pro-range) against the neutral track | 3.26:1 | 3 | PASS |
+| unplayed band (--fl-range) against the neutral track | 3.26:1 | 3 | PASS |
 | played band (accent) against the unplayed band, decorative: position also shown by the playhead | 1.57:1 | - | PASS |
 | played band / progress fill (accent) against the neutral track | 5.11:1 | 3 | PASS |
 | bracket handles (accent) against the dock (surface-1) | 6.11:1 | 3 | PASS |
@@ -388,8 +390,8 @@ See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (
 | buffered line on the dock, decorative | 1.89:1 | - | PASS |
 | hairline (line) on surface-1, decorative | 1.32:1 | - | PASS |
 | Play fill (text) against the dock | 14.89:1 | 3 | PASS |
-| toggle on (--pro-on) against control fill (surface-2): too low alone, so "on" also draws a bar in the text colour | 1.48:1 | - | PASS |
-| toggle-on bar (text) against --pro-on | 8.39:1 | 3 | PASS |
+| toggle on (--fl-on) against control fill (surface-2): too low alone, so "on" also draws a bar in the text colour | 1.48:1 | - | PASS |
+| toggle-on bar (text) against --fl-on | 8.39:1 | 3 | PASS |
 
 The white playhead over the played (accent) band is 2.44:1 on its own; its dark outline is 7.08:1 against the accent, which is what makes it visible there. Over the unplayed band it is 3.82:1, and the unplayed band is 3.26:1 against the neutral track.
 
@@ -458,7 +460,7 @@ The 5b build had a three-row dock about 163 px tall (220 px with the tray open) 
 - **Narrow arrangement** changes the order of the controls, so the module measures the container and writes `data-dock-size="narrow" | "wide"` (`isNarrowDock`, tested); everything else is container queries.
 - **Markers in the settings menu (narrow):** the settings menu lives in the Viewer chunk and menu parts need the menu's React context, so a portal would not work. The Studio module hands a ready element (`MarkersSubmenu`, props only) to the skin through the slots context (`useSetProSettingsItems`), and `SettingsMenu` renders it inside its own tree. Mute is a plain item of the Viewer skin, shown by CSS on the narrow dock only.
 - **Timeline:** 46 px (22 px ruler, 2 px gap, 16 px track, buffered line at 41 px); 40 px in compact density. No accent fill without a range: the track is neutral and the white playhead carries the position.
-- **Ruler labels and the playhead's head:** labels are painted above the head with `mix-blend-mode: difference`. `--pro-ruler-label` (#B8B8C0) is chosen so the blended colour on the dock equals `--pro-text-dim`; where the white head passes under a label the text turns dark (10.2:1), so the label stays readable and the head stays whole. Forced-colours mode switches the blending off.
+- **Ruler labels and the playhead's head:** labels are painted above the head with `mix-blend-mode: difference`. `--fl-ruler-label` (#B8B8C0) is chosen so the blended colour on the dock equals `--fl-text-dim`; where the white head passes under a label the text turns dark (10.2:1), so the label stays readable and the head stays whole. Forced-colours mode switches the blending off.
 - **Handles:** always rendered. Value = the point, or the track's own end while the point is `null`. The store now treats In at 0 and Out at the duration as "not set" (`null`), after its swap and reject rules. On top of that the handle logic treats In on frame 0 and Out on the last frame as unset (`isAtOwnEnd`), which is the brief's "within one frame". `I` on the first frame or `O` on the last does the same and says "In is at the start already" / "Out is at the end already".
 - **Magnets:** `handleDragTime` pulls a dragged handle onto the playhead or a marker when it is within 5 px (the nearest wins), and rounds to that frame. The magnet list is read once, at pointer-down.
 - **Loop** is on or off. `loopMode` still says what loops (`'range'` or `'whole'`) and the store keeps it in step as points come and go. The whole video loops from the `ended` event. Clearing the range no longer switches Loop off.
@@ -490,15 +492,15 @@ The 5b build had a three-row dock about 163 px tall (220 px with the tray open) 
 | playhead over the neutral track | 12.45:1 | 3 |
 | active handle (accent) against the dock / the neutral track | 6.11:1 / 5.11:1 | 3 |
 | active handle against the unplayed band (same hue family; the handle stands 4 px proud of the track) | 1.57:1 | decorative |
-| **idle handle (`--pro-handle-idle` #77777E) against the dock / the neutral track** | **3.74:1 / 3.13:1** | 3 |
+| **idle handle (`--fl-handle-idle` #77777E) against the dock / the neutral track** | **3.74:1 / 3.13:1** | 3 |
 | ruler label, blended, on the dock | 5.95:1 | 4.5 |
 | ruler label, blended, over the white playhead head | 10.24:1 | 4.5 |
 | hover hairline (text at 45%) over the track / the dock | 3.79:1 / 4.07:1 | 3 |
 | Viewer progress fill (white) against the unfilled track | 3.28:1 | 3 |
 | Viewer fill and thumb on the scrim over a white frame | 12.66:1 | 3 |
-| text on a highlighted Studio menu item (`--pro-on`) | 8.39:1 | 4.5 |
+| text on a highlighted Studio menu item (`--fl-on`) | 8.39:1 | 4.5 |
 | dim-raised text on that highlight: 4.45:1, so hints take the text colour on a highlighted item | - | - |
-| Loop on (`--pro-on`) against the dock: 1.77:1 alone, so it keeps the short bar in the text colour (8.39:1) | - | 3 for the bar |
+| Loop on (`--fl-on`) against the dock: 1.77:1 alone, so it keeps the short bar in the text colour (8.39:1) | - | 3 for the bar |
 
 ### Checks (headless Google Chrome via Playwright, 2x; local production build unless noted)
 
@@ -575,7 +577,7 @@ So the brief's proposed defaults were replaced for Shorts and Reels (bigger bott
 ### How the picture rectangle is computed and kept current
 
 - `pictureRect(stageW, stageH, videoW, videoH, fit)` in `src/pro/studio/guides/geometry.ts` (pure, tested): for `contain` the largest centred rectangle with the ratio `videoWidth / videoHeight`. It also handles `fill`, `cover` (the rectangle is then larger than the stage), `none` and `scale-down`; the mode is read from the video element's computed `object-fit`. `object-position` is taken as centred.
-- `usePictureRect` measures the `<video>` element's own box (so any CSS on it is respected), places the result relative to the overlay layer's parent, rounds the edges to device pixels, and writes `--pro-picture-x/y/w/h` on the container. The Viewer skin's `.pro-overlay` rule uses those variables (falling back to the whole parent), so the overlay layer **is** the picture and guides are drawn in its coordinates. The host's `overlay` slot is positioned the same way in Studio.
+- `usePictureRect` measures the `<video>` element's own box (so any CSS on it is respected), places the result relative to the overlay layer's parent, rounds the edges to device pixels, and writes `--fl-picture-x/y/w/h` on the container. The Viewer skin's `.pro-overlay` rule uses those variables (falling back to the whole parent), so the overlay layer **is** the picture and guides are drawn in its coordinates. The host's `overlay` slot is positioned the same way in Studio.
 - Recomputed on: a `ResizeObserver` on the video element and on the stage (covers window resizes, density changes, the dock changing height, entering and leaving fullscreen), the media's `loadedmetadata`, `resize` and `emptied` (a new source, a rendition of another shape), `fullscreenchange`, and window `resize`. Before metadata there is no rectangle and nothing is drawn.
 - No workaround was needed. **Pixel aspect ratio is ignored**: `videoWidth / videoHeight` is taken as the display ratio (browsers report anamorphic sources already scaled). Rotation metadata likewise.
 
@@ -584,7 +586,7 @@ So the brief's proposed defaults were replaced for Shorts and Reels (bigger bott
 - One `<svg>` per guide (`data-guide="title-safe"`, `"9:16"`, `"zones-tiktok"`…), each the size of the picture, with user units equal to CSS pixels and coordinates on device-pixel centres (`crisp`, `crispRect`), `shape-rendering: crispEdges`.
 - **Every line is drawn twice:** a 3 px stroke of black at 50%, then a 1 px white stroke at 75% on top. Over white the dark edge shows; over black the white line shows. Dashed for safe areas and zones, solid for thirds, the centre cross and the crop's edge. No accent.
 - Crop: the outside is filled `rgb(0 0 0 / .55)`; when the picture already has the ratio only the outline is drawn (`cropMask(...).full`). Zones: `rgb(0 0 0 / .35)` plus the dashed outline.
-- Labels are HTML pills (10.5 px, `--pro-text` on `rgb(14 14 16 / .72)`), hidden under a 480 px wide picture. Title safe's label sits inside its top-left corner; Action safe's sits **on** its top edge, because the gap between the two rectangles (1.5% of the height) is too small for a label. The rail's label sits to its left.
+- Labels are HTML pills (10.5 px, `--fl-text` on `rgb(14 14 16 / .72)`), hidden under a 480 px wide picture. Title safe's label sits inside its top-left corner; Action safe's sits **on** its top edge, because the gap between the two rectangles (1.5% of the height) is too small for a label. The rail's label sits to its left.
 - The centre cross is 5% of the picture height tip to tip, at least 8 px.
 
 ### View state, persistence, events
@@ -593,7 +595,7 @@ So the brief's proposed defaults were replaced for Shorts and Reels (bigger bott
 - **Zones and the 9:16 crop:** a zone always carries crop `9:16`, also when the host's guide list does not offer 9:16 as a crop (zones need the frame); choosing another crop, or None, clears the zone ("Crop 1:1. Platform zones off"). Setting zones to None keeps the 9:16 crop only if the host offers it.
 - **Badge:** checkbox guides, plus one for a crop; a zone with its frame counts as one. Hidden counts as zero.
 - **Hide/Show** keeps the set and flips `hidden`. Any choice made while hidden shows the guides again. `hidden` is not persisted: a reload shows the remembered set.
-- **Persistence:** one key (`videojs-pro:v1` or the host's), JSON `{ v: 1, guides, crop, zones, timeDisplay }`, read synchronously in the store's initialiser (in `ProRuntime`'s `useState`), so the first render already has it; there is no visible flash because guides wait for the picture rectangle anyway. Written on every change of `view` or `timeDisplay`. Every access is in `try/catch`. **Storage can come back empty, blocked or holding anything, and nothing depends on it.**
+- **Persistence:** one key (`frameline:v1` (`videojs-pro:v1` until step 8) or the host's), JSON `{ v: 1, guides, crop, zones, timeDisplay }`, read synchronously in the store's initialiser (in `ProRuntime`'s `useState`), so the first render already has it; there is no visible flash because guides wait for the picture rectangle anyway. Written on every change of `view` or `timeDisplay`. Every access is in `try/catch`. **Storage can come back empty, blocked or holding anything, and nothing depends on it.**
 - A remembered value the host does not allow is dropped on read, but the stored string is only rewritten at the next change. So a user who visits a restricted player and changes nothing keeps their fuller set for other players on the same origin.
 - `onViewChange({ guides, crop, zones })` reports the *drawn* set (empty while hidden), fires when it changes, and not for the starting set.
 - Container attributes: `data-guide-<id>` for each drawn guide **and for the crop** (`data-guide-9-16`), plus `data-crop="9-16"` and `data-zones="tiktok"`.
@@ -636,7 +638,7 @@ No conflict: `V` is not in the YouTube map or ours, the pattern needs Shift alon
 ### For step 7
 
 - **The Image section goes into `ViewMenu`'s `extra` prop** (`src/pro/studio/view-menu.tsx`): it is rendered under Platform zones in the right column, inside the same `Menu.Content`, so `Menu.RadioGroup`/`Menu.RadioItem` work there. Use the `onClick` + `preventDefault` pattern to keep the menu open.
-- **The image tools should use the picture rectangle**: `usePictureRect` returns `{ rect, layer }` and publishes `--pro-picture-*`. Zoom and pan are the risk: the hook measures the video element's box and re-measures on `ResizeObserver`, which does **not** fire for a CSS `transform`. If zoom transforms the video, the guides will not follow unless the transform is put on a wrapper that holds both the video and the overlay layer, or the hook is told to re-measure. Decide first whether guides should zoom with the picture (probably yes).
+- **The image tools should use the picture rectangle**: `usePictureRect` returns `{ rect, layer }` and publishes `--fl-picture-*`. Zoom and pan are the risk: the hook measures the video element's box and re-measures on `ResizeObserver`, which does **not** fire for a CSS `transform`. If zoom transforms the video, the guides will not follow unless the transform is put on a wrapper that holds both the video and the overlay layer, or the hook is told to re-measure. Decide first whether guides should zoom with the picture (probably yes).
 - Channel and gain/gamma filters on the video do not affect the overlay layer (it is a sibling), which is what we want: guides stay white.
 - The store still has `inspection` (channel, gain, gamma, zoom) from step 3, unused. `infoHud`, `channels`, `gainGamma`, `zoom` are on in Studio with no UI.
 - The badge counts guides only; decide whether an active image tool counts.
@@ -678,7 +680,7 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 ## Later
 
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
-- Give `ProSkin` a title for grabbed file names (`<title>_<timecode>.png`).
+- Give `FramelineSkin` a title for grabbed file names (`<title>_<timecode>.png`).
 - Stop the Out frame flashing at the loop point (jump one frame earlier) if it bothers in use.
 - Translate the Studio strings (`src/pro/studio/strings.ts`).
 - Overlay each platform's current safe-zone template and correct `platform-zones.ts` (step 6b used secondary sources).
@@ -733,7 +735,7 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 - **Step 3: frame numbers against a burned-in frame counter.** The demo stream has none. Our own 24 fps video (step 8) should carry one so this can be checked.
 - **Step 3: frame clock in Firefox and Safari.** Firefox before 132 has no `requestVideoFrameCallback` and will use the approximate fallback; neither browser was run.
 - **Step 3: phone-width re-check after step 3.** The Chrome window became hidden (0×0 viewport, screenshots timed out), so the layout could not be looked at again. The bar markup changed only by two optional slots and the CSS is unchanged.
-- **Step 3: two `ProSkin` players on one page** were not rendered together; per-instance state is covered by a unit test on the store.
+- **Step 3: two `FramelineSkin` players on one page** were not rendered together; per-instance state is covered by a unit test on the store.
 - **Step 3: dropped-frame counts** in the readout were high (the hidden window throttles rendering), so they say nothing about real playback.
 - **Fullscreen after the reskin** (see the gate table): the browser session refused all fullscreen requests.
 - **Touch**: 44 px targets, tap, double-tap, tap-to-play on iOS Safari. The HTML package has a known iOS tap issue; we use React, but this is still untested.
@@ -768,13 +770,13 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 - Checked in Chrome on the production build, Viewer and Studio: Tab from the page stops on the preview page's own switches, then **Seek** is the first stop in the player, with only its ring; `K` toggles play, `L` +10 s, `J` back, `M` mutes, `→` seeks (playing, Viewer) or steps a frame (paused, Studio); a click on the picture, then `K`, plays. `F` could not be checked (headless Chrome refuses fullscreen). Screenshots: `design/screenshots/step-6c/tab-first-control-*.png`.
 
 ### F5: narrow layout against `Narrow.dc.html`
-The mockup was read from source this time (sizes, order, spacing). Already the same: row 1 (timecode 100x44, step back and forward as one segment of 2x40, Play 46x44, previous/next cut as a segment of 2x40), row 2 (segmented In, Out, Loop at 44 high with 1 px dividers, Loop on `--pro-on`; Capture, View, Settings, Fullscreen at 44x44), 10 px between rows, 8 px radius segments, 14 px timecode.
+The mockup was read from source this time (sizes, order, spacing). Already the same: row 1 (timecode 100x44, step back and forward as one segment of 2x40, Play 46x44, previous/next cut as a segment of 2x40), row 2 (segmented In, Out, Loop at 44 high with 1 px dividers, Loop on `--fl-on`; Capture, View, Settings, Fullscreen at 44x44), 10 px between rows, 8 px radius segments, 14 px timecode.
 Changed to match: dock padding 12 / 15 / 14 px (was 12 px at the sides and below).
 Differences kept, with the reason:
 1. **Timeline width 270 px at 390, mockup 326.** F3's gutter, 29 px on each side on touch and narrow layouts, so the 44 px handle target fits inside the player without being cut at the edge (15 px dock padding + 29 = 44). F3 wins.
 2. The mockup's handles sit inside the track, centred on their points; ours are anchored on the outer edge (F3).
 3. Right group: 2 px between the four buttons (the mockup has none).
-4. The mockup draws marker pins at 8x10 in one grey; ours are the same pin in `--pro-text-dim` and `--pro-accent` when selected.
+4. The mockup draws marker pins at 8x10 in one grey; ours are the same pin in `--fl-text-dim` and `--fl-accent` when selected.
 5. Under 350 px (the accepted three rows at 320) the cut segment is not shown and In/Out/Loop take a full row; the mockup has no 320 case.
 6. The mockup's card has a 1 px border and 10 px radius around picture and dock; ours is the preview page's frame (1 px line, the skin's radius).
 Screenshots: `design/screenshots/step-6c/studio-390.png`, `studio-320.png` (before the change: `*-before.png`), Chrome headless, touch emulation, 2x.
@@ -835,11 +837,11 @@ Step 7 was "Studio image tools"; it is zoom only. The rule: **Viewer is for watc
 - **`capRenditionToPlayerSize`** (`docs/guides/media-sources.md`): on by default; automatic selection is held to the smallest rendition that covers the element.
 
 ### Z2: how zoom is built
-- **Picture wrapper.** `VideoSkin` takes `pictureWrapper`; `ProSkin` sets it from `features.zoom`. With it, the media, the poster and `.pro-overlay` sit in one `div.pro-picture` (100% of the stage, `transform-origin: 0 0`). Without the flag the element is not rendered: the Viewer's DOM was compared element by element (tag, classes, role) with the deployed 6d build and is identical. The wrapper's one CSS rule is in `skin.css`, because the element is rendered by the Viewer chunk and must be laid out before the Studio CSS arrives; it matches nothing in the Viewer.
+- **Picture wrapper.** `VideoSkin` takes `pictureWrapper`; `FramelineSkin` sets it from `features.zoom`. With it, the media, the poster and `.pro-overlay` sit in one `div.pro-picture` (100% of the stage, `transform-origin: 0 0`). Without the flag the element is not rendered: the Viewer's DOM was compared element by element (tag, classes, role) with the deployed 6d build and is identical. The wrapper's one CSS rule is in `skin.css`, because the element is rendered by the Viewer chunk and must be laid out before the Studio CSS arrives; it matches nothing in the Viewer.
 - **Transform.** `src/pro/zoom.ts` (pure, tested): `zoomScale`, `clampCentre`, `zoomTransform`, `panCentre`, `nextZoom`. `useZoom` (`src/pro/studio/zoom.tsx`) writes `translate(x, y) scale(s)` on the wrapper. Fit removes the transform. 100%: `videoWidth / picture width / devicePixelRatio`; 200% twice that; a scale below 1 is applied as it is. The zoomed picture's corner is rounded to a whole device pixel of the screen.
 - **Pan** is kept as the point of the picture at the centre of the stage (shares of its width and height), so a resize or a rendition of another size keeps the same spot. Clamped per axis: a picture larger than the stage stops with its edge on the stage's edge; a smaller one stays centred and cannot be panned. Entering a level resets to the centre.
-- **Picture rectangle.** `usePictureRect` measures with `getBoundingClientRect`, which includes the transform, so it divides by the wrapper's scale (read from its computed transform). The rectangle and `--pro-picture-*` describe the unzoomed picture at every level; a `ResizeObserver` does not fire for a transform, and a resize while zoomed gives the right numbers (checked).
-- **Guides** are inside the wrapper and scale with it. Their strokes, dashes and labels divide by `--pro-zoom-scale` (set on the wrapper), so a line is still about 1 px and a label the same size at 200%. Device-pixel snapping of the lines is only exact at Fit.
+- **Picture rectangle.** `usePictureRect` measures with `getBoundingClientRect`, which includes the transform, so it divides by the wrapper's scale (read from its computed transform). The rectangle and `--fl-picture-*` describe the unzoomed picture at every level; a `ResizeObserver` does not fire for a transform, and a resize while zoomed gives the right numbers (checked).
+- **Guides** are inside the wrapper and scale with it. Their strokes, dashes and labels divide by `--fl-zoom-scale` (set on the wrapper), so a line is still about 1 px and a label the same size at 200%. Device-pixel snapping of the lines is only exact at Fit.
 - **Pointer.** Native listeners on the wrapper. A drag over 3 px takes pointer capture and pans; its `pointerup` and the click after it are stopped, and focus is put on the container if it was on the body (the container did not see the press end). `touch-action: none` on the wrapper while there is something to pan, so one finger pans and the page does not scroll. No pinch zoom. Cursor `grab` / `grabbing`.
 - **Recomputed** on: level, a new picture rectangle, a `ResizeObserver` on the stage, the media's `loadedmetadata`, `resize` and `emptied`, `fullscreenchange`, window `resize`.
 - **State.** `zoom` is a field of the store (`'fit' | '100' | '200'`), not of `ViewState`, so it is never serialised. `AllowedView` has `zoom`; `setZoom` and `cycleZoom` do nothing without it, and `setAllowedView` puts the level back to Fit when the host turns the flag off. The container carries `data-zoom="100" | "200"` while zoomed (not at Fit).
@@ -863,7 +865,7 @@ Step 7 was "Studio image tools"; it is zoom only. The rule: **Viewer is for watc
 | --- | --- |
 | Scale | 1x: video 1280 wide in a 1280 px picture, 100% = 1, 200% = 2. 2x: video 2560 wide, 100% = 1, 200% = 2 (video box x devicePixelRatio = videoWidth, and twice that) |
 | Pixelated | `image-rendering: pixelated` at 200% only |
-| Guides follow | the thirds SVG's box equals the video's box at 200% (2560x1440 at 1x); `--pro-picture-*` unchanged by zooming; after a window resize while zoomed the rectangle is the new unzoomed size and the picture still covers the stage |
+| Guides follow | the thirds SVG's box equals the video's box at 200% (2560x1440 at 1x); `--fl-picture-*` unchanged by zooming; after a window resize while zoomed the rectangle is the new unzoomed size and the picture still covers the stage |
 | 10 px drag | paused: stays paused, picture moved 10 px. Playing: keeps playing, moved 10 px. Two quick drags: no fullscreen request, still playing. A click afterwards pauses |
 | Alt+arrows | one press moves 128 px (a tenth of 1280); 30 presses each way stop with the picture's edges exactly on the stage's edges (0 px gap on all four); the playhead did not move |
 | Grab frame | `G` at Fit and `G` at 200% panned into a corner: same canvas size (the video's own) and the same pixel checksum |
@@ -909,7 +911,7 @@ Viewer gate in headless Chrome at 1440 and 320: tab order (Seek, Play, Mute, Vol
 
 ### G2: the Zoom button
 - `ZoomMenu` in `src/pro/studio/zoom.tsx`, rendered in the `tools` slot after Guides (so before the divider and Captions; on the narrow dock next to Guides). A Video.js `Menu` with a `Menu.RadioGroup`; choosing a level closes the menu and focus returns to the button, like the Capture menu. It opens on the checked level (Video.js's own behaviour for a radio menu, which is right here).
-- The button: the level as text, 52 px wide at every level (`font-variant-numeric: tabular-nums`, 13 px semibold), the height of the other dock buttons (34 px; 44 on touch), `data-pressed` (the `--pro-on` fill and its short bar) while zoomed. Name "Zoom, Fit" / "Zoom, 200%"; tooltip "Zoom" with `Z`. Measured: the button's left edge and width and the Settings button's position are the same at Fit and at 400%.
+- The button: the level as text, 52 px wide at every level (`font-variant-numeric: tabular-nums`, 13 px semibold), the height of the other dock buttons (34 px; 44 on touch), `data-pressed` (the `--fl-on` fill and its short bar) while zoomed. Name "Zoom, Fit" / "Zoom, 200%"; tooltip "Zoom" with `Z`. Measured: the button's left edge and width and the Settings button's position are the same at Fit and at 400%.
 - Levels `fit`, `100`, `150`, `200`, `400` (`ZOOM_LEVELS`); each is a multiple of 100% (`FACTOR`). `data-zoom` carries the level; `image-rendering: pixelated` for 200 and 400.
 - **Pixelated was measured this time**, from screenshots at device scale factor 1: at 200% identical pixels come in runs of 2 px, at 400% in runs of 4 px; at 100% and 150% there are no such runs. So Chrome does draw the scaled video with nearest-neighbour through the wrapper's transform. (In step 7 this was read from the computed style only.)
 - **A Video.js detail found:** a menu is sized by measuring its content at max-content width (`core/dist/dev/dom/ui/menu/popup.js`, `measureContent`), where a paragraph is one line. The help line wrapped once the menu had its width and was cut off. It has a width of its own now (232 px), so it measures as it renders.

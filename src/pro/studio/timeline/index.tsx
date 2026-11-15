@@ -125,8 +125,8 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
   const band = rangeBand(points, 0, duration);
 
   const style = {
-    '--pro-band-start': band ? `${band.start}%` : undefined,
-    '--pro-band-end': band ? `${band.end}%` : undefined,
+    '--fl-band-start': band ? `${band.start}%` : undefined,
+    '--fl-band-end': band ? `${band.end}%` : undefined,
   } as CSSProperties;
 
   /**
@@ -225,9 +225,9 @@ const Ruler = memo(function Ruler({ duration, width, fps }: { duration: number; 
     const styles = getComputedStyle(element);
     const colour = (name: string, fallback: string) => styles.getPropertyValue(name).trim() || fallback;
     const paint = {
-      minor: { colour: colour('--pro-tick-minor', '#55555b'), height: 0.2 },
-      mid: { colour: colour('--pro-tick-mid', '#77777e'), height: 0.4 },
-      major: { colour: colour('--pro-tick-major', '#8e8e95'), height: 1 },
+      minor: { colour: colour('--fl-tick-minor', '#55555b'), height: 0.2 },
+      mid: { colour: colour('--fl-tick-mid', '#77777e'), height: 0.4 },
+      major: { colour: colour('--fl-tick-major', '#8e8e95'), height: 1 },
     };
     // One device pixel wide; two on very dense screens, where one would be too faint.
     const line = ratio >= 3 ? 2 : 1;

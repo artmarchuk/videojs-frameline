@@ -74,7 +74,7 @@
     width: 1px;
     height: calc(var(--media-spacing) * 4.5);
     margin-inline: calc(var(--media-spacing) * 2);
-    background-color: var(--pro-divider);
+    background-color: var(--fl-divider);
   }
 
   /* Time and transport do not mirror in right-to-left pages; the row keeps its left-to-right order. */
@@ -84,10 +84,10 @@
 
   /* Play is the one filled button: neutral, a little wider than the rest. Never the accent. */
   .pro-skin[data-bar="pro"] .pro-transport > .media-play-button {
-    width: calc(var(--pro-control-size) + var(--media-spacing) * 3);
-    border-radius: var(--pro-radius-group);
-    background-color: var(--pro-text);
-    color: var(--pro-ink);
+    width: calc(var(--fl-control-size) + var(--media-spacing) * 3);
+    border-radius: var(--fl-radius-group);
+    background-color: var(--fl-text);
+    color: var(--fl-ink);
   }
 
   .pro-skin[data-bar="pro"] .pro-transport > .media-play-button .media-play-button-play-icon,
@@ -97,7 +97,7 @@
 
   @media (hover: hover) {
     .pro-skin[data-bar="pro"] .pro-transport > .media-play-button:hover {
-      background-color: var(--pro-text);
+      background-color: var(--fl-text);
       filter: brightness(0.9);
     }
   }
@@ -109,7 +109,7 @@
   }
 
   .pro-skin[data-bar="pro"] .media-volume-slider-track {
-    background-color: var(--pro-surface-3);
+    background-color: var(--fl-surface-3);
   }
 
   /* Picture-in-picture and (on the narrow dock) mute are items of the settings menu. */
@@ -123,8 +123,8 @@
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    border-radius: var(--pro-radius-group);
-    background-color: var(--pro-surface-2);
+    border-radius: var(--fl-radius-group);
+    background-color: var(--fl-surface-2);
   }
 
   .pro-skin .pro-seg:empty {
@@ -139,7 +139,7 @@
     top: 50%;
     width: 1px;
     height: calc(var(--media-spacing) * 4.5);
-    background-color: var(--pro-divider);
+    background-color: var(--fl-divider);
     transform: translateY(-50%);
   }
 
@@ -158,20 +158,20 @@
     display: flex;
     justify-content: center;
     width: auto;
-    min-width: var(--pro-control-size);
+    min-width: var(--fl-control-size);
     padding-inline: calc(var(--media-spacing) * 3);
-    font-size: var(--pro-text-md);
+    font-size: var(--fl-text-md);
     font-weight: 600;
     white-space: nowrap;
   }
 
   /* Loop is a little wider than a plain button; Reset range a little narrower. */
   .pro-skin .pro-tool[data-pro-tool="loop"] {
-    width: calc(var(--pro-control-size) + var(--media-spacing));
+    width: calc(var(--fl-control-size) + var(--media-spacing));
   }
 
   .pro-skin .pro-tool-reset {
-    width: max(24px, calc(var(--pro-control-size) - var(--media-spacing) * 1.5));
+    width: max(24px, calc(var(--fl-control-size) - var(--media-spacing) * 1.5));
   }
 
   .pro-skin .pro-tool-reset .pro-tool-icon {
@@ -184,7 +184,7 @@
     display: flex;
     gap: calc(var(--media-spacing) * 1.5);
     width: auto;
-    min-width: var(--pro-control-size);
+    min-width: var(--fl-control-size);
     padding-inline: calc(var(--media-spacing) * 2);
   }
 
@@ -195,7 +195,7 @@
 
   .pro-skin .pro-tool-word {
     display: none;
-    font-size: var(--pro-text-md);
+    font-size: var(--fl-text-md);
     font-weight: 500;
   }
 
@@ -209,13 +209,13 @@
     flex: none;
     width: calc(var(--media-spacing) * 3);
     height: calc(var(--media-spacing) * 3);
-    color: var(--pro-text-dim);
+    color: var(--fl-text-dim);
     transform: rotate(90deg);
   }
 
   /* "On": a lighter graphite fill, plus aria-pressed. The accent is reserved for the timeline. */
   .pro-skin .pro-tool[data-pressed] {
-    background-color: var(--pro-on);
+    background-color: var(--fl-on);
   }
 
   /* The fill alone is only 1.5:1 against the control, so "on" also draws a short bar in the text colour. */
@@ -227,7 +227,7 @@
     width: calc(var(--media-spacing) * 3);
     height: 2px;
     border-radius: 1px;
-    background-color: var(--pro-text);
+    background-color: var(--fl-text);
     transform: translateX(-50%);
   }
 
@@ -235,9 +235,9 @@
     min-width: calc(var(--media-spacing) * 4.5);
     padding: 1px calc(var(--media-spacing) * 1.5);
     border-radius: calc(var(--media-spacing) * 2);
-    background-color: var(--pro-surface-3);
-    color: var(--pro-text);
-    font-size: var(--pro-text-xs);
+    background-color: var(--fl-surface-3);
+    color: var(--fl-text);
+    font-size: var(--fl-text-xs);
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     line-height: 1.3;
@@ -247,7 +247,7 @@
   /* On a hovered or open button the badge would vanish into the fill: step it up. */
   .pro-skin .pro-tool-menu:hover .pro-badge,
   .pro-skin .pro-tool-menu[aria-expanded="true"] .pro-badge {
-    background-color: var(--pro-surface-1);
+    background-color: var(--fl-surface-1);
   }
 
   /* ---------- Timecode ---------- */
@@ -258,42 +258,42 @@
     align-items: center;
     justify-content: center;
     width: calc(var(--media-spacing) * 37.5);
-    height: var(--pro-control-size);
-    border-radius: var(--pro-radius-group);
-    background-color: var(--pro-surface-0);
-    color: var(--pro-text);
+    height: var(--fl-control-size);
+    border-radius: var(--fl-radius-group);
+    background-color: var(--fl-surface-0);
+    color: var(--fl-text);
     cursor: pointer;
     direction: ltr;
-    font-size: var(--pro-text-timecode);
+    font-size: var(--fl-text-timecode);
     font-variant-numeric: tabular-nums;
     font-weight: 500;
     line-height: 1;
     outline: none;
     white-space: nowrap;
-    transition: box-shadow var(--pro-duration) var(--pro-ease);
+    transition: box-shadow var(--fl-duration) var(--fl-ease);
   }
 
   @media (hover: hover) {
     .pro-skin .pro-timecode:hover {
-      box-shadow: inset 0 0 0 1px var(--pro-surface-3);
+      box-shadow: inset 0 0 0 1px var(--fl-surface-3);
     }
   }
 
   .pro-skin .pro-timecode:focus-visible {
-    outline: var(--pro-focus-width) solid var(--pro-accent);
-    outline-offset: var(--pro-focus-offset);
-    box-shadow: var(--pro-focus-halo);
+    outline: var(--fl-focus-width) solid var(--fl-accent);
+    outline-offset: var(--fl-focus-offset);
+    box-shadow: var(--fl-focus-halo);
   }
 
   .pro-skin .pro-timecode-approx {
     margin-inline-end: var(--media-spacing);
-    color: var(--pro-text-dim);
+    color: var(--fl-text-dim);
   }
 
   .pro-skin .pro-timecode-total {
     flex-shrink: 0;
-    color: var(--pro-text-dim);
-    font-size: var(--pro-text-sm);
+    color: var(--fl-text-dim);
+    font-size: var(--fl-text-sm);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
@@ -312,7 +312,7 @@
   .pro-skin .pro-menu-popup {
     min-width: calc(var(--media-spacing) * 55);
     border-radius: calc(var(--media-spacing) * 2.5);
-    background-color: var(--pro-surface-3);
+    background-color: var(--fl-surface-3);
     box-shadow:
       0 10px 30px rgb(0 0 0 / 0.55),
       0 0 0 1px rgb(255 255 255 / 0.06);
@@ -330,22 +330,22 @@
   .pro-skin .pro-menu-popup .media-menu-item {
     min-height: max(24px, calc(var(--media-spacing) * 8));
     padding-inline: calc(var(--media-spacing) * 2.5);
-    border-radius: var(--pro-radius);
+    border-radius: var(--fl-radius);
   }
 
   .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] {
-    background-color: var(--pro-on);
+    background-color: var(--fl-on);
   }
 
   .pro-skin .pro-menu-popup .media-menu-hint,
   .pro-skin .pro-menu-popup .pro-kbd {
-    color: var(--pro-text-dim-raised);
+    color: var(--fl-text-dim-raised);
   }
 
   /* On the highlight the raised dim text falls just under 4.5:1 (4.45), so it takes the text colour there. */
   .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .media-menu-hint,
   .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .pro-kbd {
-    color: var(--pro-text);
+    color: var(--fl-text);
   }
 
   @media (pointer: coarse) {
@@ -361,20 +361,20 @@
 
   .pro-skin .pro-menu-label {
     padding: calc(var(--media-spacing) * 2) calc(var(--media-spacing) * 2.5) var(--media-spacing);
-    color: var(--pro-text-dim);
-    font-size: var(--pro-text-xs);
+    color: var(--fl-text-dim);
+    font-size: var(--fl-text-xs);
     font-weight: 500;
   }
 
   .pro-skin .pro-menu-popup .pro-menu-label {
-    color: var(--pro-text-dim-raised);
+    color: var(--fl-text-dim-raised);
   }
 
   .pro-skin .pro-menu-separator {
     flex: none;
     height: 1px;
     margin: calc(var(--media-spacing) * 1.5) var(--media-spacing);
-    background-color: var(--pro-divider);
+    background-color: var(--fl-divider);
   }
 
   .pro-skin .pro-marker-item-label {
@@ -409,7 +409,7 @@
 
   .pro-skin .pro-guides-column + .pro-guides-column {
     padding-inline-start: calc(var(--media-spacing) * 1.5);
-    border-inline-start: 1px solid var(--pro-divider);
+    border-inline-start: 1px solid var(--fl-divider);
   }
 
   /* The leading mark: a check for a guide that is on, a dot for the chosen crop or platform. */
@@ -431,27 +431,27 @@
     height: 6px;
     margin-inline-start: 3px;
     border-radius: 50%;
-    background-color: var(--pro-text);
+    background-color: var(--fl-text);
   }
 
   /* A dim word after an item's name: "Approximate", "Broadcast, 90%". */
   .pro-skin .pro-menu-sub {
     min-width: 0;
     overflow: hidden;
-    color: var(--pro-text-dim-raised);
-    font-size: var(--pro-text-xs);
+    color: var(--fl-text-dim-raised);
+    font-size: var(--fl-text-xs);
     text-overflow: ellipsis;
   }
 
   .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .pro-menu-sub {
-    color: var(--pro-text);
+    color: var(--fl-text);
   }
 
   .pro-skin .pro-menu-note {
     margin: var(--media-spacing) 0 0;
     padding: var(--media-spacing) calc(var(--media-spacing) * 2.5) calc(var(--media-spacing) * 1.5);
-    color: var(--pro-text-dim-raised);
-    font-size: var(--pro-text-xs);
+    color: var(--fl-text-dim-raised);
+    font-size: var(--fl-text-xs);
     line-height: 1.4;
     white-space: normal;
   }
@@ -531,8 +531,8 @@
   /* ---------- Narrow and touch: two rows, 44px controls ---------- */
 
   .pro-skin[data-dock-size="narrow"][data-bar="pro"] {
-    --pro-control-size: max(44px, var(--pro-density-control));
-    --pro-icon-size: calc(var(--media-spacing) * 5);
+    --fl-control-size: max(44px, var(--fl-density-control));
+    --fl-icon-size: calc(var(--media-spacing) * 5);
   }
 
   /* Narrow.dc.html: 12px above, 15px at the sides, 14px below. */
@@ -573,7 +573,7 @@
   }
 
   .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool[data-pro-tool="loop"] {
-    width: var(--pro-control-size);
+    width: var(--fl-control-size);
   }
 
   .pro-skin[data-dock-size="narrow"] .pro-transport > .media-play-button {
@@ -586,7 +586,7 @@
   }
 
   .pro-skin[data-dock-size="narrow"] .pro-tool-menu {
-    width: var(--pro-control-size);
+    width: var(--fl-control-size);
     padding-inline: 0;
   }
 
@@ -641,7 +641,7 @@
     justify-content: center;
     width: calc(var(--media-spacing) * 13);
     padding-inline: 0;
-    font-size: var(--pro-text-sm);
+    font-size: var(--fl-text-sm);
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     white-space: nowrap;
@@ -687,14 +687,14 @@
     position: absolute;
     top: calc(var(--media-spacing) * 3);
     left: 50%;
-    z-index: var(--pro-z-controls);
+    z-index: var(--fl-z-controls);
     max-width: calc(100% - var(--media-spacing) * 6);
     padding: calc(var(--media-spacing) * 1.5) calc(var(--media-spacing) * 3);
-    border-radius: var(--pro-radius);
-    background-color: var(--pro-surface-3);
-    box-shadow: var(--pro-shadow-popup);
-    color: var(--pro-text);
-    font-size: var(--pro-text-sm);
+    border-radius: var(--fl-radius);
+    background-color: var(--fl-surface-3);
+    box-shadow: var(--fl-shadow-popup);
+    color: var(--fl-text);
+    font-size: var(--fl-text-sm);
     pointer-events: none;
     text-align: center;
     transform: translateX(-50%);

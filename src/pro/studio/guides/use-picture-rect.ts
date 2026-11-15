@@ -10,14 +10,14 @@ function transformScale(element: HTMLElement): number {
   return scale > 0 ? scale : 1;
 }
 
-const VARIABLES = ['--pro-picture-x', '--pro-picture-y', '--pro-picture-w', '--pro-picture-h'] as const;
+const VARIABLES = ['--fl-picture-x', '--fl-picture-y', '--fl-picture-w', '--fl-picture-h'] as const;
 
 /**
  * Where the picture is: the rectangle the video's pixels occupy inside the stage, in CSS pixels relative to the
  * overlay layer's parent (the stage in the dock layout, the player otherwise).
  *
- * It is written to the player container as `--pro-picture-x`, `--pro-picture-y`, `--pro-picture-w` and
- * `--pro-picture-h`, which size the overlay layer, so every guide is drawn in the picture's own coordinates and never
+ * It is written to the player container as `--fl-picture-x`, `--fl-picture-y`, `--fl-picture-w` and
+ * `--fl-picture-h`, which size the overlay layer, so every guide is drawn in the picture's own coordinates and never
  * on the letterbox bars. It is also returned, with the overlay element, for whatever draws there.
  *
  * Recomputed when the video element or the stage changes size (a `ResizeObserver`: this covers window resizes,
@@ -59,10 +59,10 @@ export function usePictureRect(video: HTMLVideoElement | null, anchor: RefObject
       if (sameRect(next, last)) return;
       last = next;
       if (next) {
-        container.style.setProperty('--pro-picture-x', `${next.x}px`);
-        container.style.setProperty('--pro-picture-y', `${next.y}px`);
-        container.style.setProperty('--pro-picture-w', `${next.width}px`);
-        container.style.setProperty('--pro-picture-h', `${next.height}px`);
+        container.style.setProperty('--fl-picture-x', `${next.x}px`);
+        container.style.setProperty('--fl-picture-y', `${next.y}px`);
+        container.style.setProperty('--fl-picture-w', `${next.width}px`);
+        container.style.setProperty('--fl-picture-h', `${next.height}px`);
       } else {
         for (const name of VARIABLES) container.style.removeProperty(name);
       }

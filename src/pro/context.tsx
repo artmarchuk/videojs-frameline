@@ -7,7 +7,7 @@ export const ProStoreContext = createContext<ProStore | null>(null);
 /** The pro store itself, for calling actions. Does not subscribe, so it never causes a re-render. */
 export function useProStoreApi(): ProStore {
   const store = useContext(ProStoreContext);
-  if (!store) throw new Error('Pro components must be rendered inside ProSkin.');
+  if (!store) throw new Error('Pro components must be rendered inside FramelineSkin.');
   return store;
 }
 

@@ -1,6 +1,6 @@
-# Video.js PRO
+# Frameline — a Video.js skin for video creators
 
-Video.js PRO is a player skin for Video.js v10 (React, plain CSS) built for the tools video creators use: editors, AI video generators, and review platforms. One skin has two tiers: **Viewer**, the clean player a creator's client or audience gets, and **Studio**, the creator's own monitor for making, checking and reviewing video. Finer control comes from feature flags: switch a single feature on over Viewer, or off over Studio.
+Frameline is a player skin for Video.js v10 (React, plain CSS) built for the tools video creators use: editors, AI video generators, and review platforms. One skin has two tiers: **Viewer**, the clean player a creator's client or audience gets, and **Studio**, the creator's own monitor for making, checking and reviewing video. Finer control comes from feature flags: switch a single feature on over Viewer, or off over Studio.
 
 **Live URL:** https://videojs-pro.vercel.app (host: Vercel; the player alone is at `/preview.html`)
 
@@ -16,18 +16,18 @@ npm run deploy vercel   # deploy the workbench to Vercel (production URL)
 
 ## Use the skin
 
-`ProSkin` is the entry point. Put it inside a Video.js player, with the media element as its child.
+`FramelineSkin` is the entry point. Put it inside a Video.js player, with the media element as its child.
 
 ```tsx
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer } from '@videojs/react/video';
 
-import { ProSkin } from '@/pro';
+import { FramelineSkin } from '@/pro';
 
 <VideoPlayer>
-  <ProSkin tier="studio" fps={24} features={{ grabFrame: false, guides: ['title-safe', '9:16'] }}>
+  <FramelineSkin tier="studio" fps={24} features={{ grabFrame: false, guides: ['title-safe', '9:16'] }}>
     <MuxVideo src="https://stream.mux.com/….m3u8" playsInline crossOrigin="" />
-  </ProSkin>
+  </FramelineSkin>
 </VideoPlayer>;
 ```
 
@@ -63,7 +63,7 @@ Viewer is for watching. Studio is for checking timing and framing: it adds contr
 | `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
 | `onCopyLink` | `({ url, frame, time }) => void` | none | A link to the current frame was copied |
 | `onGuidesChange` | `({ guides, crop, zones }) => void` | none | The guides that are drawn changed: `guides` is a list of ids, `crop` and `zones` an id or `null`. Not fired for the remembered set the player starts with |
-| `persist` | `boolean \| string` | `true` | Remember the end user's Guides choices and the time display in `localStorage`. `true` uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off |
+| `persist` | `boolean \| string` | `true` | Remember the end user's Guides choices and the time display in `localStorage`. `true` uses the key `frameline:v1`, a string uses that key, `false` turns it off |
 
 An invalid `fps`, an unknown tier or an unknown feature name logs one warning in development and falls back to the default. Nothing throws.
 
@@ -79,7 +79,7 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 | `zoom` | off | on |
 | `debug` | off | off |
 
-A host can turn any single feature on over Viewer or off over Studio, for example `<ProSkin tier="viewer" features={{ timecode: true, frameStep: true }} />`.
+A host can turn any single feature on over Viewer or off over Studio, for example `<FramelineSkin tier="viewer" features={{ timecode: true, frameStep: true }} />`.
 
 `guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `platformZones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The Guides menu".
 
@@ -107,17 +107,17 @@ These are added to the YouTube map in the Studio tier. Each works only while its
 
 **Dock** (the default in Studio): the picture has its own stage and the controls are a panel below it. They never cover the picture, never hide, and stay in fullscreen, because the whole component goes fullscreen.
 
-- **The aspect ratio applies to the stage, not to the component.** The component's height is the stage plus the dock. Set the ratio with `--pro-stage-ratio` (default `16 / 9`).
+- **The aspect ratio applies to the stage, not to the component.** The component's height is the stage plus the dock. Set the ratio with `--fl-stage-ratio` (default `16 / 9`).
 - The dock is about 117 px tall (comfortable density, wide player) and about 180 px on narrow players and touch devices, where the main row becomes two rows. Size the host's layout as stage plus dock.
 - If you give the component a fixed height or a `max-height`, the dock keeps its height and the stage takes the rest, with the picture letterboxed.
 - Bubbles and menus open upward from the dock, over the bottom edge of the picture.
-- `--pro-frame-border: 1` draws a hairline and a 10 px radius around the component. The default is none.
+- `--fl-frame-border: 1` draws a hairline and a 10 px radius around the component. The default is none.
 
 **Overlay** (the default in Viewer): the controls sit over the picture and hide while idle.
 
 ```tsx
-<ProSkin tier="studio" layout="overlay" />  {/* Studio controls over the picture */}
-<ProSkin tier="viewer" layout="dock" />      {/* the Viewer player with a dock */}
+<FramelineSkin tier="studio" layout="overlay" />  {/* Studio controls over the picture */}
+<FramelineSkin tier="viewer" layout="dock" />      {/* the Viewer player with a dock */}
 ```
 
 ### Controls
@@ -165,7 +165,7 @@ The range lives on the timeline, like the work-area bar of an editor. **Two hand
 ### Markers
 
 ```tsx
-<ProSkin
+<FramelineSkin
   tier="studio"
   markers={[
     { id: 'logo', time: 8.4, label: 'Logo too small' },
@@ -206,7 +206,7 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 **What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the Guides button. `platformZones: false` removes that section. Zoom is a separate control with its own flag.
 
 ```tsx
-<ProSkin
+<FramelineSkin
   tier="studio"
   features={{ guides: ['title-safe', 'action-safe', '9:16'], platformZones: false }}
   persist="my-app:monitor"
@@ -246,9 +246,9 @@ Grab frame (in the Capture menu, or `G`) saves the raw frame at the video's own 
 
 ### Styling hooks
 
-The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"`, `"150"`, `"200"` or `"400"` while zoomed. The picture's rectangle inside the stage is published as `--pro-picture-x`, `--pro-picture-y`, `--pro-picture-w` and `--pro-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
+The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"`, `"150"`, `"200"` or `"400"` while zoomed. The picture's rectangle inside the stage is published as `--fl-picture-x`, `--fl-picture-y`, `--fl-picture-w` and `--fl-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--fl-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
-**The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--pro-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter graphite (`--pro-on`), Play is a neutral filled button, and the playhead is white.
+**The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--fl-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter graphite (`--fl-on`), Play is a neutral filled button, and the playhead is white.
 
 ### Frame accuracy
 
@@ -275,7 +275,7 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
 ## Where things live
 
 - `src/`: the skin.
-  - `src/pro/`: `ProSkin`, feature flags, the pro store, the frame clock and timecode utilities. The Studio controls load lazily from `studio/`.
+  - `src/pro/`: `FramelineSkin`, feature flags, the pro store, the frame clock and timecode utilities. The Studio controls load lazily from `studio/`.
   - `src/video/`: the skin component and its parts.
   - `src/styles/`: theme tokens and shared styles the skin imports, when it started from a packaged skin.
   - `src/skin.css`: global styles for the skin.

@@ -4,14 +4,14 @@
     position: absolute;
     top: calc(var(--media-spacing) * 2);
     left: calc(var(--media-spacing) * 2);
-    z-index: var(--pro-z-indicators);
+    z-index: var(--fl-z-indicators);
     max-width: calc(100% - var(--media-spacing) * 4);
     padding: calc(var(--media-spacing) * 2);
-    border: 1px solid var(--pro-line);
-    border-radius: var(--pro-radius);
-    background-color: var(--pro-scrim);
-    color: var(--pro-text);
-    font-size: var(--pro-text-xs);
+    border: 1px solid var(--fl-line);
+    border-radius: var(--fl-radius);
+    background-color: var(--fl-scrim);
+    color: var(--fl-text);
+    font-size: var(--fl-text-xs);
     font-variant-numeric: tabular-nums;
     font-weight: 500;
     line-height: 1.5;
@@ -26,7 +26,7 @@
   .pro-skin .pro-debug dt {
     flex: none;
     width: 9ch;
-    color: var(--pro-text-dim);
+    color: var(--fl-text-dim);
   }
 
   .pro-skin .pro-debug dd {

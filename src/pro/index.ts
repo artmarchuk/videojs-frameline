@@ -1,6 +1,6 @@
-// Public entry point of Video.js PRO. Importing from here pulls in the Viewer skin only; pro code loads on demand.
-export { ProSkin } from './pro-skin';
-export type { Density, ProSkinProps, ProSkinSlots } from './pro-skin';
+// Public entry point of Frameline. Importing from here pulls in the Viewer skin only; pro code loads on demand.
+export { FramelineSkin } from './frameline-skin';
+export type { Density, FramelineSkinProps, FramelineSkinSlots } from './frameline-skin';
 export { GUIDE_IDS, TIER_DEFAULTS, TIERS, resolveFeatures, resolveLayout } from './features';
 export type { FeatureFlags, FeatureOverrides, GuideId, Layout, Tier } from './features';
 export type { CopyLinkInfo } from './studio/controller';

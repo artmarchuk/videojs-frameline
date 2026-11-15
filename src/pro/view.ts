@@ -208,7 +208,7 @@ export function hasViewMenu(allowed: AllowedView): boolean {
 
 /* ---------- Remembered choices ---------- */
 
-export const DEFAULT_STORAGE_KEY = 'videojs-pro:v1';
+export const DEFAULT_STORAGE_KEY = 'frameline:v1';
 
 /** The storage key for a `persist` prop: `true` or nothing is the default key, a string is that key, `false` is none. */
 export function storageKey(persist: boolean | string | undefined): string | null {

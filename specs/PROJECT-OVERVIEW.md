@@ -1,10 +1,10 @@
-# Video.js PRO: project overview for Claude Code
+# Frameline: project overview for Claude Code
 
 Read this file at the start of every step, together with `NOTES.md` and that step's requirements file. It gives the big picture so that each step's decisions fit the whole.
 
 ## North star
 
-**Video.js PRO is a player skin for video creators.** It is a tool for people who make video, not a prettier consumer player. The author's brand is UX and product design for tools that let people create and build things, and this project must read as exactly that.
+**Frameline is a player skin for video creators.** It is a tool for people who make video, not a prettier consumer player. The author's brand is UX and product design for tools that let people create and build things, and this project must read as exactly that.
 
 **Test for every decision** (feature, layout, copy, colour, demo content): does it help someone make, check, review or deliver a video? If yes, it earns its place. If it only helps someone watch, it belongs in the Viewer tier or it is cut.
 
@@ -39,7 +39,7 @@ There are two tiers on purpose. Finer control comes from feature flags, so a hos
 2. **Feature flags**: override single features, such as `features={{ timecode: true, guides: ['title-safe','9:16'], zoom: false }}`.
 3. **Guides menu and Zoom button (end user)**: show or hide the guides and zoom the developer allowed; guides are remembered per browser, zoom is not.
 4. **Slots and events**: host app adds its own controls (`toolbar-start`, `toolbar-end`, `overlay`) and listens to `inout:change`, `marker:select`, `frame:change`, `guides:change`.
-5. **Tokens**: the 8 public `--media-*` tokens plus our own `--pro-*` tokens, and `density="comfortable" | "compact"`.
+5. **Tokens**: the 8 public `--media-*` tokens plus our own `--fl-*` tokens, and `density="comfortable" | "compact"`.
 
 Only enabled modules load. Viewer must stay as light as a stock skin.
 

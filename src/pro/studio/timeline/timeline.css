@@ -88,16 +88,16 @@
   /*
    * A label sits right of its tick and is painted above the playhead's head (z-index) with `difference` blending:
    * over the dock it reads as the usual dim grey, and where the white head passes under it the text turns dark, so
-   * it stays readable and the head stays whole. --pro-ruler-label is chosen so that the blended result on the dock
-   * equals --pro-text-dim.
+   * it stays readable and the head stays whole. --fl-ruler-label is chosen so that the blended result on the dock
+   * equals --fl-text-dim.
    */
   .pro-skin .pro-tl-label {
     position: absolute;
     top: 1px;
     z-index: 5;
     margin-left: var(--media-spacing);
-    color: var(--pro-ruler-label);
-    font-size: var(--pro-text-ruler);
+    color: var(--fl-ruler-label);
+    font-size: var(--fl-text-ruler);
     font-variant-numeric: tabular-nums;
     line-height: 1;
     mix-blend-mode: difference;
@@ -128,7 +128,7 @@
     top: 0;
     width: 24px;
     height: 100%;
-    color: var(--pro-text-dim);
+    color: var(--fl-text-dim);
     pointer-events: auto;
     transform: translateX(-50%);
   }
@@ -143,7 +143,7 @@
     background-color: currentColor;
     clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%);
     transform: translateX(-50%);
-    transition: background-color var(--pro-duration) var(--pro-ease);
+    transition: background-color var(--fl-duration) var(--fl-ease);
   }
 
   /* A marker with an end time: a 2px line along the bottom of the ruler, from the pin to the end. */
@@ -151,23 +151,23 @@
     position: absolute;
     bottom: 0;
     height: 2px;
-    background-color: var(--pro-text-dim);
+    background-color: var(--fl-text-dim);
   }
 
   @media (hover: hover) {
     .pro-skin .pro-tl-pin:hover {
-      color: var(--pro-text);
+      color: var(--fl-text);
     }
   }
 
   /* Selected: the accent, until the playhead moves away. */
   .pro-skin .pro-tl-pin[data-selected] {
     z-index: 1;
-    color: var(--pro-accent);
+    color: var(--fl-accent);
   }
 
   .pro-skin .pro-tl-span[data-selected] {
-    background-color: var(--pro-accent);
+    background-color: var(--fl-accent);
   }
 
   .pro-skin .pro-tl-tip {
@@ -178,11 +178,11 @@
     gap: calc(var(--media-spacing) * 2);
     max-width: 100%;
     padding: calc(var(--media-spacing) * 1.25) calc(var(--media-spacing) * 2.25);
-    border-radius: var(--pro-radius);
-    background-color: var(--pro-surface-3);
-    box-shadow: var(--pro-shadow-popup);
-    color: var(--pro-text);
-    font-size: var(--pro-text-sm);
+    border-radius: var(--fl-radius);
+    background-color: var(--fl-surface-3);
+    box-shadow: var(--fl-shadow-popup);
+    color: var(--fl-text);
+    font-size: var(--fl-text-sm);
     line-height: 1.3;
     pointer-events: none;
     transform: translateX(-50%);
@@ -190,7 +190,7 @@
   }
 
   .pro-skin .pro-tl-tip-time {
-    color: var(--pro-text-dim-raised);
+    color: var(--fl-text-dim-raised);
     font-variant-numeric: tabular-nums;
   }
 
@@ -229,7 +229,7 @@
   .pro-skin .pro-tl-track {
     position: absolute;
     inset: 0;
-    background-color: var(--pro-surface-2);
+    background-color: var(--fl-surface-2);
   }
 
   .pro-skin .pro-tl-band,
@@ -244,19 +244,19 @@
   }
 
   .pro-skin .pro-tl-band {
-    left: var(--pro-band-start);
-    right: calc(100% - var(--pro-band-end));
-    background-color: var(--pro-range);
+    left: var(--fl-band-start);
+    right: calc(100% - var(--fl-band-end));
+    background-color: var(--fl-range);
   }
 
   .pro-skin .pro-tl-band-played {
-    left: var(--pro-band-start);
-    right: max(calc(100% - var(--media-slider-fill, 0%)), calc(100% - var(--pro-band-end)));
-    background-color: var(--pro-accent);
+    left: var(--fl-band-start);
+    right: max(calc(100% - var(--media-slider-fill, 0%)), calc(100% - var(--fl-band-end)));
+    background-color: var(--fl-accent);
   }
 
   .pro-skin .pro-tl[data-dragging] .pro-tl-band-played {
-    right: max(calc(100% - var(--media-slider-pointer, 0%)), calc(100% - var(--pro-band-end)));
+    right: max(calc(100% - var(--media-slider-pointer, 0%)), calc(100% - var(--fl-band-end)));
   }
 
   /* Buffered range: a quiet 2px line under the track. */
@@ -267,7 +267,7 @@
     width: var(--media-slider-buffer, 0%);
     height: 2px;
     border-radius: 1px;
-    background-color: var(--pro-buffer);
+    background-color: var(--fl-buffer);
     pointer-events: none;
   }
 
@@ -284,13 +284,13 @@
     z-index: 4;
     width: 24px;
     height: calc(var(--tl-track-top) + var(--tl-track) + var(--tl-handle-over));
-    border-radius: var(--pro-radius-sm);
+    border-radius: var(--fl-radius-sm);
     outline: none;
     pointer-events: none;
     transform: translateX(-50%);
     /* One thin dark outline around the whole shape (head and line together), not around each part. */
-    filter: drop-shadow(1px 0 0 var(--pro-playhead-edge)) drop-shadow(-1px 0 0 var(--pro-playhead-edge))
-      drop-shadow(0 1px 0 var(--pro-playhead-edge)) drop-shadow(0 -1px 0 var(--pro-playhead-edge));
+    filter: drop-shadow(1px 0 0 var(--fl-playhead-edge)) drop-shadow(-1px 0 0 var(--fl-playhead-edge))
+      drop-shadow(0 1px 0 var(--fl-playhead-edge)) drop-shadow(0 -1px 0 var(--fl-playhead-edge));
   }
 
   .pro-skin .pro-tl[data-dragging] .pro-tl-playhead {
@@ -304,9 +304,9 @@
     top: 5px;
     bottom: 0;
     left: 50%;
-    width: var(--pro-playhead-width);
+    width: var(--fl-playhead-width);
     border-radius: 0 0 1px 1px;
-    background-color: var(--pro-text);
+    background-color: var(--fl-text);
     transform: translateX(-50%);
   }
 
@@ -317,19 +317,19 @@
     left: 50%;
     width: 12px;
     height: 10px;
-    background-color: var(--pro-text);
+    background-color: var(--fl-text);
     clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
     transform: translateX(-50%);
   }
 
   .pro-skin .pro-timeline {
-    --pro-playhead-edge: color-mix(in srgb, var(--pro-surface-0) 70%, transparent);
+    --fl-playhead-edge: color-mix(in srgb, var(--fl-surface-0) 70%, transparent);
   }
 
   .pro-skin .pro-tl-playhead:focus-visible {
-    outline: var(--pro-focus-width) solid var(--pro-accent);
-    outline-offset: var(--pro-focus-offset);
-    box-shadow: 0 0 0 var(--pro-focus-offset) var(--pro-surface-0);
+    outline: var(--fl-focus-width) solid var(--fl-accent);
+    outline-offset: var(--fl-focus-offset);
+    box-shadow: 0 0 0 var(--fl-focus-offset) var(--fl-surface-0);
   }
 
   /*
@@ -337,9 +337,9 @@
    * target reaches into the dock's padding, where a ring around it would be cut off by the player's edge.
    */
   .pro-skin .pro-tl-handle:focus-visible:not([data-pointer])::after {
-    outline: var(--pro-focus-width) solid var(--pro-accent);
-    outline-offset: var(--pro-focus-offset);
-    box-shadow: 0 0 0 var(--pro-focus-offset) var(--pro-surface-0);
+    outline: var(--fl-focus-width) solid var(--fl-accent);
+    outline-offset: var(--fl-focus-offset);
+    box-shadow: 0 0 0 var(--fl-focus-offset) var(--fl-surface-0);
   }
 
   /* Where the pointer is: a hairline through the ruler and the track. */
@@ -350,7 +350,7 @@
     z-index: 3;
     width: 1px;
     height: calc(var(--tl-buffer-top) + 1px);
-    background-color: color-mix(in srgb, var(--pro-text) 45%, transparent);
+    background-color: color-mix(in srgb, var(--fl-text) 45%, transparent);
     opacity: 0;
     pointer-events: none;
   }
@@ -374,8 +374,8 @@
     z-index: 3;
     width: 24px;
     height: calc(var(--tl-track) + var(--tl-handle-over) * 2);
-    border-radius: var(--pro-radius-sm);
-    color: var(--pro-handle-idle);
+    border-radius: var(--fl-radius-sm);
+    color: var(--fl-handle-idle);
     cursor: ew-resize;
     outline: none;
     touch-action: none;
@@ -383,7 +383,7 @@
 
   .pro-skin .pro-tl-handle[data-set],
   .pro-skin .pro-tl-handle[data-dragging] {
-    color: var(--pro-accent);
+    color: var(--fl-accent);
   }
 
   .pro-skin .pro-tl-handle::after {
@@ -393,7 +393,7 @@
     left: var(--tab-left, 0px);
     width: var(--tl-handle-width);
     background-color: currentColor;
-    transition: background-color var(--pro-duration) var(--pro-ease);
+    transition: background-color var(--fl-duration) var(--fl-ease);
   }
 
   .pro-skin .pro-tl-handle[data-handle="in"]::after {
@@ -406,7 +406,7 @@
 
   @media (hover: hover) {
     .pro-skin .pro-tl-handle:not([data-set]):hover {
-      color: var(--pro-text-dim);
+      color: var(--fl-text-dim);
     }
   }
 
@@ -430,7 +430,7 @@
     gap: var(--media-spacing);
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--pro-duration) var(--pro-ease);
+    transition: opacity var(--fl-duration) var(--fl-ease);
   }
 
   .pro-skin .pro-tl[data-pointing] .pro-tl-preview,
@@ -454,11 +454,11 @@
     max-width: calc(var(--media-spacing) * 60);
     height: calc(var(--media-spacing) * 5.5);
     padding-inline: calc(var(--media-spacing) * 2);
-    border-radius: var(--pro-radius);
-    background-color: var(--pro-surface-3);
-    box-shadow: var(--pro-shadow-popup);
-    color: var(--pro-text);
-    font-size: var(--pro-text-sm);
+    border-radius: var(--fl-radius);
+    background-color: var(--fl-surface-3);
+    box-shadow: var(--fl-shadow-popup);
+    color: var(--fl-text);
+    font-size: var(--fl-text-sm);
     font-variant-numeric: tabular-nums;
     font-weight: 500;
     line-height: 1;
@@ -472,7 +472,7 @@
   .pro-skin .pro-tl-bubble-chapter {
     min-width: 0;
     overflow: hidden;
-    color: var(--pro-text-dim-raised);
+    color: var(--fl-text-dim-raised);
     font-weight: 400;
     text-overflow: ellipsis;
   }

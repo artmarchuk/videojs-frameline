@@ -124,9 +124,9 @@ body {
 
 /* The player draws its own hairline and radius here; the skin does not force them on hosts. */
 .monitor-stage .media-skin {
-  --pro-frame-border: 1;
+  --fl-frame-border: 1;
   /* The aspect ratio option applies to the picture: the stage in the dock layout, the whole player otherwise. */
-  --pro-stage-ratio: var(--preview-player-ratio, 16 / 9);
+  --fl-stage-ratio: var(--preview-player-ratio, 16 / 9);
 }
 
 .monitor-stage .media-skin[data-layout="overlay"] {

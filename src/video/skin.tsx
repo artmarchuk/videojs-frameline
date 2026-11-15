@@ -33,7 +33,7 @@ export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children
   toolbarEnd?: ReactNode;
   /** Drawn in the overlay layer over the picture, which is `aria-hidden` and ignores the pointer. */
   overlay?: ReactNode;
-  /** Extra layers inside the container, above the overlay layer. `ProSkin` mounts the pro runtime here. */
+  /** Extra layers inside the container, above the overlay layer. `FramelineSkin` mounts the pro runtime here. */
   extras?: ReactNode;
   /** Pro tiers only: render the pro bar, whose slots lazily loaded pro controls are placed in. */
   proBar?: boolean;
@@ -53,7 +53,7 @@ export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children
 }
 
 /**
- * Video.js PRO, Viewer tier: the clean player a creator's client or audience gets.
+ * Frameline, Viewer tier: the clean player a creator's client or audience gets.
  *
  * Layers, bottom to top: media, poster, the overlay layer (empty here; the Studio tier draws guides in it),
  * transient indicators, controls, dialogs. With `layout="dock"` the picture layers sit in a stage and the controls in

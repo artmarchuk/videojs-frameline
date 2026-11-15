@@ -7,7 +7,7 @@
 // five levels, the announcements, the Zoom button and its menu, Alt+arrow on the seek slider (not ours: it seeks as
 // before zoom existed), and the Guides menu's reading order.
 const out = {};
-await page.evaluate(() => localStorage.setItem('videojs-pro:v1', JSON.stringify({ v: 1, guides: ['title-safe', 'thirds'], crop: null, zones: null, timeDisplay: 'timecode' })));
+await page.evaluate(() => localStorage.setItem('frameline:v1', JSON.stringify({ v: 1, guides: ['title-safe', 'thirds'], crop: null, zones: null, timeDisplay: 'timecode' })));
 await page.reload(); await page.waitForTimeout(3000);
 
 // Every PNG the skin makes goes through canvas.toBlob: record its size and a checksum of its pixels.
@@ -33,7 +33,7 @@ const state = () => page.evaluate(() => {
     stage: box(document.querySelector('.pro-stage')), video: box(video), overlay: box(document.querySelector('.pro-overlay')),
     guide: box(document.querySelector('[data-guide="thirds"]')), rendering: getComputedStyle(video).imageRendering,
     said: document.querySelector('.media-status-announcer[role=status]')?.textContent ?? '',
-    variables: ['x', 'y', 'w', 'h'].map((name) => skin.style.getPropertyValue('--pro-picture-' + name)).join(' '),
+    variables: ['x', 'y', 'w', 'h'].map((name) => skin.style.getPropertyValue('--fl-picture-' + name)).join(' '),
   };
 });
 const same = (a, b) => Math.abs(a - b) < 0.6;
@@ -168,7 +168,7 @@ const settingsAt400 = await neighbour();
 await page.focus('.pro-skin'); await page.keyboard.press('z'); await page.waitForTimeout(300);
 out.rowDoesNotShift = out.buttonFit.width === out.button400.width && out.buttonFit.left === out.button400.left && settingsAt400 === (await neighbour());
 out.buttonOk = out.buttonFit.text === 'Fit' && out.buttonFit.name === 'Zoom, Fit' && !out.buttonFit.on && out.button400.text === '400%' && out.button400.name === 'Zoom, 400%' && out.button400.on && out.focusBack === 'zoom' && out.zoomMenu.items.map((text) => text.replace(/showing.*/, '').replace('*', '')).join() === 'Fit,100%,150%,200%,400%' && out.zoomMenu.help.includes('Shift+Alt') && out.buttonFit.numerals.includes('tabular-nums') && out.rowDoesNotShift;
-out.notRemembered = !(await page.evaluate(() => localStorage.getItem('videojs-pro:v1'))).includes('zoom');
+out.notRemembered = !(await page.evaluate(() => localStorage.getItem('frameline:v1'))).includes('zoom');
 
 out.pass = out.cycleOk && out.scaleOk && out.pixelated && out.guidesFollow && out.rectUnchanged && out.afterResize.rectIsUnzoomed && out.afterResize.stillCovers && out.dragOk && out.oneStepIsTenth && out.edgesOk && out.arrowsDidNotSeek && out.grabSame && out.altAloneDoesNotPan && out.sliderOk && out.backToFit && out.shiftZFromFit === '400' && out.guidesOk && out.buttonOk && out.notRemembered;
 return out;

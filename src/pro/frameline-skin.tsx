@@ -26,7 +26,7 @@ const ProRuntime = lazy(() => import('./runtime'));
 export type Density = 'comfortable' | 'compact';
 
 /** Places where a host app can add its own UI. A slot whose area is not rendered is ignored. */
-export interface ProSkinSlots {
+export interface FramelineSkinSlots {
   /** In the control bar, after the play and volume controls. */
   toolbarStart?: ReactNode;
   /** In the control bar, before the captions button. */
@@ -46,7 +46,7 @@ type InternalSkinProps =
   | 'layout'
   | 'arrowSeekWhilePlayingOnly';
 
-export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
+export interface FramelineSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   /**
    * Which bundle of features to start from. `'viewer'` (default): the clean player a creator's client or audience
    * gets, with no pro code loaded. `'studio'`: the creator's monitor, with the full set.
@@ -79,7 +79,7 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   /** Show the debug readout. Also switched on by `?debug` in the page URL. */
   debug?: boolean;
   /** Host UI placed inside the skin. */
-  slots?: ProSkinSlots;
+  slots?: FramelineSkinSlots;
   /** Fires when the in or out point changes. Times in seconds; `null` when a point is not set. */
   onInOutChange?: (range: InOutRange) => void;
   /** Fires when the user selects a marker. */
@@ -95,7 +95,7 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   onGuidesChange?: (view: EffectiveGuides) => void;
   /**
    * Remember the end user's Guides choices (guides, crop, zones) and the time display in this browser's
-   * `localStorage`. `true` (default) uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off.
+   * `localStorage`. `true` (default) uses the key `frameline:v1`, a string uses that key, `false` turns it off.
    * The `features` always win over a remembered value.
    */
   persist?: boolean | string;
@@ -108,19 +108,19 @@ function debugInUrl(): boolean {
 }
 
 /**
- * Video.js PRO: a player skin for video creators' tools.
+ * Frameline: a player skin for video creators' tools.
  *
- * `ProSkin` is the public entry point. It wraps the Viewer skin and adds what the chosen tier and feature flags ask
+ * `FramelineSkin` is the public entry point. It wraps the Viewer skin and adds what the chosen tier and feature flags ask
  * for. With `tier="viewer"` and no flags it is exactly the Viewer skin and loads no pro code.
  *
  * @example
  * <VideoPlayer>
- *   <ProSkin tier="studio" fps={24} onInOutChange={saveRange}>
+ *   <FramelineSkin tier="studio" fps={24} onInOutChange={saveRange}>
  *     <MuxVideo src="https://stream.mux.com/…" playsInline crossOrigin="" />
- *   </ProSkin>
+ *   </FramelineSkin>
  * </VideoPlayer>
  */
-export function ProSkin({
+export function FramelineSkin({
   tier = 'viewer',
   features: overrides,
   fps = DEFAULT_FPS,
@@ -139,7 +139,7 @@ export function ProSkin({
   persist = true,
   children,
   ...skinProps
-}: ProSkinProps) {
+}: FramelineSkinProps) {
   const renders = useRef(0);
   renders.current += 1;
 

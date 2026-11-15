@@ -57,7 +57,7 @@ export function useZoom(video: HTMLVideoElement | null, rect: Box | null, layer:
 
     const clear = () => {
       wrapper.style.removeProperty('transform');
-      wrapper.style.removeProperty('--pro-zoom-scale');
+      wrapper.style.removeProperty('--fl-zoom-scale');
       delete wrapper.dataset.pannable;
     };
 
@@ -85,7 +85,7 @@ export function useZoom(video: HTMLVideoElement | null, rect: Box | null, layer:
       centre.current = next.centre;
       wrapper.style.transform = `translate(${next.x}px, ${next.y}px) scale(${next.scale})`;
       // Lets the guides keep their line width and label size while the picture under them is scaled.
-      wrapper.style.setProperty('--pro-zoom-scale', String(next.scale));
+      wrapper.style.setProperty('--fl-zoom-scale', String(next.scale));
       if (next.pannable) wrapper.dataset.pannable = '';
       else delete wrapper.dataset.pannable;
       return next.scale;
