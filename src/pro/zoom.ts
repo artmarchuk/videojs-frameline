@@ -1,8 +1,8 @@
 /**
  * Zoom: how closely the picture is looked at. Pure: no React, no DOM.
  *
- * Zoom never changes the picture, only its size on screen: Fit (the whole picture in the stage), 100% (one video
- * pixel on one device pixel) and its multiples 150%, 200% and 400%. While zoomed the picture can be panned; the pan is kept as the point of the
+ * Zoom never changes the picture, only its size on screen: Fit (the whole picture in the stage), 100% (one pixel of
+ * the source, the best rendition the stream offers, on one device pixel) and its multiples 150%, 200% and 400%. While zoomed the picture can be panned; the pan is kept as the point of the
  * picture that sits in the middle of the stage, so it survives a resize or a rendition of another size.
  */
 
@@ -33,16 +33,41 @@ const FACTOR: Record<ZoomLevel, number> = { fit: 0, '100': 1, '150': 1.5, '200':
 /** One arrow press with Alt moves the view by this share of what is visible. */
 export const PAN_STEP = 0.1;
 
+/** What a stream says about one of its renditions. Any field may be missing. */
+export interface RenditionSize {
+  width?: number | undefined;
+  height?: number | undefined;
+}
+
 /**
- * The scale to apply to the fitted picture. At 100% one video pixel covers one device pixel:
- * `(videoWidth / picture width in CSS px) / devicePixelRatio`; 150%, 200% and 400% are multiples of that. A small video on a large screen
- * gives a scale below 1, and it is applied as it is, so the label stays true. Fit, or sizes not known yet, is 1.
+ * The width of the source in pixels: what 100% is measured against. For an adaptive stream it is the width of the
+ * largest rendition the stream offers, not of the one that happens to be playing, so the scale does not change when
+ * the player switches rendition; a lower rendition is simply drawn larger. A rendition that only gives its height
+ * takes its width from the playing picture's aspect ratio. Without a rendition list (a plain file, native HLS) it is
+ * the decoded `videoWidth`. 0 while nothing is known.
  */
-export function zoomScale(level: ZoomLevel, videoWidth: number, pictureWidth: number, devicePixelRatio: number): number {
+export function sourceWidth(renditions: readonly RenditionSize[] | null | undefined, videoWidth: number, videoHeight = 0): number {
+  const decoded = videoWidth > 0 ? videoWidth : 0;
+  let best = 0;
+  for (const rendition of renditions ?? []) {
+    let width = rendition.width && rendition.width > 0 ? rendition.width : 0;
+    if (!width && rendition.height && rendition.height > 0 && decoded && videoHeight > 0) width = Math.round((rendition.height * decoded) / videoHeight);
+    if (width > best) best = width;
+  }
+  return best || decoded;
+}
+
+/**
+ * The scale to apply to the fitted picture. At 100% one source pixel covers one device pixel:
+ * `(source width / picture width in CSS px) / devicePixelRatio`; 150%, 200% and 400% are multiples of that. A small
+ * video on a large screen gives a scale below 1, and it is applied as it is, so the label stays true. Fit, or sizes
+ * not known yet, is 1. `sourceWidth` comes from the function of that name.
+ */
+export function zoomScale(level: ZoomLevel, sourceWidth: number, pictureWidth: number, devicePixelRatio: number): number {
   if (level === 'fit') return 1;
-  if (!(videoWidth > 0) || !(pictureWidth > 0)) return 1;
+  if (!(sourceWidth > 0) || !(pictureWidth > 0)) return 1;
   const ratio = devicePixelRatio > 0 ? devicePixelRatio : 1;
-  return (FACTOR[level] * videoWidth) / pictureWidth / ratio;
+  return (FACTOR[level] * sourceWidth) / pictureWidth / ratio;
 }
 
 /** A point of the picture, as shares of its width and height: `{ u: 0.5, v: 0.5 }` is its centre. */
@@ -78,7 +103,8 @@ export interface ZoomInput {
   picture: Box;
   /** The stage: what clips the picture. The wrapper fills it. */
   stage: { width: number; height: number };
-  videoWidth: number;
+  /** The source's width in pixels, from `sourceWidth`. */
+  sourceWidth: number;
   devicePixelRatio: number;
   centre: Centre;
   /** Where the stage's corner is in the viewport, so the zoomed picture can start on a whole device pixel. */
@@ -98,12 +124,12 @@ export interface ZoomTransform {
 }
 
 /** The transform of the picture wrapper for a zoom level and a pan. */
-export function zoomTransform({ level, picture, stage, videoWidth, devicePixelRatio, centre, origin }: ZoomInput): ZoomTransform {
+export function zoomTransform({ level, picture, stage, sourceWidth, devicePixelRatio, centre, origin }: ZoomInput): ZoomTransform {
   const none: ZoomTransform = { scale: null, x: 0, y: 0, centre: PICTURE_CENTRE, pannable: false };
-  if (level === 'fit' || !(picture.width > 0) || !(picture.height > 0) || !(videoWidth > 0)) return none;
+  if (level === 'fit' || !(picture.width > 0) || !(picture.height > 0) || !(sourceWidth > 0)) return none;
 
   const ratio = devicePixelRatio > 0 ? devicePixelRatio : 1;
-  const scale = zoomScale(level, videoWidth, picture.width, ratio);
+  const scale = zoomScale(level, sourceWidth, picture.width, ratio);
   const width = picture.width * scale;
   const height = picture.height * scale;
   const u = clampCentre(centre.u, width, stage.width);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { clampCentre, isPixelated, nextZoom, panCentre, PAN_STEP, PICTURE_CENTRE, previousZoom, ZOOM_LEVELS, zoomScale, zoomTransform, type ZoomInput, type ZoomLevel } from './zoom';
+import { clampCentre, isPixelated, nextZoom, panCentre, PAN_STEP, PICTURE_CENTRE, previousZoom, sourceWidth, ZOOM_LEVELS, zoomScale, zoomTransform, type ZoomInput, type ZoomLevel } from './zoom';
 
 describe('zoomScale', () => {
   it('is 1 at Fit and while sizes are unknown', () => {
@@ -79,14 +79,14 @@ describe('zoomTransform', () => {
     level: '100',
     picture: { x: 0, y: 0, width: 960, height: 540 },
     stage: { width: 960, height: 540 },
-    videoWidth: 1920,
+    sourceWidth: 1920,
     devicePixelRatio: 1,
     centre: PICTURE_CENTRE,
   };
 
   it('has no transform at Fit or before the sizes are known', () => {
     expect(zoomTransform({ ...base, level: 'fit' }).scale).toBeNull();
-    expect(zoomTransform({ ...base, videoWidth: 0 }).scale).toBeNull();
+    expect(zoomTransform({ ...base, sourceWidth: 0 }).scale).toBeNull();
     expect(zoomTransform({ ...base, picture: { x: 0, y: 0, width: 0, height: 0 } }).scale).toBeNull();
   });
 
@@ -116,7 +116,7 @@ describe('zoomTransform', () => {
   });
 
   it('keeps a picture smaller than the stage centred, and says there is nothing to pan', () => {
-    const result = zoomTransform({ ...base, videoWidth: 480, centre: { u: 0.9, v: 0.1 } });
+    const result = zoomTransform({ ...base, sourceWidth: 480, centre: { u: 0.9, v: 0.1 } });
     expect(result).toMatchObject({ scale: 0.5, x: 240, y: 135, pannable: false, centre: { u: 0.5, v: 0.5 } });
   });
 
@@ -138,7 +138,7 @@ describe('panCentre', () => {
 
   it('one Alt+arrow press is a tenth of the visible area, and repeated presses stop at the edge', () => {
     let centre = { ...PICTURE_CENTRE };
-    const input: ZoomInput = { level: '100', picture, stage: { width: 960, height: 540 }, videoWidth: 1920, devicePixelRatio: 1, centre };
+    const input: ZoomInput = { level: '100', picture, stage: { width: 960, height: 540 }, sourceWidth: 1920, devicePixelRatio: 1, centre };
     const press = () => {
       centre = zoomTransform({ ...input, centre: panCentre(centre, PAN_STEP * 960, 0, 2, picture) }).centre;
     };
@@ -147,5 +147,47 @@ describe('panCentre', () => {
     for (let i = 0; i < 20; i++) press();
     expect(centre.u).toBe(0.75);
     expect(zoomTransform({ ...input, centre }).x).toBe(-960);
+  });
+});
+
+describe('sourceWidth: what 100% is measured against', () => {
+  const ladder = [
+    { width: 640, height: 360 },
+    { width: 1280, height: 720 },
+    { width: 3840, height: 2160 },
+    { width: 1920, height: 1080 },
+  ];
+
+  it('is the widest rendition the stream offers, whatever is playing', () => {
+    expect(sourceWidth(ladder, 1280, 720)).toBe(3840);
+    expect(sourceWidth(ladder, 3840, 2160)).toBe(3840);
+    expect(sourceWidth(ladder, 0, 0)).toBe(3840);
+  });
+
+  it('is the decoded width for a source with no rendition list', () => {
+    expect(sourceWidth([], 1920, 1080)).toBe(1920);
+    expect(sourceWidth(null, 1920, 1080)).toBe(1920);
+    expect(sourceWidth(undefined, 0)).toBe(0);
+  });
+
+  it('works out the width of a rendition that only gives its height', () => {
+    expect(sourceWidth([{ height: 720 }, { height: 2160 }], 1280, 720)).toBe(3840);
+    // Nothing decoded yet: the height alone says nothing about the width.
+    expect(sourceWidth([{ height: 2160 }], 0, 0)).toBe(0);
+    expect(sourceWidth([{}, { width: 0 }], 1280, 720)).toBe(1280);
+  });
+
+  it('keeps the scale and the pan when the playing rendition changes', () => {
+    const picture = { x: 0, y: 0, width: 1280, height: 720 };
+    const centre = { u: 0.3, v: 0.6 };
+    const at = (videoWidth: number, videoHeight: number) =>
+      zoomTransform({ level: '100', picture, stage: { width: 1280, height: 720 }, sourceWidth: sourceWidth(ladder, videoWidth, videoHeight), devicePixelRatio: 1, centre });
+    const low = at(1280, 720);
+    const high = at(3840, 2160);
+    expect(low.scale).toBe(3);
+    expect(high).toEqual(low);
+    // The multiples follow the same source.
+    expect(zoomScale('200', sourceWidth(ladder, 640, 360), 1280, 1)).toBe(6);
+    expect(zoomScale('150', sourceWidth(ladder, 640, 360), 1280, 2)).toBe(2.25);
   });
 });

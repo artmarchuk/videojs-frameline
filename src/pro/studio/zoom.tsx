@@ -10,7 +10,7 @@ import { ButtonTooltip } from '../../video/shared/tooltip';
 
 import { useProStore, useProStoreApi } from '../context';
 import type { ProStore } from '../store';
-import { panCentre, PAN_STEP, PICTURE_CENTRE, ZOOM_LEVELS, zoomTransform, type Box, type Centre, type ZoomLevel } from '../zoom';
+import { panCentre, PAN_STEP, PICTURE_CENTRE, sourceWidth, ZOOM_LEVELS, zoomTransform, type Box, type Centre, type RenditionSize, type ZoomLevel } from '../zoom';
 import { useAnnounce } from './announcer';
 import { studioStrings as t } from './strings';
 
@@ -29,19 +29,32 @@ export interface ZoomController {
  * guides) as one `translate` + `scale`, so the guides follow the picture with nothing re-measured, and the stage
  * around it clips the rest. `rect` is the unzoomed picture inside the wrapper, from `usePictureRect`.
  *
- * The transform is recomputed when the level or the picture rectangle changes, when the stage changes size, on the
- * media's `loadedmetadata` and `resize` (a rendition of another size changes what 100% means), on `fullscreenchange`
- * and on a window resize (which is also how a change of the device pixel ratio arrives).
+ * 100% is measured against the source: the largest rendition in `renditions` (Video.js's `videoRenditionList`), or
+ * the decoded size when there is no list. A switch of rendition therefore changes neither the scale nor the pan.
+ *
+ * The transform is recomputed when the level, the picture rectangle or the rendition list changes, when the stage
+ * changes size, on the media's `loadedmetadata` and `resize`, on `fullscreenchange` and on a window resize (which is
+ * also how a change of the device pixel ratio arrives).
  *
  * While zoomed, a drag on the picture pans it (mouse, pen, or one finger). A drag that passed the threshold is kept
  * away from the player's tap gestures, so it neither plays or pauses nor counts toward a double click.
  */
-export function useZoom(video: HTMLVideoElement | null, rect: Box | null, layer: HTMLElement | null, enabled: boolean): ZoomController {
+export function useZoom(
+  video: HTMLVideoElement | null,
+  rect: Box | null,
+  layer: HTMLElement | null,
+  enabled: boolean,
+  renditions: readonly RenditionSize[] | null = null
+): ZoomController {
   const level = useProStore((state) => state.zoom);
   const centre = useRef<Centre>(PICTURE_CENTRE);
   const apply = useRef<() => number | null>(() => null);
   const picture = useRef<Box | null>(rect);
   picture.current = rect;
+  // The widest rendition on offer, as one number, so a new list object with the same sizes changes nothing.
+  const offered = sourceWidth(renditions, 0);
+  const list = useRef(renditions);
+  list.current = renditions;
 
   const parent = layer?.parentElement ?? null;
   const wrapper = enabled && parent?.classList.contains('pro-picture') ? parent : null;
@@ -73,7 +86,7 @@ export function useZoom(video: HTMLVideoElement | null, rect: Box | null, layer:
         level,
         picture: box,
         stage: { width: bounds.width, height: bounds.height },
-        videoWidth: video.videoWidth,
+        sourceWidth: sourceWidth(list.current, video.videoWidth, video.videoHeight),
         devicePixelRatio: window.devicePixelRatio || 1,
         centre: centre.current,
         origin: { x: bounds.left, y: bounds.top },
@@ -176,8 +189,8 @@ export function useZoom(video: HTMLVideoElement | null, rect: Box | null, layer:
       apply.current = () => null;
       clear();
     };
-    // `rect` is read through a ref but listed, so a new picture rectangle recomputes the transform.
-  }, [wrapper, video, level, rect]);
+    // `rect` and the rendition list are read through refs but listed, so a change of either recomputes the transform.
+  }, [wrapper, video, level, rect, offered]);
 
   return useMemo(
     () => ({

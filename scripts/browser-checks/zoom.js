@@ -64,8 +64,19 @@ out.cycleOk = out.cycle.join() === '100,150,200,400,200';
 out.said = [at100.said, at150.said, at200.said, at400.said];
 const ratio = await page.evaluate(() => devicePixelRatio);
 const videoWidth = await page.evaluate(() => document.querySelector('video').videoWidth);
-out.scale = { devicePixelRatio: ratio, videoWidth, at100: +(at100.video.width / fit.video.width).toFixed(4), expected100: +(videoWidth / fit.video.width / ratio).toFixed(4), at150: +(at150.video.width / fit.video.width).toFixed(4), at200: +(at200.video.width / fit.video.width).toFixed(4), at400: +(at400.video.width / fit.video.width).toFixed(4) };
-out.scaleOk = same(at100.video.width * ratio, videoWidth) && same(at150.video.width * ratio, videoWidth * 1.5) && same(at200.video.width * ratio, videoWidth * 2) && same(at400.video.width * ratio, videoWidth * 4);
+// Step 8.0: 100% is one pixel of the source (the best rendition on offer) per device pixel, not of the playing one.
+// The rendition list is not on the DOM; the Quality menu's items ("2160p", "1080p"…) are.
+await page.click('.media-settings-button'); await page.waitForTimeout(400);
+await page.locator('.media-menu-popup:not(.pro-menu-popup) [role^=menuitem]', { hasText: 'Quality' }).first().click(); await page.waitForTimeout(400);
+const sourceWidth = await page.evaluate(() => {
+  const video = document.querySelector('video');
+  const heights = [...document.querySelectorAll('[role=menuitemradio]')].map((item) => Number(/^(\d+)p/.exec(item.textContent.trim())?.[1])).filter(Boolean);
+  return heights.length ? Math.round((Math.max(...heights) * video.videoWidth) / video.videoHeight) : video.videoWidth;
+});
+await page.keyboard.press('Escape'); await page.waitForTimeout(300); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+await page.focus('.pro-skin');
+out.scale = { devicePixelRatio: ratio, videoWidth, sourceWidth, at100: +(at100.video.width / fit.video.width).toFixed(4), expected100: +(sourceWidth / fit.video.width / ratio).toFixed(4), at150: +(at150.video.width / fit.video.width).toFixed(4), at200: +(at200.video.width / fit.video.width).toFixed(4), at400: +(at400.video.width / fit.video.width).toFixed(4) };
+out.scaleOk = same(at100.video.width * ratio, sourceWidth) && same(at150.video.width * ratio, sourceWidth * 1.5) && same(at200.video.width * ratio, sourceWidth * 2) && same(at400.video.width * ratio, sourceWidth * 4);
 out.pixelated = at200.rendering === 'pixelated' && at400.rendering === 'pixelated' && at100.rendering !== 'pixelated' && at150.rendering !== 'pixelated';
 
 // (2) the guides' box transforms with the picture, and the picture rectangle still describes the unzoomed picture
@@ -107,9 +118,9 @@ await press('Shift+Alt+ArrowRight', 1);
 const one = await state();
 out.oneStepPx = +(start.video.left - one.video.left).toFixed(2);
 out.oneStepIsTenth = same(out.oneStepPx, start.stage.width * 0.1);
-await press('Shift+Alt+ArrowRight', 30); await press('Shift+Alt+ArrowDown', 30);
+await press('Shift+Alt+ArrowRight', 130); await press('Shift+Alt+ArrowDown', 130);
 const far = await state();
-await press('Shift+Alt+ArrowLeft', 30); await press('Shift+Alt+ArrowUp', 30);
+await press('Shift+Alt+ArrowLeft', 130); await press('Shift+Alt+ArrowUp', 130);
 const near = await state();
 out.edges = { rightBottom: [far.video.right - far.stage.right, far.video.bottom - far.stage.bottom].map((n) => +n.toFixed(2)), leftTop: [near.video.left - near.stage.left, near.video.top - near.stage.top].map((n) => +n.toFixed(2)) };
 out.edgesOk = out.edges.rightBottom.concat(out.edges.leftTop).every((n) => Math.abs(n) < 0.6);

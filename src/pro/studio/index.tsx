@@ -123,7 +123,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
   // Zoom: the picture wrapper is scaled and moved; the guides are inside it and follow.
   const renditionNote = useRenditionNote();
-  const zoom = useZoom(video, picture.rect, picture.layer, allowed.zoom);
+  const zoom = useZoom(video, picture.rect, picture.layer, allowed.zoom, usePlayer(selectQuality)?.videoRenditionList ?? null);
   const zoomActions = useZoomActions(renditionNote);
   const zoomed = useProStore((state) => state.zoom !== 'fit');
   useLiftRenditionCap(allowed.zoom && zoomed);

@@ -53,7 +53,7 @@ export interface FeatureFlags {
   guides: false | readonly GuideId[];
   /** Approximate platform UI zones for Shorts, Reels and TikTok. */
   platformZones: boolean;
-  /** Zoom the picture to 100% or 200% of its pixels, and pan it. Never changes what a grabbed frame holds. */
+  /** Zoom the picture to 100% of the source's pixels and its multiples, and pan it. Never changes what a grabbed frame holds. */
   zoom: boolean;
   /** Debug readout. */
   debug: boolean;
