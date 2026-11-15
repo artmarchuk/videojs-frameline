@@ -655,7 +655,7 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 
 ## Deployed URL
 
-- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
+- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`; the name stayed when the skin became Frameline). Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
@@ -968,3 +968,68 @@ Viewer gate at 1440 and 320 in headless Chrome: tab order, `K`/Space, arrows, `J
 4. **`[` and `]`: previous and next cut.** The cut list is the media's chapter starts when it has chapters, **otherwise** the host's markers (`buildCutList` in `src/pro/studio/logic.ts`). Never both. When a cut comes from a marker, the marker is also selected.
 5. **`density`: exists and is public** (`FramelineSkinProps.density`, `'comfortable' | 'compact'`). Touch always gets comfortable.
 6. **Slots: they exist, as one prop**, `slots={{ toolbarStart, toolbarEnd, overlay }}` (camelCase keys; the overview's kebab names were never the API). `overlay` is drawn in the `aria-hidden` layer over the picture.
+
+### 8.R: the rename
+- Renamed: the package (`videojs-frameline`, also `skin.json`, the lockfile, the workbench's config), the public component (`FramelineSkin`, `FramelineSkinProps`, `FramelineSkinSlots`; file `src/pro/frameline-skin.tsx`; no alias), the page titles and the monitor page's heading, README, NOTES, the overview, `CLAUDE.md`, the comments that named the product, the development warning prefix (`[frameline]`), and the storage key (`frameline:v1`; a browser that remembered guides under `videojs-pro:v1` starts fresh).
+- **Tokens: `--pro-*` is `--fl-*`.** It was mechanical: one substitution over `src`, `apps`, `scripts` and the docs (69 token names, 13 files). Checked beyond typecheck, tests and the contrast script: the computed styles of every element of the skin (20 properties and both pseudo-elements, Studio, Viewer and compact) are identical before and after, and the set of tokens that CSS reads but only script sets is the same eight names.
+- Left as they are (internal): `src/pro/`, the `.pro-*` classes, `data-pro-*`, `ProStore`, `ProRuntime`, `useProStore`, the chunk names. Also left: the old step files in `specs/` (history), **the Vercel project and its URL `videojs-pro.vercel.app`**, and the repo folder. A search for "Video.js PRO", "VideoJS PRO" and "PRO" as a name finds them only in `specs/step-*.md` and in the notes that describe the rename.
+
+### 8.0: 100% means the source
+- `sourceWidth()` in `src/pro/zoom.ts`: the widest rendition in Video.js's `videoRenditionList` (a rendition that gives only its height takes its width from the playing picture's aspect ratio); with no list, the decoded `videoWidth`. `useZoom` takes the list and recomputes when its widest entry changes.
+- On the demo stream (360p to 2160p) on a 1280 px stage at 1x, 100% is now 3x, 200% is 6x and 400% is 12x, whatever is playing. The "showing 720p" note is unchanged.
+- **Checked** (`zoom-rendition-cap.js`, public URL, `?cap=1`): at 100% and panned off-centre, the transform is `translate(-1408px, -792px) scale(3)` while 720p plays, the same after the lifted cap brings 2160p in, and the same after 360p is forced by hand in Settings. No reload. The check's last part (the cap is back at Fit) is weaker than in 7b, because the forced 360p is still playing when it looks.
+- `zoom.js` reads the source's width from the Quality menu and needed more arrow presses to cross a picture that is now up to 12 times the stage. `zoom-rendition-note.js` still cycled as if there were three levels; fixed.
+
+### 8.1: demo media
+- **Where:** `apps/preview/src/frame/media.ts`, the file `CLAUDE.md` already names as the one place for the media, not a new `src/demo/media.ts`: `src/` is the skin and imports nothing from the site. One entry per source; `ACTIVE_SOURCE` is the one line to change. `cosmicDawn` (active) and `reel` (placeholder ID `REEL_PLAYBACK_ID`, 24 fps, placeholder files in `apps/preview/public/demo/reel/`). The test stream's chapters moved to `public/demo/cosmic-dawn/chapters.vtt` and its markers out of the code into `markers.json` there.
+- `DemoVideo` and `useDemoMarkers` (`demo-video.tsx`) are shared by both pages. Markers are fetched; a missing or malformed file gives none.
+- **`capRenditionToPlayerSize: false`** on every entry, passed in MuxVideo's structured `source`. The stream now plays 2160p at Fit on a 1440 px window. `?cap=1` puts the cap back, for the checks that need a capped source.
+- **A regression caught by the Viewer DOM comparison and fixed:** a structured source with only `src` gets no storyboard track from MuxVideo (`createMuxStoryboardURL` needs `playbackId`), so the hover thumbnails had gone. Entries with a playback ID are now passed as `{ playbackId }`. The video's children are the same six as in 7b again.
+- `?media=reel` shows Video.js's error dialog (the placeholder ID does not exist), with the reel's chapters track loaded: the code paths run.
+
+### 8.2: the configurator page
+- **Files.** `apps/preview/index.html` is the page: all of its content is static HTML. `src/page/page.css` styles it, `src/page/config.ts` is its state (pure, unit-tested: defaults, query string, snippet), `src/page/main.tsx` mounts the player and wires the form. No framework beyond the React the player already needs. **The CLI's workbench shell moved from `/` to `/workbench.html`**; `apps/preview` was "do not change", and this step changes it on the brief's instruction.
+- **Order:** header, player (up to 1280 px), Configure, Code, then Event log and Try this side by side (one column under 900 px), About in the footer. DOM order is the reading order.
+- **Tier** resets the flags and the layout to that tier's defaults. **Platform zones** is disabled while Guides is off. The snippet is one line up to 84 characters, then one prop per line; it always names `tier` and `fps`.
+- **URL:** `tier` always; `layout` and each flag (`zoom=0`, `timecode=1`) only where they differ from the tier. Parameters that are not the page's (`media`, `debug`) and the `#t=` frame link survive. `history.replaceState`, no reload.
+- **The page needed a way to drive the player, and there was none**, only props and callbacks. Added to the skin, small and documented: **`apiRef`** (`seek`, `step`, `setRange`, `setLoop`, `setGuides`, `setZoom`, `pan`, `grabFrame`), filled by the lazy Studio layer, so it costs the Viewer nothing; and the events **`onZoomChange`** and **`onFrameGrab`**, which the event log and the brief's check ("the log receives a frame grab") need. The store gained `setRange` and `setGuides`, each one change and one event. Handle calls are silent for screen readers; the page says what each "Show me" did in a status line next to the buttons.
+- **Show me** never moves focus (checked: focus is still on the button). It scrolls the player into view. A task whose flags are off is disabled and says which feature to switch on. Times are taken from the video's duration, so the copy holds for any source.
+- **Event log:** the last 20, newest first, each with the player's timecode. `onFrameChange` is left out (one per frame). Not a live region.
+- **Theme:** the page follows the system; the player stays dark. Links and focus rings are the accent in the dark theme and a darker shade of it (`#1D5FD1`) in the light theme, because `#5B9DFF` is 2.7:1 on a light page. Checked boxes and the chosen segment are neutral. 28 new rows in `scripts/contrast.mjs`, all pass.
+- **Meta:** title, description, Open Graph and Twitter tags with absolute URLs on `videojs-pro.vercel.app`; `og.png` (1200x630) from `scripts/og-image.mjs`; `favicon.svg`, the Guides icon on the dock's graphite.
+- **Checks** (`scripts/browser-checks/configurator.js`, local and public, all pass): opens on Studio; a flag changes the player and the snippet; tier changes both and resets the flags; a pro flag over Viewer; layout; no reload; the radio groups work with arrow keys; each of the six "Show me" (three frames stepped, range and loop and playing, 9:16 with TikTok, title safe, 200% and panned, a PNG named `frame_<timecode>.png`); the log's lines, its cap of 20, Clear; Copy; four query strings round-trip; Viewer on the page requests no pro chunk. Structure at 1440, 1024, 390 (touch) and 320: one h1, h2 per section, header/main/footer/nav, no unlabelled control, no target under 24 px (44 on touch), no horizontal overflow.
+
+### Bundle sizes (raw / gzip -9)
+| Chunk | Step 7b | Step 8 |
+| --- | --- | --- |
+| Viewer path JS (was `preview-*.js`, now the shared `demo-video-*.js`) | 969,477 / 285,106 B | 952,862 / 279,981 B, plus the monitor page's own 15,614 / 5,961 B |
+| Skin CSS (shared `demo-video-*.css`) | 36,105 / 6,561 B with the monitor page's | 32,907 / 5,872 B, plus the monitor page's own 2,926 / 1,138 B |
+| Pro runtime | 13,069 / 5,243 B | 12,761 / 5,036 B |
+| Studio JS | 57,545 / 18,202 B | 58,245 / 18,523 B |
+| Studio CSS | 23,484 / 4,230 B | 23,357 / 4,226 B |
+| **The page's own JS** (`index-*.js`) | none | **7,479 / 3,452 B** |
+| **The page's own CSS** (`index-*.css`) | none | **7,794 / 2,408 B** |
+| The page's HTML | none | 13,415 / 3,595 B |
+The page also loads a small shared `timecode-*.js` (the pure timecode functions, for the log's timestamps) in every tier. It is not one of the pro chunks (runtime, studio, debug).
+
+### Screenshots
+`design/screenshots/step-8/` (headless Chrome; each opened and looked at): `page-1440-light`, `page-1440-dark`, `page-1024`, `page-390` (touch, dark), `page-320`, `event-log-entries`, `page-1440-after-show-me`, `og-image`.
+
+### Step 8 public-URL checks (https://videojs-pro.vercel.app)
+Viewer gate at 1440 and 320 on `/?tier=viewer` and on `/preview.html?tier=viewer`: tab order, `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**. The Viewer's DOM (every element's tag, classes and role, and the video's children) is identical to the step 7b deploy on both pages. `configurator.js`, `zoom.js` at 1x and 2x, `guides-menu-focus.js`, `zoom-rendition-cap.js` and `zoom-rendition-note.js` (both with `?cap=1`) pass. `/`, `/preview.html`, `/workbench.html`, `/og.png`, `/favicon.svg` and the demo files answer 200.
+
+### 8.6: not done
+The author creates the GitHub repository and pushes by hand. The tag `step-8-configurator` is local.
+
+### Placeholders the author replaces
+- `apps/preview/index.html`: the Source and Features links (`https://github.com/artmarchuk/videojs-frameline`, a guess from the git user name), the About pitch, and the absolute `og:` URLs if the site moves.
+- `apps/preview/src/frame/media.ts`: `REEL_PLAYBACK_ID`, then `ACTIVE_SOURCE = 'reel'`; the three files in `public/demo/reel/`. Then run `scripts/og-image.mjs` again (its `SHOT` times are for the test stream) and adjust the "Try this" copy if needed.
+
+### Unverified (step 8)
+- **Only Chrome was run** (headless, desktop and touch emulation). The page's CSS uses `accent-color`, media-query range syntax (`width < 900px`) and `clip-path: inset()`, all inside the browser floor on paper.
+- **A screen reader on the page:** structure and names were read from the DOM, not heard.
+- **The social image in a real unfurl** (Slack, X, LinkedIn): the tags and the file are there; no card validator was run.
+- **The reel:** the entry and its files are placeholders; nothing was played from it. Its captions track is plain `<track>` markup that no source has exercised with real cues.
+- **`apiRef` with a host that re-creates the ref**, and its calls before the video has metadata (the page guards for that itself).
+- **A real download** from "Grab a frame": the check stubs the link's click and reads the file name.
+- Everything listed under steps 7 and 7b that needs Firefox, Safari, a real pointer or real fullscreen still stands.
