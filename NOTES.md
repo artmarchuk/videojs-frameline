@@ -4,6 +4,8 @@ Read this at the start of every step, along with `specs/PROJECT-OVERVIEW.md` and
 
 **Tier names.** Until step 6 there were three tiers: Share, Review and Studio. Step 6 merged Review and Studio into **Studio** and renamed Share to **Viewer**. The sections for steps 2 to 5b below were renamed with the code, so "Studio" there means what was then called Review (the old Studio tier had no UI). Things step 6 removed are still described in those sections as history: the Tools tray, the Tools button, the playhead's permanent bubble, the marker lane and its cluster badges, Play range, `toolsOpen`. The git tag `step-2-share-gate` keeps its name.
 
+**View is now Guides.** Step 7b renamed the View menu to **Guides** and moved zoom to a button of its own. Sections up to step 7 still say "View menu", `onViewChange`, `view:change`, `ViewMenu` and `view-menu-focus.js`: read them as Guides menu, `onGuidesChange`, `guides:change`, `GuidesMenu` and `guides-menu-focus.js`. Step 7's Zoom group in the View menu, its three levels and `Alt+arrows` are history too (see step 7b).
+
 ## Versions (step 1, 15 Nov 2026)
 
 | What | Version |
@@ -896,3 +898,58 @@ Unit tests: 192 passing (19 new: scale at devicePixelRatio 1 and 2, 100% smaller
 
 ### Step 7 public-URL checks (https://videojs-pro.vercel.app)
 Viewer gate in headless Chrome at 1440 and 320: tab order (Seek, Play, Mute, Volume, time, captions, Settings, PiP, Fullscreen; the 320 px set is shorter as before), `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**. The Viewer's DOM (every element's tag, classes and role) is identical to the step 6d deploy, with no `.pro-picture`; `Z` and `Alt+arrows` do nothing there. Studio: `scripts/browser-checks/zoom.js` passes at device scale factor 1 and 2.
+
+## Step 7b: Guides menu and Zoom button (15 Nov 2026)
+
+### G1: View becomes Guides
+- Renamed: the button's label, tooltip ("Guides" with `Shift+V` beside it, the way every other tooltip shows its key), accessible name ("Guides", "Guides, 2 guides on"), `aria-keyshortcuts`, the strings, the component and file (`guides-menu.tsx`, `GuidesMenu`, `useGuidesActions`), CSS classes (`pro-guides-*`), `data-pro-menu="guides"`, the browser check (`guides-menu-focus.js`), README and the overview. Public names: `onViewChange` is `onGuidesChange`, the preview log line `guides:change`, the exported type `EffectiveGuides`. No alias.
+- Not renamed: the pure model file `src/pro/view.ts` and its internal names (`ViewState`, `allowedView`, `viewMenuModel`), which are not public; its header says what it is. Announcements never contained the word "View".
+- Icon: a frame (17x14, radius 2) with a dashed inner frame, on the set's **24 grid with a 1.5 stroke**. The brief says "20 px grid"; the existing icons are drawn on 24, so the new one follows them.
+- The Zoom group and its help text are out of the menu. `guides: false` removes the button again (`hasViewMenu` no longer counts zoom). The menu opens on "Title safe" and walks to "Hide guides" in reading order (checked).
+
+### G2: the Zoom button
+- `ZoomMenu` in `src/pro/studio/zoom.tsx`, rendered in the `tools` slot after Guides (so before the divider and Captions; on the narrow dock next to Guides). A Video.js `Menu` with a `Menu.RadioGroup`; choosing a level closes the menu and focus returns to the button, like the Capture menu. It opens on the checked level (Video.js's own behaviour for a radio menu, which is right here).
+- The button: the level as text, 52 px wide at every level (`font-variant-numeric: tabular-nums`, 13 px semibold), the height of the other dock buttons (34 px; 44 on touch), `data-pressed` (the `--pro-on` fill and its short bar) while zoomed. Name "Zoom, Fit" / "Zoom, 200%"; tooltip "Zoom" with `Z`. Measured: the button's left edge and width and the Settings button's position are the same at Fit and at 400%.
+- Levels `fit`, `100`, `150`, `200`, `400` (`ZOOM_LEVELS`); each is a multiple of 100% (`FACTOR`). `data-zoom` carries the level; `image-rendering: pixelated` for 200 and 400.
+- **Pixelated was measured this time**, from screenshots at device scale factor 1: at 200% identical pixels come in runs of 2 px, at 400% in runs of 4 px; at 100% and 150% there are no such runs. So Chrome does draw the scaled video with nearest-neighbour through the wrapper's transform. (In step 7 this was read from the computed style only.)
+- **A Video.js detail found:** a menu is sized by measuring its content at max-content width (`core/dist/dev/dom/ui/menu/popup.js`, `measureContent`), where a paragraph is one line. The help line wrapped once the menu had its width and was cut off. It has a width of its own now (232 px), so it measures as it renders.
+- Shortcuts: `Z` next, `Shift+Z` previous (from Fit it goes to 400%). Pan is `Shift+Alt+arrows`, registered only while zoomed. Conflicts checked against the installed hotkey matcher (modifiers must match exactly) and both maps: none. `Shift+←/→` (jump 10 frames) and `Alt+←/→` are different patterns. `Shift+Z` is not in the YouTube map. On macOS `Shift+Option+arrow` extends a text selection by a word, which only matters in a text field, and the player has none.
+- The seek slider: `Alt+→` is passed to the stock slider again, as before step 7 (it moves the playhead 1 s); `Shift+Alt+→` there pans.
+- Flags: `zoom: false` removes the button, the shortcuts, the help rows and the wrapper; `guides: false` with zoom on leaves the Zoom button and no Guides button.
+
+### G3: the rendition cap
+- **It can change at runtime.** `capRenditionToPlayerSize` is a field of the media's `source` (`docs/guides/media-sources.md`). In the installed `@videojs/hlsjs-video` (`adapter.js`) `set source` calls `#applyRenditionCaps()`, which sets the engine delegate's `capRenditionToPlayerSize`; that setter re-runs the cap controller (`hls-js-only.js`, `cap-level.js`). A load is requested only when `src` or the engine options change, and the cap is in neither. `MuxVideoAdapter`'s `set source` adds a metadata reset that is keyed by URL, so it is a no-op here.
+- **Done:** `useLiftRenditionCap` (Studio). While zoom is above Fit and no rendition is selected (Auto), it assigns `{ ...source, capRenditionToPlayerSize: false }` to the media from `useMedia()`; leaving that state puts the host's own source object back, unless the source was replaced meanwhile. It never selects a rendition. With a rendition picked by hand, or a host that set the cap off itself, or media without `source` and `videoRenditions`, it does nothing.
+- **Checked** (`scripts/browser-checks/zoom-rendition-cap.js`, 1x): playing at Fit 720p; `Z`: 2160p two seconds later; `Shift+Z` back to Fit: 720p again once the buffered segments were played (about 30 s); no `loadstart` or `emptied`, playback never stopped.
+- **What it does not do:** it changes what is fetched from then on. **A frame you paused on stays in the rendition it was buffered in**: paused at 20 s, zoomed, waited 8 s, stepped a frame: still 720p. After a seek away and back it was 2160p. The note ("showing 720p") stays correct throughout. Making the paused frame sharp would mean flushing the buffer or selecting a rendition, which the brief rules out; picking the top rendition in Settings → Quality does it.
+- A side effect to know: when the higher rendition arrives while zoomed, `videoWidth` grows, so the scale for the same level grows with it (100% of 2160p is three times 100% of 720p on this stage). The label stays true and the pan keeps its centre, but the picture visibly jumps.
+- If a host passes a new `source` object while zoomed, React sets it on the media and the cap is back until the next zoom change. Not handled.
+
+### Layout: the new numbers
+The Zoom button adds 56 px (52 + gap) to the right column. Measured with a range set (Reset range in the row), by player width:
+- The old breakpoints with the new button: the row started to overlap at about 670 px (it needs about 690), where the narrow arrangement did not begin until 640.
+- So every step moved up 60 px. **One row sheds: volume slider under 1100 (was 1040), duration 1040 (980), captions 940 (880), chevrons 900 (840), badges and divider 800 (740). Two rows under 700 (was 640)**, and always on touch. `DOCK_NARROW_BELOW = 700`. No overlap and nothing outside the player at any width tried from 1280 down to 288.
+- The transport is centred from about 1280 px up (was about 1170); below that it sits left of centre by up to 100 px, as before but sooner. Nothing was dropped to buy that back.
+- **Narrow dock, new:** the second row (In, Out, Loop, then Capture, Guides, Zoom, Settings, Fullscreen) needs about 405 px. At 390 it wrapped Fullscreen onto a line of its own, so **under 410 px In, Out, Loop take a row of their own and the five buttons the next: three rows at 390**, where step 6c had two. The dock is one row (54 px) taller on a phone. The cut buttons still step aside under 350.
+
+### Checks
+`zoom.js` (1x and 2x, local and public): the five levels and both cycles, scale at each level, pixelated from 200%, guides follow, a 10 px drag, `Shift+Alt+arrows` to the edges, grab at Fit equals grab zoomed and panned, `Alt` + arrows alone neither pan nor seek from the container, the slider's `Alt+→` and `Shift+Alt+→`, the Guides menu order, the Zoom button's text, name, pressed state, fixed width, the menu's items and help, focus back on the button. `guides-menu-focus.js`: opens on "Title safe". `zoom-rendition-note.js` and `zoom-rendition-cap.js`. Flags by URL: `?zoom=0`, `?guides=0`, both, `?tier=viewer&zoom=1`. Touch emulation at 390: Zoom menu inside the player, items 44 px, the button 52x44. Unit tests: 196.
+
+### Chunk sizes (raw / gzip -9)
+| Chunk | Step 7 | Step 7b |
+| --- | --- | --- |
+| Viewer path JS | 969,469 / 285,102 B | 969,477 / 285,106 B (the preview page's event name) |
+| Skin CSS | 36,105 / 6,561 B | 36,105 / 6,561 B |
+| Pro runtime | 12,964 / 5,204 B | 13,069 / 5,243 B |
+| Studio JS | 56,312 / 17,975 B | 57,545 / 18,202 B |
+| Studio CSS | 23,111 / 4,189 B | 23,484 / 4,230 B |
+
+### Screenshots
+`design/screenshots/step-7b/` (headless Chrome, 1x; each opened and looked at): `guides-menu`, `zoom-menu`, `zoom-menu-390`, `zoom-button-fit|100|150|200|400` (the right column of the row), `zoom-150`, `zoom-400`, `zoom-200-390`, `layout-1440`, `layout-1100` (the new first threshold), `layout-1024`, `layout-390`, `layout-320`.
+
+### Unverified (step 7b)
+- Everything listed under step 7 that needs a real browser other than Chrome, a real pointer or real fullscreen still stands, except pixelated drawing in Chrome, which is now measured.
+- **Windows and Linux:** that `Alt+←` now goes back in the browser while zoomed was reasoned from the code (the pattern is no longer registered), not run there.
+- **The cap lift on a slow connection, on native HLS (Safari), and with a host `source` object.** Chrome with hls.js on a fast connection only. On Safari the media has no renditions, so the hook does nothing.
+- **How the jump in size feels** when a higher rendition arrives mid-zoom.
+- **A real phone:** the three-row dock at 390 was seen in emulation.
