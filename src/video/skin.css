@@ -475,7 +475,6 @@
       100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0)
     );
     background-color: var(--pro-track);
-    opacity: 0.55;
   }
 
   .pro-skin .media-time-slider-buffer {
@@ -483,7 +482,7 @@
       calc(100% - var(--media-slider-buffer, 0%)),
       calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
     );
-    background-color: var(--pro-track);
+    background-color: var(--pro-text-dim);
   }
 
   .pro-skin .media-time-slider-fill {

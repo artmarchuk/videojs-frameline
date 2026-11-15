@@ -74,7 +74,7 @@ Container, poster, error dialog, controls with auto-hide, time slider with chapt
 | focus ring halo: accent vs surface-0 halo | 16.56:1 | 3 | PASS |
 | focus ring halo: surface-0 halo vs white frame | 19.57:1 | 3 | PASS |
 
-The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the full-strength part of the scrim, so the "over white frame" rows are the worst case. Proposed token values were kept; only `--pro-track` (#7A828E) was added, because the hairline colour is too dark for a slider track (first try #5C6470 gave 2.43:1 over white).
+The scrim is `--pro-surface-0` at 88% opacity. Text and icons sit only over the full-strength part of the scrim, so the "over white frame" rows are the worst case. Proposed token values were kept; only `--pro-track` (#7A828E) was added (the unfilled track; the buffered range uses `--pro-text-dim`), because the hairline colour is too dark for a slider track (first try #5C6470 gave 2.43:1 over white).
 
 ### Gate checklist (public URL, Chrome on macOS, 15 Nov 2026)
 
