@@ -25,7 +25,7 @@ Test for every decision: does it help someone make, check, review or deliver a v
 4. **Accessibility:** WCAG 2.2 AA. See `specs/PROJECT-OVERVIEW.md` for targets, contrast and overlay rules.
 5. **Frame accuracy is best effort.** Never claim guaranteed frame accuracy or true reverse playback.
 6. **Say what you could not verify** instead of guessing; list it in `NOTES.md` under "Unverified".
-7. **Do not build anything marked [Later].** Put ideas in `NOTES.md` under "Later".
+7. **Do not build anything marked [Backlog].** Put ideas in `NOTES.md` under "Backlog".
 
 ## Commands
 
@@ -42,4 +42,4 @@ Test for every decision: does it help someone make, check, review or deliver a v
 - `apps/preview/`: the site. `index.html` and `src/page/` are the configurator page (the site root, the submission URL); `preview.html` and `src/frame/` the monitor page; `workbench.html` and `src/shell/` the CLI's workbench, which you don't change. `src/frame/media.ts` is the one place that names the demo media.
 - `FEATURES.md`: every feature, where to try it, and the tag it shipped in. Update it in every step.
 - `specs/`: the project overview and per-step requirements.
-- `NOTES.md`: versions, deployed URL, decisions, Later, Unverified.
+- `NOTES.md`: versions, deployed URL, decisions, Backlog, Unverified.
