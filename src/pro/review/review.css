@@ -53,21 +53,10 @@
     height: 100%;
   }
 
-  /* "On" and "set" states use the accent, and each also has a non-colour cue: aria-pressed plus an underline. */
+  /* "On" and "set" states: a lighter graphite fill, plus aria-pressed. The accent is reserved for the timeline. */
   .pro-skin .pro-tool[data-pressed],
   .pro-skin .pro-tool-set {
-    color: var(--pro-accent);
-  }
-
-  .pro-skin .pro-tool[data-pressed]::after,
-  .pro-skin .pro-tool-set::after {
-    content: "";
-    position: absolute;
-    inset-inline: calc(var(--media-spacing) * 2);
-    bottom: var(--media-spacing);
-    height: 2px;
-    border-radius: var(--pro-radius-sm);
-    background-color: currentColor;
+    background-color: var(--pro-on);
   }
 
   /* ---------- Timecode ---------- */
@@ -88,7 +77,6 @@
     background-color: var(--pro-surface-1);
     color: var(--pro-text);
     cursor: pointer;
-    font-family: var(--pro-font-mono);
     font-size: var(--pro-text-sm);
     font-variant-numeric: tabular-nums;
     font-weight: 500;
@@ -148,7 +136,6 @@
     padding-inline: var(--media-spacing);
     color: var(--pro-text);
     direction: ltr;
-    font-family: var(--pro-font-mono);
     font-size: var(--pro-text-xs);
     font-variant-numeric: tabular-nums;
     font-weight: 500;
@@ -228,5 +215,29 @@
     pointer-events: none;
     text-align: center;
     transform: translateX(-50%);
+  }
+}
+
+@layer components {
+  /* ---------- Markers list in the More menu ---------- */
+
+  .pro-skin .pro-more-section {
+    display: flex;
+    flex-direction: column;
+    margin-top: var(--media-spacing);
+    padding-top: var(--media-spacing);
+    border-top: 1px solid var(--pro-line);
+  }
+
+  .pro-skin .pro-more-heading {
+    padding: var(--media-spacing) calc(var(--media-spacing) * 2);
+    color: var(--pro-text-dim);
+    font-size: var(--pro-text-sm);
+  }
+
+  .pro-skin .pro-more-marker-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

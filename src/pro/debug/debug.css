@@ -11,7 +11,6 @@
     border-radius: var(--pro-radius);
     background-color: var(--pro-scrim);
     color: var(--pro-text);
-    font-family: var(--pro-font-mono);
     font-size: var(--pro-text-xs);
     font-variant-numeric: tabular-nums;
     font-weight: 500;
