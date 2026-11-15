@@ -1,0 +1,73 @@
+/*
+ * Guides (Studio). Loaded with the Studio module. Drawn in the overlay layer, which is sized to the picture.
+ * Lines are white at 75% over a dark under-stroke, so they read over white, black and anything between. No accent.
+ */
+@layer components {
+  .pro-skin .pro-guide {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .pro-skin .pro-guide-line,
+  .pro-skin .pro-guide-under {
+    fill: none;
+    shape-rendering: crispEdges;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .pro-skin .pro-guide-line {
+    stroke: rgb(255 255 255 / 0.75);
+    stroke-width: 1;
+  }
+
+  .pro-skin .pro-guide-under {
+    stroke: rgb(0 0 0 / 0.5);
+    stroke-width: 3;
+  }
+
+  .pro-skin .pro-guide-dashed {
+    stroke-dasharray: 6 4;
+  }
+
+  /* Outside a crop: dimmed. */
+  .pro-skin .pro-guide-dim {
+    fill: rgb(0 0 0 / 0.55);
+  }
+
+  /* A platform zone: where the app's own interface will be. */
+  .pro-skin .pro-guide-zone {
+    fill: rgb(0 0 0 / 0.35);
+  }
+
+  .pro-skin .pro-guide-label {
+    position: absolute;
+    max-width: calc(100% - 12px);
+    padding: 1px 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background-color: rgb(14 14 16 / 0.72);
+    color: var(--pro-text);
+    font-size: var(--pro-text-ruler);
+    line-height: 1.4;
+    pointer-events: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pro-skin .pro-guide-label-straddle {
+    transform: translateY(-50%);
+  }
+
+  @media (forced-colors: active) {
+    .pro-skin .pro-guide-line {
+      stroke: CanvasText;
+    }
+
+    .pro-skin .pro-guide-under {
+      stroke: Canvas;
+    }
+  }
+}

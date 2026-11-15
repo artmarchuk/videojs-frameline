@@ -123,11 +123,18 @@
     object-position: var(--media-object-position, center);
   }
 
-  /* Above the video, below the controls. Empty in the Viewer tier; guides are drawn here later. */
+  /*
+   * Above the video, below the controls. Empty in the Viewer tier. The Studio module sets --pro-picture-x/y/w/h to
+   * the picture's rectangle (the video's pixels, without letterbox bars), so guides and a host's `overlay` slot are
+   * positioned on the picture. Without those variables the layer covers its whole parent.
+   */
   .pro-skin .pro-overlay {
     position: absolute;
-    inset: 0;
+    top: var(--pro-picture-y, 0);
+    left: var(--pro-picture-x, 0);
     z-index: var(--pro-z-overlay);
+    width: var(--pro-picture-w, 100%);
+    height: var(--pro-picture-h, 100%);
     pointer-events: none;
   }
 
