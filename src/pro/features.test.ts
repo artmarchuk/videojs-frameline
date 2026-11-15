@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetWarnings } from './dev';
-import { GUIDE_IDS, guideAttribute, hasProFeatures, resolveFeatures, resolveLayout, TIERS, isTier, type FeatureOverrides } from './features';
+import { GUIDE_IDS, hasProFeatures, resolveFeatures, resolveLayout, TIERS, isTier, type FeatureOverrides } from './features';
 
 describe('resolveFeatures', () => {
   let warn: ReturnType<typeof vi.spyOn>;
@@ -72,12 +72,6 @@ describe('resolveFeatures', () => {
     expect(Object.isFrozen(a.guides)).toBe(true);
     expect(resolveFeatures('studio')).toBe(resolveFeatures('studio', {}));
     expect(resolveFeatures('studio')).not.toBe(resolveFeatures('viewer'));
-  });
-
-  it('names data attributes for guides', () => {
-    expect(guideAttribute('title-safe')).toBe('data-guide-title-safe');
-    expect(guideAttribute('9:16')).toBe('data-guide-9-16');
-    expect(guideAttribute('2.39')).toBe('data-guide-2-39');
   });
 });
 

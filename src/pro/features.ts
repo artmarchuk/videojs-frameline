@@ -201,8 +201,3 @@ export function resolveFeatures(tier: Tier = 'viewer', overrides: FeatureOverrid
 export function hasProFeatures(features: Readonly<FeatureFlags>): boolean {
   return FLAG_NAMES.some((name) => features[name] !== false);
 }
-
-/** `data-guide-*` attribute name for a guide id: `9:16` becomes `data-guide-9-16`, `2.39` becomes `data-guide-2-39`. */
-export function guideAttribute(id: string): string {
-  return `data-guide-${id.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
-}

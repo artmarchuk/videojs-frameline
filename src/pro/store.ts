@@ -10,9 +10,24 @@
  *   Setting a point exactly onto the other is rejected (a zero-length range has no use).
  * - Loop is on or off. While on, `loopMode` says what loops: `'range'` when a point is set, `'whole'` otherwise;
  *   the store keeps it in step as points are set and cleared.
- * - Only overlays the host allowed can be switched on.
+ * - Only guides, crops and zones the host allowed can be switched on (the rules are in `view.ts`).
  */
-import type { GuideId } from './features';
+import {
+  EMPTY_VIEW,
+  effectiveView,
+  NOTHING_ALLOWED,
+  sameEffective,
+  sanitizeView,
+  setCrop as cropView,
+  setZones as zonesView,
+  toggleGuide as guideView,
+  toggleHidden as hiddenView,
+  type AllowedView,
+  type CropId,
+  type EffectiveView,
+  type ViewState,
+  type ZoneId,
+} from './view';
 
 /** A marker on the timeline. With `end` it is a range marker. Times are in seconds. */
 export interface Marker {
@@ -53,8 +68,8 @@ export interface ProState {
   outPoint: number | null;
   loopMode: LoopMode;
   timeDisplay: TimeDisplay;
-  /** Guide ids currently on. A new set is created on every change, so it can be compared by reference. */
-  activeOverlays: ReadonlySet<string>;
+  /** Guides, crop mask and platform zones: what the end user chose in the View menu. Replaced on every change. */
+  view: Readonly<ViewState>;
   inspection: Readonly<Inspection>;
   /** Current frame number, from the frame clock. Best effort. */
   frame: number;
@@ -72,6 +87,8 @@ export interface ProCallbacks {
   onInOutChange?: ((range: InOutRange) => void) | undefined;
   onMarkerSelect?: ((marker: Marker) => void) | undefined;
   onFrameChange?: ((frame: FrameInfo) => void) | undefined;
+  /** The set of guides that is drawn changed. Not fired for the set the store starts with. */
+  onViewChange?: ((view: EffectiveView) => void) | undefined;
 }
 
 export interface ProStore {
@@ -86,7 +103,14 @@ export interface ProStore {
   toggleTimeDisplay(): void;
   /** Loop on or off; with no argument, toggles. On loops the range when a point is set, otherwise the whole video. */
   setLoop(on?: boolean): void;
-  toggleOverlay(id: string, on?: boolean): void;
+  /** Switches one checkbox guide on or off; with no `on`, toggles it. */
+  toggleGuide(id: string, on?: boolean): void;
+  /** Picks a crop mask, or `null` for none. Any crop but 9:16 clears the platform zones. */
+  setCrop(crop: CropId | null): void;
+  /** Picks a platform's zones, or `null` for none. Picking one turns on the 9:16 crop. */
+  setZones(zones: ZoneId | null): void;
+  /** Hides every guide, or shows the hidden set again. */
+  toggleGuidesHidden(): void;
   setInspection(patch: Partial<Inspection>): void;
   resetInspection(): void;
   selectMarker(marker: Marker): void;
@@ -96,8 +120,8 @@ export interface ProStore {
   setFrame(frame: number, mediaTime: number): void;
   setClock(source: FrameClockSource | null, precision: FrameClockPrecision | null): void;
   setDuration(duration: number): void;
-  /** The guide ids the host allows. Active overlays that are no longer allowed are switched off. */
-  setAllowedOverlays(ids: readonly string[]): void;
+  /** What the host allows. Guides, crops and zones that are no longer allowed are switched off. */
+  setAllowedView(allowed: AllowedView): void;
   setCallbacks(callbacks: ProCallbacks): void;
 }
 
@@ -109,7 +133,9 @@ const LOOP_MODES: readonly LoopMode[] = ['off', 'range', 'whole'];
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 export interface ProStoreOptions {
-  allowedOverlays?: readonly (GuideId | string)[];
+  allowedView?: AllowedView;
+  /** The view to start with, for example the remembered one. It is checked against `allowedView`. */
+  view?: ViewState;
   timeDisplay?: TimeDisplay;
 }
 
@@ -119,7 +145,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     outPoint: null,
     loopMode: 'off',
     timeDisplay: options.timeDisplay ?? 'timecode',
-    activeOverlays: new Set<string>(),
+    view: sanitizeView(options.view ?? EMPTY_VIEW, options.allowedView ?? NOTHING_ALLOWED),
     inspection: DEFAULT_INSPECTION,
     frame: 0,
     mediaTime: 0,
@@ -128,13 +154,21 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     duration: 0,
     selectedMarker: null,
   };
-  let allowed = new Set<string>(options.allowedOverlays ?? []);
+  let allowed: AllowedView = options.allowedView ?? NOTHING_ALLOWED;
   let callbacks: ProCallbacks = {};
   const listeners = new Set<() => void>();
 
   function commit(patch: Partial<ProState>) {
     state = { ...state, ...patch };
     for (const listener of [...listeners]) listener();
+  }
+
+  function commitView(next: ViewState) {
+    if (next === state.view) return;
+    const before = effectiveView(state.view);
+    commit({ view: Object.freeze(next) });
+    const after = effectiveView(next);
+    if (!sameEffective(before, after)) callbacks.onViewChange?.(after);
   }
 
   function clampTime(time: number): number | null {
@@ -211,17 +245,10 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       if (mode !== state.loopMode) commit({ loopMode: mode });
     },
 
-    toggleOverlay(id, on) {
-      const active = state.activeOverlays.has(id);
-      const next = on ?? !active;
-      if (next === active) return;
-      if (next && !allowed.has(id)) return;
-
-      const overlays = new Set(state.activeOverlays);
-      if (next) overlays.add(id);
-      else overlays.delete(id);
-      commit({ activeOverlays: overlays });
-    },
+    toggleGuide: (id, on) => commitView(guideView(state.view, id, allowed, on)),
+    setCrop: (crop) => commitView(cropView(state.view, crop, allowed)),
+    setZones: (zones) => commitView(zonesView(state.view, zones, allowed)),
+    toggleGuidesHidden: () => commitView(hiddenView(state.view)),
 
     setInspection(patch) {
       const next: Inspection = { ...state.inspection };
@@ -284,10 +311,9 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       }
     },
 
-    setAllowedOverlays(ids) {
-      allowed = new Set(ids);
-      const kept = [...state.activeOverlays].filter((id) => allowed.has(id));
-      if (kept.length !== state.activeOverlays.size) commit({ activeOverlays: new Set(kept) });
+    setAllowedView(next) {
+      allowed = next;
+      commitView(sanitizeView(state.view, allowed));
     },
 
     setCallbacks(next) {

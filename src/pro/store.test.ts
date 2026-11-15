@@ -103,19 +103,48 @@ describe('pro store', () => {
     expect(listener).toHaveBeenCalledTimes(3);
   });
 
-  it('only switches on allowed overlays, and drops ones that stop being allowed', () => {
-    const store = createProStore({ allowedOverlays: ['title-safe', '9:16'] });
-    store.toggleOverlay('thirds');
-    expect(store.getState().activeOverlays.size).toBe(0);
-    const before = store.getState().activeOverlays;
-    store.toggleOverlay('9:16');
-    store.toggleOverlay('title-safe');
-    expect([...store.getState().activeOverlays]).toEqual(['9:16', 'title-safe']);
-    expect(store.getState().activeOverlays).not.toBe(before);
-    store.setAllowedOverlays(['title-safe']);
-    expect([...store.getState().activeOverlays]).toEqual(['title-safe']);
-    store.toggleOverlay('title-safe');
-    expect(store.getState().activeOverlays.size).toBe(0);
+  it('only switches on what the host allows, and drops what stops being allowed', () => {
+    const store = createProStore({ allowedView: { guides: ['title-safe'], crops: ['9:16'], zones: [] } });
+    store.toggleGuide('thirds');
+    store.setCrop('1:1');
+    store.setZones('tiktok');
+    expect(store.getState().view).toMatchObject({ guides: [], crop: null, zones: null });
+    const before = store.getState().view;
+    store.setCrop('9:16');
+    store.toggleGuide('title-safe');
+    expect(store.getState().view).toMatchObject({ guides: ['title-safe'], crop: '9:16' });
+    expect(store.getState().view).not.toBe(before);
+    store.setAllowedView({ guides: ['title-safe'], crops: [], zones: [] });
+    expect(store.getState().view).toMatchObject({ guides: ['title-safe'], crop: null });
+    store.toggleGuide('title-safe');
+    expect(store.getState().view.guides).toEqual([]);
+  });
+
+  it('fires onViewChange when the drawn set changes, not for the starting view', () => {
+    const allowedView = { guides: ['title-safe', 'thirds'], crops: ['9:16' as const, '1:1' as const], zones: ['tiktok' as const] };
+    const store = createProStore({ allowedView, view: { guides: ['thirds'], crop: null, zones: null, hidden: false } });
+    const onViewChange = vi.fn();
+    store.setCallbacks({ onViewChange });
+    expect(store.getState().view.guides).toEqual(['thirds']);
+    expect(onViewChange).not.toHaveBeenCalled();
+    store.toggleGuide('thirds', true); // already on
+    store.setZones('tiktok');
+    expect(onViewChange).toHaveBeenLastCalledWith({ guides: ['thirds'], crop: '9:16', zones: 'tiktok' });
+    store.toggleGuidesHidden();
+    expect(onViewChange).toHaveBeenLastCalledWith({ guides: [], crop: null, zones: null });
+    store.toggleGuidesHidden();
+    expect(onViewChange).toHaveBeenLastCalledWith({ guides: ['thirds'], crop: '9:16', zones: 'tiktok' });
+    expect(onViewChange).toHaveBeenCalledTimes(3);
+  });
+
+  it('starts from a remembered view only as far as the host allows it', () => {
+    const store = createProStore({
+      allowedView: { guides: ['thirds'], crops: [], zones: [] },
+      view: { guides: ['title-safe', 'thirds'], crop: '1:1', zones: 'reels', hidden: false },
+      timeDisplay: 'seconds',
+    });
+    expect(store.getState().view).toMatchObject({ guides: ['thirds'], crop: null, zones: null });
+    expect(store.getState().timeDisplay).toBe('seconds');
   });
 
   it('validates inspection values and resets them', () => {
@@ -138,13 +167,14 @@ describe('pro store', () => {
   });
 
   it('is per instance: two stores do not share state', () => {
-    const a = createProStore({ allowedOverlays: ['thirds'] });
-    const b = createProStore({ allowedOverlays: ['thirds'] });
+    const allowedView = { guides: ['thirds'], crops: [], zones: [] };
+    const a = createProStore({ allowedView });
+    const b = createProStore({ allowedView });
     a.setIn(5);
-    a.toggleOverlay('thirds');
+    a.toggleGuide('thirds');
     a.setFrame(10, 0.4);
     expect(b.getState()).toMatchObject({ inPoint: null, frame: 0 });
-    expect(b.getState().activeOverlays.size).toBe(0);
+    expect(b.getState().view.guides).toEqual([]);
   });
 
   it('stops notifying after unsubscribe', () => {
