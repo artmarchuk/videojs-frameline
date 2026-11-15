@@ -108,3 +108,10 @@ export const MoreIcon = (props: IconProps) => (
     <circle cx="18.5" cy="12" r="1" />
   </Icon>
 );
+
+export const EyeIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" />
+    <circle cx="12" cy="12" r="2.75" />
+  </Icon>
+);

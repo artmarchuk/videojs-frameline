@@ -1,13 +1,23 @@
 /** @jsxImportSource react */
 
 import './review.css';
-import { Menu, selectPiP, selectPlayback, useHotkey, usePlayer } from '@videojs/react';
-import { useEffect, useId, useMemo, type ComponentProps, type ReactElement, type ReactNode } from 'react';
+import { Menu, selectPlayback, useHotkey, usePlayer } from '@videojs/react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/resolve-class-name';
 
-import { PipEnterIcon } from '../../video/icons';
+import { ChevronIcon } from '../../video/icons';
 import { useProSlot, useProThumbnailRenderer } from '../../video/pro-slots';
 import { Button } from '../../video/shared/button';
 import { useShortcutsDialog, type ShortcutRow } from '../../video/shared/shortcuts-dialog';
@@ -18,15 +28,14 @@ import type { Marker } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import { AnnouncerProvider, useAnnounce } from './announcer';
 import { useReviewController, type CopyLinkInfo, type PosterFrameInfo, type ReviewController } from './controller';
+import { chooseDockSize, toolsSummary, type DockSize } from './dock-logic';
 import {
   ClearRangeIcon,
   CopyImageIcon,
+  EyeIcon,
   GrabFrameIcon,
   LinkIcon,
   LoopIcon,
-  MarkInIcon,
-  MarkOutIcon,
-  MoreIcon,
   NextCutIcon,
   PlayRangeIcon,
   PosterIcon,
@@ -36,7 +45,7 @@ import {
 } from './icons';
 import { reviewStrings as t } from './strings';
 import { Timeline, type TimelineProps } from './timeline';
-import { validMarkers } from './timeline/logic';
+import { formatRangeLength, validMarkers } from './timeline/logic';
 import { useCuts } from './use-cuts';
 
 export interface ReviewLayerProps {
@@ -46,14 +55,16 @@ export interface ReviewLayerProps {
   dropFrame: boolean;
   markers: readonly Marker[];
   video: HTMLVideoElement | null;
+  /** An element inside the player, used to find and measure the player container. */
+  anchor: RefObject<HTMLElement | null>;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
   onPosterFrame?: ((info: PosterFrameInfo) => void) | undefined;
 }
 
 /**
- * Review tier: frame-by-frame transport, timecode, in/out and loop, and frame actions. Loaded lazily, only when a
- * Review feature is on. The controls are portalled into the control bar's slots, so they sit in the bar's layout and
- * focus order.
+ * Review tier: the ruler timeline, frame-by-frame transport, timecode, and the Tools tray (Range, Capture, View).
+ * Loaded lazily, only when a Review feature is on. The controls are portalled into the control bar's slots, so they
+ * sit in the bar's layout and focus order.
  */
 export default function ReviewLayer(props: ReviewLayerProps) {
   return (
@@ -63,23 +74,70 @@ export default function ReviewLayer(props: ReviewLayerProps) {
   );
 }
 
-function Review({ features, fps, startFrames, dropFrame, markers, video, onCopyLink, onPosterFrame }: ReviewLayerProps) {
+/**
+ * Which arrangement the bar is in, from the player's own width. Also written to the container as `data-dock-size`
+ * for the styles; the attribute belongs to this module and is removed with it.
+ */
+function useDockSize(anchor: RefObject<HTMLElement | null>): DockSize {
+  const [size, setSize] = useState<DockSize>('wide');
+
+  useLayoutEffect(() => {
+    const container = anchor.current?.closest<HTMLElement>('.media-container') ?? null;
+    if (!container) return;
+    const coarse = typeof matchMedia === 'function' ? matchMedia('(pointer: coarse)') : null;
+    const update = () => {
+      const next = chooseDockSize(container.getBoundingClientRect().width, coarse?.matches ?? false);
+      container.dataset.dockSize = next;
+      setSize(next);
+    };
+    update();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    observer?.observe(container);
+    coarse?.addEventListener?.('change', update);
+    return () => {
+      observer?.disconnect();
+      coarse?.removeEventListener?.('change', update);
+      delete container.dataset.dockSize;
+    };
+  }, [anchor]);
+
+  return size;
+}
+
+function Review({ features, fps, startFrames, dropFrame, markers, video, anchor, onCopyLink, onPosterFrame }: ReviewLayerProps) {
   const announce = useAnnounce();
   const cuts = useCuts(video, features.shotNav ? markers : NO_MARKERS, fps);
   const controller = useReviewController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink, onPosterFrame });
   const paused = usePlayer(selectPlayback)?.paused ?? true;
+  const size = useDockSize(anchor);
+  const narrow = size === 'narrow';
+  const toolsOpen = useProStore((state) => state.toolsOpen);
+  const trayId = useId();
 
   const timeline = useProSlot('timeline');
   const renderThumbnail = useProThumbnailRenderer<TimelineProps['renderThumbnail']>();
   const shownMarkers = features.markers ? markers : NO_MARKERS;
+  const timeStart = useProSlot('time-start');
   const transportStart = useProSlot('transport-start');
   const transportEnd = useProSlot('transport-end');
   const time = useProSlot('time');
   const tools = useProSlot('tools');
+  const tray = useProSlot('tray');
 
   const hasCuts = cuts.length > 0;
   const range = features.inOut || features.loop;
-  const actions = features.grabFrame || features.copyTimecodeLink || features.posterFrame;
+  const capture = features.grabFrame || features.copyTimecodeLink || features.posterFrame;
+  const hasTray = range || capture || shownMarkers.length > 0 || features.guides !== false;
+
+  const previousCut = features.shotNav && (
+    <ToolButton label={t.previousCut} shortcut="[" icon={<PreviousCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('previous')} />
+  );
+  const nextCut = features.shotNav && (
+    <ToolButton label={t.nextCut} shortcut="]" icon={<NextCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('next')} />
+  );
+  const stepBack = features.frameStep && <ToolButton label={t.stepBack} shortcut="," icon={<StepBackIcon />} onClick={() => controller.step(-1)} />;
+  const stepForward = features.frameStep && <ToolButton label={t.stepForward} shortcut="." icon={<StepForwardIcon />} onClick={() => controller.step(1)} />;
+  const timecode = features.timecode && <TimecodeField controller={controller} fps={fps} dropFrame={dropFrame} />;
 
   return (
     <>
@@ -88,68 +146,55 @@ function Review({ features, fps, startFrames, dropFrame, markers, video, onCopyL
 
       {timeline &&
         createPortal(
-          <Timeline
-            controller={controller}
-            fps={fps}
-            markers={shownMarkers}
-            range={features.inOut || features.loop}
-            video={video}
-            renderThumbnail={renderThumbnail}
-          />,
+          <Timeline controller={controller} fps={fps} markers={shownMarkers} range={range} video={video} renderThumbnail={renderThumbnail} />,
           timeline
         )}
 
+      {/* Wide and medium: cut and step either side of Play, then the timecode. Narrow: timecode, step, Play, cut. */}
+      {narrow && timeStart && timecode && createPortal(timecode, timeStart)}
       {transportStart &&
         createPortal(
-          <div className={'pro-group'} data-pro-group="transport-start">
-            {features.shotNav && (
-              <ToolButton
-                label={t.previousCut}
-                shortcut="["
-                icon={<PreviousCutIcon />}
-                disabled={!hasCuts}
-                disabledReason={t.noCuts}
-                onClick={() => controller.goToCut('previous')}
-              />
+          <Segmented name={narrow ? 'step' : 'back'}>
+            {narrow ? (
+              <>
+                {stepBack}
+                {stepForward}
+              </>
+            ) : (
+              <>
+                {previousCut}
+                {stepBack}
+              </>
             )}
-            {features.frameStep && (
-              <ToolButton label={t.stepBack} shortcut="," icon={<StepBackIcon />} onClick={() => controller.step(-1)} />
-            )}
-          </div>,
+          </Segmented>,
           transportStart
         )}
-
       {transportEnd &&
         createPortal(
-          <div className={'pro-group'} data-pro-group="transport-end">
-            {features.frameStep && (
-              <ToolButton label={t.stepForward} shortcut="." icon={<StepForwardIcon />} onClick={() => controller.step(1)} />
+          <Segmented name={narrow ? 'cut' : 'forward'}>
+            {narrow ? (
+              <>
+                {previousCut}
+                {nextCut}
+              </>
+            ) : (
+              <>
+                {stepForward}
+                {nextCut}
+              </>
             )}
-            {features.shotNav && (
-              <ToolButton
-                label={t.nextCut}
-                shortcut="]"
-                icon={<NextCutIcon />}
-                disabled={!hasCuts}
-                disabledReason={t.noCuts}
-                onClick={() => controller.goToCut('next')}
-              />
-            )}
-          </div>,
+          </Segmented>,
           transportEnd
         )}
+      {!narrow && time && timecode && createPortal(timecode, time)}
 
-      {time && features.timecode && createPortal(<TimecodeDisplay controller={controller} fps={fps} dropFrame={dropFrame} />, time)}
-
-      {tools &&
-        (range || actions) &&
+      {tools && hasTray && createPortal(<ToolsToggle trayId={trayId} guides={features.guides !== false} />, tools)}
+      {tray &&
+        hasTray &&
+        toolsOpen &&
         createPortal(
-          <>
-            {range && <RangeGroup controller={controller} features={features} fps={fps} />}
-            {actions && <ActionsGroup controller={controller} features={features} />}
-            <MoreMenu controller={controller} features={features} fps={fps} markers={shownMarkers} />
-          </>,
-          tools
+          <Tray id={trayId} controller={controller} features={features} fps={fps} markers={shownMarkers} />,
+          tray
         )}
     </>
   );
@@ -157,12 +202,25 @@ function Review({ features, fps, startFrames, dropFrame, markers, video, onCopyL
 
 const NO_MARKERS: readonly Marker[] = [];
 
-/** A control-bar button with an accessible name and a tooltip that shows its shortcut, or why it is disabled. */
+/** A segmented control: buttons that share one fill. Renders nothing when it has no buttons. */
+function Segmented({ name, divided = false, children }: { name: string; divided?: boolean; children: ReactNode }) {
+  return (
+    <div className={cn('pro-seg', divided && 'pro-seg-divided')} data-pro-seg={name}>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * A dock button with an accessible name and a tooltip that shows its shortcut, or why it is disabled. With `text` it
+ * shows that word in place of an icon; the accessible name stays the full label.
+ */
 function ToolButton({
   label,
   shortcut,
   hint,
   icon,
+  text,
   onClick,
   pressed,
   disabled = false,
@@ -172,8 +230,9 @@ function ToolButton({
   label: string;
   shortcut?: string;
   hint?: string;
-  icon: ReactElement;
-  onClick: () => void;
+  icon?: ReactElement;
+  text?: string;
+  onClick?: () => void;
   pressed?: boolean;
   disabled?: boolean;
   disabledReason?: string;
@@ -190,7 +249,7 @@ function ToolButton({
     <ButtonTooltip label={tip}>
       <Button
         type="button"
-        className={cn('pro-tool', className)}
+        className={cn('pro-tool', text && 'pro-tool-text', className)}
         aria-label={disabled && disabledReason ? `${label}. ${disabledReason}` : label}
         aria-keyshortcuts={shortcut}
         aria-pressed={pressed}
@@ -198,18 +257,20 @@ function ToolButton({
         data-pressed={pressed ? '' : undefined}
         onClick={disabled ? undefined : onClick}
       >
-        <span className={'media-button-icon pro-tool-icon'}>{icon}</span>
+        {icon && <span className={'media-button-icon pro-tool-icon'}>{icon}</span>}
+        {text}
       </Button>
     </ButtonTooltip>
   );
 }
 
 /**
- * `00:00:42:12 / 00:03:20:00`. Pressing it switches between timecode and seconds. It re-renders when the frame
- * number changes and at no other time. It is not a live region: the value is read on focus, and steps and seeks are
- * announced separately.
+ * The timecode field: the full timecode of the current frame in a recessed field, with the frame rate beside it.
+ * Pressing it switches between timecode and seconds. It re-renders when the frame number changes and at no other
+ * time. It is not a live region: the value is read on focus, and steps and seeks are announced separately.
  */
-function TimecodeDisplay({ controller, fps, dropFrame }: { controller: ReviewController; fps: number; dropFrame: boolean }) {
+function TimecodeField({ controller, fps, dropFrame }: { controller: ReviewController; fps: number; dropFrame: boolean }) {
+  const store = useProStoreApi();
   const frame = useProStore((state) => state.frame);
   const display = useProStore((state) => state.timeDisplay);
   const duration = useProStore((state) => state.duration);
@@ -219,60 +280,42 @@ function TimecodeDisplay({ controller, fps, dropFrame }: { controller: ReviewCon
 
   const current = seconds ? secondsFromFrames(frame, fps).toFixed(3) : controller.timecode(frame);
   // The total is a length, so the start-timecode offset does not apply to it.
-  const total = seconds ? duration.toFixed(3) : formatTimecode(framesFromSeconds(duration, fps), fps, { dropFrame });
+  const total = seconds ? `${duration.toFixed(3)} s` : formatTimecode(framesFromSeconds(duration, fps), fps, { dropFrame });
+  const rate = t.fps(Number.isInteger(fps) ? String(fps) : fps.toFixed(2));
 
   const tip = (
-    <span>
-      {seconds ? t.switchToTimecode : t.switchToSeconds}
-      {approximate ? `. ≈ ${t.approximate}` : ''}
-    </span>
+    <>
+      <span>
+        {seconds ? t.switchToTimecode : t.switchToSeconds}
+        {approximate ? `. ≈ ${t.approximate}` : ''}
+      </span>
+      <span className={'pro-kbd'}>{t.total(total)}</span>
+    </>
   );
 
   return (
     <ButtonTooltip label={tip}>
-      <TimecodeButton pressed={seconds} describedBy={valueId}>
+      <button
+        type="button"
+        className={'pro-timecode'}
+        aria-label={t.timeInSeconds}
+        aria-pressed={seconds}
+        aria-describedby={valueId}
+        onClick={() => store.toggleTimeDisplay()}
+      >
         <span id={valueId} className={'pro-timecode-values'} data-pro-timecode>
-          <span className={'pro-timecode-current'}>
-            {approximate && <span className={'pro-timecode-approx'}>≈</span>}
-            {current}
+          {approximate && <span className={'pro-timecode-approx'}>≈</span>}
+          {current}
+          <span className={'pro-visually-hidden'}>
+            {' '}
+            {t.of} {total}, {rate}
           </span>
-          <span className={'pro-timecode-separator'} aria-hidden="true">
-            /
-          </span>
-          <span className={'pro-visually-hidden'}>{t.of}</span>
-          <span className={'pro-timecode-total'}>{total}</span>
         </span>
-      </TimecodeButton>
+        <span className={'pro-timecode-fps'} aria-hidden="true">
+          {rate}
+        </span>
+      </button>
     </ButtonTooltip>
-  );
-}
-
-function TimecodeButton({
-  pressed,
-  describedBy,
-  children,
-  ...props
-}: {
-  pressed: boolean;
-  describedBy: string;
-  children: ReactNode;
-} & ComponentProps<'button'>) {
-  const store = useProStoreApi();
-  return (
-    <button
-      {...props}
-      type="button"
-      className={cn('pro-timecode', props.className)}
-      aria-label={t.timeInSeconds}
-      aria-pressed={pressed}
-      aria-describedby={describedBy}
-      onClick={(event) => {
-        props.onClick?.(event);
-        store.toggleTimeDisplay();
-      }}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -283,92 +326,86 @@ function useRangeState() {
   return { inPoint, outPoint, looping, hasRange: inPoint !== null || outPoint !== null };
 }
 
-function RangeReadout({ controller, fps }: { controller: ReviewController; fps: number }) {
+/**
+ * The one disclosure control for the secondary tools. Closed, it also shows a dim summary of what is set. It only
+ * changes what is visible: every shortcut works whether the tray is open or not.
+ */
+function ToolsToggle({ trayId, guides }: { trayId: string; guides: boolean }) {
+  const store = useProStoreApi();
+  const open = useProStore((state) => state.toolsOpen);
+  const duration = useProStore((state) => state.duration);
+  const active = useProStore((state) => state.activeOverlays.size);
   const { inPoint, outPoint } = useRangeState();
-  const code = (time: number | null) => (time === null ? t.unset : controller.timecode(framesFromSeconds(time, fps)));
+  const summary = open ? '' : toolsSummary({ in: inPoint, out: outPoint }, duration, guides ? active : 0);
+
   return (
-    <span className={'pro-range-readout'} aria-live="off">
-      <span className={'pro-range-label'}>{t.rangeIn}</span> {code(inPoint)} <span aria-hidden="true">→</span>{' '}
-      <span className={'pro-range-label'}>{t.rangeOut}</span> {code(outPoint)}
+    <ButtonTooltip label={<span>{open ? t.hideTools : t.showTools}</span>}>
+      <button
+        type="button"
+        className={'pro-tools-toggle'}
+        aria-expanded={open}
+        aria-controls={open ? trayId : undefined}
+        data-open={open ? '' : undefined}
+        onClick={() => store.setToolsOpen()}
+      >
+        <span className={'pro-tools-label'}>{t.tools}</span>
+        <span className={'pro-tools-label-short'} aria-hidden="true">
+          {t.toolsShort}
+        </span>
+        {summary && <span className={'pro-tools-summary'}>{summary}</span>}
+        <ChevronIcon className={'pro-tools-chevron'} />
+      </button>
+    </ButtonTooltip>
+  );
+}
+
+/** `00:00:14:00 – 00:00:31:00` over `17 s · 408 frames`. */
+function RangeReadout({ controller, fps }: { controller: ReviewController; fps: number }) {
+  const { inPoint, outPoint, hasRange } = useRangeState();
+  const duration = useProStore((state) => state.duration);
+  const seconds = useProStore((state) => state.timeDisplay === 'seconds');
+
+  if (!hasRange) return <span className={'pro-range-readout pro-range-empty'}>{t.noRange}</span>;
+
+  const code = (time: number) => (seconds ? time.toFixed(3) : controller.timecode(framesFromSeconds(time, fps)));
+  const start = inPoint ?? 0;
+  const end = outPoint ?? duration;
+  const frames = Math.max(0, framesFromSeconds(end, fps) - framesFromSeconds(start, fps));
+
+  return (
+    <span className={'pro-range-readout'}>
+      <span className={'pro-range-points'}>
+        {inPoint === null ? t.fromStart : code(inPoint)} <span aria-hidden="true">–</span>
+        <span className={'pro-visually-hidden'}>to</span> {outPoint === null ? t.toEnd : code(outPoint)}
+      </span>
+      <span className={'pro-range-length'}>
+        {formatRangeLength(Math.max(0, end - start))}
+        <span className={'pro-range-frames'}> · {t.frames(frames)}</span>
+      </span>
     </span>
   );
 }
 
-/** Set In, Set Out, Loop, Play range and the range readout. Shown inline on wide players; in More when narrow. */
-function RangeGroup({ controller, features, fps }: { controller: ReviewController; features: Readonly<FeatureFlags>; fps: number }) {
-  const { inPoint, outPoint, looping, hasRange } = useRangeState();
-
+/** A small chevron button that opens a menu of the less-used actions of its segmented control. */
+function OptionsMenu({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
-    <div className={'pro-group pro-group-inline'} data-pro-group="range">
-      {features.inOut && (
-        <>
-          <ToolButton label={t.setIn} shortcut="I" icon={<MarkInIcon />} className={inPoint !== null ? 'pro-tool-set' : undefined} onClick={controller.setIn} />
-          <ToolButton label={t.setOut} shortcut="O" icon={<MarkOutIcon />} className={outPoint !== null ? 'pro-tool-set' : undefined} onClick={controller.setOut} />
-        </>
-      )}
-      {features.loop && (
-        <>
-          <ToolButton
-            label={t.loop}
-            shortcut="R"
-            icon={<LoopIcon />}
-            pressed={looping}
-            disabled={!hasRange}
-            disabledReason={t.needRange}
-            onClick={controller.toggleLoop}
-          />
-          <ToolButton
-            label={t.playRange}
-            icon={<PlayRangeIcon />}
-            className={'pro-tool-xl'}
-            disabled={!hasRange}
-            disabledReason={t.needRange}
-            onClick={controller.playRange}
-          />
-        </>
-      )}
-      {features.inOut && <RangeReadout controller={controller} fps={fps} />}
-    </div>
+    <Menu.Root side="top" align="start">
+      <ButtonTooltip label={<span>{label}</span>}>
+        <Menu.Trigger render={<Button />} className={cn('pro-tool pro-tool-chevron', className)} aria-label={label}>
+          <ChevronIcon className={'pro-chevron-down'} />
+        </Menu.Trigger>
+      </ButtonTooltip>
+      <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-options-popup')}>
+        <Menu.Content className={'media-menu-content'}>{children}</Menu.Content>
+      </Menu.Popup>
+    </Menu.Root>
   );
 }
 
-function ActionsGroup({ controller, features }: { controller: ReviewController; features: Readonly<FeatureFlags> }) {
+function OptionsItem({ icon, label, shortcut, onSelect, disabled }: { icon?: ReactElement; label: string; shortcut?: string; onSelect: () => void; disabled?: boolean }) {
   return (
-    <div className={'pro-group pro-group-inline'} data-pro-group="actions">
-      {features.grabFrame && (
-        <ToolButton label={t.grab} hint={t.grabHint} shortcut="G" icon={<GrabFrameIcon />} onClick={controller.grabFrame} />
-      )}
-      {features.copyTimecodeLink && <ToolButton label={t.copyLink} icon={<LinkIcon />} onClick={controller.copyLink} />}
-      {features.posterFrame && <ToolButton label={t.poster} icon={<PosterIcon />} onClick={controller.usePoster} />}
-    </div>
-  );
-}
-
-function MoreItem({
-  icon,
-  label,
-  shortcut,
-  onSelect,
-  disabled,
-  collapsed = false,
-  className,
-}: {
-  icon: ReactElement;
-  label: string;
-  shortcut?: string;
-  onSelect: () => void;
-  disabled?: boolean;
-  /** Only shown while the inline groups are collapsed (narrow players). */
-  collapsed?: boolean;
-  className?: string;
-}) {
-  return (
-    <Menu.Item
-      className={cn('media-menu-item', collapsed && 'pro-more-collapsed', className)}
-      disabled={disabled}
-      onSelect={onSelect}
-    >
-      <span className={'media-menu-icon'}>{icon}</span>
+    <Menu.Item className={'media-menu-item'} disabled={disabled} onSelect={onSelect}>
+      {icon && <span className={'media-menu-icon'}>{icon}</span>}
       <span>{label}</span>
       {shortcut && (
         <span className={'media-menu-hint'}>
@@ -379,101 +416,129 @@ function MoreItem({
   );
 }
 
+function TrayGroup({ label, name, children }: { label: string; name: string; children: ReactNode }) {
+  return (
+    <div className={'pro-tray-group'} role="group" aria-label={label} data-pro-group={name}>
+      <span className={'pro-tray-label'} aria-hidden="true">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
 /**
- * The More menu. It always holds the less-used actions (Play range, Clear range, Copy frame image). On narrow
- * players it also holds everything from the Range and Actions groups, which are hidden there.
+ * The Tools tray: Range, Capture, markers and View, with inline labels. Escape inside it closes it and returns focus
+ * to the Tools button.
  */
-function MoreMenu({
+function Tray({
+  id,
   controller,
   features,
   fps,
   markers,
 }: {
+  id: string;
   controller: ReviewController;
   features: Readonly<FeatureFlags>;
   fps: number;
   markers: readonly Marker[];
 }) {
+  const store = useProStoreApi();
+  const { looping, hasRange } = useRangeState();
   const duration = useProStore((state) => state.duration);
+  const active = useProStore((state) => state.activeOverlays.size);
   const listed = useMemo(() => validMarkers(markers, duration), [markers, duration]);
-  const { hasRange, looping } = useRangeState();
-  const pip = usePlayer(selectPiP);
+
+  const range = features.inOut || features.loop;
+  const capture = features.grabFrame || features.copyTimecodeLink || features.posterFrame;
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    // An open menu or tooltip takes Escape first.
+    if (event.target instanceof Element && event.target.closest('[role="menu"], [aria-expanded="true"]')) return;
+    event.preventDefault();
+    store.setToolsOpen(false);
+    event.currentTarget.closest('.pro-bar')?.querySelector<HTMLElement>('.pro-tools-toggle')?.focus();
+  };
 
   return (
-    <Menu.Root side="top" align="end">
-      <ButtonTooltip label={<span>{t.more}</span>}>
-        <Menu.Trigger render={<Button />} className={'pro-tool pro-more-button'} aria-label={t.more}>
-          <span className={'media-button-icon pro-tool-icon'}>
-            <MoreIcon />
-          </span>
-        </Menu.Trigger>
-      </ButtonTooltip>
-      <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-more-popup')}>
-        <Menu.Content className={'media-menu-content'}>
-          {features.inOut && (
-            <div className={'pro-more-readout pro-more-collapsed'}>
-              <RangeReadout controller={controller} fps={fps} />
-            </div>
-          )}
-          {features.inOut && <MoreItem collapsed icon={<MarkInIcon />} label={t.setIn} shortcut="I" onSelect={controller.setIn} />}
-          {features.inOut && <MoreItem collapsed icon={<MarkOutIcon />} label={t.setOut} shortcut="O" onSelect={controller.setOut} />}
-          {features.loop && (
-            <MoreItem
-              collapsed
-              icon={<LoopIcon />}
-              label={looping ? t.loopOn : t.loop}
-              shortcut="R"
-              disabled={!hasRange}
-              onSelect={controller.toggleLoop}
-            />
-          )}
-          {features.loop && (
-            <MoreItem
-              className={'pro-more-below-xl'}
-              icon={<PlayRangeIcon />}
-              label={t.playRange}
-              disabled={!hasRange}
-              onSelect={controller.playRange}
-            />
-          )}
-          {features.inOut && <MoreItem icon={<ClearRangeIcon />} label={t.clearRange} disabled={!hasRange} onSelect={controller.clearRange} />}
-          {features.grabFrame && <MoreItem collapsed icon={<GrabFrameIcon />} label={t.grab} shortcut="G" onSelect={controller.grabFrame} />}
-          {features.grabFrame && <MoreItem icon={<CopyImageIcon />} label={t.copyImage} onSelect={controller.copyFrameImage} />}
-          {features.copyTimecodeLink && <MoreItem collapsed icon={<LinkIcon />} label={t.copyLink} onSelect={controller.copyLink} />}
-          {features.posterFrame && <MoreItem collapsed icon={<PosterIcon />} label={t.poster} onSelect={controller.usePoster} />}
-          {pip?.pictureInPictureAvailability === 'available' && (
-            <MoreItem
-              className={'pro-more-below-xl'}
-              icon={<PipEnterIcon />}
-              label={t.pictureInPicture}
-              onSelect={() => {
-                const request = pip.isPictureInPicture ? pip.exitPictureInPicture() : pip.requestPictureInPicture();
-                request.catch(() => {});
-              }}
-            />
-          )}
-          {listed.length > 0 && (
-            <div className={'pro-more-section'} role="group" aria-label={t.markers}>
-              <div className={'pro-more-heading'} aria-hidden="true">
+    <div id={id} className={'pro-tray'} onKeyDown={onKeyDown}>
+      {range && (
+        <TrayGroup label={t.range} name="range">
+          <Segmented name="range" divided>
+            {features.inOut && <ToolButton label={t.setIn} shortcut="I" text={t.in} onClick={controller.setIn} />}
+            {features.inOut && <ToolButton label={t.setOut} shortcut="O" text={t.out} onClick={controller.setOut} />}
+            {features.loop && (
+              <ToolButton label={t.loop} shortcut="R" icon={<LoopIcon />} pressed={looping} disabled={!hasRange} disabledReason={t.needRange} onClick={controller.toggleLoop} />
+            )}
+            <OptionsMenu label={t.rangeOptions}>
+              {features.loop && <OptionsItem icon={<PlayRangeIcon />} label={t.playRange} disabled={!hasRange} onSelect={controller.playRange} />}
+              {features.inOut && <OptionsItem icon={<ClearRangeIcon />} label={t.clearRange} disabled={!hasRange} onSelect={controller.clearRange} />}
+            </OptionsMenu>
+          </Segmented>
+          {features.inOut && <RangeReadout controller={controller} fps={fps} />}
+        </TrayGroup>
+      )}
+
+      {capture && (
+        <TrayGroup label={t.capture} name="capture">
+          <Segmented name="capture" divided>
+            {features.grabFrame && <ToolButton label={t.grab} hint={t.grabHint} shortcut="G" icon={<GrabFrameIcon />} onClick={controller.grabFrame} />}
+            {features.grabFrame && (
+              <OptionsMenu label={t.grabOptions} className={'pro-tool-attached'}>
+                <OptionsItem icon={<GrabFrameIcon />} label={t.download} shortcut="G" onSelect={controller.grabFrame} />
+                <OptionsItem icon={<CopyImageIcon />} label={t.copyImage} onSelect={controller.copyFrameImage} />
+              </OptionsMenu>
+            )}
+            {features.copyTimecodeLink && <ToolButton label={t.copyLink} icon={<LinkIcon />} onClick={controller.copyLink} />}
+            {features.posterFrame && <ToolButton label={t.poster} icon={<PosterIcon />} onClick={controller.usePoster} />}
+          </Segmented>
+        </TrayGroup>
+      )}
+
+      {listed.length > 0 && (
+        <TrayGroup label={t.goTo} name="markers">
+          <Menu.Root side="top" align="start">
+            <ButtonTooltip label={<span>{t.markers}</span>}>
+              <Menu.Trigger render={<Button />} className={'pro-tool pro-tool-text pro-tool-menu'}>
                 {t.markers}
-              </div>
-              {listed.map((marker, index) => (
-                <Menu.Item
-                  key={marker.id ?? `${index}:${marker.time}`}
-                  className={'media-menu-item pro-more-marker'}
-                  onSelect={() => controller.goToMarker(marker)}
-                >
-                  <span className={'pro-more-marker-label'}>{marker.label}</span>
-                  <span className={'media-menu-hint'}>
-                    <span className={'media-menu-hint-label'}>{controller.timecode(framesFromSeconds(marker.time, fps))}</span>
-                  </span>
-                </Menu.Item>
-              ))}
-            </div>
-          )}
-        </Menu.Content>
-      </Menu.Popup>
-    </Menu.Root>
+                <span className={'pro-badge'}>{listed.length}</span>
+                <ChevronIcon className={'pro-chevron-down'} />
+              </Menu.Trigger>
+            </ButtonTooltip>
+            <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-options-popup')}>
+              <Menu.Content className={'media-menu-content'}>
+                {listed.map((marker, index) => (
+                  <Menu.Item key={marker.id ?? `${index}:${marker.time}`} className={'media-menu-item pro-marker-item'} onSelect={() => controller.goToMarker(marker)}>
+                    <span className={'pro-marker-item-label'}>{marker.label}</span>
+                    <span className={'media-menu-hint'}>
+                      <span className={'media-menu-hint-label'}>{controller.timecode(framesFromSeconds(marker.time, fps))}</span>
+                    </span>
+                  </Menu.Item>
+                ))}
+              </Menu.Content>
+            </Menu.Popup>
+          </Menu.Root>
+        </TrayGroup>
+      )}
+
+      {features.guides !== false && (
+        <TrayGroup label={t.view} name="view">
+          {/* Step 6 fills this menu. Until then the control has its place and says so. */}
+          <ButtonTooltip label={<span>{t.guidesSoon}</span>}>
+            <Button type="button" className={'pro-tool pro-tool-text pro-tool-menu'} aria-label={t.guidesSoon} aria-disabled="true">
+              <span className={'media-button-icon pro-tool-icon'}>
+                <EyeIcon />
+              </span>
+              {t.guides}
+              {active > 0 && <span className={'pro-badge'}>{active}</span>}
+              <ChevronIcon className={'pro-chevron-down'} />
+            </Button>
+          </ButtonTooltip>
+        </TrayGroup>
+      )}
+    </div>
   );
 }
 

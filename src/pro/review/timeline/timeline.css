@@ -178,7 +178,7 @@
   }
 
   .pro-skin .pro-tl-tip-time {
-    color: var(--pro-text-dim);
+    color: var(--pro-text-dim-raised);
     font-variant-numeric: tabular-nums;
   }
 
