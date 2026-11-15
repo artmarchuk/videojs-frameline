@@ -655,7 +655,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Deployed URL
 
-- https://frameline.artmarchuk.me is the canonical URL (a custom domain on the Vercel project `videojs-pro`). `videojs-frameline.vercel.app` and `videojs-pro.vercel.app` stay as secondary domains. The "public-URL checks" sections below ran on the earlier vercel.app domains. Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
+- https://frameline.artmarchuk.me is the canonical URL (a custom domain on the Vercel project `videojs-pro`). `videojs-frameline.vercel.app` stays as a secondary domain (it redirects to the canonical one). The "public-URL checks" sections below ran on the earlier vercel.app domains. Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
