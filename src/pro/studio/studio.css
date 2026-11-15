@@ -534,8 +534,9 @@
     --pro-icon-size: calc(var(--media-spacing) * 5);
   }
 
+  /* Narrow.dc.html: 12px above, 15px at the sides, 14px below. */
   .pro-skin[data-dock-size="narrow"][data-layout="dock"][data-bar="pro"] .pro-bar {
-    padding-inline: calc(var(--media-spacing) * 3);
+    padding: calc(var(--media-spacing) * 3) 15px calc(var(--media-spacing) * 3.5);
   }
 
   /* Row one: the timecode, then step, Play and cut across the rest. Row two: the right column, full width. */

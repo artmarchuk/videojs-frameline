@@ -24,6 +24,20 @@
     box-sizing: border-box;
   }
 
+  /*
+   * Narrow and touch: the handle's target is 44px wide and grows outward, so the gutter plus the dock's 15px side
+   * padding must hold it, or the part past the player's edge would be clipped (15 + 29 = 44).
+   */
+  .pro-skin[data-dock-size="narrow"] .pro-timeline {
+    --tl-gutter: 29px;
+  }
+
+  @media (pointer: coarse) {
+    .pro-skin .pro-timeline {
+      --tl-gutter: 29px;
+    }
+  }
+
   .pro-skin .pro-timeline[data-display="seconds"] {
     --tl-bubble-width: calc(var(--media-spacing) * 16);
   }

@@ -760,3 +760,20 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 - A drag keeps the grab offset, so snapping (5 px to the playhead and markers) and the bubble are measured from the anchor edge, not from the pointer or the tab's middle. The playhead (z-index 4) draws above the handles (3).
 - Focus ring: the handle sets `data-pointer` on a pointer press and drops it on any key; the ring shows only for `:focus-visible:not([data-pointer])`. Chrome still matched `:focus-visible` after a mouse drag (script `focus()` after a pointer press), which is why the hand test showed a ring. Checked: after a drag no outline; after Tab a solid ring.
 - Screenshots (2x crops): `design/screenshots/step-6c/handles-*.png`.
+
+### F4: the container's focus ring
+- Cause: `Container` (`@videojs/react`) defaults `tabIndex` to 0 and on every pointer-up calls `focusContainer`, so the container was a Tab stop and `.pro-skin:focus-visible::after` drew the ring. Fix: `tabIndex={-1}` on the Container in `src/video/skin.tsx` (a host can still pass its own) and the ring rule removed from `skin.css`. A click on the picture still focuses the container from code (needed for the hotkeys), without a ring.
+- Hotkeys: `createHotkey` (`@videojs/core` `dom/hotkey/coordinator.js`) listens for `keydown` on the **container** (target `"player"`, the default), so keys pressed on any control inside it bubble to it. It skips Space and Enter on interactive elements (`isInteractiveActivation`: the control gets its own activation), editable targets, and events already `defaultPrevented`. Nothing else in `src/` depended on the container being a Tab stop (searched for `focus(`, `activeElement`, `:focus`); the help dialog returns focus to whatever had it, the container included.
+- Checked in Chrome on the production build, Viewer and Studio: Tab from the page stops on the preview page's own switches, then **Seek** is the first stop in the player, with only its ring; `K` toggles play, `L` +10 s, `J` back, `M` mutes, `→` seeks (playing, Viewer) or steps a frame (paused, Studio); a click on the picture, then `K`, plays. `F` could not be checked (headless Chrome refuses fullscreen). Screenshots: `design/screenshots/step-6c/tab-first-control-*.png`.
+
+### F5: narrow layout against `Narrow.dc.html`
+The mockup was read from source this time (sizes, order, spacing). Already the same: row 1 (timecode 100x44, step back and forward as one segment of 2x40, Play 46x44, previous/next cut as a segment of 2x40), row 2 (segmented In, Out, Loop at 44 high with 1 px dividers, Loop on `--pro-on`; Capture, View, Settings, Fullscreen at 44x44), 10 px between rows, 8 px radius segments, 14 px timecode.
+Changed to match: dock padding 12 / 15 / 14 px (was 12 px at the sides and below).
+Differences kept, with the reason:
+1. **Timeline width 270 px at 390, mockup 326.** F3's gutter, 29 px on each side on touch and narrow layouts, so the 44 px handle target fits inside the player without being cut at the edge (15 px dock padding + 29 = 44). F3 wins.
+2. The mockup's handles sit inside the track, centred on their points; ours are anchored on the outer edge (F3).
+3. Right group: 2 px between the four buttons (the mockup has none).
+4. The mockup draws marker pins at 8x10 in one grey; ours are the same pin in `--pro-text-dim` and `--pro-accent` when selected.
+5. Under 350 px (the accepted three rows at 320) the cut segment is not shown and In/Out/Loop take a full row; the mockup has no 320 case.
+6. The mockup's card has a 1 px border and 10 px radius around picture and dock; ours is the preview page's frame (1 px line, the skin's radius).
+Screenshots: `design/screenshots/step-6c/studio-390.png`, `studio-320.png` (before the change: `*-before.png`), Chrome headless, touch emulation, 2x.
