@@ -34,3 +34,40 @@ audio-player,
 live-audio-player {
   display: contents;
 }
+
+/* Event log, shown with ?debug. */
+.preview-log {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  z-index: 100;
+  width: min(420px, calc(100vw - 16px));
+  max-height: 30vh;
+  overflow: auto;
+  padding: 8px 12px;
+  border: 1px solid #333336;
+  border-radius: 8px;
+  background: #1e1e20;
+  color: #f2f2f4;
+  font: 11px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-log h2 {
+  margin: 0 0 4px;
+  color: #9a9aa0;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.preview-log p {
+  margin: 0;
+  color: #9a9aa0;
+}
+
+.preview-log ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}

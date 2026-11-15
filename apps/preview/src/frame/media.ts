@@ -1,6 +1,8 @@
 // The one place that names the media the preview plays. Step 8 replaces the default with our own Mux video.
 // Current default: the scaffold's demo (NASA Cosmic Dawn trailer on Mux), not our own asset.
 
+import type { Marker } from '@/pro';
+
 export interface PreviewMedia {
   src: string;
   poster?: string;
@@ -10,6 +12,8 @@ export interface PreviewMedia {
   noCors?: boolean;
   /** Chapters for the time slider, served from `apps/preview/public`. */
   chapters?: string;
+  /** Sample markers for the Review timeline. */
+  markers?: Marker[];
 }
 
 const DEFAULT: PreviewMedia = {
@@ -18,6 +22,16 @@ const DEFAULT: PreviewMedia = {
   chapters: './cosmic-dawn-chapters.vtt',
   // Measured: the frame clock reports media times in steps of 1/30 s for this stream.
   fps: 30,
+  // Samples that exercise the marker lane: a point, a range, the two ends, and three within a second (a cluster).
+  markers: [
+    { id: 'start', time: 0, label: 'Head' },
+    { id: 'logo', time: 8.4, label: 'Logo too small' },
+    { id: 'grade', time: 34, end: 44, label: 'Check the grade' },
+    { id: 'cut-a', time: 62.0, label: 'Trim two frames' },
+    { id: 'cut-b', time: 62.3, label: 'Flash frame' },
+    { id: 'cut-c', time: 62.6, label: 'Audio pop' },
+    { id: 'end', time: 111.143, label: 'Tail' },
+  ],
 };
 
 /**
