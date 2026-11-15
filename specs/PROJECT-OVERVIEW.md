@@ -1,14 +1,12 @@
-# Frameline: project overview for Claude Code
+# Frameline skin for Video.js
 
-The skin's name is **Frameline** (display form: "Frameline — a Video.js skin for video creators"). It was called Video.js PRO until step 8.
+The skin's name is **Frameline** (display form: "Frameline — a Video.js skin for video creators").
 
 Read this file at the start of every step, together with `NOTES.md` and that step's requirements file. It gives the big picture so that each step's decisions fit the whole.
 
 ## North star
 
-**Frameline is a player skin for video creators.** It is a tool for people who make video, not a prettier consumer player. The author is Artem Marchuk; the author's brand is UX and product design for tools that let people create and build things, and this project must read as exactly that.
-
-**Test for every decision** (feature, layout, copy, colour, demo content): does it help someone make, check, review or deliver a video? If yes, it earns its place. If it only helps someone watch, it belongs in the Viewer tier or it is cut.
+**Frameline is a player skin for video creators.** It is a tool for people who make video, not a prettier consumer player. The author is Artem Marchuk, UX and product designer for tools that let people create and build things, and this project must read as exactly that.
 
 ## The product
 
@@ -20,6 +18,8 @@ One skin, two tiers. A developer building a video tool picks a tier and switches
 | **Studio** | The creator making, checking and reviewing video | A professional monitor: controls in a dock **below** the picture, a compact ruler timeline with draggable In/Out handles, frame-accurate transport, timecode, markers, guides and crop masks, frame grab, and zoom to check detail |
 
 > **Viewer is for watching. Studio is for checking timing and framing.** Studio adds controls and overlays around the picture; it never processes the picture.
+
+**Test for every decision** (feature, layout, copy, colour, demo content): does it help someone make, check, review or deliver a video? If yes, it earns its place in the Studio tier. If it only helps someone watch, it belongs in the Viewer tier or it is cut.
 
 There are two tiers on purpose. Finer control comes from feature flags, so a host can turn a single feature on over Viewer or off over Studio.
 
@@ -35,40 +35,40 @@ Only enabled modules load. Viewer must stay as light as a stock skin.
 
 ## Full feature list
 
-Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** means after the contest. Do not build [Later] items unless a step says so.
+Tiers in brackets. **[Scope]** means we build it first. **[Backlog]** means we consider building it later. Do not build [Backlog] items unless a step says so.
 
 ### Transport and time
-- Timecode `HH:MM:SS:FF` with a frames/seconds toggle [Studio] [Contest]
-- Frame step back/forward (`,` `.` and `←` `→` while paused) [Studio] [Contest]
-- Jump ±N frames (default 10) [Studio] [Contest]
-- In and out points: draggable handles on the timeline (always present, like a work-area bar), `I` / `O` at the playhead, arrow keys on a focused handle; loop range [Studio] [Contest]
-- Previous / next cut, from markers or chapters [Studio] [Contest]
-- Markers on the ruler: one pin type, optional end time; host data, shown and navigated by the skin [Studio] [Contest]
-- Frame-accurate hover scrubbing with preview [Studio] [Contest, best effort with Mux storyboard thumbnails]
-- Ping-pong loop, loop ±N seconds around the playhead [Studio] [Later]
-- JKL shuttle 2×/4×/8× [Studio] [Later] (reverse is not supported in Chrome or Firefox; would be simulated)
-- Playback stats: dropped frames, real fps [Studio] [Later]
+- Timecode `HH:MM:SS:FF` with a frames/seconds toggle [Studio] [Scope]
+- Frame step back/forward (`,` `.` and `←` `→` while paused) [Studio] [Scope]
+- Jump ±N frames (default 10) [Studio] [Scope]
+- In and out points: draggable handles on the timeline (always present, like a work-area bar), `I` / `O` at the playhead, arrow keys on a focused handle; loop range [Studio] [Scope]
+- Previous / next cut, from markers or chapters [Studio] [Scope]
+- Markers on the ruler: one pin type, optional end time; host data, shown and navigated by the skin [Studio] [Scope]
+- Frame-accurate hover scrubbing with preview [Studio] [Scope, best effort with Mux storyboard thumbnails]
+- Ping-pong loop, loop ±N seconds around the playhead [Studio] [Backlog]
+- JKL shuttle 2×/4×/8× [Studio] [Backlog] (reverse is not supported in Chrome or Firefox; would be simulated)
+- Playback stats: dropped frames, real fps [Studio] [Backlog]
 
 ### Guides and overlays
-- Title-safe and action-safe zones [Studio] [Contest]
-- Format centre crosshair [Studio] [Contest]
-- Rule-of-thirds and proportional grids [Studio] [Contest]
-- Aspect masks: 9:16, 4:5, 1:1, 2.39, 1.85 [Studio] [Contest]
-- Platform UI zones for Shorts, Reels and TikTok (approximate, labelled so) [Studio] [Contest]
-- Region of interest [Studio] [Later]
+- Title-safe and action-safe zones [Studio] [Scope]
+- Format centre crosshair [Studio] [Scope]
+- Rule-of-thirds and proportional grids [Studio] [Scope]
+- Aspect masks: 9:16, 4:5, 1:1, 2.39, 1.85 [Studio] [Scope]
+- Platform UI zones for Shorts, Reels and TikTok (approximate, labelled so) [Studio] [Scope]
+- Region of interest [Studio] [Backlog]
 
 ### Creator actions
-- Grab frame (download PNG or copy; needs CORS, which Mux provides) [Studio] [Contest]
-- Copy link at timecode (URL fragment plus an event) [Studio] [Contest]
-- Time-coded comments: the skin shows markers and fires events; the host app stores comments [Studio] [Contest, markers and events only]
+- Grab frame (download PNG or copy; needs CORS, which Mux provides) [Studio] [Scope]
+- Copy link at timecode (URL fragment plus an event) [Studio] [Scope]
+- Time-coded comments: the skin shows markers and fires events; the host app stores comments [Studio] [Scope, markers and events only]
 
 ### Zoom
-- Zoom and pan, 100% pixel view [Studio] [Contest]
+- Zoom and pan, 100% pixel view [Studio] [Scope]
 
 ### Compare and audio
-- A/B wipe, side by side, onion skin, difference, compare two takes (needs two synced media elements) [Later]
-- Drawing annotations on a frame [Later]
-- Audio level meters; audio waveform under the timeline [Studio] [Later]
+- A/B wipe, side by side, onion skin, difference, compare two takes (needs two synced media elements) [Backlog]
+- Drawing annotations on a frame [Backlog]
+- Audio level meters; audio waveform under the timeline [Studio] [Backlog]
 
 ### Always, in every tier
 - Full keyboard operation; the YouTube keyboard map is kept in every tier. Pro shortcuts use only keys that don't conflict: `I`, `O`, `,`, `.`, `Shift+←/→`. The help dialog (`Shift+?`) lists the active map.
@@ -92,7 +92,7 @@ Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no m
 5. **Frame accuracy is best effort.** Read `mediaTime` from `requestVideoFrameCallback`; say so in the UI and docs where it matters. Do not claim guaranteed frame accuracy or true reverse playback.
 6. **Unverified is a valid answer.** Tell the author what you could not check.
 7. **Every step ends deployed**, with a working public URL. From step 2, the build is always submittable.
-8. **Do not build anything marked [Later].** Put ideas in `NOTES.md` under "Later".
+8. **Do not build anything marked [Backlog].** Put ideas in `NOTES.md` under "Backlog".
 
 ## Nine steps
 

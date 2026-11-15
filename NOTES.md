@@ -677,7 +677,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - Step 2: the skin's own strings are in `src/video/strings.ts` (English only). Video.js control labels come from Video.js i18n and do follow the locale.
 - Only `@videojs/*` packages are pinned exactly. The other dependencies keep the scaffold's caret ranges, locked by the lockfile.
 
-## Later
+## Backlog
 
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
 - Give `FramelineSkin` a title for grabbed file names (`<title>_<timecode>.png`).

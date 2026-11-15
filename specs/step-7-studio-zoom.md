@@ -25,10 +25,10 @@ Edit `specs/PROJECT-OVERVIEW.md`:
 - **Customisation layers:** the View menu line becomes "show or hide the guides and zoom the developer allowed; guides are remembered per browser, zoom is not".
 - **Feature list:**
   - Rename the "Image inspection" section to "Zoom".
-  - Keep only "Zoom and pan, 100% pixel view [Studio] [Contest]".
+  - Keep only "Zoom and pan, 100% pixel view [Studio] [Scope]".
   - Move channel view, gain/exposure, gamma, zebra/false colour, scopes, pixel probe and snapshot compare to a new line under **Out of scope**: "Image processing and analysis (channels, exposure, gamma, scopes, false colour): belongs to a grading or monitoring engine, not a player skin."
   - Make sure "Use frame as poster" is gone (step 6d removed it); if it is not, remove it.
-  - In the guides section, drop "info HUD" from the "Region of interest" line, and keep the rest of that line as [Later].
+  - In the guides section, drop "info HUD" from the "Region of interest" line, and keep the rest of that line as [Backlog].
 - **Steps:**
   - Step 7 becomes "Studio zoom: Fit, 100%, 200%, pan, rendition notes".
   - Mark steps 6 (with 6c and 6d) as done.
