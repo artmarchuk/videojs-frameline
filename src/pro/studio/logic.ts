@@ -1,5 +1,5 @@
 /**
- * Review transport logic. Pure: no React, no DOM. Everything the Review controls decide is decided here, so it can be
+ * Studio transport logic. Pure: no React, no DOM. Everything the Studio controls decide is decided here, so it can be
  * tested without a browser.
  */
 import type { LoopMode, Marker } from '../store';
@@ -10,6 +10,19 @@ import { formatTimecode, framesFromSeconds, parseTimecode, resolveFrameRate, typ
  * boundaries, so rounding in the browser cannot land it on a neighbouring frame.
  */
 export const SEEK_OFFSET = 0.5;
+
+/** Below this player width the dock uses its narrow arrangement. */
+export const DOCK_NARROW_BELOW = 640;
+
+/**
+ * The dock's narrow arrangement: a player under 640 px wide (the one-row arrangement needs about 640 px even after
+ * it has shed what it can), or any touch device (which has no keyboard for `I` and
+ * `O`, so it gets In and Out buttons). A width that is not measured yet counts as wide.
+ */
+export function isNarrowDock(width: number, coarsePointer = false): boolean {
+  if (coarsePointer) return true;
+  return width > 0 && width < DOCK_NARROW_BELOW;
+}
 
 /** Frames jumped by `Shift+←` and `Shift+→`. */
 export const JUMP_FRAMES = 10;
@@ -97,17 +110,15 @@ export function effectiveRange(range: Range, duration: number): { start: number;
   return { start: range.in ?? 0, end };
 }
 
-export type LoopDecision = 'continue' | 'jumpToIn' | 'pauseAtOut';
+export type LoopDecision = 'continue' | 'jumpToIn';
 
 export interface LoopInput {
   mediaTime: number;
   range: Range;
   duration: number;
   fps: number;
-  /** `'range'`: loop the range. `'off'`: nothing, unless a one-off "play range" is running. */
+  /** `'range'`: loop the range. `'whole'`: the whole video loops when it ends, which the `ended` event handles. */
   loopMode: LoopMode;
-  /** A one-off "play range" is running: stop at Out instead of looping. */
-  playingRange?: boolean;
   /** Playback is just starting: with loop on, a playhead outside the range jumps to In first. */
   starting?: boolean;
 }
@@ -117,21 +128,15 @@ export interface LoopInput {
  * frame that is already on screen; expect a one-frame overshoot now and then, loops are not exact.
  */
 export function loopDecision(input: LoopInput): LoopDecision {
-  const active = input.loopMode === 'range' || Boolean(input.playingRange);
-  if (!active) return 'continue';
+  if (input.loopMode !== 'range') return 'continue';
 
   const range = effectiveRange(input.range, input.duration);
   if (!range) return 'continue';
 
   const half = SEEK_OFFSET / resolveFrameRate(input.fps).exact;
-  const atOut = range.end !== null && input.mediaTime >= range.end - half;
-
-  if (input.loopMode === 'range') {
-    if (atOut) return 'jumpToIn';
-    if (input.starting && input.mediaTime < range.start - half) return 'jumpToIn';
-    return 'continue';
-  }
-  return atOut ? 'pauseAtOut' : 'continue';
+  if (range.end !== null && input.mediaTime >= range.end - half) return 'jumpToIn';
+  if (input.starting && input.mediaTime < range.start - half) return 'jumpToIn';
+  return 'continue';
 }
 
 const LINK_KEY = 't';

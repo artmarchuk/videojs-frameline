@@ -8,10 +8,12 @@ import {
   buildTicks,
   chooseTicks,
   clampBubble,
-  formatRangeLength,
   formatRulerLabel,
+  handleDragTime,
   handleKeyTarget,
   handleTimeFromX,
+  handleValue,
+  isAtOwnEnd,
   isSnapped,
   layoutMarkers,
   MIN_LABEL_PX,
@@ -176,48 +178,41 @@ describe('frame snapping', () => {
 describe('layoutMarkers', () => {
   const m = (time: number, extra: Partial<Marker> = {}): Marker => ({ time, label: `m${time}`, ...extra });
 
-  it('places a point and a range with different kinds', () => {
-    const items = layoutMarkers([m(10), m(30, { end: 40 })], 60, 600);
-    expect(items.map((item) => item.kind)).toEqual(['point', 'range']);
-    const range = items[1]!;
-    expect(range.kind === 'range' && range.width).toBeCloseTo(100);
+  it('gives every marker one pin, and a line to the end time when it has one', () => {
+    const pins = layoutMarkers([m(10), m(30, { end: 40 })], 60, 600);
+    expect(pins).toHaveLength(2);
+    expect(pins[0]).toMatchObject({ x: 100, endX: null });
+    expect(pins[1]).toMatchObject({ x: 300, endX: 400 });
   });
 
-  it('clusters points closer than 12 px and counts them', () => {
-    const items = layoutMarkers([m(20), m(20.3), m(20.6), m(40)], 60, 600);
-    expect(items.map((item) => item.kind)).toEqual(['cluster', 'point']);
-    expect(items[0]!.markers).toHaveLength(3);
+  it('never clusters: close markers keep their own pins, later ones last (drawn on top)', () => {
+    const pins = layoutMarkers([m(20.6), m(20), m(20.3), m(40)], 60, 600);
+    expect(pins.map((pin) => pin.marker.time)).toEqual([20, 20.3, 20.6, 40]);
   });
 
-  it('does not cluster points that are far enough apart', () => {
-    expect(layoutMarkers([m(10), m(12)], 60, 600).map((item) => item.kind)).toEqual(['point', 'point']);
+  it('keeps pins at 0 and at the duration fully inside', () => {
+    const pins = layoutMarkers([m(0), m(60), m(59, { end: 70 })], 60, 600);
+    expect(pins[0]!.x).toBe(4);
+    expect(pins[2]!.x).toBe(596);
+    expect(pins[1]!.endX).toBe(600);
   });
 
-  it('keeps markers at 0 and at the duration fully inside the lane', () => {
-    const items = layoutMarkers([m(0), m(60), m(59, { end: 60 })], 60, 600);
-    const points = items.filter((item) => item.kind === 'point');
-    expect(points[0]!.x).toBe(5);
-    expect(points[1]!.x).toBe(595);
-    const range = items.find((item) => item.kind === 'range')!;
-    expect(range.kind === 'range' && range.x + range.width).toBeLessThanOrEqual(600);
-  });
-
-  it('gives a very short range a visible width', () => {
-    const range = layoutMarkers([m(10, { end: 10.01 })], 60, 600)[0]!;
-    expect(range.kind === 'range' && range.width).toBe(6);
+  it('ignores an end that is not after the start', () => {
+    expect(layoutMarkers([m(10, { end: 10 }), m(20, { end: 5 }), m(30, { end: Number.NaN })], 60, 600).map((pin) => pin.endX)).toEqual([null, null, null]);
   });
 
   it('ignores bad times and sorts by time', () => {
-    const items = layoutMarkers([m(50), m(Number.NaN), m(-1), m(5), m(500)], 60, 600);
-    expect(items.map((item) => item.markers[0]!.time)).toEqual([5, 50, 500]);
-    expect(items[2]!.x).toBe(595); // past the end: drawn at the end
+    const pins = layoutMarkers([m(50), m(Number.NaN), m(-1), m(5), m(500)], 60, 600);
+    expect(pins.map((pin) => pin.marker.time)).toEqual([5, 50, 500]);
+    expect(pins[2]!.x).toBe(596); // past the end: drawn at the end
   });
 
-  it('handles 200 markers, and more, without growing past the lane', () => {
+  it('handles 200 markers, and more: still one pin each, all inside', () => {
     const many = Array.from({ length: 250 }, (_, i) => m((i / 250) * 60));
-    const items = layoutMarkers(many, 60, 320);
-    expect(items.length).toBeLessThanOrEqual(320 / 12 + 1);
-    expect(items.reduce((sum, item) => sum + item.markers.length, 0)).toBe(250);
+    const pins = layoutMarkers(many, 60, 320);
+    expect(pins).toHaveLength(250);
+    expect(pins.every((pin) => pin.x >= 4 && pin.x <= 316)).toBe(true);
+    expect(new Set(pins.map((pin) => pin.key)).size).toBe(250);
   });
 
   it('returns nothing while the duration is unknown', () => {
@@ -226,6 +221,8 @@ describe('layoutMarkers', () => {
 });
 
 describe('handle drag maths', () => {
+  const lastFrameTime = (60 * 24 - 1) / 24;
+
   it('rounds a drag position to the start of a frame', () => {
     const time = handleTimeFromX(123.4, 800, 60, 24);
     expect(time * 24).toBeCloseTo(Math.round(time * 24));
@@ -234,44 +231,102 @@ describe('handle drag maths', () => {
 
   it('clamps to the clip', () => {
     expect(handleTimeFromX(-50, 800, 60, 24)).toBe(0);
-    expect(handleTimeFromX(5000, 800, 60, 24)).toBeCloseTo((60 * 24 - 1) / 24);
+    expect(handleTimeFromX(5000, 800, 60, 24)).toBeCloseTo(lastFrameTime);
+  });
+
+  it('snaps magnetically to the playhead and to markers within 5 px', () => {
+    // 1200 px for 60 s: 20 px per second, so 5 px is a quarter of a second.
+    const magnets = [22 + 8 / 24, 30];
+    expect(handleDragTime(22.5 * 20, 1200, 60, 24, magnets)).toBeCloseTo(22 + 8 / 24); // 3.3 px away
+    expect(handleDragTime(30 * 20 - 5, 1200, 60, 24, magnets)).toBe(30); // exactly 5 px away
+    expect(handleDragTime(30 * 20 + 6, 1200, 60, 24, magnets)).toBeCloseTo(handleTimeFromX(606, 1200, 60, 24)); // 6 px: free
+    expect(handleDragTime(400, 1200, 60, 24, magnets)).toBe(20);
+  });
+
+  it('picks the nearest magnet, and rounds a magnet to its frame', () => {
+    expect(handleDragTime(601, 1200, 60, 24, [29.9, 30.1])).toBeCloseTo(framesFromSeconds(30.1, 24) / 24);
+    const landed = handleDragTime(200, 1200, 60, 24, [10.03]);
+    expect(landed * 24).toBeCloseTo(Math.round(landed * 24));
+  });
+
+  it('ignores magnets outside the clip and works without any', () => {
+    expect(handleDragTime(100, 1200, 60, 24, [Number.NaN, -1, 90])).toBe(5);
+    expect(handleDragTime(100, 1200, 60, 24)).toBe(5);
+  });
+
+  it('puts an unset handle at its own end of the track', () => {
+    expect(handleValue('in', { in: null, out: null }, 60)).toBe(0);
+    expect(handleValue('out', { in: null, out: null }, 60)).toBe(60);
+    expect(handleValue('in', { in: 3, out: 9 }, 60)).toBe(3);
+    expect(handleValue('out', { in: 3, out: 9 }, 60)).toBe(9);
+  });
+
+  it('knows when a handle is back at its own end (within one frame)', () => {
+    expect(isAtOwnEnd('in', 0, 60, 24)).toBe(true);
+    expect(isAtOwnEnd('in', 1 / 24, 60, 24)).toBe(false);
+    expect(isAtOwnEnd('out', lastFrameTime, 60, 24)).toBe(true);
+    expect(isAtOwnEnd('out', 60, 60, 24)).toBe(true);
+    expect(isAtOwnEnd('out', lastFrameTime - 1 / 24, 60, 24)).toBe(false);
+    expect(isAtOwnEnd('out', 5, 0, 24)).toBe(false); // duration unknown
   });
 
   it('moves a point', () => {
-    expect(resolveHandleMove('in', 5, { in: 2, out: 10 }, 60, 24)).toEqual({ in: 5, out: 10, swapped: false, rejected: false });
+    expect(resolveHandleMove('in', 5, { in: 2, out: 10 }, 60, 24)).toEqual({ in: 5, out: 10, swapped: false, rejected: false, unset: false });
+    expect(resolveHandleMove('out', 20, { in: null, out: null }, 60, 24)).toMatchObject({ in: null, out: 20, unset: false });
+  });
+
+  it('unsets a point dragged back to its end', () => {
+    expect(resolveHandleMove('in', 0, { in: 2, out: 10 }, 60, 24)).toEqual({ in: null, out: 10, swapped: false, rejected: false, unset: true });
+    expect(resolveHandleMove('in', -3, { in: 2, out: null }, 60, 24)).toMatchObject({ in: null, unset: true });
+    expect(resolveHandleMove('out', 500, { in: 2, out: 10 }, 60, 24)).toMatchObject({ in: 2, out: null, unset: true });
+    expect(resolveHandleMove('out', lastFrameTime, { in: 2, out: 10 }, 60, 24)).toMatchObject({ out: null, unset: true });
   });
 
   it('swaps when a handle is dragged past the other', () => {
-    expect(resolveHandleMove('in', 12, { in: 2, out: 10 }, 60, 24)).toEqual({ in: 10, out: 12, swapped: true, rejected: false });
-    expect(resolveHandleMove('out', 1, { in: 2, out: 10 }, 60, 24)).toEqual({ in: 1, out: 2, swapped: true, rejected: false });
+    expect(resolveHandleMove('in', 12, { in: 2, out: 10 }, 60, 24)).toMatchObject({ in: 10, out: 12, swapped: true, rejected: false });
+    expect(resolveHandleMove('out', 1, { in: 2, out: 10 }, 60, 24)).toMatchObject({ in: 1, out: 2, swapped: true, rejected: false });
   });
 
   it('rejects a move onto the other point', () => {
-    expect(resolveHandleMove('in', 10.01, { in: 2, out: 10 }, 60, 24)).toEqual({ in: 2, out: 10, swapped: false, rejected: true });
+    expect(resolveHandleMove('in', 10.01, { in: 2, out: 10 }, 60, 24)).toMatchObject({ in: 2, out: 10, rejected: true });
   });
 
-  it('clamps a move to the clip and rounds to a frame', () => {
-    expect(resolveHandleMove('out', 500, { in: 2, out: null }, 60, 24).out).toBeCloseTo((60 * 24 - 1) / 24);
-    expect(resolveHandleMove('in', -3, { in: 2, out: null }, 60, 24).in).toBe(0);
+  it('rounds a release to a frame', () => {
     expect(resolveHandleMove('in', 1.03, { in: null, out: null }, 60, 24).in).toBeCloseTo(1);
+    const out = resolveHandleMove('out', 33.333, { in: null, out: null }, 60, 24).out!;
+    expect(out * 24).toBeCloseTo(Math.round(out * 24));
   });
 
   it('moves by keys, one or ten frames, within the limits', () => {
     const range = { in: 2, out: 10 };
     expect(handleKeyTarget('ArrowRight', false, 'in', range, 60, 24)).toBeCloseTo(2 + 1 / 24);
     expect(handleKeyTarget('ArrowLeft', true, 'out', range, 60, 24)).toBeCloseTo(10 - 10 / 24);
-    expect(handleKeyTarget('Home', false, 'in', range, 60, 24)).toBe(0);
     expect(handleKeyTarget('End', false, 'in', range, 60, 24)).toBeCloseTo(10 - 1 / 24);
     expect(handleKeyTarget('Home', false, 'out', range, 60, 24)).toBeCloseTo(2 + 1 / 24);
-    expect(handleKeyTarget('End', false, 'out', range, 60, 24)).toBeCloseTo((60 * 24 - 1) / 24);
+    expect(handleKeyTarget('a', false, 'in', range, 60, 24)).toBeNull();
+  });
+
+  it('unsets by Delete, Backspace, and by a key that takes the handle to its own end', () => {
+    const range = { in: 2, out: 10 };
     expect(handleKeyTarget('Delete', false, 'out', range, 60, 24)).toBe('clear');
     expect(handleKeyTarget('Backspace', false, 'in', range, 60, 24)).toBe('clear');
-    expect(handleKeyTarget('a', false, 'in', range, 60, 24)).toBeNull();
-    expect(handleKeyTarget('ArrowRight', false, 'in', { in: null, out: 5 }, 60, 24)).toBeNull();
+    expect(handleKeyTarget('Home', false, 'in', range, 60, 24)).toBe('clear');
+    expect(handleKeyTarget('End', false, 'out', range, 60, 24)).toBe('clear');
+    expect(handleKeyTarget('ArrowLeft', false, 'in', { in: 1 / 24, out: null }, 60, 24)).toBe('clear');
+  });
+
+  it('starts an unset handle from its end of the clip', () => {
+    const unset = { in: null, out: null };
+    expect(handleKeyTarget('ArrowRight', false, 'in', unset, 60, 24)).toBeCloseTo(1 / 24);
+    expect(handleKeyTarget('ArrowRight', true, 'in', unset, 60, 24)).toBeCloseTo(10 / 24);
+    expect(handleKeyTarget('ArrowLeft', false, 'out', unset, 60, 24)).toBeCloseTo(lastFrameTime - 1 / 24);
+    expect(handleKeyTarget('ArrowLeft', false, 'in', unset, 60, 24)).toBe('clear');
+    expect(handleKeyTarget('ArrowRight', false, 'out', unset, 60, 24)).toBe('clear');
   });
 
   it('a key cannot push a handle past the other point', () => {
     expect(handleKeyTarget('ArrowRight', true, 'in', { in: 9.9, out: 10 }, 60, 24)).toBeCloseTo(10 - 1 / 24);
+    expect(handleKeyTarget('ArrowLeft', true, 'out', { in: 9.9, out: 10 }, 60, 24)).toBeCloseTo(framesFromSeconds(9.9, 24) / 24 + 1 / 24);
   });
 });
 
@@ -281,7 +336,7 @@ describe('rangeBand', () => {
   });
 
   it('spans In to Out with the played part up to the playhead', () => {
-    expect(rangeBand({ in: 15, out: 45 }, 30, 60)).toEqual({ start: 25, end: 75, played: 50, openStart: false, openEnd: false });
+    expect(rangeBand({ in: 15, out: 45 }, 30, 60)).toEqual({ start: 25, end: 75, played: 50 });
   });
 
   it('keeps the played part inside the band when the playhead is outside it', () => {
@@ -289,9 +344,9 @@ describe('rangeBand', () => {
     expect(rangeBand({ in: 15, out: 45 }, 55, 60)!.played).toBe(75);
   });
 
-  it('runs to the open end with one point', () => {
-    expect(rangeBand({ in: 15, out: null }, 0, 60)).toMatchObject({ start: 25, end: 100, openEnd: true, openStart: false });
-    expect(rangeBand({ in: null, out: 45 }, 0, 60)).toMatchObject({ start: 0, end: 75, openStart: true, openEnd: false });
+  it('runs from the start or to the end with one point', () => {
+    expect(rangeBand({ in: 15, out: null }, 0, 60)).toMatchObject({ start: 25, end: 100 });
+    expect(rangeBand({ in: null, out: 45 }, 0, 60)).toMatchObject({ start: 0, end: 75 });
   });
 
   it('is null while the duration is unknown', () => {
@@ -308,14 +363,5 @@ describe('clampBubble', () => {
 
   it('centres a bubble wider than its container', () => {
     expect(clampBubble(10, 92, 80)).toBe(40);
-  });
-});
-
-describe('formatRangeLength', () => {
-  it('reads as plain words', () => {
-    expect(formatRangeLength(17)).toBe('17 s');
-    expect(formatRangeLength(0.5)).toBe('0.5 s');
-    expect(formatRangeLength(65)).toBe('1 min 5 s');
-    expect(formatRangeLength(120)).toBe('2 min');
   });
 });

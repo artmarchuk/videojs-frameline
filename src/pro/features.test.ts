@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetWarnings } from './dev';
-import { GUIDE_IDS, guideAttribute, hasProFeatures, resolveFeatures, resolveLayout, type FeatureOverrides } from './features';
+import { GUIDE_IDS, guideAttribute, hasProFeatures, resolveFeatures, resolveLayout, TIERS, isTier, type FeatureOverrides } from './features';
 
 describe('resolveFeatures', () => {
   let warn: ReturnType<typeof vi.spyOn>;
@@ -13,61 +13,65 @@ describe('resolveFeatures', () => {
 
   afterEach(() => warn.mockRestore());
 
-  it('gives Share no pro features', () => {
-    const share = resolveFeatures('share');
-    expect(Object.values(share).every((value) => value === false)).toBe(true);
-    expect(hasProFeatures(share)).toBe(false);
+  it('gives Viewer no pro features', () => {
+    const viewer = resolveFeatures('viewer');
+    expect(Object.values(viewer).every((value) => value === false)).toBe(true);
+    expect(hasProFeatures(viewer)).toBe(false);
+    expect(resolveFeatures()).toBe(viewer);
   });
 
-  it('gives Review the review bundle and Studio the inspection tools on top', () => {
-    const review = resolveFeatures('review');
-    expect(review).toMatchObject({ timecode: true, frameStep: true, inOut: true, loop: true, markers: true });
-    expect(review).toMatchObject({ shotNav: true, grabFrame: true, copyTimecodeLink: true, platformZones: true });
-    expect(review.posterFrame).toBe(true);
-    expect(resolveFeatures('share').posterFrame).toBe(false);
-    expect(resolveFeatures('studio').posterFrame).toBe(true);
-    expect(resolveFeatures('review', { posterFrame: false }).posterFrame).toBe(false);
-    expect(review).toMatchObject({ channels: false, gainGamma: false, zoom: false, infoHud: false, debug: false });
-    expect(review.guides).toEqual([...GUIDE_IDS]);
-
+  it('gives Studio the full set', () => {
     const studio = resolveFeatures('studio');
-    expect(studio).toMatchObject({ timecode: true, channels: true, gainGamma: true, zoom: true, infoHud: true });
+    expect(studio).toMatchObject({ timecode: true, frameStep: true, inOut: true, loop: true, markers: true });
+    expect(studio).toMatchObject({ shotNav: true, grabFrame: true, copyTimecodeLink: true, posterFrame: true });
+    expect(studio).toMatchObject({ platformZones: true, channels: true, gainGamma: true, zoom: true, infoHud: true });
     expect(studio.debug).toBe(false);
+    expect(studio.guides).toEqual([...GUIDE_IDS]);
+    expect(studio.guides).toContain('1.85');
+    expect(resolveFeatures('studio', { posterFrame: false }).posterFrame).toBe(false);
+  });
+
+  it('has two tiers only: the old names are not accepted', () => {
+    expect(TIERS).toEqual(['viewer', 'studio']);
+    expect(isTier('share')).toBe(false);
+    expect(isTier('review')).toBe(false);
+    expect(resolveFeatures('share' as never)).toBe(resolveFeatures('viewer'));
+    expect(resolveFeatures('review' as never)).toBe(resolveFeatures('viewer'));
   });
 
   it('lets overrides win over the tier', () => {
-    expect(resolveFeatures('share', { timecode: true }).timecode).toBe(true);
+    expect(resolveFeatures('viewer', { timecode: true }).timecode).toBe(true);
     expect(resolveFeatures('studio', { zoom: false, grabFrame: false })).toMatchObject({ zoom: false, grabFrame: false });
-    expect(hasProFeatures(resolveFeatures('share', { debug: true }))).toBe(true);
+    expect(hasProFeatures(resolveFeatures('viewer', { debug: true }))).toBe(true);
   });
 
   it('filters the guides list', () => {
-    expect(resolveFeatures('review', { guides: ['9:16', 'title-safe'] }).guides).toEqual(['title-safe', '9:16']);
-    expect(resolveFeatures('review', { guides: false }).guides).toBe(false);
-    expect(resolveFeatures('share', { guides: true }).guides).toEqual([...GUIDE_IDS]);
-    expect(resolveFeatures('review', { guides: ['nope', '1:1', '1:1'] }).guides).toEqual(['1:1']);
-    expect(resolveFeatures('review', { guides: ['nope'] }).guides).toBe(false);
+    expect(resolveFeatures('studio', { guides: ['9:16', 'title-safe'] }).guides).toEqual(['title-safe', '9:16']);
+    expect(resolveFeatures('studio', { guides: false }).guides).toBe(false);
+    expect(resolveFeatures('viewer', { guides: true }).guides).toEqual([...GUIDE_IDS]);
+    expect(resolveFeatures('studio', { guides: ['nope', '1:1', '1:1'] }).guides).toEqual(['1:1']);
+    expect(resolveFeatures('studio', { guides: ['nope'] }).guides).toBe(false);
     expect(warn).toHaveBeenCalledTimes(1);
   });
 
   it('ignores unknown flags with one warning and never throws', () => {
     const overrides = { scopes: true, timecode: 'yes' } as unknown as FeatureOverrides;
-    expect(() => resolveFeatures('review', overrides)).not.toThrow();
-    const first = resolveFeatures('review', overrides);
-    resolveFeatures('review', overrides);
-    expect(first).toBe(resolveFeatures('review'));
+    expect(() => resolveFeatures('studio', overrides)).not.toThrow();
+    const first = resolveFeatures('studio', overrides);
+    resolveFeatures('studio', overrides);
+    expect(first).toBe(resolveFeatures('studio'));
     expect(warn).toHaveBeenCalledTimes(2); // one for "scopes", one for the non-boolean "timecode"; not repeated
-    expect(resolveFeatures('nope' as never)).toBe(resolveFeatures('share'));
+    expect(resolveFeatures('nope' as never)).toBe(resolveFeatures('viewer'));
   });
 
   it('returns a frozen, memoised object', () => {
-    const a = resolveFeatures('review', { guides: ['thirds', 'centre'], zoom: true });
-    const b = resolveFeatures('review', { zoom: true, guides: ['centre', 'thirds'] });
+    const a = resolveFeatures('studio', { guides: ['thirds', 'centre'], zoom: true });
+    const b = resolveFeatures('studio', { zoom: true, guides: ['centre', 'thirds'] });
     expect(a).toBe(b);
     expect(Object.isFrozen(a)).toBe(true);
     expect(Object.isFrozen(a.guides)).toBe(true);
-    expect(resolveFeatures('review')).toBe(resolveFeatures('review', {}));
-    expect(resolveFeatures('review')).not.toBe(resolveFeatures('studio'));
+    expect(resolveFeatures('studio')).toBe(resolveFeatures('studio', {}));
+    expect(resolveFeatures('studio')).not.toBe(resolveFeatures('viewer'));
   });
 
   it('names data attributes for guides', () => {
@@ -78,19 +82,18 @@ describe('resolveFeatures', () => {
 });
 
 describe('resolveLayout', () => {
-  it('defaults to overlay for share and dock for review and studio', () => {
-    expect(resolveLayout('share')).toBe('overlay');
-    expect(resolveLayout('review')).toBe('dock');
+  it('defaults to overlay for Viewer and dock for Studio', () => {
+    expect(resolveLayout('viewer')).toBe('overlay');
     expect(resolveLayout('studio')).toBe('dock');
   });
 
   it('lets the host override either way', () => {
-    expect(resolveLayout('share', 'dock')).toBe('dock');
-    expect(resolveLayout('review', 'overlay')).toBe('overlay');
+    expect(resolveLayout('viewer', 'dock')).toBe('dock');
+    expect(resolveLayout('studio', 'overlay')).toBe('overlay');
   });
 
   it('ignores anything that is not a layout', () => {
-    expect(resolveLayout('review', 'sidebar')).toBe('dock');
-    expect(resolveLayout('share', null)).toBe('overlay');
+    expect(resolveLayout('studio', 'sidebar')).toBe('dock');
+    expect(resolveLayout('viewer', null)).toBe('overlay');
   });
 });

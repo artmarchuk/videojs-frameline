@@ -36,7 +36,7 @@ export function snapFrame(time: number, duration: number, fps: number): number {
 }
 
 /**
- * The time a seek to `time` is moved to in the Review and Studio tiers: the middle of the frame that contains it,
+ * The time a seek to `time` is moved to in the Studio tier: the middle of the frame that contains it,
  * the same half-frame rule the step buttons use (`seekTimeForFrame`).
  */
 export function snapSeekTime(time: number, duration: number, fps: number): number {
@@ -190,19 +190,21 @@ export function clampBubble(center: number, bubbleWidth: number, containerWidth:
 
 /* ---------- Markers ---------- */
 
-/** Point markers closer than this share one cluster badge. */
-export const CLUSTER_PX = 12;
 /** More markers than this still render, with a development warning. */
 export const MARKER_SOFT_LIMIT = 200;
 
-const POINT_WIDTH = 10;
-const CLUSTER_WIDTH = 20;
-const MIN_RANGE_WIDTH = 6;
+/** Half the width of a pin: a pin at 0 or at the duration is moved in by this much, so it stays whole. */
+const PIN_HALF = 4;
 
-export type MarkerItem =
-  | { kind: 'point'; key: string; x: number; markers: readonly [Marker] }
-  | { kind: 'cluster'; key: string; x: number; markers: readonly Marker[] }
-  | { kind: 'range'; key: string; x: number; width: number; markers: readonly [Marker] };
+/** One marker on the ruler: a pin at its time, and a line to `endX` when the marker has an end time. */
+export interface MarkerPin {
+  key: string;
+  /** Centre of the pin, in pixels from the left edge of the track. */
+  x: number;
+  /** Where the line from the pin ends, or `null` for a marker without an end time. */
+  endX: number | null;
+  marker: Marker;
+}
 
 const markerKey = (marker: Marker, index: number) => marker.id ?? `${index}:${marker.time}`;
 
@@ -210,7 +212,7 @@ const markerKey = (marker: Marker, index: number) => marker.id ?? `${index}:${ma
  * Markers the timeline can place: finite, non-negative times, sorted by time. A marker past the end is kept and
  * drawn at the end, because a host's "last frame" marker is often a few milliseconds past the media's duration.
  */
-export function validMarkers(markers: readonly Marker[], _duration?: number): Marker[] {
+export function validMarkers(markers: readonly Marker[]): Marker[] {
   return markers
     .filter((marker) => marker && Number.isFinite(marker.time) && marker.time >= 0)
     .slice()
@@ -218,52 +220,16 @@ export function validMarkers(markers: readonly Marker[], _duration?: number): Ma
 }
 
 /**
- * Lays the markers out in the marker lane.
- *
- * - A marker with `end` is a range: a thin bar from its start to its end, at least `MIN_RANGE_WIDTH` wide.
- * - Other markers are points. Points closer than `CLUSTER_PX` collapse into one cluster with a count; a single lane
- *   stays readable at any width, where stacked rows would not on a phone.
- * - Positions are clamped so a marker at 0 or at the duration stays fully inside the lane.
+ * One pin per marker, in time order, so later markers are drawn on top of earlier ones. There is one visual and no
+ * clustering: pins that are close together simply overlap. Pins at 0 and at the duration stay fully inside.
  */
-export function layoutMarkers(markers: readonly Marker[], duration: number, width: number): MarkerItem[] {
+export function layoutMarkers(markers: readonly Marker[], duration: number, width: number): MarkerPin[] {
   if (!(duration > 0) || !(width > 0)) return [];
-  const sorted = validMarkers(markers, duration);
-  const items: MarkerItem[] = [];
-
-  sorted.forEach((marker, index) => {
-    if (marker.end === undefined || !Number.isFinite(marker.end) || marker.end <= marker.time) return;
-    const start = timeToX(marker.time, duration, width);
-    const end = timeToX(marker.end, duration, width);
-    const barWidth = Math.min(width, Math.max(MIN_RANGE_WIDTH, end - start));
-    items.push({ kind: 'range', key: `r-${markerKey(marker, index)}`, x: clamp(start, 0, width - barWidth), width: barWidth, markers: [marker] });
+  return validMarkers(markers).map((marker, index) => {
+    const x = clamp(timeToX(marker.time, duration, width), PIN_HALF, Math.max(PIN_HALF, width - PIN_HALF));
+    const hasEnd = marker.end !== undefined && Number.isFinite(marker.end) && marker.end > marker.time;
+    return { key: markerKey(marker, index), x, endX: hasEnd ? Math.max(x, timeToX(marker.end!, duration, width)) : null, marker };
   });
-
-  let group: { first: number; last: number; markers: Marker[]; index: number } | null = null;
-  const flush = () => {
-    if (!group) return;
-    const single = group.markers.length === 1;
-    const half = (single ? POINT_WIDTH : CLUSTER_WIDTH) / 2;
-    const x = clamp((group.first + group.last) / 2, half, Math.max(half, width - half));
-    const key = `${single ? 'p' : 'c'}-${markerKey(group.markers[0]!, group.index)}`;
-    if (single) items.push({ kind: 'point', key, x, markers: [group.markers[0]!] });
-    else items.push({ kind: 'cluster', key, x, markers: group.markers });
-    group = null;
-  };
-
-  sorted.forEach((marker, index) => {
-    if (marker.end !== undefined && Number.isFinite(marker.end) && marker.end > marker.time) return;
-    const x = timeToX(marker.time, duration, width);
-    if (group && x - group.last < CLUSTER_PX) {
-      group.last = x;
-      group.markers.push(marker);
-      return;
-    }
-    flush();
-    group = { first: x, last: x, markers: [marker], index };
-  });
-  flush();
-
-  return items.sort((a, b) => a.x - b.x);
 }
 
 /* ---------- In and Out handles ---------- */
@@ -273,9 +239,47 @@ export interface RangePoints {
   out: number | null;
 }
 
+/** How close, in pixels, a dragged handle must come to the playhead or a marker to jump onto it. */
+export const MAGNET_PX = 5;
+
 /** The time a handle dragged to `x` lands on: the start of the frame under the pointer, within the clip. */
 export function handleTimeFromX(x: number, width: number, duration: number, fps: number): number {
   return secondsFromFrames(snapFrame(xToTime(x, duration, width), duration, fps), fps);
+}
+
+/**
+ * The time a dragged handle lands on, with magnets. A pixel covers more than one frame on most timelines, so a drag
+ * could never hit the playhead or a marker exactly: within `MAGNET_PX` of one, the handle jumps to its frame. The
+ * nearest magnet wins. Otherwise the handle lands on the frame under the pointer. The result is always the start
+ * of a frame.
+ */
+export function handleDragTime(x: number, width: number, duration: number, fps: number, magnets: readonly number[] = []): number {
+  let best: number | null = null;
+  let bestDistance = MAGNET_PX;
+  for (const time of magnets) {
+    if (!Number.isFinite(time) || time < 0 || (duration > 0 && time > duration)) continue;
+    const distance = Math.abs(timeToX(time, duration, width) - x);
+    if (distance <= bestDistance) {
+      best = time;
+      bestDistance = distance;
+    }
+  }
+  if (best !== null) return secondsFromFrames(snapFrame(best, duration, fps), fps);
+  return handleTimeFromX(x, width, duration, fps);
+}
+
+/** Where a handle sits: at its point, or at its own end of the track while the point is not set. */
+export function handleValue(which: 'in' | 'out', range: RangePoints, duration: number): number {
+  return which === 'in' ? (range.in ?? 0) : (range.out ?? Math.max(0, duration));
+}
+
+/**
+ * True when `time` is at the handle's own end of the clip: the first frame for In, the last frame (or later) for Out.
+ * A handle there means "not set": the range runs from the start, or to the end.
+ */
+export function isAtOwnEnd(which: 'in' | 'out', time: number, duration: number, fps: number): boolean {
+  const frame = framesFromSeconds(Math.max(0, time), fps);
+  return which === 'in' ? frame <= 0 : duration > 0 && frame >= lastFrameOf(duration, fps);
 }
 
 export interface HandleMove {
@@ -285,19 +289,26 @@ export interface HandleMove {
   swapped: boolean;
   /** The move would put both points on one frame; nothing changes (the store's reject rule). */
   rejected: boolean;
+  /** The handle is back at its own end, so its point is not set any more. */
+  unset: boolean;
 }
 
 /**
  * What the range becomes when `which` moves to `time`. Mirrors the store's invariants so a drag can be previewed
- * before it is committed: clamp to `[0, duration]`, round to a frame, reject a zero-length range, swap on crossing.
+ * before it is committed: clamp to `[0, duration]`, round to a frame, unset at the handle's own end, reject a
+ * zero-length range, swap on crossing.
  */
 export function resolveHandleMove(which: 'in' | 'out', time: number, range: RangePoints, duration: number, fps: number): HandleMove {
   const max = duration > 0 ? duration : Number.POSITIVE_INFINITY;
   const frame = snapFrame(clamp(time, 0, max), duration, fps);
   const value = secondsFromFrames(frame, fps);
-  const other = which === 'in' ? range.out : range.in;
 
-  if (other !== null && framesFromSeconds(other, fps) === frame) return { in: range.in, out: range.out, swapped: false, rejected: true };
+  if (isAtOwnEnd(which, value, duration, fps)) {
+    return { in: which === 'in' ? null : range.in, out: which === 'out' ? null : range.out, swapped: false, rejected: false, unset: true };
+  }
+
+  const other = which === 'in' ? range.out : range.in;
+  if (other !== null && framesFromSeconds(other, fps) === frame) return { in: range.in, out: range.out, swapped: false, rejected: true, unset: false };
 
   let next: RangePoints = which === 'in' ? { in: value, out: range.out } : { in: range.in, out: value };
   let swapped = false;
@@ -305,10 +316,14 @@ export function resolveHandleMove(which: 'in' | 'out', time: number, range: Rang
     next = { in: next.out, out: next.in };
     swapped = true;
   }
-  return { ...next, swapped, rejected: false };
+  return { ...next, swapped, rejected: false, unset: false };
 }
 
-/** The time a handle moves to for a key press, or `'clear'`, or `null` when the key is not a handle key. */
+/**
+ * The time a handle moves to for a key press; `'clear'` when the key unsets the point (`Delete`, `Backspace`, or a
+ * move that takes the handle back to its own end); `null` when the key is not a handle key. A handle whose point is
+ * not set starts from its end of the clip.
+ */
 export function handleKeyTarget(
   key: string,
   shift: boolean,
@@ -317,14 +332,17 @@ export function handleKeyTarget(
   duration: number,
   fps: number
 ): number | 'clear' | null {
-  const current = which === 'in' ? range.in : range.out;
-  if (current === null) return null;
-  const frame = framesFromSeconds(current, fps);
   const lastFrame = lastFrameOf(duration, fps);
-  // A handle's limits: the clip, and one frame short of the other point.
-  const min = which === 'out' && range.in !== null ? framesFromSeconds(range.in, fps) + 1 : 0;
-  const max = which === 'in' && range.out !== null ? framesFromSeconds(range.out, fps) - 1 : lastFrame;
-  const to = (target: number) => secondsFromFrames(clamp(target, min, Math.max(min, max)), fps);
+  const current = which === 'in' ? range.in : range.out;
+  const frame = current === null ? (which === 'in' ? 0 : lastFrame) : framesFromSeconds(current, fps);
+  // A handle's limits: its own end of the clip, and one frame short of the other point.
+  const min = which === 'out' ? (range.in !== null ? framesFromSeconds(range.in, fps) + 1 : 1) : 0;
+  const max = which === 'in' ? (range.out !== null ? framesFromSeconds(range.out, fps) - 1 : Math.max(0, lastFrame - 1)) : lastFrame;
+  const to = (target: number): number | 'clear' => {
+    const landed = clamp(target, min, Math.max(min, max));
+    const time = secondsFromFrames(landed, fps);
+    return isAtOwnEnd(which, time, duration, fps) ? 'clear' : time;
+  };
 
   switch (key) {
     case 'ArrowLeft':
@@ -354,39 +372,18 @@ export interface RangeBand {
   end: number;
   /** Right edge of the played part: the playhead, kept inside the band. */
   played: number;
-  /** The In point is not set: the band runs from the start of the track and fades in. */
-  openStart: boolean;
-  /** The Out point is not set: the band runs to the end of the track and fades out. */
-  openEnd: boolean;
 }
 
 /**
- * Geometry of the In/Out band, in percentages of the track. No point set: `null` (the track shows plain progress).
- * One point set: the band runs to the open end of the track. The played part runs from the band's start to the
- * playhead. The band is drawn to the Out time; the loop shows the Out frame before it jumps, so the range in effect
- * includes that frame, which is under a pixel at normal widths.
+ * Geometry of the In/Out band, in percentages of the track. No point set: `null` (the track stays neutral). One
+ * point set: the band runs from the start, or to the end, of the track. The played part runs from the band's start
+ * to the playhead. The band is drawn to the Out time; the loop shows the Out frame before it jumps, so the range in
+ * effect includes that frame, which is under a pixel at normal widths.
  */
 export function rangeBand(range: RangePoints, playhead: number, duration: number): RangeBand | null {
   if (range.in === null && range.out === null) return null;
   if (!(duration > 0)) return null;
   const start = range.in === null ? 0 : timeToPercent(range.in, duration);
   const end = range.out === null ? 100 : timeToPercent(range.out, duration);
-  return {
-    start,
-    end,
-    played: clamp(timeToPercent(playhead, duration), start, end),
-    openStart: range.in === null,
-    openEnd: range.out === null,
-  };
-}
-
-/** `17 s`, `1 min 5 s`, `0.5 s`: the length of a range in plain words. */
-export function formatRangeLength(seconds: number): string {
-  const value = Math.max(0, seconds);
-  if (value < 10 && Math.abs(value - Math.round(value)) > 0.05) return `${value.toFixed(1)} s`;
-  const total = Math.round(value);
-  if (total < 60) return `${total} s`;
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return s ? `${m} min ${s} s` : `${m} min`;
+  return { start, end, played: clamp(timeToPercent(playhead, duration), start, end) };
 }

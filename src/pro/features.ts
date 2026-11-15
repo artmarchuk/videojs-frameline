@@ -2,29 +2,32 @@
  * Feature flags and tier defaults. Pure: no React, no DOM.
  *
  * A developer picks a tier, then switches single features on or off:
- * `resolveFeatures('review', { guides: ['title-safe', '9:16'], grabFrame: false })`.
+ * `resolveFeatures('studio', { guides: ['title-safe', '9:16'], grabFrame: false })`.
  */
 import { warnOnce } from './dev';
 
-/** The three tiers of the skin. */
-export type Tier = 'share' | 'review' | 'studio';
+/**
+ * The two tiers of the skin. Viewer is the clean player a creator's client or audience gets; Studio is the creator's
+ * monitor with the full tool set. Anything in between is a tier plus feature flags.
+ */
+export type Tier = 'viewer' | 'studio';
 
-export const TIERS: readonly Tier[] = ['share', 'review', 'studio'];
+export const TIERS: readonly Tier[] = ['viewer', 'studio'];
 
 /** Where the controls sit: over the picture, or in a dock below it. */
 export type Layout = 'overlay' | 'dock';
 
 /**
- * The layout for a tier. Share is the audience's player, so its controls overlay the picture. Review and Studio are
- * tools, where nothing may cover the picture, so they dock. A host can override either way; anything else is ignored.
+ * The layout for a tier. Viewer is the audience's player, so its controls overlay the picture. Studio is a tool,
+ * where nothing may cover the picture, so it docks. A host can override either way; anything else is ignored.
  */
 export function resolveLayout(tier: Tier, layout?: unknown): Layout {
   if (layout === 'overlay' || layout === 'dock') return layout;
-  return tier === 'share' ? 'overlay' : 'dock';
+  return tier === 'viewer' ? 'overlay' : 'dock';
 }
 
 /** Guides and masks that can be drawn over the picture. */
-export const GUIDE_IDS = ['title-safe', 'action-safe', 'thirds', 'centre', '9:16', '4:5', '1:1', '2.39'] as const;
+export const GUIDE_IDS = ['title-safe', 'action-safe', 'thirds', 'centre', '9:16', '4:5', '1:1', '2.39', '1.85'] as const;
 
 export type GuideId = (typeof GUIDE_IDS)[number];
 
@@ -88,7 +91,7 @@ const OFF: FeatureFlags = {
   debug: false,
 };
 
-const REVIEW: FeatureFlags = {
+const STUDIO: FeatureFlags = {
   ...OFF,
   timecode: true,
   frameStep: true,
@@ -101,13 +104,17 @@ const REVIEW: FeatureFlags = {
   posterFrame: true,
   guides: ALL_GUIDES,
   platformZones: true,
+  // No UI until step 7; on, so the tier's bundle is complete.
+  channels: true,
+  gainGamma: true,
+  zoom: true,
+  infoHud: true,
 };
 
 /** The default bundle of each tier. */
 export const TIER_DEFAULTS: Readonly<Record<Tier, Readonly<FeatureFlags>>> = Object.freeze({
-  share: Object.freeze(OFF),
-  review: Object.freeze(REVIEW),
-  studio: Object.freeze({ ...REVIEW, channels: true, gainGamma: true, zoom: true, infoHud: true }),
+  viewer: Object.freeze(OFF),
+  studio: Object.freeze(STUDIO),
 });
 
 const FLAG_NAMES = Object.keys(OFF) as (keyof FeatureFlags)[];
@@ -150,11 +157,11 @@ const cache = new Map<string, Readonly<FeatureFlags>>();
  * - Unknown flag names and unknown guide ids are ignored with one development warning each; nothing throws.
  * - The result is frozen and memoised: the same tier and equivalent overrides return the same object.
  */
-export function resolveFeatures(tier: Tier = 'share', overrides: FeatureOverrides = {}): Readonly<FeatureFlags> {
+export function resolveFeatures(tier: Tier = 'viewer', overrides: FeatureOverrides = {}): Readonly<FeatureFlags> {
   let safeTier: Tier = tier;
   if (!isTier(tier)) {
-    warnOnce(`Unknown tier "${String(tier)}"; using "share".`);
-    safeTier = 'share';
+    warnOnce(`Unknown tier "${String(tier)}"; using "viewer".`);
+    safeTier = 'viewer';
   }
 
   const defaults = TIER_DEFAULTS[safeTier];

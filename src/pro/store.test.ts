@@ -21,13 +21,31 @@ describe('pro store', () => {
     expect(store.getState().outPoint).toBeNull();
   });
 
-  it('clamps to [0, duration]', () => {
+  it('clamps to [0, duration], and a point at its own end is not set', () => {
     const store = createProStore();
     store.setIn(-3);
-    expect(store.getState().inPoint).toBe(0);
+    expect(store.getState().inPoint).toBeNull();
     store.setDuration(60);
     store.setOut(500);
-    expect(store.getState().outPoint).toBe(60);
+    expect(store.getState().outPoint).toBeNull();
+    store.setOut(59);
+    store.setIn(70);
+    // In past the end clamps to the end, which is past Out: swapped, and the point at the end is not set.
+    expect(store.getState()).toMatchObject({ inPoint: 59, outPoint: null });
+  });
+
+  it('unsets a point that is moved back to its end', () => {
+    const store = createProStore();
+    const onInOutChange = vi.fn();
+    store.setDuration(60);
+    store.setCallbacks({ onInOutChange });
+    store.setIn(10);
+    store.setOut(20);
+    store.setIn(0);
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: 20 });
+    store.setOut(60);
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null });
+    expect(onInOutChange).toHaveBeenLastCalledWith({ in: null, out: null });
   });
 
   it('re-clamps when the duration arrives late', () => {
@@ -35,31 +53,26 @@ describe('pro store', () => {
     store.setIn(10);
     store.setOut(90);
     store.setDuration(60);
-    expect(store.getState()).toMatchObject({ inPoint: 10, outPoint: 60 });
+    expect(store.getState()).toMatchObject({ inPoint: 10, outPoint: null });
   });
 
-  it('resets range looping when in and out are cleared', () => {
+  it('loops the range while a point is set and the whole video otherwise', () => {
     const store = createProStore();
-    store.setIn(1);
-    store.setOut(2);
-    store.setLoopMode('range');
-    store.clearInOut();
-    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null, loopMode: 'off' });
-
-    store.setLoopMode('whole');
-    store.clearInOut();
+    store.setLoop();
     expect(store.getState().loopMode).toBe('whole');
-  });
-
-  it('clears one point at a time and keeps looping while a point remains', () => {
-    const store = createProStore();
     store.setIn(1);
+    expect(store.getState().loopMode).toBe('range');
     store.setOut(2);
-    store.setLoopMode('range');
     store.clearIn();
     expect(store.getState()).toMatchObject({ inPoint: null, outPoint: 2, loopMode: 'range' });
-    store.clearOut();
-    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null, loopMode: 'off' });
+    store.clearInOut();
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null, loopMode: 'whole' });
+    store.setLoop();
+    expect(store.getState().loopMode).toBe('off');
+    store.setIn(3);
+    expect(store.getState().loopMode).toBe('off');
+    store.setLoop(true);
+    expect(store.getState().loopMode).toBe('range');
   });
 
   it('fires onInOutChange only when the range changes', () => {
@@ -145,33 +158,11 @@ describe('pro store', () => {
   });
 });
 
-describe('toolsOpen', () => {
-  it('is closed by default and can start open', () => {
-    expect(createProStore().getState().toolsOpen).toBe(false);
-    expect(createProStore({ toolsOpen: true }).getState().toolsOpen).toBe(true);
-  });
-
-  it('toggles with no argument and sets with one', () => {
+describe('removed state', () => {
+  it('has no toolsOpen', () => {
     const store = createProStore();
-    store.setToolsOpen();
-    expect(store.getState().toolsOpen).toBe(true);
-    store.setToolsOpen();
-    expect(store.getState().toolsOpen).toBe(false);
-    store.setToolsOpen(true);
-    store.setToolsOpen(true);
-    expect(store.getState().toolsOpen).toBe(true);
-  });
-
-  it('notifies only on a change and leaves the range alone', () => {
-    const store = createProStore();
-    store.setIn(2);
-    let calls = 0;
-    store.subscribe(() => calls++);
-    store.setToolsOpen(false);
-    expect(calls).toBe(0);
-    store.setToolsOpen(true);
-    expect(calls).toBe(1);
-    expect(store.getState().inPoint).toBe(2);
+    expect('toolsOpen' in store.getState()).toBe(false);
+    expect('setToolsOpen' in store).toBe(false);
   });
 });
 
@@ -184,5 +175,15 @@ describe('selectedMarker', () => {
     store.selectMarker(marker);
     expect(store.getState().selectedMarker).toBe(marker);
     expect(seen).toEqual([marker]);
+  });
+
+  it('drops the selection without telling the host', () => {
+    const store = createProStore();
+    const onMarkerSelect = vi.fn();
+    store.setCallbacks({ onMarkerSelect });
+    store.selectMarker({ time: 3, label: 'a' });
+    store.deselectMarker();
+    expect(store.getState().selectedMarker).toBeNull();
+    expect(onMarkerSelect).toHaveBeenCalledTimes(1);
   });
 });

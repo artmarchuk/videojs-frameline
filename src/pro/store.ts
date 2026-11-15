@@ -4,9 +4,12 @@
  *
  * Invariants kept here, not in components:
  * - In and out points are clamped to `[0, duration]` (only to `>= 0` while the duration is unknown).
+ * - A point that is not set is `null`: the range then runs from the start, or to the end, of the media. Setting In
+ *   at the start (0) or Out at the end (the duration) is the same as not setting it, so it is stored as `null`.
  * - In is always before out. Setting one past the other **swaps** them, so the mark the user just made is kept.
  *   Setting a point exactly onto the other is rejected (a zero-length range has no use).
- * - Clearing in and out resets `loopMode` from `'range'` to `'off'`. A range exists while either point is set.
+ * - Loop is on or off. While on, `loopMode` says what loops: `'range'` when a point is set, `'whole'` otherwise;
+ *   the store keeps it in step as points are set and cleared.
  * - Only overlays the host allowed can be switched on.
  */
 import type { GuideId } from './features';
@@ -63,8 +66,6 @@ export interface ProState {
   duration: number;
   /** The marker the user last selected (timeline, Markers list, or previous/next cut); drawn in the accent. */
   selectedMarker: Marker | null;
-  /** The Tools tray (Range, Capture, View) is open. Only what is visible changes; every shortcut works either way. */
-  toolsOpen: boolean;
 }
 
 export interface ProCallbacks {
@@ -83,12 +84,14 @@ export interface ProStore {
   clearInOut(): void;
   setLoopMode(mode: LoopMode): void;
   toggleTimeDisplay(): void;
-  /** Opens or closes the Tools tray; with no argument, toggles it. */
-  setToolsOpen(open?: boolean): void;
+  /** Loop on or off; with no argument, toggles. On loops the range when a point is set, otherwise the whole video. */
+  setLoop(on?: boolean): void;
   toggleOverlay(id: string, on?: boolean): void;
   setInspection(patch: Partial<Inspection>): void;
   resetInspection(): void;
   selectMarker(marker: Marker): void;
+  /** Drops the selection without telling the host: the playhead moved away from the marker. */
+  deselectMarker(): void;
   /** Called by the frame clock. Notifies only when the frame or the media time changed. */
   setFrame(frame: number, mediaTime: number): void;
   setClock(source: FrameClockSource | null, precision: FrameClockPrecision | null): void;
@@ -108,8 +111,6 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 export interface ProStoreOptions {
   allowedOverlays?: readonly (GuideId | string)[];
   timeDisplay?: TimeDisplay;
-  /** Start with the Tools tray open. Default closed. */
-  toolsOpen?: boolean;
 }
 
 export function createProStore(options: ProStoreOptions = {}): ProStore {
@@ -126,7 +127,6 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     clockPrecision: null,
     duration: 0,
     selectedMarker: null,
-    toolsOpen: options.toolsOpen ?? false,
   };
   let allowed = new Set<string>(options.allowedOverlays ?? []);
   let callbacks: ProCallbacks = {};
@@ -144,6 +144,8 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
   }
 
   function commitRange(inPoint: number | null, outPoint: number | null, extra: Partial<ProState> = {}) {
+    // Loop follows the range: with loop on, it loops the range while a point is set and the whole video otherwise.
+    if (state.loopMode !== 'off') extra = { ...extra, loopMode: inPoint !== null || outPoint !== null ? 'range' : 'whole' };
     if (inPoint === state.inPoint && outPoint === state.outPoint) {
       if (Object.keys(extra).length) commit(extra);
       return;
@@ -163,6 +165,9 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       if (inPoint === outPoint) return; // rejected: zero-length range
       if (inPoint > outPoint) [inPoint, outPoint] = [outPoint, inPoint]; // swapped
     }
+    // A point at its own end of the media is "not set".
+    if (inPoint !== null && inPoint <= 0) inPoint = null;
+    if (outPoint !== null && state.duration > 0 && outPoint >= state.duration) outPoint = null;
     commitRange(inPoint, outPoint);
   }
 
@@ -180,17 +185,15 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     setOut: (time) => setPoint('out', time),
 
     clearIn() {
-      const empty = state.outPoint === null;
-      commitRange(null, state.outPoint, empty && state.loopMode === 'range' ? { loopMode: 'off' } : {});
+      commitRange(null, state.outPoint);
     },
 
     clearOut() {
-      const empty = state.inPoint === null;
-      commitRange(state.inPoint, null, empty && state.loopMode === 'range' ? { loopMode: 'off' } : {});
+      commitRange(state.inPoint, null);
     },
 
     clearInOut() {
-      commitRange(null, null, state.loopMode === 'range' ? { loopMode: 'off' } : {});
+      commitRange(null, null);
     },
 
     setLoopMode(mode) {
@@ -202,9 +205,10 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       commit({ timeDisplay: state.timeDisplay === 'timecode' ? 'seconds' : 'timecode' });
     },
 
-    setToolsOpen(open) {
-      const next = typeof open === 'boolean' ? open : !state.toolsOpen;
-      if (next !== state.toolsOpen) commit({ toolsOpen: next });
+    setLoop(on) {
+      const next = typeof on === 'boolean' ? on : state.loopMode === 'off';
+      const mode: LoopMode = !next ? 'off' : state.inPoint !== null || state.outPoint !== null ? 'range' : 'whole';
+      if (mode !== state.loopMode) commit({ loopMode: mode });
     },
 
     toggleOverlay(id, on) {
@@ -249,6 +253,10 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       callbacks.onMarkerSelect?.(marker);
     },
 
+    deselectMarker() {
+      if (state.selectedMarker !== null) commit({ selectedMarker: null });
+    },
+
     setFrame(frame, mediaTime) {
       if (!Number.isFinite(frame) || !Number.isFinite(mediaTime)) return;
       if (frame === state.frame && mediaTime === state.mediaTime) return;
@@ -271,7 +279,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       if (value > 0) {
         const inPoint = state.inPoint === null ? null : Math.min(state.inPoint, value);
         const outPoint = state.outPoint === null ? null : Math.min(state.outPoint, value);
-        if (inPoint !== null && outPoint !== null && inPoint >= outPoint) commitRange(inPoint, null);
+        if (outPoint !== null && (outPoint >= value || (inPoint !== null && inPoint >= outPoint))) commitRange(inPoint, null);
         else commitRange(inPoint, outPoint);
       }
     },

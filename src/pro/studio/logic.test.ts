@@ -7,6 +7,7 @@ import {
   findCut,
   formatLinkPosition,
   grabFileName,
+  isNarrowDock,
   lastFrameOf,
   loopDecision,
   parseLinkPosition,
@@ -125,11 +126,12 @@ describe('range', () => {
     store.setOut(4);
     expect(store.getState()).toMatchObject({ inPoint: 4, outPoint: 9 });
     store.setOut(100);
-    expect(store.getState().outPoint).toBe(60);
+    expect(store.getState().outPoint).toBeNull();
+    store.setOut(50);
     store.clearIn();
     expect(effectiveRange({ in: store.getState().inPoint, out: store.getState().outPoint }, 60)).toEqual({
       start: 0,
-      end: 60,
+      end: 50,
     });
     store.clearInOut();
     expect(effectiveRange({ in: store.getState().inPoint, out: store.getState().outPoint }, 60)).toBeNull();
@@ -162,9 +164,9 @@ describe('loop decision', () => {
     expect(loopDecision({ ...base, range: { in: null, out: 9 }, mediaTime: 9, loopMode: 'range' })).toBe('jumpToIn');
   });
 
-  it('pauses at Out for a one-off play range', () => {
-    expect(loopDecision({ ...base, mediaTime: 6, loopMode: 'off', playingRange: true })).toBe('continue');
-    expect(loopDecision({ ...base, mediaTime: 9, loopMode: 'off', playingRange: true })).toBe('pauseAtOut');
+  it('leaves a whole-video loop to the ended event', () => {
+    expect(loopDecision({ ...base, range: { in: null, out: null }, mediaTime: 59.99, loopMode: 'whole' })).toBe('continue');
+    expect(loopDecision({ ...base, mediaTime: 9, loopMode: 'whole' })).toBe('continue');
   });
 });
 
@@ -210,5 +212,15 @@ describe('links', () => {
     expect(grabFileName(null, '00:00:12:05')).toBe('frame_00-00-12-05.png');
     expect(grabFileName('My Film: Take 2', '00:01:00;02')).toBe('My-Film-Take-2_00-01-00-02.png');
     expect(grabFileName('  ', '00:00:00:00')).toBe('frame_00-00-00-00.png');
+  });
+});
+
+describe('dock arrangement', () => {
+  it('is narrow under 640 px, and always on touch', () => {
+    expect(isNarrowDock(639)).toBe(true);
+    expect(isNarrowDock(640)).toBe(false);
+    expect(isNarrowDock(1280)).toBe(false);
+    expect(isNarrowDock(1280, true)).toBe(true);
+    expect(isNarrowDock(0)).toBe(false); // not measured yet
   });
 });
