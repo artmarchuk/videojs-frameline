@@ -106,6 +106,10 @@ export function VideoSkin({
       data-tier="viewer"
       data-density="comfortable"
       data-layout={layout}
+      // Out of the Tab order: the first Tab stop is the first control, which has its own focus ring. The container is
+      // still focusable from code (a click on the picture focuses it so the hotkeys keep working) but a keyboard
+      // user never lands on it, so it needs no ring of its own.
+      tabIndex={-1}
       {...props}
     >
       <ShortcutsProvider>{proBar ? <ProSlotsProvider renderThumbnail={renderThumbnail}>{body}</ProSlotsProvider> : body}</ShortcutsProvider>
