@@ -1,6 +1,17 @@
-# videojs-pro
+# Video.js PRO
 
-A Video.js video skin for React, styled with CSS. It started from the Scaffold skin.
+Video.js PRO is a player skin for Video.js v10 (React, plain CSS) built for the tools video creators use: editors, AI video generators, and review platforms. One skin has three tiers: Share for the audience, Review for checking work frame by frame, and Studio for inspecting the image.
+
+**Live URL:** _not deployed yet_ (host: Vercel)
+
+## Quick start
+
+```sh
+npm install
+npm run dev        # workbench at http://localhost:5173
+npm run build      # production build into dist/
+npm run deploy vercel   # deploy the workbench to Vercel (production URL)
+```
 
 ## Develop
 
@@ -16,7 +27,7 @@ The workbench opens your skin in a slimmed-down version of the Video.js sandbox.
 npm run deploy
 ```
 
-It asks where to deploy the workbench: Vercel, Netlify, or Cloudflare Pages. Name one to skip the question, such as `npm run deploy vercel`. The first time, the host's CLI signs you in and creates the project, then every run prints the URL. Vercel and Netlify deploy to a preview URL you can share; to deploy to production instead, add `--prod` to the `deploy:netlify` script, or to both commands in `deploy:vercel`.
+This project deploys to **Vercel** with `npm run deploy vercel` (Netlify is the fallback: `npm run deploy netlify`). Without a host name, the script asks where to deploy the workbench: Vercel, Netlify, or Cloudflare Pages. The first time, the host's CLI signs you in and creates the project, then every run prints the URL. In this project `deploy:vercel` already passes `--prod`, because Vercel's preview URLs ask visitors to log in by default. Netlify still deploys to a preview URL; add `--prod` to `deploy:netlify` if you switch hosts.
 
 To deploy on every push instead, put the project on GitHub and import it on Vercel or Netlify; `vercel.json` and `netlify.toml` already describe the build. The build uses relative URLs, so `dist/` also works on any static host, including in a subfolder.
 
