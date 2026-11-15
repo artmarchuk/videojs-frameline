@@ -1,11 +1,13 @@
 /** @jsxImportSource react */
 
-import { lazy, Suspense, useEffect, useRef, useState, type RefObject } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type Ref, type RefObject } from 'react';
+
+import type { FramelineApi } from '../api';
 
 import { ProStoreContext } from '../context';
 import type { FeatureFlags, Tier } from '../features';
 import { useFrameClock } from '../frame-clock';
-import type { CopyLinkInfo } from '../studio/controller';
+import type { CopyLinkInfo, FrameGrabInfo } from '../studio/controller';
 import { createProStore, type Marker, type ProCallbacks } from '../store';
 import { parseTimecode } from '../timecode';
 import { useVideoElement } from '../use-video-element';
@@ -40,6 +42,8 @@ export interface ProRuntimeProps extends ProCallbacks {
   dropFrame?: boolean | undefined;
   markers?: readonly Marker[] | undefined;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
+  onFrameGrab?: ((info: FrameGrabInfo) => void) | undefined;
+  apiRef?: Ref<FramelineApi> | undefined;
   /** Counts renders of `FramelineSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
   skinRenders: RefObject<number>;
   /** Reports the container attributes of the guides that are drawn (`data-guide-*`, `data-crop`, `data-zones`) and `data-zoom`. */
@@ -62,6 +66,8 @@ export default function ProRuntime({
   dropFrame = false,
   markers = NO_MARKERS,
   onCopyLink,
+  onFrameGrab,
+  apiRef,
   skinRenders,
   onViewAttributes,
   persist,
@@ -69,6 +75,7 @@ export default function ProRuntime({
   onMarkerSelect,
   onFrameChange,
   onGuidesChange,
+  onZoomChange,
 }: ProRuntimeProps) {
   // One store per FramelineSkin instance, created on first render and kept for the life of the component.
   // It starts from the choices remembered in this browser, read here (not in an effect) so the first render already
@@ -83,8 +90,8 @@ export default function ProRuntime({
   const video = useVideoElement(anchor);
 
   useEffect(() => {
-    store.setCallbacks({ onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange });
-  }, [store, onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange]);
+    store.setCallbacks({ onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange, onZoomChange });
+  }, [store, onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange, onZoomChange]);
 
   // The host's features always win: what is no longer allowed is switched off.
   useEffect(() => {
@@ -146,6 +153,8 @@ export default function ProRuntime({
             video={video}
             anchor={anchor}
             onCopyLink={onCopyLink}
+            onFrameGrab={onFrameGrab}
+            apiRef={apiRef}
           />
         )}
         {features.debug && (

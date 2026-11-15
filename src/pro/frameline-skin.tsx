@@ -2,9 +2,10 @@
 
 'use client';
 
-import { lazy, Suspense, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 
 import { VideoSkin, type VideoSkinProps } from '../video/skin';
+import type { FramelineApi } from './api';
 import { warnOnce } from './dev';
 import {
   hasProFeatures,
@@ -15,9 +16,10 @@ import {
   type Layout,
   type Tier,
 } from './features';
-import type { CopyLinkInfo } from './studio/controller';
+import type { CopyLinkInfo, FrameGrabInfo } from './studio/controller';
 import type { FrameInfo, InOutRange, Marker } from './store';
 import type { EffectiveGuides } from './view';
+import type { ZoomLevel } from './zoom';
 import { DEFAULT_FPS, isValidFps } from './fps';
 
 // The pro runtime (store, frame clock, the Studio layer) is a separate chunk. The Viewer tier never requests it.
@@ -93,6 +95,15 @@ export interface FramelineSkinProps extends Omit<VideoSkinProps, InternalSkinPro
    * the remembered set the player starts with.
    */
   onGuidesChange?: (view: EffectiveGuides) => void;
+  /** Fires when the zoom level changes: `'fit'`, `'100'`, `'150'`, `'200'` or `'400'`. */
+  onZoomChange?: (level: ZoomLevel) => void;
+  /** Fires after a frame was grabbed: downloaded as a PNG (`target: 'file'`) or copied as an image (`'clipboard'`). */
+  onFrameGrab?: (info: FrameGrabInfo) => void;
+  /**
+   * A handle for driving the Studio tools from the host's own UI: seek, step, set the range, the guides and the zoom,
+   * grab a frame. `null` in the Viewer tier and until the pro code has loaded. See `FramelineApi`.
+   */
+  apiRef?: Ref<FramelineApi>;
   /**
    * Remember the end user's Guides choices (guides, crop, zones) and the time display in this browser's
    * `localStorage`. `true` (default) uses the key `frameline:v1`, a string uses that key, `false` turns it off.
@@ -136,6 +147,9 @@ export function FramelineSkin({
   onFrameChange,
   onCopyLink,
   onGuidesChange,
+  onZoomChange,
+  onFrameGrab,
+  apiRef,
   persist = true,
   children,
   ...skinProps
@@ -212,6 +226,9 @@ export function FramelineSkin({
               dropFrame={dropFrame}
               markers={markers}
               onCopyLink={onCopyLink}
+              onFrameGrab={onFrameGrab}
+              onZoomChange={onZoomChange}
+              apiRef={apiRef}
               skinRenders={renders}
               onViewAttributes={onViewAttributes}
               persist={persist}

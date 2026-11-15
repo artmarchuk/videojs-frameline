@@ -2,7 +2,7 @@
 
 import './studio.css';
 import { Menu, selectPlayback, selectQuality, useHotkey, useMedia, usePlayer } from '@videojs/react';
-import { useEffect, useId, useLayoutEffect, useMemo, useState, type ReactElement, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useState, type ReactElement, type ReactNode, type Ref, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/resolve-class-name';
@@ -12,12 +12,13 @@ import { useProSlot, useProThumbnailRenderer, useSetProSettingsItems } from '../
 import { Button } from '../../video/shared/button';
 import { useShortcutsDialog, type ShortcutRow } from '../../video/shared/shortcuts-dialog';
 import { ButtonTooltip } from '../../video/shared/tooltip';
+import type { FramelineApi } from '../api';
 import { useProStore, useProStoreApi } from '../context';
 import type { FeatureFlags } from '../features';
 import type { Marker } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import { AnnouncerProvider, useAnnounce } from './announcer';
-import { useStudioController, type CopyLinkInfo, type StudioController } from './controller';
+import { useStudioController, type CopyLinkInfo, type FrameGrabInfo, type StudioController } from './controller';
 import { BookmarkIcon, GrabFrameIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
 import { isNarrowDock } from './logic';
 import { studioStrings as t } from './strings';
@@ -40,6 +41,9 @@ export interface StudioLayerProps {
   /** An element inside the player, used to find and measure the player container. */
   anchor: RefObject<HTMLElement | null>;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
+  onFrameGrab?: ((info: FrameGrabInfo) => void) | undefined;
+  /** The host's handle on the Studio tools. */
+  apiRef?: Ref<FramelineApi> | undefined;
 }
 
 /**
@@ -106,11 +110,11 @@ function useMarkerDeselect(video: HTMLVideoElement | null, fps: number) {
   }, [store, video, fps]);
 }
 
-function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor, onCopyLink }: StudioLayerProps) {
+function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor, onCopyLink, onFrameGrab, apiRef }: StudioLayerProps) {
   const announce = useAnnounce();
   const chapters = useChapters(video);
   const cuts = useCuts(chapters, features.shotNav ? markers : NO_MARKERS, fps);
-  const controller = useStudioController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink });
+  const controller = useStudioController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink, onFrameGrab });
   const paused = usePlayer(selectPlayback)?.paused ?? true;
   const narrow = useNarrowDock(anchor);
   useMarkerDeselect(video, fps);
@@ -127,6 +131,31 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const zoomActions = useZoomActions(renditionNote);
   const zoomed = useProStore((state) => state.zoom !== 'fit');
   useLiftRenditionCap(allowed.zoom && zoomed);
+
+  // The host's handle. Each call follows the flags; the store ignores guides and zoom that are not allowed.
+  const store = useProStoreApi();
+  useImperativeHandle(
+    apiRef,
+    (): FramelineApi => ({
+      seek: (time) => controller.seekToTime(time),
+      step: (frames) => {
+        if (features.frameStep && Number.isFinite(frames) && frames !== 0) controller.step(Math.trunc(frames));
+      },
+      setRange: (next) => {
+        if (features.inOut) store.setRange(next.in, next.out);
+      },
+      setLoop: (on) => {
+        if (features.loop) store.setLoop(on);
+      },
+      setGuides: (next) => store.setGuides(next),
+      setZoom: (level) => store.setZoom(level),
+      pan: (direction) => zoom.pan(direction),
+      grabFrame: () => {
+        if (features.grabFrame) controller.grabFrame();
+      },
+    }),
+    [controller, store, zoom, features]
+  );
 
   const timeline = useProSlot('timeline');
   const renderThumbnail = useProThumbnailRenderer<TimelineProps['renderThumbnail']>();

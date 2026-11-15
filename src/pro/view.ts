@@ -113,6 +113,24 @@ export function setZones(view: ViewState, zones: ZoneId | null, allowed: Allowed
   return shown({ ...view, zones, crop: ZONE_CROP });
 }
 
+/**
+ * Sets several things at once, for a host driving the guides: `guides` is the full list of checkbox guides to have
+ * on, `crop` and `zones` as in `setCrop` and `setZones`. Fields left out are not changed, and what the host's flags
+ * do not allow is ignored. Zones are applied last, so `{ crop: '1:1', zones: 'tiktok' }` ends on TikTok in 9:16.
+ */
+export function applyGuides(view: ViewState, next: { guides?: readonly string[]; crop?: string | null; zones?: string | null }, allowed: AllowedView): ViewState {
+  let result = view;
+  if (next.guides !== undefined) {
+    const wanted = next.guides;
+    for (const id of CHECK_IDS) result = toggleGuide(result, id, allowed, wanted.includes(id));
+  }
+  if (next.crop !== undefined && (next.crop === null || isCrop(next.crop))) result = setCrop(result, next.crop, allowed);
+  if (next.zones !== undefined && (next.zones === null || isZone(next.zones))) result = setZones(result, next.zones, allowed);
+  // A host that sets the guides wants them seen, also when the set itself did not change.
+  if (next.guides !== undefined || next.crop !== undefined || next.zones !== undefined) result = shown(result);
+  return sameView(result, view) ? view : result;
+}
+
 /** `Shift+V` and the menu's footer: every guide off, and back again. Nothing to do when nothing is on. */
 export function toggleHidden(view: ViewState): ViewState {
   if (!view.hidden && view.guides.length === 0 && view.crop === null) return view;

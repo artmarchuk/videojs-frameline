@@ -14,6 +14,7 @@
  * - Zoom starts at Fit and goes back to Fit when the host stops allowing it.
  */
 import {
+  applyGuides,
   EMPTY_VIEW,
   effectiveView,
   NOTHING_ALLOWED,
@@ -81,6 +82,8 @@ export interface ProCallbacks {
   onFrameChange?: ((frame: FrameInfo) => void) | undefined;
   /** The set of guides that is drawn changed. Not fired for the set the store starts with. */
   onGuidesChange?: ((view: EffectiveGuides) => void) | undefined;
+  /** The zoom level changed, by the user, by the host's handle, or because the host switched zoom off. */
+  onZoomChange?: ((level: ZoomLevel) => void) | undefined;
 }
 
 export interface ProStore {
@@ -91,6 +94,8 @@ export interface ProStore {
   clearIn(): void;
   clearOut(): void;
   clearInOut(): void;
+  /** Sets both points at once, with the same rules as `setIn` and `setOut`, and tells the host once. */
+  setRange(inPoint: number | null, outPoint: number | null): void;
   setLoopMode(mode: LoopMode): void;
   toggleTimeDisplay(): void;
   /** Loop on or off; with no argument, toggles. On loops the range when a point is set, otherwise the whole video. */
@@ -103,6 +108,8 @@ export interface ProStore {
   setZones(zones: ZoneId | null): void;
   /** Hides every guide, or shows the hidden set again. */
   toggleGuidesHidden(): void;
+  /** Sets guides, crop and zones in one change; fields left out stay as they are. */
+  setGuides(next: { guides?: readonly string[]; crop?: string | null; zones?: string | null }): void;
   /** Picks a zoom level. Ignored while the host does not allow zoom. */
   setZoom(level: ZoomLevel): void;
   /** `Z`: the next level, and Fit again after the last. `-1` (`Shift+Z`) goes the other way. */
@@ -160,6 +167,11 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     commit({ view: Object.freeze(next) });
     const after = effectiveView(next);
     if (!sameEffective(before, after)) callbacks.onGuidesChange?.(after);
+  }
+
+  function commitZoom(level: ZoomLevel) {
+    commit({ zoom: level });
+    callbacks.onZoomChange?.(level);
   }
 
   function clampTime(time: number): number | null {
@@ -221,6 +233,19 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       commitRange(null, null);
     },
 
+    setRange(inTime, outTime) {
+      let inPoint = inTime === null ? null : clampTime(inTime);
+      let outPoint = outTime === null ? null : clampTime(outTime);
+      if ((inTime !== null && inPoint === null) || (outTime !== null && outPoint === null)) return; // not a time
+      if (inPoint !== null && outPoint !== null) {
+        if (inPoint === outPoint) return; // rejected: zero-length range
+        if (inPoint > outPoint) [inPoint, outPoint] = [outPoint, inPoint];
+      }
+      if (inPoint !== null && inPoint <= 0) inPoint = null;
+      if (outPoint !== null && state.duration > 0 && outPoint >= state.duration) outPoint = null;
+      commitRange(inPoint, outPoint);
+    },
+
     setLoopMode(mode) {
       if (!LOOP_MODES.includes(mode) || mode === state.loopMode) return;
       commit({ loopMode: mode });
@@ -240,14 +265,15 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     setCrop: (crop) => commitView(cropView(state.view, crop, allowed)),
     setZones: (zones) => commitView(zonesView(state.view, zones, allowed)),
     toggleGuidesHidden: () => commitView(hiddenView(state.view)),
+    setGuides: (next) => commitView(applyGuides(state.view, next, allowed)),
 
     setZoom(level) {
       if (!allowed.zoom || !isZoomLevel(level) || level === state.zoom) return;
-      commit({ zoom: level });
+      commitZoom(level);
     },
 
     cycleZoom(direction = 1) {
-      if (allowed.zoom) commit({ zoom: direction === -1 ? previousZoom(state.zoom) : nextZoom(state.zoom) });
+      if (allowed.zoom) commitZoom(direction === -1 ? previousZoom(state.zoom) : nextZoom(state.zoom));
     },
 
     selectMarker(marker) {
@@ -288,7 +314,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
 
     setAllowedView(next) {
       allowed = next;
-      if (!allowed.zoom && state.zoom !== 'fit') commit({ zoom: 'fit' });
+      if (!allowed.zoom && state.zoom !== 'fit') commitZoom('fit');
       commitView(sanitizeView(state.view, allowed));
     },
 

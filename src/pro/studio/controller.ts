@@ -28,6 +28,21 @@ export interface CopyLinkInfo {
   time: number;
 }
 
+/** What `onFrameGrab` reports: the frame that was grabbed and where it went. */
+export interface FrameGrabInfo {
+  frame: number;
+  /** Media time of the frame, in seconds. */
+  time: number;
+  /** The timecode as shown in the player. */
+  timecode: string;
+  /** The image's size: the playing rendition's own pixels. */
+  width: number;
+  height: number;
+  /** `'file'`: downloaded as a PNG named `fileName`. `'clipboard'`: copied as an image. */
+  target: 'file' | 'clipboard';
+  fileName?: string;
+}
+
 export interface StudioOptions {
   video: HTMLVideoElement | null;
   fps: number;
@@ -36,6 +51,7 @@ export interface StudioOptions {
   cuts: readonly Cut[];
   announce: (message: string, options?: AnnounceOptions) => void;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
+  onFrameGrab?: ((info: FrameGrabInfo) => void) | undefined;
 }
 
 export interface StudioController {
@@ -327,8 +343,8 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     return state.inPoint === null && state.outPoint === null;
   };
 
-  const withCapture = async (work: (blob: Promise<Blob>, name: string) => Promise<string>) => {
-    const { video, announce } = opts();
+  const withCapture = async (target: FrameGrabInfo['target'], work: (blob: Promise<Blob>, name: string) => Promise<string>) => {
+    const { video, announce, fps } = opts();
     if (!video || !video.videoWidth || !video.videoHeight) {
       announce(t.noFrame, { toast: true });
       return;
@@ -337,8 +353,18 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     try {
       // The frame is drawn now, inside the click, so it is the frame the user sees even while playing.
       const canvas = drawFrame(video);
-      const message = await work(canvasToPng(canvas), grabFileName(null, timecode(frame)));
+      const fileName = grabFileName(null, timecode(frame));
+      const message = await work(canvasToPng(canvas), fileName);
       announce(message, { toast: true });
+      opts().onFrameGrab?.({
+        frame,
+        time: secondsFromFrames(frame, fps),
+        timecode: timecode(frame),
+        width: canvas.width,
+        height: canvas.height,
+        target,
+        ...(target === 'file' ? { fileName } : {}),
+      });
     } catch (error) {
       const blocked = error instanceof DOMException && error.name === 'SecurityError';
       announce(blocked ? t.captureBlocked : t.copyFailed, { toast: true });
@@ -420,7 +446,7 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     },
 
     grabFrame() {
-      void withCapture(async (blob, name) => {
+      void withCapture('file', async (blob, name) => {
         const url = URL.createObjectURL(await blob);
         const link = document.createElement('a');
         link.href = url;
@@ -439,7 +465,7 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
         announce(t.copyImageUnsupported, { toast: true });
         return;
       }
-      void withCapture(async (blob) => {
+      void withCapture('clipboard', async (blob) => {
         // Passing the promise keeps the write inside the user gesture, which Safari requires.
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
         return t.imageCopied;

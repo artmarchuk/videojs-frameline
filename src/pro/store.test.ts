@@ -259,3 +259,88 @@ describe('selectedMarker', () => {
     expect(store.getState().zoom).toBe('fit');
   });
 });
+
+describe('the host handle: setRange, setGuides, onZoomChange', () => {
+  const studio = () => createProStore({ allowedView: allowedView(resolveFeatures('studio')) });
+
+  it('sets both points in one change and tells the host once', () => {
+    const store = createProStore();
+    const onInOutChange = vi.fn();
+    store.setCallbacks({ onInOutChange });
+    store.setDuration(60);
+    store.setRange(10, 20);
+    expect(store.getState()).toMatchObject({ inPoint: 10, outPoint: 20 });
+    expect(onInOutChange).toHaveBeenCalledTimes(1);
+    expect(onInOutChange).toHaveBeenLastCalledWith({ in: 10, out: 20 });
+    // The same range again: nothing to tell.
+    store.setRange(10, 20);
+    expect(onInOutChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the range rules: swap, clamp, ends are not set, no zero length', () => {
+    const store = createProStore();
+    store.setDuration(60);
+    store.setRange(30, 12);
+    expect(store.getState()).toMatchObject({ inPoint: 12, outPoint: 30 });
+    store.setRange(0, 90);
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null });
+    store.setRange(5, 5);
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null });
+    store.setRange(Number.NaN, 8);
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null });
+    store.setRange(null, 8);
+    expect(store.getState()).toMatchObject({ inPoint: null, outPoint: 8 });
+  });
+
+  it('keeps loop in step with a range set this way', () => {
+    const store = createProStore();
+    store.setLoop(true);
+    expect(store.getState().loopMode).toBe('whole');
+    store.setRange(2, 4);
+    expect(store.getState().loopMode).toBe('range');
+  });
+
+  it('sets guides, crop and zones in one change and reports it once', () => {
+    const store = studio();
+    const onGuidesChange = vi.fn();
+    store.setCallbacks({ onGuidesChange });
+    store.setGuides({ guides: ['title-safe', 'thirds'], zones: 'tiktok' });
+    expect(onGuidesChange).toHaveBeenCalledTimes(1);
+    expect(onGuidesChange).toHaveBeenLastCalledWith({ guides: ['title-safe', 'thirds'], crop: '9:16', zones: 'tiktok' });
+    // Fields left out stay; `guides` is the full list, so thirds goes off.
+    store.setGuides({ guides: ['title-safe'] });
+    expect(onGuidesChange).toHaveBeenLastCalledWith({ guides: ['title-safe'], crop: '9:16', zones: 'tiktok' });
+    store.setGuides({ crop: null });
+    expect(onGuidesChange).toHaveBeenLastCalledWith({ guides: ['title-safe'], crop: null, zones: null });
+    store.setGuides({ crop: null });
+    expect(onGuidesChange).toHaveBeenCalledTimes(3);
+  });
+
+  it('shows hidden guides again, and ignores what the host does not allow or does not know', () => {
+    const store = createProStore({ allowedView: allowedView(resolveFeatures('studio', { guides: ['title-safe'], platformZones: false })) });
+    store.setGuides({ guides: ['title-safe'] });
+    store.toggleGuidesHidden();
+    expect(store.getState().view.hidden).toBe(true);
+    store.setGuides({ guides: ['title-safe', 'thirds', 'nonsense'], crop: '1:1', zones: 'tiktok' });
+    expect(store.getState().view).toMatchObject({ guides: ['title-safe'], crop: null, zones: null, hidden: false });
+    store.setGuides({ guides: [] });
+    expect(store.getState().view).toMatchObject({ guides: [], hidden: false });
+    store.setGuides({ crop: 'wide' });
+    expect(store.getState().view.crop).toBeNull();
+  });
+
+  it('reports every zoom change, also the reset when the host switches zoom off', () => {
+    const store = studio();
+    const onZoomChange = vi.fn();
+    store.setCallbacks({ onZoomChange });
+    store.setZoom('200');
+    store.setZoom('200');
+    store.cycleZoom();
+    store.cycleZoom(-1);
+    expect(onZoomChange.mock.calls.map(([level]) => level)).toEqual(['200', '400', '200']);
+    store.setAllowedView(allowedView(resolveFeatures('studio', { zoom: false })));
+    expect(onZoomChange).toHaveBeenLastCalledWith('fit');
+    store.setZoom('100');
+    expect(onZoomChange).toHaveBeenCalledTimes(4);
+  });
+});

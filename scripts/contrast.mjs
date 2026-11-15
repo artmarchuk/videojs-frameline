@@ -1,5 +1,5 @@
 // Computes the WCAG contrast ratios recorded in NOTES.md. Run: node scripts/contrast.mjs
-// Values mirror src/styles/tokens.css.
+// Values mirror src/styles/tokens.css, and for the configurator page apps/preview/src/page/page.css.
 const T = {
   s0: '#0E0E10', s1: '#1E1E20', s2: '#2C2C2F', s3: '#3A3A3E', on: '#46464B', line: '#333336', track: '#85858C',
   text: '#F2F2F4', dim: '#9A9AA0', dimRaised: '#B2B2B8', accent: '#5B9DFF', accentInk: '#0B1220', range: '#4D7BC1', ink: '#1C1C1E',
@@ -76,6 +76,31 @@ const rows = [
   ['Loop on (--fl-on) against the dock: too low alone, same bar', c('on'), c('s1'), 0],
   ['toggle-on bar (text) against --fl-on', c('text'), c('on'), 3],
 ];
+// The configurator page (apps/preview/src/page/page.css), in its light and its dark theme. The player stays dark in
+// both; the page takes the accent only for links and focus rings, a darker shade of it on the light theme.
+const PAGE = {
+  light: { bg: '#F3F3F1', surface: '#FFFFFF', sunken: '#EAEAE7', text: '#1B1B1D', dim: '#5A5A61', line: '#D8D8D4', control: '#85858C', fill: '#1B1B1D', ink: '#FFFFFF', link: '#1D5FD1', focus: '#1D5FD1' },
+  dark: { bg: '#151517', surface: '#1E1E20', sunken: '#0E0E10', text: '#F2F2F4', dim: '#A3A3AA', line: '#333336', control: '#7D7D84', fill: '#F2F2F4', ink: '#1C1C1E', link: '#5B9DFF', focus: '#5B9DFF' },
+};
+for (const [theme, p] of Object.entries(PAGE)) {
+  const k = (name) => rgb(p[name]);
+  rows.push(
+    [`page, ${theme}: text on the page`, k('text'), k('bg'), 4.5],
+    [`page, ${theme}: text on a panel`, k('text'), k('surface'), 4.5],
+    [`page, ${theme}: text on the code block and a hovered button`, k('text'), k('sunken'), 4.5],
+    [`page, ${theme}: dim text on the page (subtitle, byline)`, k('dim'), k('bg'), 4.5],
+    [`page, ${theme}: dim text on a panel (leads, hints, flag names, log)`, k('dim'), k('surface'), 4.5],
+    [`page, ${theme}: link on the page`, k('link'), k('bg'), 4.5],
+    [`page, ${theme}: link on a panel`, k('link'), k('surface'), 4.5],
+    [`page, ${theme}: chosen segment, its text on its fill`, k('ink'), k('fill'), 4.5],
+    [`page, ${theme}: chosen segment and checked box against the panel`, k('fill'), k('surface'), 3],
+    [`page, ${theme}: control edge (buttons, segmented track, keys) against the panel`, k('control'), k('surface'), 3],
+    [`page, ${theme}: focus ring on the page`, k('focus'), k('bg'), 3],
+    [`page, ${theme}: focus ring on a panel`, k('focus'), k('surface'), 3],
+    [`page, ${theme}: the player's dock (surface-1) against the page, decorative: the player has a hairline`, c('s1'), k('bg'), 0],
+    [`page, ${theme}: panel hairline, decorative`, k('line'), k('surface'), 0],
+  );
+}
 let fail = 0;
 for (const [name, a, b, min] of rows) {
   const r = ratio(a, b); const ok = r >= min; if (!ok) fail++;
