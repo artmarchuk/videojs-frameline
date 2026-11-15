@@ -1,0 +1,9 @@
+[
+  { "id": "start", "time": 0, "label": "Head" },
+  { "id": "logo", "time": 8.4, "label": "Logo too small" },
+  { "id": "grade", "time": 34, "end": 44, "label": "Check the grade" },
+  { "id": "cut-a", "time": 62.0, "label": "Trim two frames" },
+  { "id": "cut-b", "time": 62.3, "label": "Flash frame" },
+  { "id": "cut-c", "time": 62.6, "label": "Audio pop" },
+  { "id": "end", "time": 111.143, "label": "Tail" }
+]

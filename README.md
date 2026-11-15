@@ -254,13 +254,28 @@ The player container carries `data-tier`, `data-density`, `data-layout`, `data-b
 
 Frame numbers are best effort. Where the browser has `requestVideoFrameCallback`, the skin reads the media time of each presented frame; elsewhere it samples `currentTime`, which is approximate. Both depend on the `fps` you pass. The skin does not guarantee frame accuracy.
 
+## Demo media
+
+Every source the demo can play is an entry in `apps/preview/src/frame/media.ts`: a Mux playback ID (or a URL), the frame rate, and the files that go with it (captions, chapters, markers, poster). Both pages read it, and the frame rate always comes from the entry.
+
+**To switch the demo to another source, change one line** in that file:
+
+```ts
+export const ACTIVE_SOURCE: SourceName = 'reel'; // was 'cosmicDawn'
+```
+
+- `cosmicDawn` (active): NASA's Cosmic Dawn trailer on Mux, 30 fps. Files in `apps/preview/public/demo/cosmic-dawn/`.
+- `reel`: the author's reel, 24 fps. It holds a placeholder playback ID (`REEL_PLAYBACK_ID`) and placeholder files in `apps/preview/public/demo/reel/` (`captions.vtt`, `chapters.vtt`, `markers.json`). Put the real ID in the entry and replace the three files.
+
+`?media=reel` (or `plain`, `nocors`, `error`) plays another entry without a code change. Every entry sets Video.js's `capRenditionToPlayerSize` to `false`, so automatic quality is not held to the player's size; `?cap=1` puts the cap back for testing.
+
 ## Develop
 
 ```sh
 npm run dev
 ```
 
-The workbench opens your skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (the host's guide list; `?guides=0` for none), `?zones=0` and `?debug` (debug readout and event log) set its state. It plays NASA's Cosmic Dawn trailer from Mux, with chapters; change the media in `apps/preview/src/frame/media.ts`. The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
+The workbench opens your skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (the host's guide list; `?guides=0` for none), `?zones=0` and `?debug` (debug readout and event log) set its state. It plays the active demo source (see Demo media). The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
 
 ## Deploy
 
@@ -282,7 +297,7 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
 - `apps/preview/`: the workbench that previews the skin. You don't need to change it.
   - `src/shell/`: the Shadcn shell.
   - `src/frame/`: the page the shell frames. `player` mounts your skin in a player and sets the media it plays.
-  - `public/`: files the preview serves, such as the chapters track.
+  - `public/demo/`: the files of each demo source: chapters, captions, markers.
 - `vercel.json`, `netlify.toml`: how those hosts build the workbench.
 - `skin.json`: what this skin is built from. Keep it; it records the Video.js version the skin was created with.
 

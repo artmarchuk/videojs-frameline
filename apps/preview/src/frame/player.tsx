@@ -1,4 +1,3 @@
-import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer } from '@videojs/react/video';
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
@@ -7,7 +6,8 @@ import { FramelineSkin, TIERS, type Density, type Tier } from '@/pro';
 import type { PlaybackProps } from '../shell/params';
 
 // The media lives in ./media so it can be swapped in one place.
-import { MEDIA } from './media';
+import { DemoVideo, useDemoMarkers } from './demo-video';
+import { MEDIA, posterUrl } from './media';
 
 // Loaded only with `?debug`, so it is not part of the normal preview bundle.
 const EventLog = lazy(() => import('./event-log'));
@@ -66,6 +66,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
   const [tier, setTier] = useState<Tier>(START_TIER);
   const [density, setDensity] = useState<Density>(START_DENSITY);
   const [events, setEvents] = useState<string[]>([]);
+  const markers = useDemoMarkers(MEDIA);
 
   const log = useCallback((name: string, detail: unknown) => {
     const line = `${name} ${JSON.stringify(detail, (_key, value) => (typeof value === 'number' ? Number(value.toFixed(3)) : value))}`;
@@ -100,11 +101,9 @@ export function Player({ media }: { media?: PlaybackProps }) {
         </div>
       </header>
       <div className="monitor-stage">
-        <VideoPlayer poster={MEDIA.poster}>
-          <FramelineSkin tier={tier} density={density} layout={LAYOUT} features={FEATURES} fps={MEDIA.fps} markers={MEDIA.markers} {...handlers}>
-            <MuxVideo {...media} src={MEDIA.src} playsInline crossOrigin={MEDIA.noCors ? undefined : ''}>
-              {MEDIA.chapters && <track kind="chapters" label="English" srcLang="en" src={MEDIA.chapters} default />}
-            </MuxVideo>
+        <VideoPlayer poster={posterUrl(MEDIA)}>
+          <FramelineSkin tier={tier} density={density} layout={LAYOUT} features={FEATURES} fps={MEDIA.fps} markers={markers} {...handlers}>
+            <DemoVideo source={MEDIA} playback={media} />
           </FramelineSkin>
         </VideoPlayer>
       </div>

@@ -1,0 +1,5 @@
+[
+  { "id": "sample-1", "time": 4, "label": "Sample note" },
+  { "id": "sample-2", "time": 18, "end": 22, "label": "Sample range note" },
+  { "id": "sample-3", "time": 36.5, "label": "Sample note near the end" }
+]

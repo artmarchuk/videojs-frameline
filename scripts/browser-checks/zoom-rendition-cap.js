@@ -1,5 +1,5 @@
-// Browser check (step 7b, G3). Body of an async function; `page` on /preview.html?tier=studio at 1440x900, device scale
-// factor 1 (so the player-size cap holds Auto at 720p on this stream).
+// Browser check (step 7b, G3). Body of an async function; `page` on /preview.html?tier=studio&cap=1 at 1440x900, device scale
+// factor 1 (so the player-size cap holds Auto at 720p on this stream). `?cap=1` puts the cap on: the demo source has it off.
 // While zoomed with Quality on Auto the rendition cap is lifted (`source.capRenditionToPlayerSize: false`), with no
 // reload; at Fit the source is as the host gave it. A rendition picked by hand is not touched.
 // Step 8.0: 100% is measured against the best rendition on offer, so the scale and the pan do not change when the
