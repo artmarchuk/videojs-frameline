@@ -88,7 +88,7 @@ Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** me
 
 ## Look
 
-Graphite surfaces, one acid-lime accent, a ruler-style timeline with tick marks and a timecode bubble that rides the playhead (see the moodboard: a pro video-editor UI). Mono tabular numerals for all time values. Guides are drawn in the accent at reduced opacity so they read over any footage. Verify every guide colour over bright footage. Treat the look as a creator's tool, not a media-site player.
+Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no monospace, no slashed zeros) with tabular numerals for all changing numbers, and one soft blue accent (`#5B9DFF`) **reserved** for the most important indications: the played part of the range band, the In/Out handles, the focus ring and a selected marker. Toggled-on states use a lighter graphite, Play is a neutral filled button, the playhead is white. Controls live in a **dock below the picture** in the Review and Studio tiers (never over it, also in fullscreen); the Share tier keeps an overlay. Secondary tools (Range, Capture, View) sit behind one disclosure control, so the default view stays quiet. The timeline is a ruler with compact seconds-first labels (`10s`, `1:30`) and a white playhead with a full-timecode bubble. Guides are white at reduced opacity with a dark outline so they read over any footage; verify every guide over bright footage. Treat the look as a creator's tool, not a media-site player.
 
 ## Hard rules
 
