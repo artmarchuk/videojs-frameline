@@ -23,12 +23,12 @@ describe('resolveFeatures', () => {
   it('gives Studio the full set', () => {
     const studio = resolveFeatures('studio');
     expect(studio).toMatchObject({ timecode: true, frameStep: true, inOut: true, loop: true, markers: true });
-    expect(studio).toMatchObject({ shotNav: true, grabFrame: true, copyTimecodeLink: true, posterFrame: true });
+    expect(studio).toMatchObject({ shotNav: true, grabFrame: true, copyTimecodeLink: true });
     expect(studio).toMatchObject({ platformZones: true, channels: true, gainGamma: true, zoom: true, infoHud: true });
     expect(studio.debug).toBe(false);
     expect(studio.guides).toEqual([...GUIDE_IDS]);
     expect(studio.guides).toContain('1.85');
-    expect(resolveFeatures('studio', { posterFrame: false }).posterFrame).toBe(false);
+    expect(resolveFeatures('studio', { grabFrame: false }).grabFrame).toBe(false);
   });
 
   it('has two tiers only: the old names are not accepted', () => {

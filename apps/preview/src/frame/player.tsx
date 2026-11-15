@@ -78,7 +78,6 @@ export function Player({ media }: { media?: PlaybackProps }) {
             onInOutChange: (range: unknown) => log('inout:change', range),
             onMarkerSelect: (marker: unknown) => log('marker:select', marker),
             onCopyLink: (info: unknown) => log('link:copy', info),
-            onPosterFrame: (info: unknown) => log('poster:frame', info),
             onFrameChange: (frame: unknown) => log('frame:change', frame),
             onViewChange: (view: unknown) => log('view:change', view),
           }

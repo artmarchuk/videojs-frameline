@@ -208,7 +208,6 @@ The Viewer bar renders four empty slots (`transport-start`, `transport-end`, `ti
 | Grab frame, CORS source | 1920×1080 PNG, `frame_00-00-12-05.png` |
 | Grab frame, source without CORS (`?media=nocors`) | No file; "This video's host does not allow frame capture." announced and shown |
 | Copy link, then open it | `…#t=00:00:12:05`; reopened on frame 293 at 24 fps, paused, other hash data kept |
-| Poster frame | Announces the timecode |
 | Help dialog | 11 rows in Viewer, 19 in Studio |
 | More menu by keyboard | Opens, focus moves in, arrows move the highlight, disabled items do nothing |
 | Viewer tier | No slots, no pro chunk requested, pro keys do nothing, keyboard checks pass on the public URL |
@@ -268,7 +267,7 @@ Built with the step 5b look from the start (the author's instruction): system ty
 | Handles by keyboard | Tab order Seek, In point, Out point. `→` +1 frame, `Shift+←` −10, `End`/`Home` to the limits (one frame from the other point), `Delete` clears and focus returns to the seek slider. The playhead does not move. Announced: "In point moved to 00:00:13:21", "Out point cleared" |
 | Handles by mouse | Bubble shows the timecode while dragging; store unchanged until release; one `inout:change` per drag; dragging In past Out swaps and says so |
 | Markers | Tooltip "Logo too small 00:00:08:12"; click seeks to frame 252 and fires `marker:select`; the marker turns blue; More > Markers lists all and seeks |
-| Events in the log (`?debug`) | `inout:change`, `marker:select`, `frame:change` seen. `link:copy` and `poster:frame` are wired the same way; not pressed in this run |
+| Events in the log (`?debug`) | `inout:change`, `marker:select`, `frame:change` seen. `link:copy` is wired the same way; not pressed in this run |
 | Touch (Chrome touch emulation, CDP touch events, coarse pointer) | Dragging the playhead and the Out handle moves them; the page (made 3 screens tall) did not scroll; bar buttons are 44 px |
 | Reduced motion (emulated) | No element of the skin has a transition or animation duration above 0 |
 | Long video | A one-hour duration (the element's `duration` overridden in the page): labels `0:00 10:00 … 50:00` at 1280 px, `0:00 30:00` at 320 px. 10 s: `0s … 9s` with frame ticks |
@@ -405,11 +404,11 @@ Measured in Chrome on macOS (SF Pro through `-apple-system`): with `font-variant
 | Fits 1440x900 | Tray closed: stage 657 + dock 163. Tray open: stage 600 + dock 220, picture letterboxed. No page scroll in either |
 | Other sizes | 1100x800 and 800x800: main row one line, no scroll (the tray wraps to two lines at 800). 390x800 and 320x700: two rows, no horizontal overflow; the page scrolls vertically at 320x700 with the tray open (618 px player) |
 | Tab order, tray closed | Player, Seek, In point, Out point, Previous cut, Step back, Play, Step forward, Next cut, Time in seconds, Tools, Mute, Volume, Captions, Settings, PiP, Fullscreen |
-| Tab order, tray open | …Tools, Set In, Set Out, Loop, Range options, Grab frame, Grab options, Copy link, Poster, Markers, Guides, then Mute… |
+| Tab order, tray open | …Tools, Set In, Set Out, Loop, Range options, Grab frame, Grab options, Copy link, Markers, Guides, then Mute… |
 | Tools button | `aria-expanded` false/true; Enter and Space toggle; opening moves focus nowhere; next Tab is Set In; Escape in the tray closes it and focus returns to the Tools button; Escape in an open menu closes only the menu |
 | Groups | `role="group"` named Transport, Range, Capture, Go to (markers), View, Playback; no `role="toolbar"` |
 | Shortcuts with the tray closed | `I`, `O`, `R`, `.` work; the closed button shows "17 s range" |
-| Actions from the tray | Loop off, "Link copied" (`link:copy` logged), "Poster frame: 00:00:20:01" (`poster:frame` logged), grab downloads `frame_00-00-20-01.png`, Set In by button, Grab menu lists Download PNG and Copy frame image |
+| Actions from the tray | Loop off, "Link copied" (`link:copy` logged), grab downloads `frame_00-00-20-01.png`, Set In by button, Grab menu lists Download PNG and Copy frame image |
 | View | Present, `aria-disabled`, "Guides. Coming in the next step" |
 | Click on the picture / on the dock | Picture toggles play; a click between dock buttons does nothing |
 | Fixed-height host | Skin forced to the window size: stage 0–680, dock 680–900, dock fully visible, picture letterboxed |
@@ -478,7 +477,7 @@ The 5b build had a three-row dock about 163 px tall (220 px with the tray open) 
 - **Focus ring of a handle** is drawn around its 9 px tab, not its 24 px target: at the ends of the track the target reaches into the dock padding and a ring around it was clipped by the player's edge.
 - **Reset range** hands focus to Loop when it removes itself.
 - `Narrow.dc.html` was not in `design/mockups/` (deleted in the working tree); the narrow layout was built from `Studio, narrow.png`.
-- Icons: kept; added a bookmark. Reset range uses the existing close icon, checks the existing check icon. Removed unused ones (mark in/out, play range, clear range, copy image, link, poster, more).
+- Icons: kept; added a bookmark. Reset range uses the existing close icon, checks the existing check icon. Removed unused ones (mark in/out, play range, clear range, copy image, link, more).
 
 ### Contrast (new or changed rows; `node scripts/contrast.mjs`, all pass)
 
@@ -515,7 +514,7 @@ The 5b build had a three-row dock about 163 px tall (220 px with the tray open) 
 | Unset by pointer | Dragging In past the start: "Range reset". Double-click on a handle unsets it |
 | Marker pin | Hover: "Logo too small 00:00:08:12"; click seeks to frame 252 and selects it (accent); stepping one frame drops the selection |
 | Markers menu (keyboard) | `aria-haspopup="menu"`, `aria-expanded` false→true, focus moves to the first item, arrow keys move the highlight, Escape closes and focus returns to the button. Lists 7 markers and the chapters; Enter on an item seeks and focus returns |
-| Capture menu (keyboard) | Same behaviour; items Grab frame (G), Copy frame image, Copy link at timecode, Use frame as poster |
+| Capture menu (keyboard) | Same behaviour; items Grab frame (G), Copy frame image, Copy link at timecode |
 | Loop with no range | "Loop on: the whole video"; playing from 110.6 s wrapped to the start and kept playing |
 | Touch emulation (Chrome, `hasTouch`, coarse pointer, CDP touch events, 390 px) | Narrow layout; targets 44x44 (step and cut 40x44); handle target 44x44; dragging the Out handle diagonally moved it and the page (made 2400 px tall) did not scroll; scrubbing the track seeks; In button sets In at the playhead; settings lists Mute and Markers |
 | Viewer gate (keyboard only, 1440 and 320) | Tab order as above; `K`/`Space`, `←` `→` 5 s, `J` `L` 10 s, `5`, `Home`, `M`, `↓`, `C`, `Shift+?` (11 rows, focus in, `Esc`, focus back). Free keys (`I O , . [ ] R G Shift+←/→ Shift+V`) do nothing. No overflow at 320 px. Volume slider opens on focus (64 px) |
@@ -708,7 +707,7 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 - **Step 6a: how the magnetic snap feels**, and dragging in general, with a real mouse or finger. Positions were checked from script.
 - **Step 6a: Firefox and Safari.** `mix-blend-mode: difference` on the ruler labels, `:has()`, `color-mix()` and container queries are inside the browser floor on paper; only Chrome was run.
 - **Step 6a: a real touch device.** Touch was emulated in Chrome. On a wide tablet the narrow arrangement is used (as the brief asks) and was not looked at.
-- **Step 6a: Copy frame image, Copy link, Use frame as poster from the new Capture menu** were not pressed in this run; the actions are the step 4 ones, unchanged.
+- **Step 6a: Copy frame image and Copy link from the new Capture menu** were not pressed in this run; the actions are the step 4 ones, unchanged.
 - **Step 6a: menu type-ahead, `Home`/`End` in a menu.** Documented by Video.js, not tried.
 - **Step 6a: screen reader.** Names, roles, values and the live region's text were read from the DOM, not heard.
 - **Step 6a: a source without chapters and with markers** (the Markers menu without the Chapters heading, `[` `]` on markers) was not run in the browser; unit-tested.
@@ -719,14 +718,14 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 - **Step 5b: the fullscreen `:fullscreen .pro-stage` rule** (stage fills the screen) is untested for the same reason.
 - **Step 5: Firefox and Safari.** Only Chrome was run. `:has()` (hides the seek preview over a marker), `color-mix()` and `mask-image` are inside the browser floor on paper, not tested.
 - **Step 5: a real touch device.** Touch was emulated in Chrome.
-- **Step 5: `onCopyLink` and `onPosterFrame` in the event log** were not pressed in the step 5 run (checked in step 5b).
+- **Step 5: `onCopyLink` in the event log** were not pressed in the step 5 run (checked in step 5b).
 - **Step 5: the one-hour case** used an overridden `duration` on the element, not a real one-hour file.
 - **Step 5: screen reader.** Names, values and announcements were read from the DOM, not heard.
 - **Step 4: nothing was looked at.** The Chrome window was hidden for the whole step (0×0 viewport, screenshots timed out), so the Studio bar's appearance, the new icons, the wrapping and breakpoints, focus rings, tooltips and the toast were never seen. Behaviour was tested through page scripts. This needs a visual pass before step 5.
 - **Step 4: mouse-only range and loop** was exercised by clicking buttons from script, not with a real pointer. **320 px layout**, **touch**, **Firefox** and **Safari** were not run.
 - **Step 4: Copy frame image** gave no result in the hidden window: neither success nor failure was announced, so the clipboard call probably never settled. Untested in a visible window.
 - **Step 4: copy link** was tested with the clipboard call replaced by a stub; the real clipboard was not written.
-- **Step 4: `onInOutChange`, `onCopyLink`, `onPosterFrame`, `onMarkerSelect`** are wired but the preview passes no handlers, so they were not seen firing in the browser (the store callbacks are unit-tested).
+- **Step 4: `onInOutChange`, `onCopyLink`, `onMarkerSelect`** are wired but the preview passes no handlers, so they were not seen firing in the browser (the store callbacks are unit-tested).
 - **Step 4: cuts from `markers`** are covered by unit tests only; the demo stream has chapters.
 - **Step 4: screen reader** output was read from the live region's text, not heard.
 - **Step 3: frame numbers against a burned-in frame counter.** The demo stream has none. Our own 24 fps video (step 8) should carry one so this can be checked.
@@ -812,3 +811,6 @@ Checked in code (installed `@videojs/core` 10.x, `dom/presentation/fullscreen.js
 Checked in the browser with the Fullscreen API stubbed (headless Chrome refuses the real one), Viewer and Studio, `scripts/browser-checks/fullscreen-focus.js`: `F` from the first control and `F` after a click on the picture both call `requestFullscreen` on the container; when fullscreen ends with focus on the body, focus goes back inside the player.
 Changes: `FullscreenFocus` (on `fullscreenchange` leaving fullscreen with focus on the body: the fullscreen button, or the container when the button is hidden); and a fix found by the check: in the Viewer the first click on the picture left focus on the body (the big play button takes focus on press, then hides), so `F` and `K` did nothing until a second click. The skin now focuses the container when a press inside the player ends with focus on the body.
 Left for the hand test: real fullscreen entry and exit (Escape and the button) in Chrome, Safari (the container request and `webkit` prefix) and Firefox; that the dock is included in fullscreen; where focus is after Escape.
+
+### D4: "Use frame as poster" removed
+Setting a poster or thumbnail is the host product's job, with back-end work behind it, so it is not a skin feature. Removed: the Capture menu item, its handler (`controller.usePoster`), its announcement and strings, the `posterFrame` feature flag (and from the runtime's list of pro flags), the `onPosterFrame` prop and event and the `PosterFrameInfo` type, the preview page's `poster:frame` log line, its test, and the README and `PROJECT-OVERVIEW.md` lines. No icon was used only by it. The Capture menu is Grab frame (`G`), Copy frame image, Copy link at timecode. What remains of the word "poster" in the repo is the media's own poster image (`<Poster>` in the skin, `MEDIA.poster` in the preview) and the older step specs and the author's `Capture.dc.html` mockup, which I did not edit (the mockup still draws the item).

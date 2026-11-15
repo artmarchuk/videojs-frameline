@@ -5,7 +5,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type RefObject } from 'rea
 import { ProStoreContext } from '../context';
 import type { FeatureFlags, Tier } from '../features';
 import { useFrameClock } from '../frame-clock';
-import type { CopyLinkInfo, PosterFrameInfo } from '../studio/controller';
+import type { CopyLinkInfo } from '../studio/controller';
 import { createProStore, type Marker, type ProCallbacks } from '../store';
 import { parseTimecode } from '../timecode';
 import { useVideoElement } from '../use-video-element';
@@ -24,7 +24,6 @@ const STUDIO_FLAGS = [
   'shotNav',
   'grabFrame',
   'copyTimecodeLink',
-  'posterFrame',
   'guides',
   'platformZones',
   'channels',
@@ -44,7 +43,6 @@ export interface ProRuntimeProps extends ProCallbacks {
   dropFrame?: boolean | undefined;
   markers?: readonly Marker[] | undefined;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
-  onPosterFrame?: ((info: PosterFrameInfo) => void) | undefined;
   /** Counts renders of `ProSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
   skinRenders: RefObject<number>;
   /** Reports the container attributes of the guides that are drawn: `data-guide-*`, `data-crop`, `data-zones`. */
@@ -67,7 +65,6 @@ export default function ProRuntime({
   dropFrame = false,
   markers = NO_MARKERS,
   onCopyLink,
-  onPosterFrame,
   skinRenders,
   onViewAttributes,
   persist,
@@ -147,7 +144,6 @@ export default function ProRuntime({
             video={video}
             anchor={anchor}
             onCopyLink={onCopyLink}
-            onPosterFrame={onPosterFrame}
           />
         )}
         {features.debug && (

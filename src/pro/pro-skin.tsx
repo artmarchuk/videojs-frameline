@@ -15,7 +15,7 @@ import {
   type Layout,
   type Tier,
 } from './features';
-import type { CopyLinkInfo, PosterFrameInfo } from './studio/controller';
+import type { CopyLinkInfo } from './studio/controller';
 import type { FrameInfo, InOutRange, Marker } from './store';
 import type { EffectiveView } from './view';
 import { DEFAULT_FPS, isValidFps } from './fps';
@@ -87,8 +87,6 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   onFrameChange?: (frame: FrameInfo) => void;
   /** Fires after a link to the current frame was copied. `url` carries the position as `#t=HH:MM:SS:FF`. */
   onCopyLink?: (info: CopyLinkInfo) => void;
-  /** Fires when the user picks the current frame as the poster. The host app saves it; the skin stores nothing. */
-  onPosterFrame?: (info: PosterFrameInfo) => void;
   /**
    * Fires when the guides that are drawn change: `guides` (ids), `crop` and `zones` (an id or `null`). Not fired for
    * the remembered set the player starts with.
@@ -136,7 +134,6 @@ export function ProSkin({
   onMarkerSelect,
   onFrameChange,
   onCopyLink,
-  onPosterFrame,
   onViewChange,
   persist = true,
   children,
@@ -184,8 +181,7 @@ export function ProSkin({
     features.inOut ||
     features.loop ||
     features.grabFrame ||
-    features.copyTimecodeLink ||
-    features.posterFrame;
+    features.copyTimecodeLink;
 
   return (
     <VideoSkin
@@ -213,7 +209,6 @@ export function ProSkin({
               dropFrame={dropFrame}
               markers={markers}
               onCopyLink={onCopyLink}
-              onPosterFrame={onPosterFrame}
               skinRenders={renders}
               onViewAttributes={onViewAttributes}
               persist={persist}

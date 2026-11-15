@@ -28,10 +28,6 @@ export interface CopyLinkInfo {
   time: number;
 }
 
-export interface PosterFrameInfo extends FrameInfo {
-  timecode: string;
-}
-
 export interface StudioOptions {
   video: HTMLVideoElement | null;
   fps: number;
@@ -40,7 +36,6 @@ export interface StudioOptions {
   cuts: readonly Cut[];
   announce: (message: string, options?: AnnounceOptions) => void;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
-  onPosterFrame?: ((info: PosterFrameInfo) => void) | undefined;
 }
 
 export interface StudioController {
@@ -58,7 +53,6 @@ export interface StudioController {
   grabFrame(): void;
   copyFrameImage(): void;
   copyLink(): void;
-  usePoster(): void;
   /** The frame the user is on: the one just asked for while that seek is fresh, otherwise the clock's. */
   currentFrame(): number;
   /** Seeks to the frame that contains `time`, with the same half-frame offset as stepping. */
@@ -462,14 +456,6 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
         announce(ok ? t.linkCopied : t.copyFailed, { toast: true });
         if (ok) onCopyLink?.({ url, frame, time: secondsFromFrames(frame, fps) });
       });
-    },
-
-    usePoster() {
-      const { fps, announce, onPosterFrame } = opts();
-      const frame = currentFrame();
-      const code = timecode(frame);
-      onPosterFrame?.({ frame, time: secondsFromFrames(frame, fps), timecode: code });
-      announce(t.posterSet(code), { toast: true });
     },
   };
 }

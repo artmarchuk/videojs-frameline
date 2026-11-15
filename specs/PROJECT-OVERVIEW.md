@@ -67,7 +67,6 @@ Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** me
 
 ### Creator actions
 - Grab frame (download PNG or copy; needs CORS, which Mux provides) [Studio] [Contest]
-- Use frame as poster (emits an event with the time; host app saves it) [Studio] [Contest]
 - Copy link at timecode (URL fragment plus an event) [Studio] [Contest]
 - Time-coded comments: the skin shows markers and fires events; the host app stores comments [Studio] [Contest, markers and events only]
 

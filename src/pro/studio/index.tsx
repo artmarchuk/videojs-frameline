@@ -17,7 +17,7 @@ import type { FeatureFlags } from '../features';
 import type { Marker } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import { AnnouncerProvider, useAnnounce } from './announcer';
-import { useStudioController, type CopyLinkInfo, type PosterFrameInfo, type StudioController } from './controller';
+import { useStudioController, type CopyLinkInfo, type StudioController } from './controller';
 import { BookmarkIcon, GrabFrameIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
 import { isNarrowDock } from './logic';
 import { studioStrings as t } from './strings';
@@ -39,7 +39,6 @@ export interface StudioLayerProps {
   /** An element inside the player, used to find and measure the player container. */
   anchor: RefObject<HTMLElement | null>;
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
-  onPosterFrame?: ((info: PosterFrameInfo) => void) | undefined;
 }
 
 /**
@@ -106,11 +105,11 @@ function useMarkerDeselect(video: HTMLVideoElement | null, fps: number) {
   }, [store, video, fps]);
 }
 
-function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor, onCopyLink, onPosterFrame }: StudioLayerProps) {
+function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor, onCopyLink }: StudioLayerProps) {
   const announce = useAnnounce();
   const chapters = useChapters(video);
   const cuts = useCuts(chapters, features.shotNav ? markers : NO_MARKERS, fps);
-  const controller = useStudioController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink, onPosterFrame });
+  const controller = useStudioController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink });
   const paused = usePlayer(selectPlayback)?.paused ?? true;
   const narrow = useNarrowDock(anchor);
   useMarkerDeselect(video, fps);
@@ -135,7 +134,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
   const hasCuts = cuts.length > 0;
   const range = features.inOut || features.loop;
-  const capture = features.grabFrame || features.copyTimecodeLink || features.posterFrame;
+  const capture = features.grabFrame || features.copyTimecodeLink;
 
   // On the narrow dock the Markers menu has no room in the row: the markers move into the settings menu.
   const setSettingsItems = useSetProSettingsItems();
@@ -516,16 +515,15 @@ function MenuAction({ label, shortcut, onSelect }: { label: string; shortcut?: s
   );
 }
 
-/** The Capture menu: grab or copy the frame, then link to it or name it as the poster. */
+/** The Capture menu: grab or copy the frame, or copy a link at the timecode. */
 function CaptureMenu({ controller, features }: { controller: StudioController; features: Readonly<FeatureFlags> }) {
-  const link = features.copyTimecodeLink || features.posterFrame;
+  const link = features.copyTimecodeLink;
   return (
     <ToolMenu name="capture" label={t.capture} icon={<GrabFrameIcon />} word={t.capture}>
       {features.grabFrame && <MenuAction label={t.grab} shortcut="G" onSelect={controller.grabFrame} />}
       {features.grabFrame && <MenuAction label={t.copyImage} onSelect={controller.copyFrameImage} />}
       {features.grabFrame && link && <Menu.Separator className={'pro-menu-separator'} />}
       {features.copyTimecodeLink && <MenuAction label={t.copyLink} onSelect={controller.copyLink} />}
-      {features.posterFrame && <MenuAction label={t.poster} onSelect={controller.usePoster} />}
     </ToolMenu>
   );
 }

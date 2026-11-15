@@ -60,7 +60,6 @@ With `tier="viewer"` (the default) and no flags, it is the clean Viewer player a
 | `onMarkerSelect` | `(marker) => void` | none | The user selected a marker |
 | `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
 | `onCopyLink` | `({ url, frame, time }) => void` | none | A link to the current frame was copied |
-| `onPosterFrame` | `({ frame, time, timecode }) => void` | none | The user chose the current frame as the poster. The host saves it; the skin stores nothing |
 | `onViewChange` | `({ guides, crop, zones }) => void` | none | The guides that are drawn changed: `guides` is a list of ids, `crop` and `zones` an id or `null`. Not fired for the remembered set the player starts with |
 | `persist` | `boolean \| string` | `true` | Remember the end user's View choices and the time display in `localStorage`. `true` uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off |
 
@@ -72,7 +71,7 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 
 | Flag | Viewer | Studio |
 | --- | --- | --- |
-| `timecode`, `frameStep`, `inOut`, `loop`, `markers`, `shotNav`, `grabFrame`, `copyTimecodeLink`, `posterFrame` | off | on |
+| `timecode`, `frameStep`, `inOut`, `loop`, `markers`, `shotNav`, `grabFrame`, `copyTimecodeLink` | off | on |
 | `guides` | off | all |
 | `platformZones` | off | on |
 | `channels`, `gainGamma`, `zoom`, `infoHud` | off | on (no UI yet) |
@@ -129,7 +128,7 @@ The Studio dock has two rows.
 The menus open upward and are real menus: arrow keys, Enter, Escape, and focus returns to the button.
 
 - **Markers** lists the host's markers with their timecodes, and the media's chapters under a second heading. Choosing one seeks to it.
-- **Capture:** Grab frame (downloads a PNG, `G`), Copy frame image, Copy link at timecode, Use frame as poster.
+- **Capture:** Grab frame (downloads a PNG, `G`), Copy frame image, Copy link at timecode.
 - **View:** guides, crop masks and platform zones. See "The View menu".
 
 The row follows the player's own width. It is one row down to 640 px, shedding in this order: the volume slider (under 1040 px), the duration text (980), the captions button (880; `C` and the settings menu remain), the menu chevrons (840), the count badges (740). **Under 640 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, View, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 350 px the cut buttons step aside (`[` `]` and the markers list still work) and In, Out, Loop take a row of their own.

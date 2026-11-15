@@ -45,8 +45,6 @@ export const studioStrings = {
   copyFailed: 'Could not copy. Check the clipboard permission.',
   copyLink: 'Copy link at timecode',
   linkCopied: 'Link copied',
-  poster: 'Use frame as poster',
-  posterSet: (timecode: string) => `Poster frame: ${timecode}`,
 
   seek: 'Seek',
   inPoint: 'In point',
