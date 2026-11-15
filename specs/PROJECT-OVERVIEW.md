@@ -10,18 +10,6 @@ Read this file at the start of every step, together with `NOTES.md` and that ste
 
 **Test for every decision** (feature, layout, copy, colour, demo content): does it help someone make, check, review or deliver a video? If yes, it earns its place. If it only helps someone watch, it belongs in the Viewer tier or it is cut.
 
-## Ultimate goal
-
-Place in the top three of the **Video.js Skins Design Challenge** on Contra (sponsor Mux; judges are the creators of Video.js and Plyr; prizes $5k / $3k / $2k).
-
-- **Deadline:** Sunday 16 Nov 2026, 11:59 pm PST, which is Monday 17 Nov, 09:59 Nicosia time. Aim to submit by 09:00 Nicosia.
-- **Submission:** a public URL showing the v10 player playing video, a visual, and a short design-thinking text. The author submits it manually on Monday morning.
-- **Minimum gate (must pass or the entry is out):** it works, with the essential controls (play/pause, seek, time, volume/mute, fullscreen), it is responsive, and it is keyboard-operable. Licence: Apache 2.0.
-- **Scoring (25 points):** visual design and originality 10, usability and interaction 5, accessibility 5, execution and polish 5.
-- **Bonuses (+1 each):** the demo video is hosted on Mux (playback ID, kept live); a real live site (artmarchuk.me) uses the skin.
-
-What wins: a distinct point of view with real craft, not a restyle of a consumer player. Execution is only 5 points, but a half-built feature costs more than an absent one, so cut early.
-
 ## The product
 
 One skin, two tiers. A developer building a video tool picks a tier and switches single features on or off.
