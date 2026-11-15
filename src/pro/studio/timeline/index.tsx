@@ -272,6 +272,8 @@ const MarkerPins = memo(function MarkerPins({
   const selected = useProStore((state) => state.selectedMarker);
   const [hover, setHover] = useState<MarkerPin | null>(null);
   const tip = useRef<HTMLSpanElement>(null);
+  // Set when a press landed on the playhead through a pin: that press belongs to the playhead (seek and drag), not the pin.
+  const playheadPress = useRef(false);
 
   if (markers.length > MARKER_SOFT_LIMIT) warnOnce(`${markers.length} markers passed; the timeline is designed for up to ${MARKER_SOFT_LIMIT}.`);
 
@@ -293,10 +295,21 @@ const MarkerPins = memo(function MarkerPins({
           className={'pro-tl-pin'}
           style={{ left: pin.x }}
           data-selected={pin.marker === selected ? '' : undefined}
-          // Stopped, so the seek slider under the pin does not also seek to the pointer's own position.
-          onPointerDown={(event: ReactPointerEvent) => event.stopPropagation()}
-          onPointerUp={(event: ReactPointerEvent) => event.stopPropagation()}
-          onClick={() => controller.goToMarker(pin.marker)}
+          // Stopped, so the seek slider under the pin does not also seek to the pointer's own position. Except when
+          // the playhead is under the pointer: the playhead has priority, and the press goes on to the slider so it
+          // can be grabbed and dragged from a marker.
+          onPointerDown={(event: ReactPointerEvent) => {
+            const playhead = event.currentTarget.closest('.pro-tl')?.querySelector('.pro-tl-playhead')?.getBoundingClientRect();
+            playheadPress.current = playhead !== undefined && Math.abs(event.clientX - (playhead.left + playhead.width / 2)) <= PLAYHEAD_GRAB_PX;
+            if (!playheadPress.current) event.stopPropagation();
+          }}
+          onPointerUp={(event: ReactPointerEvent) => {
+            if (!playheadPress.current) event.stopPropagation();
+          }}
+          onClick={() => {
+            if (playheadPress.current) playheadPress.current = false;
+            else controller.goToMarker(pin.marker);
+          }}
           onPointerEnter={() => setHover(pin)}
           onPointerLeave={() => setHover((current) => (current === pin ? null : current))}
         />
@@ -312,6 +325,9 @@ const MarkerPins = memo(function MarkerPins({
     </div>
   );
 });
+
+/** How far from the playhead's centre a press still grabs the playhead rather than a marker pin, in pixels. */
+const PLAYHEAD_GRAB_PX = 10;
 
 /** How long after the last key press a handle move is announced, so a held key speaks once. */
 const HANDLE_ANNOUNCE_MS = 400;

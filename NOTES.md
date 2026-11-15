@@ -790,3 +790,6 @@ Viewer gate run on the public URL in headless Chrome: tab order Seek, Play, Mute
 ### 6c follow-up: playhead as one shape, marker at 0
 - The playhead's head and line were two shapes, each with its own outline, so a dark seam showed where they met. They are one shape now: the line starts inside the head in the same colour, and a single `drop-shadow` outline goes around the union.
 - A marker at 0 was drawn 4 px to the right of the playhead at 0: `layoutMarkers` clamped every pin inward by half a pin. That clamp is removed; a pin sits exactly on its time (a marker at 0 or at the end is on the same x as the playhead there), and the gutter around the track holds the half pin. Measured at 1440: playhead centre 108, pin centre 108, track left 108.
+
+### 6c follow-up: the playhead wins over a marker pin
+A pin under the playhead caught the press (it stops propagation so the slider does not also seek), so the playhead could not be grabbed from a marker. Now a press within 10 px of the playhead's centre goes on to the slider (grab and drag), and the click that follows does not select the marker. Pins away from the playhead behave as before. Checked in Chrome: click the "Logo too small" pin (8.42 s), press on the playhead and drag 120 px right: playback position 19.32 s; another pin still seeks to its marker.
