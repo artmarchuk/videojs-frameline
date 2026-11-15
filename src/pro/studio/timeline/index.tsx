@@ -437,8 +437,16 @@ function RangeHandle({
       else store.setOut(target);
       timer.current = window.setTimeout(() => announce((now.which === 'in' ? t.inMoved : t.outMoved)(latest.current.format(target))), HANDLE_ANNOUNCE_MS);
     };
+    // The pointer mark hides the focus ring after a press; it must not outlive the press: clear it when focus leaves.
+    const onBlur = () => {
+      delete node.dataset.pointer;
+    };
     node.addEventListener('keydown', onKeyDown);
-    return () => node.removeEventListener('keydown', onKeyDown);
+    node.addEventListener('blur', onBlur);
+    return () => {
+      node.removeEventListener('keydown', onKeyDown);
+      node.removeEventListener('blur', onBlur);
+    };
   }, [store, announce, clear]);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
