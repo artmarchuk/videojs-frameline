@@ -11,9 +11,13 @@ import { loadMarkers, streamUrl, type DemoSource } from './media';
  * tracks. Goes inside the skin, as its child.
  */
 export function DemoVideo({ source, playback }: { source: DemoSource; playback?: PlaybackProps | undefined }) {
-  // Sources are compared by value by Video.js, but a stable object also keeps React from setting it on every render.
+  // A Mux source is named by its playback ID, not by its URL: MuxVideo derives the stream and the storyboard (the
+  // hover thumbnails) from the ID, and gives no storyboard to a source that only has a `src`.
   const structured = useMemo(
-    () => ({ src: streamUrl(source), capRenditionToPlayerSize: source.capRenditionToPlayerSize }),
+    () => ({
+      ...(source.playbackId ? { playbackId: source.playbackId } : { src: streamUrl(source) }),
+      capRenditionToPlayerSize: source.capRenditionToPlayerSize,
+    }),
     [source]
   );
 
