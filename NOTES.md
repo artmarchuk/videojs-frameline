@@ -21,7 +21,8 @@ Docs versus installed version: npm `latest` is 10.4.0, and the bundled docs (`no
 
 ## Deployed URL
 
-- _Not deployed yet._ Host: Vercel, command `npm run deploy vercel`.
+- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. Player alone: `/preview.html`.
+- Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
 
@@ -30,6 +31,7 @@ Docs versus installed version: npm `latest` is 10.4.0, and the bundled docs (`no
 - Kept the scaffold's `CLAUDE.md` → `@AGENTS.md` import and added the project guide below it.
 - Demo media: the scaffold's default Mux stream (NASA Cosmic Dawn trailer, with a chapters VTT). It is now named in one file, `apps/preview/src/frame/media.ts`, which step 8 replaces.
 - `deploy:vercel` passes `--prod`. Vercel's Deployment Protection puts preview URLs behind a Vercel login by default, and the submission needs a public URL.
+- `package.json` has `engines.node: 24.x`. Vercel rejected the project's default of Node 26.x (this machine's version) as discontinued. Local Node 26 still builds fine.
 - Only `@videojs/*` packages are pinned exactly. The other dependencies keep the scaffold's caret ranges, locked by the lockfile.
 
 ## Later
@@ -41,8 +43,8 @@ Docs versus installed version: npm `latest` is 10.4.0, and the bundled docs (`no
 
 ## Unverified
 
-- **Playback in a real browser** (sound, captions, fullscreen): the Chrome extension was not connected, so I couldn't drive a browser. Checked over HTTP only: the workbench and `preview.html` return 200, and the Mux manifest has a stereo audio track plus English and Japanese subtitle tracks.
-- The Video.js skill install (`claude plugin marketplace add videojs/skills`, `claude plugin install videojs@videojs`): auto mode blocked it, so the author has to run it.
+- **Playback on the live URL** was checked in Chrome on `/preview.html`: it plays at 1920×1080 unmuted at full volume, fullscreen works, and the English and Japanese subtitle tracks and chapters are present. Not checked: actually hearing the audio, captions rendering on screen, Safari and Firefox.
+- The Video.js skill install (`claude plugin marketplace add videojs/skills`, `claude plugin install videojs@videojs`): auto mode blocked it, so the author has to run it. Not yet confirmed installed.
 - The version shown on the live docs site.
-- The public URL in a clean browser session, and a mobile viewport.
+- A truly clean browser session (the Chrome used is the author's own profile, though the site needs no login), and a mobile viewport.
 - Build warnings, harmless so far: chunk size over 500 kB, and a Rolldown note on `"use no memo"` in `react-compiler-runtime`.

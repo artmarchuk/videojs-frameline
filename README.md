@@ -2,7 +2,7 @@
 
 Video.js PRO is a player skin for Video.js v10 (React, plain CSS) built for the tools video creators use: editors, AI video generators, and review platforms. One skin has three tiers: Share for the audience, Review for checking work frame by frame, and Studio for inspecting the image.
 
-**Live URL:** _not deployed yet_ (host: Vercel)
+**Live URL:** https://videojs-pro.vercel.app (host: Vercel; the player alone is at `/preview.html`)
 
 ## Quick start
 
