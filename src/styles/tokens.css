@@ -1,0 +1,143 @@
+/*
+ * Video.js PRO design tokens: the single source for the look.
+ * Change a token here and the whole skin follows. Contrast ratios for these values are computed by
+ * `node scripts/contrast.mjs` and recorded in NOTES.md.
+ */
+@layer base, components, utilities;
+@layer base.theme, base.preset, base.preferences;
+
+/* JetBrains Mono 500 (OFL 1.1), subset to printable ASCII plus × − and arrows. See src/assets/fonts/OFL.txt. */
+@font-face {
+  font-family: "Pro Mono";
+  src: url("../assets/fonts/jetbrains-mono-500-subset.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00D7, U+2212, U+2190-2193;
+}
+
+@layer base.theme {
+  .media-skin[data-theme="pro"] {
+    /* Colour. Dark only: Video.js v10 video skins are dark-only. */
+    --pro-surface-0: #0b0c0e; /* behind the video, deepest; scrim colour */
+    --pro-surface-1: #131518; /* menus, tooltips, dialogs */
+    --pro-surface-2: #1b1e23; /* raised elements, hover */
+    --pro-line: #2a2e35; /* hairlines, dividers */
+    --pro-track: #7a828e; /* unfilled slider track: 3:1 on the scrim over a white frame */
+    --pro-text: #eceef1; /* primary text and icons */
+    --pro-text-dim: #9aa1ac; /* secondary text */
+    /* The one accent: playhead, progress, focus, "on" states. Hosts override it with --media-accent-color. */
+    --pro-accent: var(--media-accent-color, #c6ff3d);
+    --pro-accent-ink: var(--media-accent-text-color, #0b0c0e); /* text and icons placed on the accent */
+    --pro-frame-line: var(--media-border-color, var(--pro-line)); /* hairline around the player */
+
+    /* Scrim: surface-0 at this opacity sits behind the control bar so it reads on a pure white frame. */
+    --pro-scrim-alpha: 88%;
+    --pro-scrim: color-mix(in srgb, var(--pro-surface-0) var(--pro-scrim-alpha), transparent);
+
+    /* Type. UI text is a system stack; every time value and number uses the mono font with tabular numerals. */
+    --pro-font-ui: var(--media-font-family, system-ui, sans-serif);
+    --pro-font-mono: "Pro Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    /* Scale. Everything is a multiple of this 4px step, so --media-scale-unit (default 16px) scales the skin. */
+    --media-spacing: calc(var(--media-scale-unit, 16px) / 4);
+    --pro-text-xs: calc(var(--media-spacing) * 2.75); /* 11px */
+    --pro-text-sm: calc(var(--media-spacing) * 3); /* 12px */
+    --pro-text-md: calc(var(--media-spacing) * 3.25); /* 13px */
+    --pro-text-lg: calc(var(--media-spacing) * 4); /* 16px */
+    --pro-icon-size: calc(var(--media-spacing) * 5); /* 20px */
+    --pro-stroke: 1.5; /* icon stroke width on the 24px grid */
+
+    /* Shape. Small radii and hairlines: this is a tool. */
+    --pro-radius: var(--media-border-radius, 4px);
+    --pro-radius-sm: 2px;
+
+    /* Density: comfortable (default). Targets never go under 24px. */
+    --pro-density-control: calc(var(--media-spacing) * 9); /* 36px */
+    --pro-density-gap: var(--media-spacing); /* 4px */
+    --pro-density-pad: calc(var(--media-spacing) * 3); /* 12px */
+    --pro-control-size: max(24px, var(--pro-density-control));
+    --pro-slider-hit: max(24px, calc(var(--media-spacing) * 6)); /* pointer target height of the seek bar */
+
+    /* Seek bar geometry. */
+    --pro-track-height: var(--media-spacing); /* 4px */
+    --pro-playhead-width: 3px;
+    --pro-playhead-height: calc(var(--media-spacing) * 4); /* 16px */
+
+    /* Motion: short and functional. */
+    --pro-duration: 120ms;
+    --pro-duration-fade: 200ms; /* control-bar fade */
+    --pro-ease: cubic-bezier(0.2, 0, 0, 1);
+    --media-spinner-animation: pro-spin 0.9s linear infinite;
+
+    /* Focus ring: 2px accent outline with a surface-0 halo so it keeps 3:1 against any footage. */
+    --pro-focus-width: 2px;
+    --pro-focus-offset: 2px;
+    --pro-focus-halo: 0 0 0 calc(var(--pro-focus-width) * 2 + var(--pro-focus-offset)) var(--pro-surface-0);
+
+    /* Layers. */
+    --pro-z-overlay: 10;
+    --pro-z-indicators: 20;
+    --pro-z-controls: 30;
+    --pro-z-dialog-backdrop: 40;
+    --pro-z-dialog: 50;
+
+    /* Values the Video.js components and shared captions rules read. */
+    --media-popover-side-offset: calc(var(--media-spacing) * 2);
+    --media-popover-boundary-offset: calc(var(--media-spacing) * 2);
+    --media-tooltip-side-offset: calc(var(--media-spacing) * 2);
+    --media-tooltip-boundary-offset: var(--media-spacing);
+    --media-caption-track-y: calc(var(--media-spacing) * -3);
+    --media-caption-controls-y: calc(var(--media-spacing) * -16);
+  }
+
+  .media-skin[data-theme="pro"][data-density="compact"] {
+    --pro-density-control: calc(var(--media-spacing) * 7); /* 28px */
+    --pro-density-gap: calc(var(--media-spacing) * 0.5); /* 2px */
+    --pro-density-pad: calc(var(--media-spacing) * 2); /* 8px */
+  }
+}
+
+@layer base.preferences {
+  /* Touch always gets comfortable density and 44px targets, whatever the host asked for. */
+  @media (pointer: coarse) {
+    .media-skin[data-theme="pro"],
+    .media-skin[data-theme="pro"][data-density="compact"] {
+      --pro-density-control: calc(var(--media-spacing) * 11);
+      --pro-density-gap: var(--media-spacing);
+      --pro-density-pad: calc(var(--media-spacing) * 3);
+      --pro-control-size: max(44px, var(--pro-density-control));
+      --pro-slider-hit: max(44px, calc(var(--media-spacing) * 11));
+    }
+  }
+
+  /* Reduced motion: no transitions, no control-bar fade, no spinner rotation. */
+  @media (prefers-reduced-motion: reduce) {
+    .media-skin[data-theme="pro"] {
+      --pro-duration: 0ms;
+      --pro-duration-fade: 0ms;
+      --media-spinner-animation: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .media-skin[data-theme="pro"] {
+      --pro-surface-0: Canvas;
+      --pro-surface-1: Canvas;
+      --pro-surface-2: Canvas;
+      --pro-line: CanvasText;
+      --pro-track: CanvasText;
+      --pro-text: CanvasText;
+      --pro-text-dim: CanvasText;
+      --pro-accent: Highlight;
+      --pro-accent-ink: HighlightText;
+      --pro-scrim: Canvas;
+    }
+  }
+}
+
+@keyframes pro-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
