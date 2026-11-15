@@ -4,27 +4,27 @@ import {
   StatusIndicator as StatusIndicatorPrimitive,
   VolumeIndicator as VolumeIndicatorPrimitive,
 } from '@videojs/react';
-import {
-  CaptionsOnIcon as CaptionsOnIconPrimitive,
-  CaptionsOffIcon as CaptionsOffIconPrimitive,
-  FullscreenEnterIcon as FullscreenEnterIconPrimitive,
-  FullscreenExitIcon as FullscreenExitIconPrimitive,
-  PipEnterIcon as PipEnterIconPrimitive,
-  PipExitIcon as PipExitIconPrimitive,
-  VolumeHighIcon as VolumeHighIconPrimitive,
-  VolumeLowIcon as VolumeLowIconPrimitive,
-  VolumeOffIcon as VolumeOffIconPrimitive,
-} from '@videojs/react/icons/scaffold';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/resolve-class-name';
 
+import {
+  CaptionsOffIcon,
+  CaptionsOnIcon,
+  FullscreenEnterIcon,
+  FullscreenExitIcon,
+  PipEnterIcon,
+  PipExitIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeMutedIcon,
+} from '../icons';
+
 const STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
 /**
- * Transient feedback stacks above the title and below the controls, and never takes pointer input. The whole group is
- * hidden from assistive technology: `StatusAnnouncer` already speaks these same events, so exposing both would announce
- * every one of them twice.
+ * Transient feedback for keyboard and gesture actions. It never takes pointer input, and the whole group is hidden
+ * from assistive technology: `StatusAnnouncer` already speaks these same events.
  */
 export function Indicators({ children }: { children?: ReactNode } = {}) {
   return (
@@ -37,35 +37,31 @@ export function Indicators({ children }: { children?: ReactNode } = {}) {
 }
 
 function StatusIndicator() {
+  const icon = (name: string) => cn('media-indicator-icon', 'media-status-indicator-icon', `media-status-${name}-icon`);
+
   return (
     <StatusIndicatorPrimitive.Root actions={STATUS_ACTIONS} className={cn('media-indicator', 'media-status-indicator')}>
-      <CaptionsOnIconPrimitive
-        className={cn('media-status-indicator-icon', 'media-status-indicator-captions-on-icon')}
-      />
-      <CaptionsOffIconPrimitive
-        className={cn('media-status-indicator-icon', 'media-status-indicator-captions-off-icon')}
-      />
-      <FullscreenEnterIconPrimitive
-        className={cn('media-status-indicator-icon', 'media-status-indicator-fullscreen-enter-icon')}
-      />
-      <FullscreenExitIconPrimitive
-        className={cn('media-status-indicator-icon', 'media-status-indicator-fullscreen-exit-icon')}
-      />
-      <PipEnterIconPrimitive className={cn('media-status-indicator-icon', 'media-status-indicator-pip-enter-icon')} />
-      <PipExitIconPrimitive className={cn('media-status-indicator-icon', 'media-status-indicator-pip-exit-icon')} />
-      <StatusIndicatorPrimitive.Value />
+      <CaptionsOnIcon className={icon('captions-on')} />
+      <CaptionsOffIcon className={icon('captions-off')} />
+      <FullscreenEnterIcon className={icon('fullscreen')} />
+      <FullscreenExitIcon className={icon('exit-fullscreen')} />
+      <PipEnterIcon className={icon('pip')} />
+      <PipExitIcon className={icon('exit-pip')} />
+      <StatusIndicatorPrimitive.Value className={'media-indicator-label'} />
     </StatusIndicatorPrimitive.Root>
   );
 }
 
 function VolumeIndicator() {
+  const icon = (name: string) => cn('media-indicator-icon', 'media-volume-indicator-icon', `media-volume-${name}-icon`);
+
   return (
     <VolumeIndicatorPrimitive.Root className={cn('media-indicator', 'media-volume-indicator')}>
       <VolumeIndicatorPrimitive.Fill className={'media-volume-indicator-fill'}>
-        <VolumeHighIconPrimitive className={cn('media-volume-indicator-icon', 'media-volume-indicator-high-icon')} />
-        <VolumeLowIconPrimitive className={cn('media-volume-indicator-icon', 'media-volume-indicator-low-icon')} />
-        <VolumeOffIconPrimitive className={cn('media-volume-indicator-icon', 'media-volume-indicator-off-icon')} />
-        <VolumeIndicatorPrimitive.Value className={'media-volume-indicator-value'} />
+        <VolumeHighIcon className={icon('high')} />
+        <VolumeLowIcon className={icon('low')} />
+        <VolumeMutedIcon className={icon('off')} />
+        <VolumeIndicatorPrimitive.Value className={'media-indicator-value'} />
       </VolumeIndicatorPrimitive.Fill>
     </VolumeIndicatorPrimitive.Root>
   );

@@ -1,65 +1,32 @@
 /** @jsxImportSource react */
 
-import {
-  CastButton as CastButtonPrimitive,
-  PiPButton as PiPButtonPrimitive,
-  FullscreenButton as FullscreenButtonPrimitive,
-} from '@videojs/react';
-import {
-  CastEnterIcon as CastEnterIconPrimitive,
-  CastExitIcon as CastExitIconPrimitive,
-  PipEnterIcon as PipEnterIconPrimitive,
-  PipExitIcon as PipExitIconPrimitive,
-  FullscreenEnterIcon as FullscreenEnterIconPrimitive,
-  FullscreenExitIcon as FullscreenExitIconPrimitive,
-} from '@videojs/react/icons/scaffold';
+import { FullscreenButton as FullscreenButtonPrimitive, PiPButton as PiPButtonPrimitive } from '@videojs/react';
 
 import { cn } from '@/lib/resolve-class-name';
 
-import { AirPlayButton } from './airplay-button';
+import { FullscreenEnterIcon, FullscreenExitIcon, PipEnterIcon, PipExitIcon } from '../icons';
 import { Button } from './button';
 import { ButtonTooltip } from './tooltip';
 
-function CastButton() {
+/** Picture-in-picture. The component renders nothing where the browser does not support it. */
+export function PiPButton() {
   return (
-    <ButtonTooltip popupClassName={'media-tooltip-screen-popup'}>
-      <CastButtonPrimitive render={<Button />} className={'media-cast-button'}>
-        <CastEnterIconPrimitive className={cn('media-button-icon', 'media-cast-button-enter-icon')} />
-        <CastExitIconPrimitive className={cn('media-button-icon', 'media-cast-button-exit-icon')} />
-      </CastButtonPrimitive>
-    </ButtonTooltip>
-  );
-}
-
-function PiPButton() {
-  return (
-    <ButtonTooltip popupClassName={'media-tooltip-screen-popup'}>
+    <ButtonTooltip>
       <PiPButtonPrimitive render={<Button />} className={'media-pip-button'}>
-        <PipEnterIconPrimitive className={cn('media-button-icon', 'media-pip-button-enter-icon')} />
-        <PipExitIconPrimitive className={cn('media-button-icon', 'media-pip-button-exit-icon')} />
+        <PipEnterIcon className={cn('media-button-icon', 'media-pip-button-enter-icon')} />
+        <PipExitIcon className={cn('media-button-icon', 'media-pip-button-exit-icon')} />
       </PiPButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
-function FullscreenButton() {
+export function FullscreenButton() {
   return (
-    <ButtonTooltip popupClassName={'media-tooltip-screen-popup'}>
+    <ButtonTooltip align="end">
       <FullscreenButtonPrimitive render={<Button />} className={'media-fullscreen-button'}>
-        <FullscreenEnterIconPrimitive className={cn('media-button-icon', 'media-fullscreen-button-enter-icon')} />
-        <FullscreenExitIconPrimitive className={cn('media-button-icon', 'media-fullscreen-button-exit-icon')} />
+        <FullscreenEnterIcon className={cn('media-button-icon', 'media-fullscreen-button-enter-icon')} />
+        <FullscreenExitIcon className={cn('media-button-icon', 'media-fullscreen-button-exit-icon')} />
       </FullscreenButtonPrimitive>
     </ButtonTooltip>
-  );
-}
-
-export function ScreenControls() {
-  return (
-    <>
-      <AirPlayButton popupClassName={'media-tooltip-screen-popup'} />
-      <CastButton />
-      <PiPButton />
-      <FullscreenButton />
-    </>
   );
 }

@@ -1,47 +1,48 @@
 /** @jsxImportSource react */
 
 import { PlayButton as PlayButtonPrimitive } from '@videojs/react';
-import {
-  RestartIcon as RestartIconPrimitive,
-  PlayIcon as PlayIconPrimitive,
-  PauseIcon as PauseIconPrimitive,
-} from '@videojs/react/icons/scaffold';
-import type { ClassValue } from 'cn';
 
 import { cn, resolveClassName } from '@/lib/resolve-class-name';
 
+import { PauseIcon, PlayIcon, ReplayIcon } from '../icons';
 import { Button } from './button';
 import { ButtonTooltip } from './tooltip';
-import { BufferingIndicator } from './video-feedback';
 
-export function PlayButton({
-  className,
-  iconClassName,
-  tooltip = true,
-  ...props
-}: PlayButtonPrimitive.Props & { iconClassName?: ClassValue; tooltip?: boolean } = {}) {
+function PlayIcons() {
   return (
-    <ButtonTooltip disabled={!tooltip}>
+    <>
+      <ReplayIcon className={cn('media-button-icon', 'media-play-button-replay-icon')} />
+      <PlayIcon className={cn('media-button-icon', 'media-play-button-play-icon')} />
+      <PauseIcon className={cn('media-button-icon', 'media-play-button-pause-icon')} />
+    </>
+  );
+}
+
+export function PlayButton({ className, ...props }: PlayButtonPrimitive.Props = {}) {
+  return (
+    <ButtonTooltip>
       <PlayButtonPrimitive
         render={<Button />}
         className={(state) => cn('media-play-button', resolveClassName(className, state))}
         {...props}
       >
-        <RestartIconPrimitive
-          className={cn('media-button-icon-base', 'media-play-button-restart-icon', iconClassName)}
-        />
-        <PlayIconPrimitive className={cn('media-button-icon-base', 'media-play-button-play-icon', iconClassName)} />
-        <PauseIconPrimitive className={cn('media-button-icon-base', 'media-play-button-pause-icon', iconClassName)} />
+        <PlayIcons />
       </PlayButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
-export function AudioPlayButton() {
+/**
+ * The large play button over the video: the start affordance before playback, and the tap-to-play target on touch.
+ * It duplicates the control bar's play button, so it is kept out of the tab order and the accessibility tree.
+ */
+export function CenterPlayButton() {
   return (
-    <div className={'media-play-button-audio'}>
-      <PlayButton />
-      <BufferingIndicator className={'media-play-button-buffering'} />
-    </div>
+    <PlayButtonPrimitive
+      render={<Button tabIndex={-1} aria-hidden="true" />}
+      className={cn('media-play-button', 'pro-center-play')}
+    >
+      <PlayIcons />
+    </PlayButtonPrimitive>
   );
 }

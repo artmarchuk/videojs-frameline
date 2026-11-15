@@ -1,30 +1,29 @@
 /** @jsxImportSource react */
 
 import { Tooltip } from '@videojs/react';
-import type { ClassValue } from 'cn';
 import type { ReactElement, ReactNode } from 'react';
 
 import { cn } from '@/lib/resolve-class-name';
 
+/**
+ * Tooltip for a control: its label plus its keyboard shortcut. It opens on hover and on keyboard focus, closes with
+ * Escape, and is kept inside the player (`boundary="container"`) so it cannot overflow a narrow embed.
+ */
 export function ButtonTooltip({
+  align,
   children,
-  delay,
   disabled,
   label,
-  popupClassName,
-  sticky,
 }: {
+  align?: 'start' | 'center' | 'end';
   children: ReactElement;
-  delay?: number;
   disabled?: boolean;
   label?: ReactNode;
-  popupClassName?: ClassValue;
-  sticky?: boolean;
 }) {
   return (
-    <Tooltip.Root delay={delay} disabled={disabled} side="top" sticky={sticky}>
+    <Tooltip.Root align={align} boundary="container" disabled={disabled} side="top">
       <Tooltip.Trigger render={children} />
-      <Tooltip.Popup className={cn('media-popup', 'media-popup-safe-area', 'media-tooltip-popup', popupClassName)}>
+      <Tooltip.Popup className={cn('media-popup', 'media-tooltip-popup')}>
         {label ?? <Tooltip.Label />}
         {!label && <Tooltip.Shortcut className={'media-tooltip-shortcut'} />}
       </Tooltip.Popup>

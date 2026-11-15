@@ -2,7 +2,8 @@
 
 'use client';
 
-import '../styles/video/scaffold.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
 import './skin.css';
 import { Container as ContainerPrimitive, Poster as PosterPrimitive, Slider as SliderPrimitive } from '@videojs/react';
 import type { ReactNode } from 'react';
@@ -15,34 +16,48 @@ import { VideoControls } from './controls';
 import { ErrorDialog } from './shared/error-dialog';
 import { Indicators } from './shared/indicators';
 import { SeekIndicator } from './shared/seek-indicator';
+import { ShortcutsDialog, ShortcutsProvider } from './shared/shortcuts-dialog';
 import { StatusAnnouncer } from './shared/status-announcer';
 import { Poster } from './shared/video-feedback';
 
 export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children'> {
+  /** The media element, for example `<MuxVideo />`. */
   children?: ReactNode;
   renderPoster?: PosterPrimitive.ImageProps['render'];
   renderThumbnail?: SliderPrimitive.Thumbnail.ImageProps['render'];
 }
 
+/**
+ * Video.js PRO, Share tier: the clean player a creator's client or audience gets.
+ *
+ * Layers, bottom to top: media, poster, the overlay layer (empty here; the Review tier draws guides in it),
+ * transient indicators, controls, dialogs.
+ */
 export function VideoSkin({ children, className, renderPoster, renderThumbnail, ...props }: VideoSkinProps = {}) {
   return (
     <ContainerPrimitive
-      className={cn('media-skin', 'media-container', 'media-video', className)}
-      data-theme="scaffold"
+      className={cn('media-skin', 'media-container', 'media-video', 'pro-skin', className)}
+      data-theme="pro"
       data-preset="video"
+      data-tier="share"
+      data-density="comfortable"
       {...props}
     >
-      {children}
-      <Poster renderImage={renderPoster} />
-      <ErrorDialog />
-      <VideoControls renderThumbnail={renderThumbnail} />
+      <ShortcutsProvider>
+        {children}
+        <Poster renderImage={renderPoster} />
+        <div className={'pro-overlay'} aria-hidden="true" />
+        <ErrorDialog />
+        <VideoControls renderThumbnail={renderThumbnail} />
 
-      <VideoHotkeys />
-      <VideoGestures />
-      <StatusAnnouncer />
-      <Indicators>
-        <SeekIndicator />
-      </Indicators>
+        <VideoHotkeys />
+        <VideoGestures />
+        <StatusAnnouncer />
+        <Indicators>
+          <SeekIndicator />
+        </Indicators>
+        <ShortcutsDialog />
+      </ShortcutsProvider>
     </ContainerPrimitive>
   );
 }

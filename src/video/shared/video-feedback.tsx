@@ -1,11 +1,8 @@
 /** @jsxImportSource react */
 
-import { Poster as PosterPrimitive } from '@videojs/react';
-import { BufferingIndicator as BufferingIndicatorPrimitive, Controls } from '@videojs/react';
-import { SpinnerIcon as SpinnerIconPrimitive } from '@videojs/react/icons/scaffold';
-import type { ClassValue } from 'cn';
+import { BufferingIndicator as BufferingIndicatorPrimitive, Poster as PosterPrimitive } from '@videojs/react';
 
-import { cn, resolveClassName } from '@/lib/resolve-class-name';
+import { SpinnerIcon } from '../icons';
 
 export function Poster({ renderImage }: { renderImage?: PosterPrimitive.ImageProps['render'] } = {}) {
   return (
@@ -15,20 +12,11 @@ export function Poster({ renderImage }: { renderImage?: PosterPrimitive.ImagePro
   );
 }
 
-export function BufferingIndicator({ className }: { className?: ClassValue } = {}) {
+/** Centre spinner, shown after a short delay while the media is waiting for data. */
+export function BufferingIndicator() {
   return (
-    <BufferingIndicatorPrimitive
-      className={(state) => cn('media-buffering-indicator', resolveClassName(className, state))}
-    >
-      <SpinnerIconPrimitive className={'media-buffering-indicator-spinner-icon'} />
+    <BufferingIndicatorPrimitive className={'media-buffering-indicator'}>
+      <SpinnerIcon className={'media-buffering-indicator-icon'} />
     </BufferingIndicatorPrimitive>
-  );
-}
-
-export function VideoBufferingIndicator() {
-  return (
-    <Controls.Group className={'media-buffering-indicator-controls'}>
-      <BufferingIndicator className={'media-buffering-indicator-backdrop'} />
-    </Controls.Group>
   );
 }

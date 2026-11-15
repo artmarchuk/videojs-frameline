@@ -1,15 +1,7 @@
 /** @jsxImportSource react */
 import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
 import { Text as TextPrimitive } from '@videojs/react';
-import { Menu } from '@videojs/react';
-import {
-  ChevronIcon as ChevronIconPrimitive,
-  SwitchesIcon as SwitchesIconPrimitive,
-  SpeechIcon as SpeechIconPrimitive,
-  SpeedIcon as SpeedIconPrimitive,
-  CaptionsOffIcon as CaptionsOffIconPrimitive,
-  GearIcon as GearIconPrimitive,
-} from '@videojs/react/icons/scaffold';
+import { Menu, selectPiP, usePlayer } from '@videojs/react';
 import { AudioTrackRadioGroup } from '@videojs/react/ui/audio-track-radio-group';
 import { CaptionsRadioGroup } from '@videojs/react/ui/captions-radio-group';
 import { PlaybackRateRadioGroup } from '@videojs/react/ui/playback-rate-radio-group';
@@ -17,12 +9,24 @@ import { QualityRadioGroup } from '@videojs/react/ui/quality-radio-group';
 
 import { cn } from '@/lib/resolve-class-name';
 
+import {
+  AudioTrackIcon,
+  CaptionsOffIcon,
+  ChevronIcon,
+  KeyboardIcon,
+  PipEnterIcon,
+  QualityIcon,
+  SettingsIcon,
+  SpeedIcon,
+} from '../icons';
+import { strings } from '../strings';
 import { Button } from './button';
 import { RadioItem } from './menu-item';
+import { useShortcutsDialog } from './shortcuts-dialog';
 import { ButtonTooltip } from './tooltip';
 
 function MenuChevron({ back = false }: { back?: boolean } = {}) {
-  return <ChevronIconPrimitive className={back ? 'media-menu-back-chevron' : 'media-menu-forward-chevron'} />;
+  return <ChevronIcon className={cn('media-menu-icon', back ? 'media-menu-back-chevron' : 'media-menu-forward-chevron')} />;
 }
 
 function QualityMenu() {
@@ -30,7 +34,7 @@ function QualityMenu() {
     <Menu.Root>
       <QualityRadioGroup.Root>
         <Menu.Trigger className={'media-menu-item'}>
-          <SwitchesIconPrimitive className={'media-menu-trigger-icon'} />
+          <QualityIcon className={'media-menu-icon'} />
           <TextPrimitive token={qualityText.key}>{qualityText.text}</TextPrimitive>
           <span className={'media-menu-hint'}>
             <QualityRadioGroup.Value className={'media-menu-hint-label'} />
@@ -38,7 +42,7 @@ function QualityMenu() {
           </span>
         </Menu.Trigger>
         <Menu.Content className={'media-menu-content'}>
-          <Menu.Item className={'media-menu-back-item'}>
+          <Menu.Item className={'media-menu-item media-menu-back-item'}>
             <MenuChevron back />
             <TextPrimitive token={qualityText.key}>{qualityText.text}</TextPrimitive>
           </Menu.Item>
@@ -66,7 +70,7 @@ function AudioTrackMenu() {
     <Menu.Root>
       <AudioTrackRadioGroup.Root>
         <Menu.Trigger className={'media-menu-item'}>
-          <SpeechIconPrimitive className={'media-menu-trigger-icon'} />
+          <AudioTrackIcon className={'media-menu-icon'} />
           <TextPrimitive token={audioText.key}>{audioText.text}</TextPrimitive>
           <span className={'media-menu-hint'}>
             <AudioTrackRadioGroup.Value className={'media-menu-hint-label'} />
@@ -74,7 +78,7 @@ function AudioTrackMenu() {
           </span>
         </Menu.Trigger>
         <Menu.Content className={'media-menu-content'}>
-          <Menu.Item className={'media-menu-back-item'}>
+          <Menu.Item className={'media-menu-item media-menu-back-item'}>
             <MenuChevron back />
             <TextPrimitive token={audioText.key}>{audioText.text}</TextPrimitive>
           </Menu.Item>
@@ -98,7 +102,7 @@ function PlaybackRateMenu() {
     <Menu.Root>
       <PlaybackRateRadioGroup.Root>
         <Menu.Trigger className={'media-menu-item'}>
-          <SpeedIconPrimitive className={'media-menu-trigger-icon'} />
+          <SpeedIcon className={'media-menu-icon'} />
           <TextPrimitive token={speedText.key}>{speedText.text}</TextPrimitive>
           <span className={'media-menu-hint'}>
             <PlaybackRateRadioGroup.Value className={'media-menu-hint-label'} />
@@ -106,7 +110,7 @@ function PlaybackRateMenu() {
           </span>
         </Menu.Trigger>
         <Menu.Content className={'media-menu-content'}>
-          <Menu.Item className={'media-menu-back-item'}>
+          <Menu.Item className={'media-menu-item media-menu-back-item'}>
             <MenuChevron back />
             <TextPrimitive token={speedText.key}>{speedText.text}</TextPrimitive>
           </Menu.Item>
@@ -130,7 +134,7 @@ function CaptionsMenu() {
     <Menu.Root>
       <CaptionsRadioGroup.Root>
         <Menu.Trigger className={'media-menu-item'}>
-          <CaptionsOffIconPrimitive className={'media-menu-trigger-icon'} />
+          <CaptionsOffIcon className={'media-menu-icon'} />
           <TextPrimitive token={captionsText.key}>{captionsText.text}</TextPrimitive>
           <span className={'media-menu-hint'}>
             <CaptionsRadioGroup.Value className={'media-menu-hint-label'} />
@@ -138,7 +142,7 @@ function CaptionsMenu() {
           </span>
         </Menu.Trigger>
         <Menu.Content className={'media-menu-content'}>
-          <Menu.Item className={'media-menu-back-item'}>
+          <Menu.Item className={'media-menu-item media-menu-back-item'}>
             <MenuChevron back />
             <TextPrimitive token={captionsText.key}>{captionsText.text}</TextPrimitive>
           </Menu.Item>
@@ -158,23 +162,52 @@ function CaptionsMenu() {
   );
 }
 
-export function SettingsMenu() {
+/** Picture-in-picture as a menu item. CSS shows it only on narrow players, where the PiP button is hidden. */
+function PiPMenuItem() {
+  const pip = usePlayer(selectPiP);
+  if (!pip || pip.pictureInPictureAvailability !== 'available') return null;
+
   return (
-    <Menu.Root side="top" align="center">
+    <Menu.Item
+      className={'media-menu-item pro-menu-item-narrow'}
+      onSelect={() => {
+        const request = pip.isPictureInPicture ? pip.exitPictureInPicture() : pip.requestPictureInPicture();
+        request.catch(() => {});
+      }}
+    >
+      <PipEnterIcon className={'media-menu-icon'} />
+      <span>{strings.pictureInPicture}</span>
+    </Menu.Item>
+  );
+}
+
+export function SettingsMenu() {
+  const shortcuts = useShortcutsDialog();
+
+  return (
+    <Menu.Root side="top" align="end">
       <ButtonTooltip label={<TextPrimitive token={settingsText.key}>{settingsText.text}</TextPrimitive>}>
         <Menu.Trigger render={<Button />} className={'media-settings-button'}>
-          <GearIconPrimitive className={'media-button-icon'} />
+          <SettingsIcon className={'media-button-icon'} />
           <TextPrimitive className={'media-settings-button-label'} token={settingsText.key}>
             {settingsText.text}
           </TextPrimitive>
         </Menu.Trigger>
       </ButtonTooltip>
-      <Menu.Popup keepMounted className={cn('media-popup', 'media-popup-safe-area', 'media-menu-popup')}>
+      <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup')}>
         <Menu.Content className={'media-menu-content'}>
-          <QualityMenu />
-          <AudioTrackMenu />
           <PlaybackRateMenu />
+          <QualityMenu />
           <CaptionsMenu />
+          <AudioTrackMenu />
+          <PiPMenuItem />
+          <Menu.Item className={'media-menu-item'} onSelect={() => shortcuts.setOpen(true)}>
+            <KeyboardIcon className={'media-menu-icon'} />
+            <span>{strings.shortcutsMenuItem}</span>
+            <span className={'media-menu-hint'}>
+              <kbd className={'pro-kbd'}>?</kbd>
+            </span>
+          </Menu.Item>
         </Menu.Content>
       </Menu.Popup>
     </Menu.Root>

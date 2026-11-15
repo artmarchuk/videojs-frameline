@@ -1,35 +1,21 @@
 /** @jsxImportSource react */
 
 import { CaptionsButton as CaptionsButtonPrimitive } from '@videojs/react';
-import {
-  CaptionsOffIcon as CaptionsOffIconPrimitive,
-  CaptionsOnIcon as CaptionsOnIconPrimitive,
-} from '@videojs/react/icons/scaffold';
 
-import { cn, resolveClassName } from '@/lib/resolve-class-name';
+import { cn } from '@/lib/resolve-class-name';
 
+import { CaptionsOffIcon, CaptionsOnIcon } from '../icons';
 import { Button } from './button';
 import { ButtonTooltip } from './tooltip';
 
+/** Captions on or off. With several tracks, the track is chosen in the settings menu. Hidden when there are none. */
 export function CaptionsToggle() {
   return (
     <ButtonTooltip>
-      <CaptionsButton />
+      <CaptionsButtonPrimitive render={<Button />} className={'media-captions-button'}>
+        <CaptionsOffIcon className={cn('media-button-icon', 'media-captions-button-off-icon')} />
+        <CaptionsOnIcon className={cn('media-button-icon', 'media-captions-button-on-icon')} />
+      </CaptionsButtonPrimitive>
     </ButtonTooltip>
-  );
-}
-
-export type CaptionsButtonProps = Omit<CaptionsButtonPrimitive.Props, 'children'>;
-
-export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}) {
-  return (
-    <CaptionsButtonPrimitive
-      render={<Button />}
-      className={(state) => cn('media-captions-button', resolveClassName(className, state))}
-      {...props}
-    >
-      <CaptionsOffIconPrimitive className={cn('media-button-icon', 'media-captions-button-off-icon')} />
-      <CaptionsOnIconPrimitive className={cn('media-button-icon', 'media-captions-button-on-icon')} />
-    </CaptionsButtonPrimitive>
   );
 }
