@@ -5,17 +5,16 @@ import { lazy, Suspense, useEffect, useRef, useState, type RefObject } from 'rea
 import { ProStoreContext } from '../context';
 import type { FeatureFlags, Tier } from '../features';
 import { useFrameClock } from '../frame-clock';
-import type { CopyLinkInfo, PosterFrameInfo } from '../review/controller';
+import type { CopyLinkInfo, PosterFrameInfo } from '../studio/controller';
 import { createProStore, type Marker, type ProCallbacks } from '../store';
 import { parseTimecode } from '../timecode';
 import { useVideoElement } from '../use-video-element';
 import { warnOnce } from '../dev';
 
-const ReviewLayer = lazy(() => import('../review'));
 const StudioLayer = lazy(() => import('../studio'));
 const DebugReadout = lazy(() => import('../debug'));
 
-const REVIEW_FLAGS = [
+const STUDIO_FLAGS = [
   'timecode',
   'frameStep',
   'inOut',
@@ -27,9 +26,12 @@ const REVIEW_FLAGS = [
   'posterFrame',
   'guides',
   'platformZones',
+  'channels',
+  'gainGamma',
+  'zoom',
+  'infoHud',
 ] as const satisfies readonly (keyof FeatureFlags)[];
 const NO_MARKERS: readonly Marker[] = [];
-const STUDIO_FLAGS = ['channels', 'gainGamma', 'zoom', 'infoHud'] as const satisfies readonly (keyof FeatureFlags)[];
 
 export interface ProRuntimeProps extends ProCallbacks {
   tier: Tier;
@@ -49,8 +51,8 @@ export interface ProRuntimeProps extends ProCallbacks {
 }
 
 /**
- * Everything pro that is not the Share skin: the store, the frame clock, and the lazily loaded tier layers.
- * This module is itself loaded lazily by `ProSkin`, so the Share tier never downloads it.
+ * Everything pro that is not the Viewer skin: the store, the frame clock, and the lazily loaded Studio layer.
+ * This module is itself loaded lazily by `ProSkin`, so the Viewer tier never downloads it.
  */
 export default function ProRuntime({
   tier,
@@ -103,7 +105,6 @@ export default function ProRuntime({
   if (parsedStart === null) warnOnce(`Invalid startTimecode "${String(startTimecode)}"; using 00:00:00:00.`);
   const startFrames = parsedStart ?? 0;
 
-  const review = REVIEW_FLAGS.some((name) => features[name] !== false);
   const studio = STUDIO_FLAGS.some((name) => features[name] !== false);
 
   return (
@@ -111,8 +112,8 @@ export default function ProRuntime({
       <span ref={anchor} hidden />
       <FrameClock video={video} fps={fps} />
       <Suspense fallback={null}>
-        {review && (
-          <ReviewLayer
+        {studio && (
+          <StudioLayer
             features={features}
             fps={fps}
             startFrames={startFrames}
@@ -124,7 +125,6 @@ export default function ProRuntime({
             onPosterFrame={onPosterFrame}
           />
         )}
-        {studio && <StudioLayer features={features} />}
         {features.debug && (
           <DebugReadout
             tier={tier}

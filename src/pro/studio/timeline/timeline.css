@@ -1,0 +1,491 @@
+/*
+ * The compact ruler timeline (Studio). Loaded with the Studio module, never by the Viewer tier. Tokens only.
+ * About 46px tall: a 22px ruler (ticks, labels, marker pins), a 2px gap, a 16px track (with the In/Out band), and
+ * the buffered range as a 2px line under it. The playhead and the range handles reach a little past the track.
+ * Bubbles float above the dock, over the bottom edge of the picture. Time runs left to right on every page: the
+ * component sets dir="ltr".
+ */
+@layer components {
+  .pro-skin .pro-timeline {
+    --tl-ruler: calc(var(--media-spacing) * 5.5); /* 22px */
+    --tl-track: calc(var(--media-spacing) * 4); /* 16px */
+    --tl-track-top: calc(var(--tl-ruler) + 2px);
+    --tl-buffer-top: calc(var(--tl-track-top) + var(--tl-track) + 1px);
+    --tl-height: calc(var(--tl-buffer-top) + 5px); /* 46px */
+    --tl-handle-width: 9px;
+    --tl-handle-over: var(--media-spacing); /* the handles and the playhead reach 4px past the track */
+    --tl-bubble-width: calc(var(--media-spacing) * 22); /* 88px: 00:00:00:00 at 12px */
+    flex: none;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pro-skin .pro-timeline[data-display="seconds"] {
+    --tl-bubble-width: calc(var(--media-spacing) * 16);
+  }
+
+  /* Compact: a shorter ruler and track. The whole timeline is the seek target, so the hit area stays above 24px. */
+  .pro-skin[data-density="compact"] .pro-timeline {
+    --tl-ruler: calc(var(--media-spacing) * 5);
+    --tl-track: calc(var(--media-spacing) * 3);
+  }
+
+  @media (pointer: coarse) {
+    .pro-skin[data-density="compact"] .pro-timeline {
+      --tl-ruler: calc(var(--media-spacing) * 5.5);
+      --tl-track: calc(var(--media-spacing) * 4);
+    }
+  }
+
+  .pro-skin .pro-tl {
+    position: relative;
+    height: var(--tl-height);
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .pro-skin .pro-tl[data-disabled] {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  /* ---------- Ruler ---------- */
+
+  .pro-skin .pro-tl-ruler {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: var(--tl-ruler);
+    pointer-events: none;
+  }
+
+  .pro-skin .pro-tl-ticks {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /*
+   * A label sits right of its tick and is painted above the playhead's head (z-index) with `difference` blending:
+   * over the dock it reads as the usual dim grey, and where the white head passes under it the text turns dark, so
+   * it stays readable and the head stays whole. --pro-ruler-label is chosen so that the blended result on the dock
+   * equals --pro-text-dim.
+   */
+  .pro-skin .pro-tl-label {
+    position: absolute;
+    top: 1px;
+    z-index: 5;
+    margin-left: var(--media-spacing);
+    color: var(--pro-ruler-label);
+    font-size: var(--pro-text-ruler);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    mix-blend-mode: difference;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  @media (forced-colors: active) {
+    .pro-skin .pro-tl-label {
+      mix-blend-mode: normal;
+    }
+  }
+
+  /* ---------- Marker pins ---------- */
+
+  .pro-skin .pro-tl-pins {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 2;
+    height: var(--tl-ruler);
+    pointer-events: none;
+  }
+
+  /* The element is the 24px-wide target, as tall as the ruler; the 8x10 flag is drawn in ::after. */
+  .pro-skin .pro-tl-pin {
+    position: absolute;
+    top: 0;
+    width: 24px;
+    height: 100%;
+    color: var(--pro-text-dim);
+    pointer-events: auto;
+    transform: translateX(-50%);
+  }
+
+  .pro-skin .pro-tl-pin::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 8px;
+    height: 10px;
+    background-color: currentColor;
+    clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%);
+    transform: translateX(-50%);
+    transition: background-color var(--pro-duration) var(--pro-ease);
+  }
+
+  /* A marker with an end time: a 2px line along the bottom of the ruler, from the pin to the end. */
+  .pro-skin .pro-tl-span {
+    position: absolute;
+    bottom: 0;
+    height: 2px;
+    background-color: var(--pro-text-dim);
+  }
+
+  @media (hover: hover) {
+    .pro-skin .pro-tl-pin:hover {
+      color: var(--pro-text);
+    }
+  }
+
+  /* Selected: the accent, until the playhead moves away. */
+  .pro-skin .pro-tl-pin[data-selected] {
+    z-index: 1;
+    color: var(--pro-accent);
+  }
+
+  .pro-skin .pro-tl-span[data-selected] {
+    background-color: var(--pro-accent);
+  }
+
+  .pro-skin .pro-tl-tip {
+    position: absolute;
+    bottom: calc(100% + var(--media-spacing) * 2);
+    z-index: 8;
+    display: flex;
+    gap: calc(var(--media-spacing) * 2);
+    max-width: 100%;
+    padding: calc(var(--media-spacing) * 1.25) calc(var(--media-spacing) * 2.25);
+    border-radius: var(--pro-radius);
+    background-color: var(--pro-surface-3);
+    box-shadow: var(--pro-shadow-popup);
+    color: var(--pro-text);
+    font-size: var(--pro-text-sm);
+    line-height: 1.3;
+    pointer-events: none;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .pro-skin .pro-tl-tip-time {
+    color: var(--pro-text-dim-raised);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Track and the In/Out band ---------- */
+
+  .pro-skin .pro-tl-chapters {
+    position: absolute;
+    inset-inline: 0;
+    top: var(--tl-track-top);
+    height: var(--tl-track);
+    overflow: hidden;
+    border-radius: var(--media-spacing);
+  }
+
+  /* Chapter boundaries are 2px gaps: each chapter is clipped 1px short of its neighbours. */
+  .pro-skin .pro-tl-chapter {
+    --tl-gap-start: 1px;
+    --tl-gap-end: 1px;
+    position: absolute;
+    inset: 0;
+    clip-path: inset(
+      0 calc(100% - var(--media-slider-chapter-end, 100%) + var(--tl-gap-end)) 0
+        calc(var(--media-slider-chapter-start, 0%) + var(--tl-gap-start))
+    );
+  }
+
+  .pro-skin .pro-tl-chapter:first-of-type {
+    --tl-gap-start: 0px;
+  }
+
+  .pro-skin .pro-tl-chapter:last-of-type {
+    --tl-gap-end: 0px;
+  }
+
+  /* The track is neutral. The accent appears only inside a range, on its played part. */
+  .pro-skin .pro-tl-track {
+    position: absolute;
+    inset: 0;
+    background-color: var(--pro-surface-2);
+  }
+
+  .pro-skin .pro-tl-band,
+  .pro-skin .pro-tl-band-played {
+    position: absolute;
+    inset-block: 0;
+  }
+
+  .pro-skin .pro-timeline[data-range="none"] .pro-tl-band,
+  .pro-skin .pro-timeline[data-range="none"] .pro-tl-band-played {
+    display: none;
+  }
+
+  .pro-skin .pro-tl-band {
+    left: var(--pro-band-start);
+    right: calc(100% - var(--pro-band-end));
+    background-color: var(--pro-range);
+  }
+
+  .pro-skin .pro-tl-band-played {
+    left: var(--pro-band-start);
+    right: max(calc(100% - var(--media-slider-fill, 0%)), calc(100% - var(--pro-band-end)));
+    background-color: var(--pro-accent);
+  }
+
+  .pro-skin .pro-tl[data-dragging] .pro-tl-band-played {
+    right: max(calc(100% - var(--media-slider-pointer, 0%)), calc(100% - var(--pro-band-end)));
+  }
+
+  /* Buffered range: a quiet 2px line under the track. */
+  .pro-skin .pro-tl-buffer {
+    position: absolute;
+    top: var(--tl-buffer-top);
+    left: 0;
+    width: var(--media-slider-buffer, 0%);
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--pro-buffer);
+    pointer-events: none;
+  }
+
+  /* ---------- Playhead ---------- */
+
+  /*
+   * The slider thumb, inside a 24px focusable box as tall as the timeline: a 3px white line with a thin dark outline
+   * (::after) from under its head to below the track, and a small white pentagon head on the ruler (::before).
+   */
+  .pro-skin .pro-tl-playhead {
+    position: absolute;
+    top: 0;
+    left: var(--media-slider-fill, 0%);
+    z-index: 4;
+    width: 24px;
+    height: calc(var(--tl-track-top) + var(--tl-track) + var(--tl-handle-over));
+    border-radius: var(--pro-radius-sm);
+    outline: none;
+    pointer-events: none;
+    transform: translateX(-50%);
+  }
+
+  .pro-skin .pro-tl[data-dragging] .pro-tl-playhead {
+    left: var(--media-slider-pointer, 0%);
+  }
+
+  .pro-skin .pro-tl-playhead::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 0;
+    left: 50%;
+    width: var(--pro-playhead-width);
+    border-radius: 1px;
+    background-color: var(--pro-text);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--pro-surface-0) 70%, transparent);
+    transform: translateX(-50%);
+  }
+
+  .pro-skin .pro-tl-playhead::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 12px;
+    height: 10px;
+    background-color: var(--pro-text);
+    clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
+    transform: translateX(-50%);
+  }
+
+  .pro-skin .pro-tl-playhead:focus-visible {
+    outline: var(--pro-focus-width) solid var(--pro-accent);
+    outline-offset: var(--pro-focus-offset);
+    box-shadow: 0 0 0 var(--pro-focus-offset) var(--pro-surface-0);
+  }
+
+  /*
+   * A handle's focus ring is drawn around its tab, not around its larger target: at the ends of the track the
+   * target reaches into the dock's padding, where a ring around it would be cut off by the player's edge.
+   */
+  .pro-skin .pro-tl-handle:focus-visible::after {
+    outline: var(--pro-focus-width) solid var(--pro-accent);
+    outline-offset: var(--pro-focus-offset);
+    box-shadow: 0 0 0 var(--pro-focus-offset) var(--pro-surface-0);
+  }
+
+  /* Where the pointer is: a hairline through the ruler and the track. */
+  .pro-skin .pro-tl-hairline {
+    position: absolute;
+    top: 0;
+    left: var(--media-slider-pointer, 0%);
+    z-index: 3;
+    width: 1px;
+    height: calc(var(--tl-buffer-top) + 1px);
+    background-color: color-mix(in srgb, var(--pro-text) 45%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .pro-skin .pro-tl[data-pointing]:not([data-dragging]) .pro-tl-hairline {
+    opacity: 1;
+  }
+
+  /* ---------- Range handles ---------- */
+
+  /*
+   * A handle is a 9px-wide, 24px-tall tab with its outer corners rounded, always present. The element is a 24px
+   * target that sits mostly on the outer side of its point, so a click inside the range still seeks; the tab is
+   * drawn in ::after, 6px over the range and 3px outside it. Neutral while the point is not set (the handle then
+   * rests at its end of the track); the accent once it is.
+   */
+  .pro-skin .pro-tl-handle {
+    position: absolute;
+    top: calc(var(--tl-track-top) - var(--tl-handle-over));
+    z-index: 3;
+    width: 24px;
+    height: calc(var(--tl-track) + var(--tl-handle-over) * 2);
+    border-radius: var(--pro-radius-sm);
+    color: var(--pro-handle-idle);
+    cursor: ew-resize;
+    outline: none;
+    touch-action: none;
+  }
+
+  .pro-skin .pro-tl-handle[data-set],
+  .pro-skin .pro-tl-handle[data-dragging] {
+    color: var(--pro-accent);
+  }
+
+  .pro-skin .pro-tl-handle[data-handle="in"] {
+    transform: translateX(-18px);
+  }
+
+  .pro-skin .pro-tl-handle[data-handle="out"] {
+    transform: translateX(-6px);
+  }
+
+  .pro-skin .pro-tl-handle::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    width: var(--tl-handle-width);
+    background-color: currentColor;
+    transition: background-color var(--pro-duration) var(--pro-ease);
+  }
+
+  .pro-skin .pro-tl-handle[data-handle="in"]::after {
+    left: 15px;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .pro-skin .pro-tl-handle[data-handle="out"]::after {
+    left: 0;
+    border-radius: 0 4px 4px 0;
+  }
+
+  @media (hover: hover) {
+    .pro-skin .pro-tl-handle:not([data-set]):hover {
+      color: var(--pro-text-dim);
+    }
+  }
+
+  /* Touch: a 44px by 44px target, grown outwards and up and down, not over the range. */
+  @media (pointer: coarse) {
+    .pro-skin .pro-tl-handle::before {
+      content: "";
+      position: absolute;
+      inset-block: -10px;
+    }
+
+    .pro-skin .pro-tl-handle[data-handle="in"]::before {
+      inset-inline: -20px 0;
+    }
+
+    .pro-skin .pro-tl-handle[data-handle="out"]::before {
+      inset-inline: 0 -20px;
+    }
+  }
+
+  /* ---------- Bubbles: hover preview and drag ---------- */
+
+  /* The hover preview follows the pointer: the storyboard thumbnail when the media has one, then the timecode. */
+  .pro-skin .pro-tl-preview {
+    bottom: calc(100% + var(--media-spacing) * 2);
+    z-index: 7;
+    display: grid;
+    justify-items: center;
+    gap: var(--media-spacing);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--pro-duration) var(--pro-ease);
+  }
+
+  .pro-skin .pro-tl[data-pointing] .pro-tl-preview,
+  .pro-skin .pro-tl[data-dragging] .pro-tl-preview {
+    opacity: 1;
+  }
+
+  /* Over a marker pin, the pin's own tooltip takes the place of the hover bubble and hairline. */
+  .pro-skin .pro-tl:has(.pro-tl-pin:hover) .pro-tl-preview,
+  .pro-skin .pro-tl:has(.pro-tl-pin:hover) .pro-tl-hairline {
+    opacity: 0;
+  }
+
+  /* A small dark bubble with the full timecode. */
+  .pro-skin .pro-tl-bubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--media-spacing) * 2);
+    min-width: var(--tl-bubble-width);
+    max-width: calc(var(--media-spacing) * 60);
+    height: calc(var(--media-spacing) * 5.5);
+    padding-inline: calc(var(--media-spacing) * 2);
+    border-radius: var(--pro-radius);
+    background-color: var(--pro-surface-3);
+    box-shadow: var(--pro-shadow-popup);
+    color: var(--pro-text);
+    font-size: var(--pro-text-sm);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .pro-skin .pro-tl-bubble-value {
+    flex-shrink: 0;
+  }
+
+  .pro-skin .pro-tl-bubble-chapter {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--pro-text-dim-raised);
+    font-weight: 400;
+    text-overflow: ellipsis;
+  }
+
+  .pro-skin .pro-tl-bubble-chapter:empty {
+    display: none;
+  }
+
+  /* The bubble of a handle being dragged: the same bubble, centred on the handle and kept inside the timeline. */
+  .pro-skin .pro-tl-bubble-drag {
+    position: absolute;
+    bottom: calc(100% + var(--media-spacing) * 2);
+    z-index: 8;
+    width: var(--tl-bubble-width);
+    padding-inline: 0;
+    pointer-events: none;
+    transform: translateX(-50%);
+  }
+
+  @media (forced-colors: active) {
+    .pro-skin .pro-tl-track {
+      border: 1px solid CanvasText;
+    }
+  }
+}

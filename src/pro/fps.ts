@@ -1,4 +1,4 @@
-/** Frame-rate basics shared by the Share-side wrapper and the pro code. Kept tiny so Share stays light. */
+/** Frame-rate basics shared by the Viewer-side wrapper and the pro code. Kept tiny so Viewer stays light. */
 
 export const DEFAULT_FPS = 24;
 

@@ -16,7 +16,7 @@ export const useAnnounce = () => useContext(AnnounceContext);
 const TOAST_MS = 2400;
 
 /**
- * The Review tier's one polite live region, plus an on-screen toast for action results. Video.js's own
+ * The Studio tier's one polite live region, plus an on-screen toast for action results. Video.js's own
  * `StatusAnnouncer` keeps announcing the built-in actions (play, mute, captions); it has no way to speak custom text,
  * so pro messages go through this region instead. Each message is spoken once.
  */

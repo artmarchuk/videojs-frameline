@@ -19,8 +19,8 @@ import {
   withLinkPosition,
   type Cut,
 } from './logic';
-import { reviewStrings as t } from './strings';
-import { snapFrame } from './timeline/logic';
+import { studioStrings as t } from './strings';
+import { isAtOwnEnd, snapFrame } from './timeline/logic';
 
 export interface CopyLinkInfo {
   url: string;
@@ -32,7 +32,7 @@ export interface PosterFrameInfo extends FrameInfo {
   timecode: string;
 }
 
-export interface ReviewOptions {
+export interface StudioOptions {
   video: HTMLVideoElement | null;
   fps: number;
   startFrames: number;
@@ -43,7 +43,7 @@ export interface ReviewOptions {
   onPosterFrame?: ((info: PosterFrameInfo) => void) | undefined;
 }
 
-export interface ReviewController {
+export interface StudioController {
   /** Formats a frame as the timecode the user sees (start offset and drop-frame applied). */
   timecode(frame: number): string;
   step(delta: number): void;
@@ -55,7 +55,6 @@ export interface ReviewController {
   clearOut(): void;
   clearRange(): void;
   toggleLoop(): void;
-  playRange(): void;
   grabFrame(): void;
   copyFrameImage(): void;
   copyLink(): void;
@@ -68,6 +67,8 @@ export interface ReviewController {
   seekBy(seconds: number): void;
   /** Seeks to a marker and reports it as selected. */
   goToMarker(marker: Marker): void;
+  /** Seeks to a time (a chapter start) and announces the frame. */
+  goToTime(time: number): void;
 }
 
 /** How long a just-requested frame is trusted over the clock, which needs a moment to catch up after a seek. */
@@ -120,10 +121,10 @@ function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 /**
- * Everything the Review controls do, in one place. Components and hotkeys call these actions; none of them holds
+ * Everything the Studio controls do, in one place. Components and hotkeys call these actions; none of them holds
  * transport logic of its own. The returned object is stable for the life of the component.
  */
-export function useReviewController(options: ReviewOptions): ReviewController {
+export function useStudioController(options: StudioOptions): StudioController {
   const store = useProStoreApi();
   const latest = useRef(options);
   latest.current = options;
@@ -132,10 +133,9 @@ export function useReviewController(options: ReviewOptions): ReviewController {
   const target = useRef<{ frame: number; at: number } | null>(null);
   const queued = useRef<number | null>(null);
   const cutTarget = useRef<{ frame: number; at: number } | null>(null);
-  const playingRange = useRef(false);
   const stepTimer = useRef(0);
 
-  const controller = useMemo(() => createController(store, latest, { target, queued, cutTarget, playingRange, stepTimer }), [store]);
+  const controller = useMemo(() => createController(store, latest, { target, queued, cutTarget, stepTimer }), [store]);
 
   const { video, fps } = options;
 
@@ -151,7 +151,7 @@ export function useReviewController(options: ReviewOptions): ReviewController {
     return () => video.removeEventListener('seeked', onSeeked);
   }, [video, fps]);
 
-  // Loop and play-range engine. It listens to the store, not to React state, so nothing re-renders per frame.
+  // Loop engine. It listens to the store, not to React state, so nothing re-renders per frame.
   useEffect(() => {
     if (!video) return;
 
@@ -163,17 +163,9 @@ export function useReviewController(options: ReviewOptions): ReviewController {
         duration: state.duration || video.duration || 0,
         fps,
         loopMode: state.loopMode,
-        playingRange: playingRange.current,
         starting,
       };
-      const decision = loopDecision(input);
-      if (decision === 'continue') return;
-
-      if (decision === 'pauseAtOut') {
-        playingRange.current = false;
-        video.pause();
-        return;
-      }
+      if (loopDecision(input) === 'continue') return;
       const range = effectiveRange(input.range, input.duration);
       if (!range || video.seeking) return;
       video.currentTime = seekTimeForFrame(framesFromSeconds(range.start, fps), fps);
@@ -191,26 +183,21 @@ export function useReviewController(options: ReviewOptions): ReviewController {
       target.current = null;
       decide(video.currentTime, true);
     };
-    const onPause = () => {
-      playingRange.current = false;
-    };
-    // The range can run to the very end of the media, where the clock stops before the loop point is seen.
+    // The whole video loops here; so does a range that runs to the very end of the media, where the clock stops
+    // before the loop point is seen.
     const onEnded = () => {
       const state = store.getState();
-      if (state.loopMode !== 'range') return;
+      if (state.loopMode === 'off') return;
       const range = effectiveRange({ in: state.inPoint, out: state.outPoint }, video.duration || 0);
-      if (!range) return;
-      video.currentTime = seekTimeForFrame(framesFromSeconds(range.start, fps), fps);
+      video.currentTime = seekTimeForFrame(framesFromSeconds(range?.start ?? 0, fps), fps);
       void video.play().catch(() => {});
     };
 
     video.addEventListener('play', onPlay);
-    video.addEventListener('pause', onPause);
     video.addEventListener('ended', onEnded);
     return () => {
       unsubscribe();
       video.removeEventListener('play', onPlay);
-      video.removeEventListener('pause', onPause);
       video.removeEventListener('ended', onEnded);
     };
   }, [video, fps, store]);
@@ -249,11 +236,10 @@ interface Refs {
   target: { current: { frame: number; at: number } | null };
   queued: { current: number | null };
   cutTarget: { current: { frame: number; at: number } | null };
-  playingRange: { current: boolean };
   stepTimer: { current: number };
 }
 
-function createController(store: ProStore, latest: { current: ReviewOptions }, refs: Refs): ReviewController {
+function createController(store: ProStore, latest: { current: StudioOptions }, refs: Refs): StudioController {
   const opts = () => latest.current;
 
   const timecode = (frame: number) => {
@@ -309,6 +295,16 @@ function createController(store: ProStore, latest: { current: ReviewOptions }, r
     const frame = currentFrame();
     const time = secondsFromFrames(frame, fps);
     const before = store.getState();
+
+    // In on the first frame, or Out on the last, is the whole video on that side: the point is not set.
+    if (isAtOwnEnd(which, time, before.duration, fps)) {
+      const had = which === 'in' ? before.inPoint : before.outPoint;
+      if (which === 'in') store.clearIn();
+      else store.clearOut();
+      if (had !== null) announce(rangeIsEmpty() ? t.rangeReset : which === 'in' ? t.inCleared : t.outCleared);
+      else announce(which === 'in' ? t.inAtStart : t.outAtEnd, { toast: true });
+      return;
+    }
     const other = which === 'in' ? before.outPoint : before.inPoint;
 
     if (other !== null && framesFromSeconds(other, fps) === frame) {
@@ -332,9 +328,9 @@ function createController(store: ProStore, latest: { current: ReviewOptions }, r
     announce((which === 'in' ? t.inSet : t.outSet)(timecode(frame)));
   };
 
-  const hasRange = () => {
+  const rangeIsEmpty = () => {
     const state = store.getState();
-    return state.inPoint !== null || state.outPoint !== null;
+    return state.inPoint === null && state.outPoint === null;
   };
 
   const withCapture = async (work: (blob: Promise<Blob>, name: string) => Promise<string>) => {
@@ -378,6 +374,11 @@ function createController(store: ProStore, latest: { current: ReviewOptions }, r
       announceFrameSoon();
     },
 
+    goToTime(time) {
+      seekToTime(time);
+      announceFrameSoon();
+    },
+
     jump: (direction) => step(direction * JUMP_FRAMES),
 
     goToCut(direction) {
@@ -403,52 +404,25 @@ function createController(store: ProStore, latest: { current: ReviewOptions }, r
     clearIn() {
       if (store.getState().inPoint === null) return;
       store.clearIn();
-      opts().announce(t.inCleared);
+      opts().announce(rangeIsEmpty() ? t.rangeReset : t.inCleared);
     },
 
     clearOut() {
       if (store.getState().outPoint === null) return;
       store.clearOut();
-      opts().announce(t.outCleared);
+      opts().announce(rangeIsEmpty() ? t.rangeReset : t.outCleared);
     },
 
     clearRange() {
-      if (!hasRange()) return;
+      if (rangeIsEmpty()) return;
       store.clearInOut();
-      opts().announce(t.rangeCleared, { toast: true });
+      opts().announce(t.rangeReset, { toast: true });
     },
 
     toggleLoop() {
-      const { announce } = opts();
-      if (!hasRange()) {
-        announce(t.needRange, { toast: true });
-        return;
-      }
-      const on = store.getState().loopMode !== 'range';
-      store.setLoopMode(on ? 'range' : 'off');
-      announce(on ? t.loopOn : t.loopOff, { toast: true });
-    },
-
-    playRange() {
-      const { video, fps, announce } = opts();
-      if (!video) return;
-      const state = store.getState();
-      const range = effectiveRange({ in: state.inPoint, out: state.outPoint }, video.duration || 0);
-      if (!range) {
-        announce(t.needRange, { toast: true });
-        return;
-      }
-      seekToFrame(framesFromSeconds(range.start, fps));
-      refs.playingRange.current = true;
-      void video
-        .play()
-        .then(() => {
-          // `play` clears the flag through the pause listener only on a real pause; set it again after start.
-          refs.playingRange.current = true;
-        })
-        .catch(() => {
-          refs.playingRange.current = false;
-        });
+      store.setLoop();
+      const mode = store.getState().loopMode;
+      opts().announce(mode === 'off' ? t.loopOff : mode === 'range' ? t.loopOnRange : t.loopOnWhole, { toast: true });
     },
 
     grabFrame() {

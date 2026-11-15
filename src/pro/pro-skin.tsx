@@ -16,11 +16,11 @@ import {
   type Layout,
   type Tier,
 } from './features';
-import type { CopyLinkInfo, PosterFrameInfo } from './review/controller';
+import type { CopyLinkInfo, PosterFrameInfo } from './studio/controller';
 import type { FrameInfo, InOutRange, Marker } from './store';
 import { DEFAULT_FPS, isValidFps } from './fps';
 
-// The pro runtime (store, frame clock, tier layers) is a separate chunk. The Share tier never requests it.
+// The pro runtime (store, frame clock, the Studio layer) is a separate chunk. The Viewer tier never requests it.
 const ProRuntime = lazy(() => import('./runtime'));
 
 export type Density = 'comfortable' | 'compact';
@@ -46,7 +46,10 @@ type InternalSkinProps =
   | 'arrowSeekWhilePlayingOnly';
 
 export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
-  /** Which bundle of features to start from. Default `'share'`: the clean player, with no pro code loaded. */
+  /**
+   * Which bundle of features to start from. `'viewer'` (default): the clean player a creator's client or audience
+   * gets, with no pro code loaded. `'studio'`: the creator's monitor, with the full set.
+   */
   tier?: Tier;
   /** Single features switched on or off on top of the tier, for example `{ grabFrame: false, guides: ['9:16'] }`. */
   features?: FeatureOverrides;
@@ -59,11 +62,14 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   startTimecode?: string;
   /** Count in drop-frame timecode. Only meaningful for 29.97 and 59.94; ignored for other rates. */
   dropFrame?: boolean;
-  /** Markers for the timeline. Times in seconds; `end` makes a range marker. */
+  /**
+   * Markers for the timeline: the host's data. The skin shows them as pins, lists them in the Markers menu and
+   * reports clicks; it never creates or stores them. Times in seconds; `end` adds a line to that time.
+   */
   markers?: Marker[];
   /**
    * `'dock'` puts the controls in a panel below the picture, where they never cover it (also in fullscreen) and never
-   * hide; `'overlay'` puts them over the picture. Default: `'overlay'` for Share, `'dock'` for Review and Studio.
+   * hide; `'overlay'` puts them over the picture. Default: `'overlay'` for Viewer, `'dock'` for Studio.
    * In the dock layout the aspect ratio applies to the picture's stage, and the component's height is stage plus dock.
    */
   layout?: Layout;
@@ -83,7 +89,7 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
   onCopyLink?: (info: CopyLinkInfo) => void;
   /** Fires when the user picks the current frame as the poster. The host app saves it; the skin stores nothing. */
   onPosterFrame?: (info: PosterFrameInfo) => void;
-  /** The media element, as in the Share skin: for example `<MuxVideo src="…" />`. */
+  /** The media element, as in the Viewer skin: for example `<MuxVideo src="…" />`. */
   children: ReactNode;
 }
 
@@ -94,18 +100,18 @@ function debugInUrl(): boolean {
 /**
  * Video.js PRO: a player skin for video creators' tools.
  *
- * `ProSkin` is the public entry point. It wraps the Share skin and adds what the chosen tier and feature flags ask
- * for. With `tier="share"` and no flags it is exactly the Share skin and loads no pro code.
+ * `ProSkin` is the public entry point. It wraps the Viewer skin and adds what the chosen tier and feature flags ask
+ * for. With `tier="viewer"` and no flags it is exactly the Viewer skin and loads no pro code.
  *
  * @example
  * <VideoPlayer>
- *   <ProSkin tier="review" fps={24} onInOutChange={saveRange}>
+ *   <ProSkin tier="studio" fps={24} onInOutChange={saveRange}>
  *     <MuxVideo src="https://stream.mux.com/…" playsInline crossOrigin="" />
  *   </ProSkin>
  * </VideoPlayer>
  */
 export function ProSkin({
-  tier = 'share',
+  tier = 'viewer',
   features: overrides,
   fps = DEFAULT_FPS,
   startTimecode,
@@ -126,8 +132,8 @@ export function ProSkin({
   const renders = useRef(0);
   renders.current += 1;
 
-  const safeTier: Tier = isTier(tier) ? tier : 'share';
-  if (safeTier !== tier) warnOnce(`Unknown tier "${String(tier)}"; using "share".`);
+  const safeTier: Tier = isTier(tier) ? tier : 'viewer';
+  if (safeTier !== tier) warnOnce(`Unknown tier "${String(tier)}"; using "viewer".`);
 
   let safeFps = fps;
   if (!isValidFps(fps)) {
@@ -155,9 +161,11 @@ export function ProSkin({
   for (const id of overlays) guideAttributes[guideAttribute(id)] = '';
 
   const pro = hasProFeatures(features);
-  // Any Review control in the bar means the pro bar: timeline row, grouped main row, slots for the pro controls.
+  // Any Studio control in the bar means the pro bar: the timeline row and the three-column main row with its slots.
   const proBar =
     features.timecode ||
+    features.markers ||
+    features.guides !== false ||
     features.frameStep ||
     features.shotNav ||
     features.inOut ||

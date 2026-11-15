@@ -20,16 +20,17 @@ import { warnOnce } from '../../dev';
 import type { Marker } from '../../store';
 import { secondsFromFrames } from '../../timecode';
 import { useAnnounce } from '../announcer';
-import type { ReviewController } from '../controller';
+import type { StudioController } from '../controller';
 import { JUMP_FRAMES } from '../logic';
-import { reviewStrings as t } from '../strings';
+import { studioStrings as t } from '../strings';
 import {
   buildLabels,
   buildTicks,
   chooseTicks,
   clampBubble,
+  handleDragTime,
   handleKeyTarget,
-  handleTimeFromX,
+  handleValue,
   isSnapped,
   layoutMarkers,
   MARKER_SOFT_LIMIT,
@@ -39,16 +40,16 @@ import {
   snapSeekTime,
   timeToPercent,
   timeToX,
-  type MarkerItem,
+  type MarkerPin,
   type RangePoints,
 } from './logic';
 
 export interface TimelineProps {
-  controller: ReviewController;
+  controller: StudioController;
   fps: number;
   /** Markers to draw; pass an empty list when the `markers` feature is off. */
   markers: readonly Marker[];
-  /** Draw the In/Out band and handles. */
+  /** Draw the In/Out band and the two handles. */
   range: boolean;
   video: HTMLVideoElement | null;
   renderThumbnail?: SliderPrimitive.Thumbnail.ImageProps['render'];
@@ -71,7 +72,7 @@ function useWidth(ref: { current: HTMLElement | null }): number {
 }
 
 /**
- * Frame snapping. In the Review and Studio tiers every seek, whatever started it (the timeline, a slider key, `J`,
+ * Frame snapping. In the Studio tier every seek, whatever started it (the timeline, a slider key, `J`,
  * `L`, a number key), is moved to the middle of the frame it lands in: the same half-frame rule the step buttons
  * use. It runs inside the `seeking` event, so the browser performs one seek, not two.
  */
@@ -91,10 +92,12 @@ function useFrameSnap(video: HTMLVideoElement | null, fps: number) {
 }
 
 /**
- * The Review and Studio timeline: "a slider that looks like a ruler". It is the Video.js `TimeSlider` (root, track,
- * fill, buffer, thumb, preview, chapters), so slider semantics, pointer capture and media state stay Video.js's job.
- * Around it: a marker lane, a tick ruler, the In/Out band with draggable handles, and a timecode bubble on the
- * playhead. Time always runs left to right, also on right-to-left pages.
+ * The Studio timeline: "a slider that looks like a ruler", about 46 px tall. It is the Video.js `TimeSlider` (root,
+ * track, buffer, thumb, preview, chapters), so slider semantics, pointer capture and media state stay Video.js's job.
+ * Around it: a tick ruler with the marker pins on it, the In/Out band, and the two range handles, which are always
+ * at the ends of the track until they are moved. There is no permanent time bubble: the current timecode is in the
+ * main row, and a bubble appears only while the pointer hovers the timeline or drags something. Time always runs
+ * left to right, also on right-to-left pages.
  */
 export function Timeline({ controller, fps, markers, range, video, renderThumbnail }: TimelineProps) {
   const duration = useProStore((state) => state.duration);
@@ -103,7 +106,6 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
   const storeOut = useProStore((state) => state.outPoint);
 
   const root = useRef<HTMLDivElement>(null);
-  const thumb = useRef<HTMLDivElement | null>(null);
   const width = useWidth(root);
 
   useFrameSnap(video, fps);
@@ -126,8 +128,6 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
     '--pro-band-start': band ? `${band.start}%` : undefined,
     '--pro-band-end': band ? `${band.end}%` : undefined,
   } as CSSProperties;
-
-  const focusThumb = useCallback(() => thumb.current?.focus({ preventScroll: true }), []);
 
   /**
    * Keys on the focused seek slider. One rule with the global map: `←` `→` step a frame while paused and seek 5 s
@@ -152,18 +152,19 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
     [controller, video]
   );
 
+  const handleProps = { points, duration, fps, width, root, format, setDraft, controller, markers };
+
   return (
-    <div className={'pro-timeline'} dir="ltr" style={style} data-range={band ? (band.openStart ? 'open-start' : band.openEnd ? 'open-end' : 'both') : 'none'} data-display={seconds ? 'seconds' : 'timecode'} data-interactive="">
+    <div className={'pro-timeline'} dir="ltr" style={style} data-range={band ? 'set' : 'none'} data-display={seconds ? 'seconds' : 'timecode'} data-interactive="">
       <TimeSlider.Root ref={root} className={'pro-tl'} label={t.seek}>
-        {markers.length > 0 && <MarkerLane markers={markers} duration={duration} width={width} format={format} controller={controller} />}
         <Ruler duration={duration} width={width} fps={fps} />
+        {markers.length > 0 && <MarkerPins markers={markers} duration={duration} width={width} format={format} controller={controller} />}
 
         <TimeSlider.Chapters
           className={'pro-tl-chapters'}
           renderChapter={(props) => (
             <div className={'pro-tl-chapter'} {...props}>
               <TimeSlider.Track className={'pro-tl-track'}>
-                <TimeSlider.Fill className={'pro-tl-fill'} />
                 <span className={'pro-tl-band'} />
                 <span className={'pro-tl-band-played'} />
               </TimeSlider.Track>
@@ -171,56 +172,29 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
           )}
         />
         <TimeSlider.Buffer className={'pro-tl-buffer'} />
+        <span className={'pro-tl-hairline'} aria-hidden="true" />
 
         <TimeSlider.Thumb
           className={'pro-tl-playhead'}
           render={(props, state) => (
-            <div
-              {...props}
-              ref={(node) => {
-                thumb.current = node;
-                const forwarded = (props as { ref?: unknown }).ref;
-                if (typeof forwarded === 'function') forwarded(node);
-                else if (forwarded && typeof forwarded === 'object') (forwarded as { current: unknown }).current = node;
-              }}
-              aria-valuetext={format(state.value)}
-              onKeyDownCapture={(event) => onThumbKey(event, props.onKeyDownCapture as never)}
-            />
+            <div {...props} aria-valuetext={format(state.value)} onKeyDownCapture={(event) => onThumbKey(event, props.onKeyDownCapture as never)} />
           )}
         />
-        <PlayheadBubble format={controller} fps={fps} seconds={seconds} />
 
-        {range && points.in !== null && (
-          <RangeHandle which="in" points={points} duration={duration} fps={fps} width={width} root={root} format={format} setDraft={setDraft} onCleared={focusThumb} controller={controller} />
-        )}
-        {range && points.out !== null && (
-          <RangeHandle which="out" points={points} duration={duration} fps={fps} width={width} root={root} format={format} setDraft={setDraft} onCleared={focusThumb} controller={controller} />
-        )}
+        {range && <RangeHandle which="in" {...handleProps} />}
+        {range && <RangeHandle which="out" {...handleProps} />}
 
         <TimeSlider.Preview className={'pro-tl-preview'} overflow="clamp">
           <SliderPrimitive.Thumbnail.Root className={'media-slider-thumbnail'}>
             <SliderPrimitive.Thumbnail.Image render={renderThumbnail} className={'media-slider-thumbnail-image'} />
           </SliderPrimitive.Thumbnail.Root>
-          <div className={'pro-tl-hover'}>
-            <TimeSlider.Value className={'pro-tl-hover-value'} type="pointer" format={format} />
-            <TimeSlider.ChapterTitle className={'pro-tl-hover-chapter'} />
+          <div className={'pro-tl-bubble'}>
+            <TimeSlider.Value className={'pro-tl-bubble-value'} type="pointer" format={format} />
+            <TimeSlider.ChapterTitle className={'pro-tl-bubble-chapter'} />
           </div>
         </TimeSlider.Preview>
       </TimeSlider.Root>
     </div>
-  );
-}
-
-/**
- * The bubble that rides the playhead with the current position. It re-renders when the frame changes and at no other
- * time; its position comes from the slider's CSS variables, clamped in CSS so it never leaves the timeline.
- */
-function PlayheadBubble({ format, fps, seconds }: { format: ReviewController; fps: number; seconds: boolean }) {
-  const frame = useProStore((state) => state.frame);
-  return (
-    <span className={'pro-tl-bubble'} aria-hidden="true">
-      {seconds ? secondsFromFrames(frame, fps).toFixed(3) : format.timecode(frame)}
-    </span>
   );
 }
 
@@ -277,11 +251,12 @@ const Ruler = memo(function Ruler({ duration, width, fps }: { duration: number; 
 });
 
 /**
- * The marker lane. Points are flags, ranges are bars, and points that would overlap collapse into a count badge, so
- * shape tells the kinds apart, not colour. The lane is for the pointer only: no tab stops, hidden from assistive
- * technology. Keyboard and screen-reader users reach the same markers through `[` `]` and the Markers list.
+ * The marker pins: one small flag per marker on the ruler, with a line to the end time when the marker has one.
+ * One visual and no clusters; pins that are close together overlap, later ones on top. The pins are for the pointer
+ * only: no tab stops, hidden from assistive technology. Keyboard and screen-reader users reach the same markers
+ * through `[` `]` and the Markers menu. The skin only shows the host's markers; it never creates or stores them.
  */
-const MarkerLane = memo(function MarkerLane({
+const MarkerPins = memo(function MarkerPins({
   markers,
   duration,
   width,
@@ -292,58 +267,45 @@ const MarkerLane = memo(function MarkerLane({
   duration: number;
   width: number;
   format: (time: number) => string;
-  controller: ReviewController;
+  controller: StudioController;
 }) {
   const selected = useProStore((state) => state.selectedMarker);
-  const [hover, setHover] = useState<MarkerItem | null>(null);
+  const [hover, setHover] = useState<MarkerPin | null>(null);
   const tip = useRef<HTMLSpanElement>(null);
 
-  if (markers.length > MARKER_SOFT_LIMIT)
-    warnOnce(`${markers.length} markers passed; the timeline is designed for up to ${MARKER_SOFT_LIMIT}. They are clustered.`);
+  if (markers.length > MARKER_SOFT_LIMIT) warnOnce(`${markers.length} markers passed; the timeline is designed for up to ${MARKER_SOFT_LIMIT}.`);
 
-  const items = useMemo(() => layoutMarkers(markers, duration, width), [markers, duration, width]);
+  const pins = useMemo(() => layoutMarkers(markers, duration, width), [markers, duration, width]);
 
-  // Centre the tooltip on its marker, then pull it back inside the lane.
+  // Centre the tooltip on its pin, then pull it back inside the timeline.
   useLayoutEffect(() => {
     const element = tip.current;
     if (!element || !hover) return;
-    const centre = hover.kind === 'range' ? hover.x + hover.width / 2 : hover.x;
-    element.style.left = `${clampBubble(centre, element.offsetWidth, width)}px`;
+    element.style.left = `${clampBubble(hover.x, element.offsetWidth, width)}px`;
   }, [hover, width]);
 
-  const select = (item: MarkerItem) => controller.goToMarker(item.markers[0]!);
-
   return (
-    <div className={'pro-tl-lane'} aria-hidden="true">
-      {items.map((item) => {
-        const isSelected = selected !== null && item.markers.includes(selected);
-        const common = {
-          'data-selected': isSelected ? '' : undefined,
-          onPointerDown: (event: ReactPointerEvent) => event.stopPropagation(),
-          onPointerUp: (event: ReactPointerEvent) => event.stopPropagation(),
-          onClick: () => select(item),
-          onPointerEnter: () => setHover(item),
-          onPointerLeave: () => setHover((current) => (current === item ? null : current)),
-        };
-        if (item.kind === 'range')
-          return <span key={item.key} className={'pro-tl-marker pro-tl-marker-range'} style={{ left: item.x, width: item.width }} {...common} />;
-        if (item.kind === 'cluster')
-          return (
-            <span key={item.key} className={'pro-tl-marker pro-tl-marker-cluster'} style={{ left: item.x }} {...common}>
-              {item.markers.length}
-            </span>
-          );
-        return <span key={item.key} className={'pro-tl-marker pro-tl-marker-point'} style={{ left: item.x }} {...common} />;
-      })}
+    <div className={'pro-tl-pins'} aria-hidden="true">
+      {pins.map((pin) => pin.endX !== null && <span key={`e-${pin.key}`} className={'pro-tl-span'} data-selected={pin.marker === selected ? '' : undefined} style={{ left: pin.x, width: pin.endX - pin.x }} />)}
+      {pins.map((pin) => (
+        <span
+          key={pin.key}
+          className={'pro-tl-pin'}
+          style={{ left: pin.x }}
+          data-selected={pin.marker === selected ? '' : undefined}
+          // Stopped, so the seek slider under the pin does not also seek to the pointer's own position.
+          onPointerDown={(event: ReactPointerEvent) => event.stopPropagation()}
+          onPointerUp={(event: ReactPointerEvent) => event.stopPropagation()}
+          onClick={() => controller.goToMarker(pin.marker)}
+          onPointerEnter={() => setHover(pin)}
+          onPointerLeave={() => setHover((current) => (current === pin ? null : current))}
+        />
+      ))}
       {hover && (
         <span ref={tip} className={'pro-tl-tip'}>
-          {hover.kind === 'cluster' ? t.markerCount(hover.markers.length) : hover.markers[0]!.label}
+          {hover.marker.label}
           <span className={'pro-tl-tip-time'}>
-            {hover.kind === 'cluster'
-              ? `${format(hover.markers[0]!.time)} – ${format(hover.markers[hover.markers.length - 1]!.time)}`
-              : hover.kind === 'range'
-                ? `${format(hover.markers[0]!.time)} – ${format(hover.markers[0]!.end ?? hover.markers[0]!.time)}`
-                : format(hover.markers[0]!.time)}
+            {hover.endX !== null ? `${format(hover.marker.time)} – ${format(hover.marker.end ?? hover.marker.time)}` : format(hover.marker.time)}
           </span>
         </span>
       )}
@@ -355,9 +317,12 @@ const MarkerLane = memo(function MarkerLane({
 const HANDLE_ANNOUNCE_MS = 400;
 
 /**
- * An In or Out handle: a bracket on the band's outer side, and a real slider for the keyboard and assistive
- * technology. Dragging previews the move and commits on release, so `onInOutChange` fires once. With focus on it:
- * `←` `→` one frame, `Shift` ten, `Home` `End` its limits, `Delete` or `Backspace` clears the point.
+ * An In or Out handle: a tab at its end of the range, and a real slider for the keyboard and assistive technology.
+ * It is always there. While its point is not set it rests at its own end of the track, in a neutral colour; moved
+ * anywhere else it sets the point and takes the accent. Dragging previews the move and commits on release, so
+ * `onInOutChange` fires once; the drag snaps to frames, and magnetically to the playhead and to markers. Dragging it
+ * back to its end, a double click, `Delete` or `Backspace` unsets the point. With focus on it: `←` `→` one frame,
+ * `Shift` ten, `Home` `End` its limits.
  */
 function RangeHandle({
   which,
@@ -368,8 +333,8 @@ function RangeHandle({
   root,
   format,
   setDraft,
-  onCleared,
   controller,
+  markers,
 }: {
   which: 'in' | 'out';
   points: RangePoints;
@@ -379,21 +344,26 @@ function RangeHandle({
   root: { current: HTMLElement | null };
   format: (time: number) => string;
   setDraft: (draft: RangePoints | null) => void;
-  onCleared: () => void;
-  controller: ReviewController;
+  controller: StudioController;
+  markers: readonly Marker[];
 }) {
   const store = useProStoreApi();
   const announce = useAnnounce();
   const element = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ base: RangePoints; left: number; time: number; rejected: boolean; swapped: boolean } | null>(null);
+  const drag = useRef<{ base: RangePoints; left: number; time: number; moved: boolean; magnets: number[] } | null>(null);
   const [dragTime, setDragTime] = useState<number | null>(null);
   const timer = useRef(0);
 
-  const value = (which === 'in' ? points.in : points.out) ?? 0;
-  const moved = which === 'in' ? t.inMoved : t.outMoved;
+  const set = (which === 'in' ? points.in : points.out) !== null;
+  const value = handleValue(which, points, duration);
 
-  const latest = useRef({ points, duration, fps, format, which });
-  latest.current = { points, duration, fps, format, which };
+  const latest = useRef({ duration, fps, format, which });
+  latest.current = { duration, fps, format, which };
+
+  const clear = useCallback(() => {
+    if (which === 'in') controller.clearIn();
+    else controller.clearOut();
+  }, [controller, which]);
 
   // A native listener, so these keys are handled (and marked handled) before the player's hotkeys see them.
   useEffect(() => {
@@ -403,25 +373,22 @@ function RangeHandle({
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       const now = latest.current;
       const state = store.getState();
-      const range = { in: state.inPoint, out: state.outPoint };
-      const target = handleKeyTarget(event.key, event.shiftKey, now.which, range, now.duration, now.fps);
+      const target = handleKeyTarget(event.key, event.shiftKey, now.which, { in: state.inPoint, out: state.outPoint }, now.duration, now.fps);
       if (target === null) return;
       event.preventDefault();
       event.stopPropagation();
+      window.clearTimeout(timer.current);
       if (target === 'clear') {
-        onCleared();
-        if (now.which === 'in') controller.clearIn();
-        else controller.clearOut();
+        clear();
         return;
       }
       if (now.which === 'in') store.setIn(target);
       else store.setOut(target);
-      window.clearTimeout(timer.current);
       timer.current = window.setTimeout(() => announce((now.which === 'in' ? t.inMoved : t.outMoved)(latest.current.format(target))), HANDLE_ANNOUNCE_MS);
     };
     node.addEventListener('keydown', onKeyDown);
     return () => node.removeEventListener('keydown', onKeyDown);
-  }, [store, controller, announce, onCleared]);
+  }, [store, announce, clear]);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
@@ -430,16 +397,23 @@ function RangeHandle({
     drag.current = null;
     setDragTime(null);
     setDraft(null);
-    if (!current || !commit) return;
-    if (current.rejected) {
+    if (!current || !commit || !current.moved) return;
+
+    const move = resolveHandleMove(which, current.time, current.base, duration, fps);
+    if (move.rejected) {
       announce(t.sameFrame, { toast: true });
       return;
     }
+    if (move.unset) {
+      clear();
+      return;
+    }
+    const wasSet = (which === 'in' ? current.base.in : current.base.out) !== null;
     if (which === 'in') store.setIn(current.time);
     else store.setOut(current.time);
     const after = store.getState();
-    if (current.swapped && after.inPoint !== null && after.outPoint !== null) announce(t.swapped(format(after.inPoint), format(after.outPoint)), { toast: true });
-    else announce(moved(format(current.time)));
+    if (move.swapped && after.inPoint !== null && after.outPoint !== null) announce(t.swapped(format(after.inPoint), format(after.outPoint)), { toast: true });
+    else announce((which === 'in' ? (wasSet ? t.inMoved : t.inSet) : wasSet ? t.outMoved : t.outSet)(format(current.time)));
   };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -450,7 +424,14 @@ function RangeHandle({
     const track = root.current;
     if (!track) return;
     const state = store.getState();
-    drag.current = { base: { in: state.inPoint, out: state.outPoint }, left: track.getBoundingClientRect().left, time: value, rejected: false, swapped: false };
+    drag.current = {
+      base: { in: state.inPoint, out: state.outPoint },
+      left: track.getBoundingClientRect().left,
+      time: value,
+      moved: false,
+      // The handle is pulled onto the playhead and onto markers when it comes within a few pixels of them.
+      magnets: [secondsFromFrames(controller.currentFrame(), fps), ...markers.map((marker) => marker.time)],
+    };
     event.currentTarget.setPointerCapture(event.pointerId);
     event.currentTarget.focus({ preventScroll: true });
     setDragTime(value);
@@ -460,11 +441,11 @@ function RangeHandle({
     const current = drag.current;
     if (!current) return;
     event.stopPropagation();
-    const time = handleTimeFromX(event.clientX - current.left, width, duration, fps);
+    const time = handleDragTime(event.clientX - current.left, width, duration, fps, current.magnets);
+    if (time === current.time) return;
     const move = resolveHandleMove(which, time, current.base, duration, fps);
     current.time = time;
-    current.rejected = move.rejected;
-    current.swapped = move.swapped;
+    current.moved = true;
     setDragTime(time);
     if (!move.rejected) setDraft({ in: move.in, out: move.out });
   };
@@ -477,6 +458,7 @@ function RangeHandle({
         ref={element}
         className={'pro-tl-handle'}
         data-handle={which}
+        data-set={set ? '' : undefined}
         data-dragging={dragTime !== null ? '' : undefined}
         role="slider"
         tabIndex={0}
@@ -485,8 +467,8 @@ function RangeHandle({
         aria-valuemin={0}
         aria-valuemax={Number(duration.toFixed(3))}
         aria-valuenow={Number(value.toFixed(3))}
-        aria-valuetext={format(value)}
-        style={{ left: `${timeToPercent(value, duration)}%` }}
+        aria-valuetext={set ? format(value) : which === 'in' ? t.startOfVideo : t.endOfVideo}
+        style={{ left: `${timeToPercent(value, duration > 0 ? duration : 1)}%` }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={(event) => {
@@ -496,9 +478,10 @@ function RangeHandle({
         }}
         onPointerCancel={() => end(false)}
         onLostPointerCapture={() => end(false)}
+        onDoubleClick={clear}
       />
       {dragTime !== null && (
-        <span className={'pro-tl-bubble pro-tl-bubble-handle'} style={{ left: bubbleX }} aria-hidden="true">
+        <span className={'pro-tl-bubble pro-tl-bubble-drag'} style={{ left: bubbleX }} aria-hidden="true">
           {format(dragTime)}
         </span>
       )}

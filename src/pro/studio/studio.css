@@ -1,0 +1,550 @@
+/*
+ * Studio styles: the dock's main row and its menus. Loaded with the Studio module, never by the Viewer tier. Tokens
+ * only. The main row is three columns, as on a professional monitor: timecode on the left, transport in the centre,
+ * tools and playback on the right. It responds to the player's own width (container queries on `media-root`); one
+ * row sheds, in this order, as it narrows:
+ *   < 1040px  the volume slider
+ *   <  980px  the "of duration" text
+ *   <  880px  the captions button (the C key and the settings menu remain)
+ *   <  840px  the menu buttons' chevrons; the timecode field gets narrower
+ *   <  740px  the count badges and the divider; tighter gaps
+ *   narrow    (under 640px, or a touch device; set as data-dock-size by the module, because the order of the
+ *             controls changes): timecode, step, Play, cut; then In, Out, Loop and Capture, View, Settings, Fullscreen
+ * Picture-in-picture is in the settings menu at every width.
+ */
+@layer components {
+  /* ---------- Dock ---------- */
+
+  .pro-skin[data-layout="dock"][data-bar="pro"] .pro-bar {
+    gap: calc(var(--media-spacing) * 2.5);
+    padding: calc(var(--media-spacing) * 3.5) calc(var(--media-spacing) * 4) calc(var(--media-spacing) * 3);
+  }
+
+  /* ---------- Main row: three columns ---------- */
+
+  /*
+   * The side columns share the free space equally, so the transport sits in the centre of the dock; when there is
+   * not room for that, each side keeps the width of its content and the transport moves off-centre, not off-screen.
+   */
+  .pro-skin[data-bar="pro"] .pro-main-row {
+    display: grid;
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    align-items: center;
+    gap: calc(var(--media-spacing) * 2.5) calc(var(--media-spacing) * 4);
+  }
+
+  .pro-skin .pro-main-left,
+  .pro-skin .pro-main-centre,
+  .pro-skin .pro-main-right,
+  .pro-skin .pro-range {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .pro-skin .pro-main-left {
+    gap: calc(var(--media-spacing) * 2.5);
+  }
+
+  .pro-skin .pro-main-centre {
+    gap: calc(var(--media-spacing) * 3.5);
+  }
+
+  .pro-skin .pro-main-right {
+    justify-content: flex-end;
+    gap: calc(var(--media-spacing) * 0.5);
+  }
+
+  .pro-skin .pro-range {
+    flex-shrink: 0;
+    gap: calc(var(--media-spacing) * 0.5);
+  }
+
+  .pro-skin[data-bar="pro"] .pro-transport {
+    gap: calc(var(--media-spacing) * 1.5);
+  }
+
+  .pro-skin[data-bar="pro"] .pro-playback {
+    gap: calc(var(--media-spacing) * 0.5);
+  }
+
+  .pro-skin .pro-main-divider {
+    flex: none;
+    width: 1px;
+    height: calc(var(--media-spacing) * 4.5);
+    margin-inline: calc(var(--media-spacing) * 2);
+    background-color: var(--pro-divider);
+  }
+
+  /* Time and transport do not mirror in right-to-left pages; the row keeps its left-to-right order. */
+  .pro-skin[data-bar="pro"] .pro-main-row {
+    direction: ltr;
+  }
+
+  /* Play is the one filled button: neutral, a little wider than the rest. Never the accent. */
+  .pro-skin[data-bar="pro"] .pro-transport > .media-play-button {
+    width: calc(var(--pro-control-size) + var(--media-spacing) * 3);
+    border-radius: var(--pro-radius-group);
+    background-color: var(--pro-text);
+    color: var(--pro-ink);
+  }
+
+  .pro-skin[data-bar="pro"] .pro-transport > .media-play-button .media-play-button-play-icon,
+  .pro-skin[data-bar="pro"] .pro-transport > .media-play-button .media-play-button-pause-icon {
+    fill: currentColor;
+  }
+
+  @media (hover: hover) {
+    .pro-skin[data-bar="pro"] .pro-transport > .media-play-button:hover {
+      background-color: var(--pro-text);
+      filter: brightness(0.9);
+    }
+  }
+
+  /* Mute with a short volume slider. */
+  .pro-skin[data-bar="pro"] .media-volume-slider {
+    width: calc(var(--media-spacing) * 14);
+    margin-inline: 0 calc(var(--media-spacing) * 2);
+  }
+
+  .pro-skin[data-bar="pro"] .media-volume-slider-track {
+    background-color: var(--pro-surface-3);
+  }
+
+  /* Picture-in-picture and (on the narrow dock) mute are items of the settings menu. */
+  .pro-skin[data-bar="pro"] .pro-menu-item-narrow {
+    display: flex;
+  }
+
+  /* ---------- Segmented controls and tool buttons ---------- */
+
+  .pro-skin .pro-seg {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    border-radius: var(--pro-radius-group);
+    background-color: var(--pro-surface-2);
+  }
+
+  .pro-skin .pro-seg:empty {
+    display: none;
+  }
+
+  /* Hairline dividers between the buttons of a divided control. */
+  .pro-skin .pro-seg-divided > .pro-tool + .pro-tool:not([data-pressed])::before {
+    content: "";
+    position: absolute;
+    left: -0.5px;
+    top: 50%;
+    width: 1px;
+    height: calc(var(--media-spacing) * 4.5);
+    background-color: var(--pro-divider);
+    transform: translateY(-50%);
+  }
+
+  .pro-skin .pro-tool-icon {
+    display: grid;
+  }
+
+  .pro-skin .pro-tool-icon > svg,
+  .pro-skin .media-menu-icon > svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* A button with a word on it: In, Out. */
+  .pro-skin .pro-tool-text {
+    display: flex;
+    justify-content: center;
+    width: auto;
+    min-width: var(--pro-control-size);
+    padding-inline: calc(var(--media-spacing) * 3);
+    font-size: var(--pro-text-md);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Loop is a little wider than a plain button; Reset range a little narrower. */
+  .pro-skin .pro-tool[data-pro-tool="loop"] {
+    width: calc(var(--pro-control-size) + var(--media-spacing));
+  }
+
+  .pro-skin .pro-tool-reset {
+    width: max(24px, calc(var(--pro-control-size) - var(--media-spacing) * 1.5));
+  }
+
+  .pro-skin .pro-tool-reset .pro-tool-icon {
+    width: calc(var(--media-spacing) * 3.5);
+    height: calc(var(--media-spacing) * 3.5);
+  }
+
+  /* A menu button: icon, count badge, chevron. */
+  .pro-skin .pro-tool-menu {
+    display: flex;
+    gap: calc(var(--media-spacing) * 1.5);
+    width: auto;
+    min-width: var(--pro-control-size);
+    padding-inline: calc(var(--media-spacing) * 2);
+  }
+
+  .pro-skin .pro-tool-menu .media-button-icon {
+    grid-area: auto;
+    flex: none;
+  }
+
+  .pro-skin .pro-tool-word {
+    display: none;
+    font-size: var(--pro-text-md);
+    font-weight: 500;
+  }
+
+  @container media-root (width >= 1500px) {
+    .pro-skin .pro-tool-word {
+      display: inline;
+    }
+  }
+
+  .pro-skin .pro-chevron-down {
+    flex: none;
+    width: calc(var(--media-spacing) * 3);
+    height: calc(var(--media-spacing) * 3);
+    color: var(--pro-text-dim);
+    transform: rotate(90deg);
+  }
+
+  /* "On": a lighter graphite fill, plus aria-pressed. The accent is reserved for the timeline. */
+  .pro-skin .pro-tool[data-pressed] {
+    background-color: var(--pro-on);
+  }
+
+  /* The fill alone is only 1.5:1 against the control, so "on" also draws a short bar in the text colour. */
+  .pro-skin .pro-tool[data-pressed]::after {
+    content: "";
+    position: absolute;
+    bottom: calc(var(--media-spacing) * 0.75);
+    left: 50%;
+    width: calc(var(--media-spacing) * 3);
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--pro-text);
+    transform: translateX(-50%);
+  }
+
+  .pro-skin .pro-badge {
+    min-width: calc(var(--media-spacing) * 4.5);
+    padding: 1px calc(var(--media-spacing) * 1.5);
+    border-radius: calc(var(--media-spacing) * 2);
+    background-color: var(--pro-surface-3);
+    color: var(--pro-text);
+    font-size: var(--pro-text-xs);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  /* On a hovered or open button the badge would vanish into the fill: step it up. */
+  .pro-skin .pro-tool-menu:hover .pro-badge,
+  .pro-skin .pro-tool-menu[aria-expanded="true"] .pro-badge {
+    background-color: var(--pro-surface-1);
+  }
+
+  /* ---------- Timecode ---------- */
+
+  .pro-skin .pro-timecode {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--media-spacing) * 37.5);
+    height: var(--pro-control-size);
+    border-radius: var(--pro-radius-group);
+    background-color: var(--pro-surface-0);
+    color: var(--pro-text);
+    cursor: pointer;
+    direction: ltr;
+    font-size: var(--pro-text-timecode);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    line-height: 1;
+    outline: none;
+    white-space: nowrap;
+    transition: box-shadow var(--pro-duration) var(--pro-ease);
+  }
+
+  @media (hover: hover) {
+    .pro-skin .pro-timecode:hover {
+      box-shadow: inset 0 0 0 1px var(--pro-surface-3);
+    }
+  }
+
+  .pro-skin .pro-timecode:focus-visible {
+    outline: var(--pro-focus-width) solid var(--pro-accent);
+    outline-offset: var(--pro-focus-offset);
+    box-shadow: var(--pro-focus-halo);
+  }
+
+  .pro-skin .pro-timecode-approx {
+    margin-inline-end: var(--media-spacing);
+    color: var(--pro-text-dim);
+  }
+
+  .pro-skin .pro-timecode-total {
+    flex-shrink: 0;
+    color: var(--pro-text-dim);
+    font-size: var(--pro-text-sm);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .pro-skin .pro-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  /* ---------- Menus ---------- */
+
+  .pro-skin .pro-menu-popup {
+    min-width: calc(var(--media-spacing) * 55);
+    border-radius: calc(var(--media-spacing) * 2.5);
+    background-color: var(--pro-surface-3);
+    box-shadow:
+      0 10px 30px rgb(0 0 0 / 0.55),
+      0 0 0 1px rgb(255 255 255 / 0.06);
+    border: 0;
+  }
+
+  .pro-skin .media-menu-popup.pro-menu-popup {
+    max-height: min(var(--media-menu-available-height, 100cqh), calc(var(--media-spacing) * 120));
+  }
+
+  .pro-skin .pro-menu-popup .media-menu-content {
+    padding: calc(var(--media-spacing) * 1.5);
+  }
+
+  .pro-skin .pro-menu-popup .media-menu-item {
+    min-height: max(24px, calc(var(--media-spacing) * 8));
+    padding-inline: calc(var(--media-spacing) * 2.5);
+    border-radius: var(--pro-radius);
+  }
+
+  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] {
+    background-color: var(--pro-on);
+  }
+
+  .pro-skin .pro-menu-popup .media-menu-hint,
+  .pro-skin .pro-menu-popup .pro-kbd {
+    color: var(--pro-text-dim-raised);
+  }
+
+  /* On the highlight the raised dim text falls just under 4.5:1 (4.45), so it takes the text colour there. */
+  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .media-menu-hint,
+  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .pro-kbd {
+    color: var(--pro-text);
+  }
+
+  @media (pointer: coarse) {
+    .pro-skin .pro-menu-popup .media-menu-item {
+      min-height: 44px;
+    }
+  }
+
+  .pro-skin .pro-menu-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pro-skin .pro-menu-label {
+    padding: calc(var(--media-spacing) * 2) calc(var(--media-spacing) * 2.5) var(--media-spacing);
+    color: var(--pro-text-dim);
+    font-size: var(--pro-text-xs);
+    font-weight: 500;
+  }
+
+  .pro-skin .pro-menu-popup .pro-menu-label {
+    color: var(--pro-text-dim-raised);
+  }
+
+  .pro-skin .pro-menu-separator {
+    flex: none;
+    height: 1px;
+    margin: calc(var(--media-spacing) * 1.5) var(--media-spacing);
+    background-color: var(--pro-divider);
+  }
+
+  .pro-skin .pro-marker-item-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---------- Responsive: one row that sheds ---------- */
+
+  @container media-root (width < 1040px) {
+    .pro-skin[data-bar="pro"] .media-volume-slider {
+      display: none;
+    }
+  }
+
+  @container media-root (width < 980px) {
+    .pro-skin .pro-timecode-total {
+      display: none;
+    }
+  }
+
+  @container media-root (width < 880px) {
+    .pro-skin[data-bar="pro"] .media-captions-button {
+      display: none;
+    }
+  }
+
+  @container media-root (width < 840px) {
+    .pro-skin .pro-tool-menu .pro-chevron-down {
+      display: none;
+    }
+
+    .pro-skin .pro-timecode {
+      width: calc(var(--media-spacing) * 29);
+      font-size: calc(var(--media-spacing) * 3.75);
+    }
+  }
+
+  @container media-root (width < 740px) {
+    .pro-skin .pro-tool-menu .pro-badge,
+    .pro-skin .pro-main-divider {
+      display: none;
+    }
+
+    .pro-skin[data-bar="pro"] .pro-main-row {
+      column-gap: calc(var(--media-spacing) * 2);
+    }
+
+    .pro-skin .pro-main-centre {
+      gap: calc(var(--media-spacing) * 2);
+    }
+
+    .pro-skin[data-layout="dock"][data-bar="pro"] .pro-bar {
+      padding-inline: calc(var(--media-spacing) * 3);
+    }
+  }
+
+  /* ---------- Narrow and touch: two rows, 44px controls ---------- */
+
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] {
+    --pro-control-size: max(44px, var(--pro-density-control));
+    --pro-icon-size: calc(var(--media-spacing) * 5);
+  }
+
+  .pro-skin[data-dock-size="narrow"][data-layout="dock"][data-bar="pro"] .pro-bar {
+    padding-inline: calc(var(--media-spacing) * 3);
+  }
+
+  /* Row one: the timecode, then step, Play and cut across the rest. Row two: the right column, full width. */
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-main-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: calc(var(--media-spacing) * 2.5) calc(var(--media-spacing) * 1.5);
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-main-centre,
+  .pro-skin[data-dock-size="narrow"] .pro-transport {
+    flex: 1;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-main-right {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: calc(var(--media-spacing) * 2.5);
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-playback {
+    display: contents;
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-range {
+    margin-inline-end: auto;
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool:not(.pro-tool-text) {
+    width: calc(var(--media-spacing) * 10);
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool[data-pro-tool="loop"] {
+    width: var(--pro-control-size);
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-transport > .media-play-button {
+    width: calc(var(--media-spacing) * 11.5);
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-timecode {
+    width: calc(var(--media-spacing) * 25);
+    font-size: calc(var(--media-spacing) * 3.5);
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-tool-menu {
+    width: var(--pro-control-size);
+    padding-inline: 0;
+  }
+
+  .pro-skin[data-dock-size="narrow"] .pro-timecode-total,
+  .pro-skin[data-dock-size="narrow"] .pro-main-divider,
+  .pro-skin[data-dock-size="narrow"] .pro-tool-menu .pro-badge,
+  .pro-skin[data-dock-size="narrow"] .pro-tool-menu .pro-chevron-down,
+  .pro-skin[data-dock-size="narrow"] .pro-tool-word,
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-volume,
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .media-captions-button {
+    display: none;
+  }
+
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-menu-item-dock-narrow {
+    display: flex;
+  }
+
+  /* Under 350px the row cannot hold four 40px buttons beside Play and the timecode: the cut buttons step aside. */
+  @container media-root (width < 350px) {
+    .pro-skin[data-dock-size="narrow"] .pro-seg[data-pro-seg="cut"] {
+      display: none;
+    }
+
+    .pro-skin[data-dock-size="narrow"] .pro-transport {
+      justify-content: flex-end;
+      gap: calc(var(--media-spacing) * 1.5);
+    }
+
+    /* The second row cannot hold seven 40px targets either: In, Out, Loop take a row, the four menus the next. */
+    .pro-skin[data-dock-size="narrow"] .pro-range {
+      flex: 1 0 100%;
+    }
+
+    .pro-skin[data-dock-size="narrow"] .pro-range .pro-seg,
+    .pro-skin[data-dock-size="narrow"] .pro-range .pro-seg .pro-tool {
+      flex: 1;
+    }
+  }
+
+  /* ---------- Toast ---------- */
+
+  .pro-skin .pro-toast {
+    position: absolute;
+    top: calc(var(--media-spacing) * 3);
+    left: 50%;
+    z-index: var(--pro-z-controls);
+    max-width: calc(100% - var(--media-spacing) * 6);
+    padding: calc(var(--media-spacing) * 1.5) calc(var(--media-spacing) * 3);
+    border-radius: var(--pro-radius);
+    background-color: var(--pro-surface-3);
+    box-shadow: var(--pro-shadow-popup);
+    color: var(--pro-text);
+    font-size: var(--pro-text-sm);
+    pointer-events: none;
+    text-align: center;
+    transform: translateX(-50%);
+  }
+}
