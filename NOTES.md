@@ -157,6 +157,71 @@ Checked on the public URL without `?debug`: no pro chunk is requested. The Share
 - **Frame clock** (Chrome on macOS, 30 fps demo stream, no burned-in frame counter): source `rvfc`, precision `frame`. Seeking to 18 known frame times while paused gave the expected frame 16 times; the 2 misses were long seeks that had not finished within the 450 ms the test waited, and they showed the previous frame, not an off-by-one. Seeking to frame 300 on the public URL gave frame 300, media time 10.000, timecode 00:00:10:00.
 - **Step 2 regression:** the keyboard-only checks were re-run on the public URL and pass (play, pause, seek, mute, captions, free keys, help dialog and focus return). Skin CSS is byte-identical to the `step-2-share-gate` tag.
 
+## Step 4: Review transport (15 Nov 2026)
+
+### Verified APIs
+
+- `useHotkey({ keys, onActivate, action, repeatable, disabled })` for every Review key. Patterns match modifiers exactly, so `.` and `>` (Shift+.) do not collide, and Ctrl/Cmd/Alt combinations are left to the browser.
+- `Menu.Root / Trigger / Popup / Content / Item (onSelect, disabled)` for the More menu; `Menu.Popup` is the popup, there is no separate `Popover`.
+- `Tooltip` with a custom `label` node on plain buttons (`ButtonTooltip label={…}`).
+- `usePlayer(selectPlayback)` for `paused`; `usePlayer(selectPiP)`.
+- The `<video>` element is reached through `useVideoElement` (step 3); `drawImage(video)` on a canvas works for the HLS stream.
+
+### How the Review controls get into the bar
+
+The Share bar renders four empty slots (`transport-start`, `transport-end`, `time`, `tools`) only when `ProSkin` asks for them. The lazy Review module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Share path. With any Review control on, the seek bar always has its own row, and the button row wraps.
+
+### Decisions
+
+- **Seek offset:** half a frame, `(frame + 0.5) / fps`. No change was needed in Chrome.
+- **Held keys:** a step is computed from the frame last asked for, and while a seek is running only the newest target is kept. 12 key repeats 33 ms apart moved exactly 12 frames.
+- **Inversion:** the store swaps the points (step 3 rule); the skin announces "In was after Out, so the two points were swapped", with both timecodes. Marking Out on the In frame is refused and announced.
+- **Loop start rule:** with loop on, pressing play with the playhead before In jumps to In first. Past Out it also jumps to In, because the playhead is at or beyond the loop point.
+- **Loop point:** Out counts as reached half a frame early. A range that runs to the end of the media loops on the `ended` event.
+- **Play range** is in the More menu, and inline at 1100 px and wider. It pauses on the frame before Out.
+- **Cut list:** chapter starts when the media has a chapters track, otherwise the `markers` prop. Cuts are compared by frame. For 750 ms after a cut jump, the next press counts from that cut, so pressing "previous" twice moves two cuts even during playback.
+- **Grab frame** is one button that downloads the PNG; "Copy frame image" is a separate item in More. One press for the common task, and no nested menu.
+- **Link format:** `#t=HH:MM:SS:FF`, always the timecode on screen (start offset and drop-frame included), whatever `timeDisplay` is, because a timecode names a frame and seconds do not. Other hash content is kept. Plain seconds are accepted when reading.
+- **Announcements:** one polite live region owned by the Review module. Video.js's `StatusAnnouncer` cannot speak custom text, so it keeps the built-in actions and ours carries the pro ones. Results a sighted user needs ("Link copied", capture refused) also show as a short toast.
+- **Timecode button:** named "Time in seconds" with `aria-pressed`; the current value is its description, read on focus. It is not a live region.
+- **Bar breakpoints (player width):** under 880 px Range and Actions live in More; from 880 px they are inline; from 1100 px Play range, the volume slider and the PiP button are also inline; from 1360 px the range readout is inline. Under 1100 px PiP is in More.
+- The Review layer needs no title for file names yet: grabbed files are named `frame_<timecode>.png`.
+
+### Checks (Chrome on macOS, through page scripts; the browser window was hidden, see Unverified)
+
+| Check | Result |
+| --- | --- |
+| Step 30 forward, 30 back (buttons locally, `.` `,` on the public URL) | Returns to the start frame both times (500→530→500, 200→230→200) |
+| `,` `.` `←` `→` (paused) `Shift+←/→` | ±1 and ±10 frames, exact |
+| `←` `→` while playing in Review | Seek 5 s, as in Share |
+| `.` while playing | Pauses, then steps |
+| Start edge | No movement, announces "Start" |
+| Timecode in the bar against the debug readout | Identical |
+| Mark In, Out, loop by keyboard (`I`, `O`, `R`) | Works; loop ran 180→120 twice in 3.5 s |
+| Loop accuracy | The Out frame itself is shown before the jump: a one-frame overshoot, every time |
+| Play outside the range with loop on | Jumps to In |
+| Play range | Pauses one frame before Out (119 for Out 120) |
+| Previous/next cut from chapters | 40 s → 52 s; previous twice → 20 s → 0 s; "No previous cut" at the start |
+| No chapters and no markers | Cut buttons disabled, reason in name and tooltip |
+| Grab frame, CORS source | 1920×1080 PNG, `frame_00-00-12-05.png` |
+| Grab frame, source without CORS (`?media=nocors`) | No file; "This video's host does not allow frame capture." announced and shown |
+| Copy link, then open it | `…#t=00:00:12:05`; reopened on frame 293 at 24 fps, paused, other hash data kept |
+| Poster frame | Announces the timecode |
+| Help dialog | 11 rows in Share, 19 in Review |
+| More menu by keyboard | Opens, focus moves in, arrows move the highlight, disabled items do nothing |
+| Share tier | No slots, no pro chunk requested, pro keys do nothing, keyboard checks pass on the public URL |
+
+### Chunk sizes (gzip)
+
+| Chunk | Step 3 | Step 4 |
+| --- | --- | --- |
+| Share path JS | 284.1 kB (963.0 kB raw) | 284.6 kB (964.7 kB raw) |
+| Skin CSS | 5.6 kB | 5.6 kB |
+| Pro runtime | 3.3 kB | 3.5 kB |
+| Review JS + CSS | 86 B | 7.6 kB + 1.2 kB |
+
+The Share path grew by 1.7 kB raw: the bar slots, the "arrows only while playing" switch and the extra help rows are hooks that have to live in the Share skin. No Review logic is in it (searched for its identifiers).
+
 ## Deployed URL
 
 - https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. Player alone: `/preview.html`.
@@ -183,6 +248,9 @@ Checked on the public URL without `?debug`: no pro chunk is requested. The Share
 
 ## Later
 
+- Give `ProSkin` a title for grabbed file names (`<title>_<timecode>.png`).
+- Stop the Out frame flashing at the loop point (jump one frame earlier) if it bothers in use.
+- Translate the Review strings (`src/pro/review/strings.ts`).
 - Persist View choices (overlays, time display) per browser: step 6. `activeOverlays` is a set of ids and `timeDisplay` a string, so both serialise directly.
 - Measure the Share skin's own weight against a stock Video.js skin.
 - Redraw the settings icon: it reads a little like a sun.
@@ -197,6 +265,13 @@ Checked on the public URL without `?debug`: no pro chunk is requested. The Share
 
 ## Unverified
 
+- **Step 4: nothing was looked at.** The Chrome window was hidden for the whole step (0×0 viewport, screenshots timed out), so the Review bar's appearance, the new icons, the wrapping and breakpoints, focus rings, tooltips and the toast were never seen. Behaviour was tested through page scripts. This needs a visual pass before step 5.
+- **Step 4: mouse-only range and loop** was exercised by clicking buttons from script, not with a real pointer. **320 px layout**, **touch**, **Firefox** and **Safari** were not run.
+- **Step 4: Copy frame image** gave no result in the hidden window: neither success nor failure was announced, so the clipboard call probably never settled. Untested in a visible window.
+- **Step 4: copy link** was tested with the clipboard call replaced by a stub; the real clipboard was not written.
+- **Step 4: `onInOutChange`, `onCopyLink`, `onPosterFrame`, `onMarkerSelect`** are wired but the preview passes no handlers, so they were not seen firing in the browser (the store callbacks are unit-tested).
+- **Step 4: cuts from `markers`** are covered by unit tests only; the demo stream has chapters.
+- **Step 4: screen reader** output was read from the live region's text, not heard.
 - **Step 3: frame numbers against a burned-in frame counter.** The demo stream has none. Our own 24 fps video (step 8) should carry one so this can be checked.
 - **Step 3: frame clock in Firefox and Safari.** Firefox before 132 has no `requestVideoFrameCallback` and will use the approximate fallback; neither browser was run.
 - **Step 3: phone-width re-check after step 3.** The Chrome window became hidden (0×0 viewport, screenshots timed out), so the layout could not be looked at again. The bar markup changed only by two optional slots and the CSS is unchanged.

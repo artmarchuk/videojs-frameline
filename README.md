@@ -33,7 +33,7 @@ import { ProSkin } from '@/pro';
 
 With `tier="share"` (the default) and no flags, it is the clean Share player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
-**Status:** the Share tier is complete. The pro core (flags, state, frame clock, timecode maths) is in place. The Review and Studio controls themselves arrive in later steps, so `tier="review"` and `tier="studio"` do not show extra controls yet.
+**Status:** the Share tier and the Review transport are complete: frame stepping, timecode, in/out and loop, previous/next cut, grab frame, copy link and poster frame. The ruler timeline, guides and the Studio tools arrive in later steps, so `tier="studio"` currently shows the same controls as `tier="review"`.
 
 ### Props
 
@@ -51,10 +51,12 @@ With `tier="share"` (the default) and no flags, it is the clean Share player and
 | `onInOutChange` | `({ in, out }) => void` | none | The in or out point changed. Seconds, or `null` |
 | `onMarkerSelect` | `(marker) => void` | none | The user selected a marker |
 | `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
+| `onCopyLink` | `({ url, frame, time }) => void` | none | A link to the current frame was copied |
+| `onPosterFrame` | `({ frame, time, timecode }) => void` | none | The user chose the current frame as the poster. The host saves it; the skin stores nothing |
 
 An invalid `fps`, an unknown tier or an unknown feature name logs one warning in development and falls back to the default. Nothing throws.
 
-`startTimecode`, `dropFrame` and `markers` are accepted now and used by the Review features in later steps.
+`startTimecode` and `dropFrame` shape the timecode display and links. `markers` feed previous/next cut when the media has no chapters; they are drawn on the timeline in a later step.
 
 ### Feature flags
 
@@ -68,6 +70,7 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 | `shotNav` | off | on | on |
 | `grabFrame` | off | on | on |
 | `copyTimecodeLink` | off | on | on |
+| `posterFrame` | off | on | on |
 | `guides` | off | all | all |
 | `platformZones` | off | on | on |
 | `channels` | off | off | on |
@@ -78,9 +81,32 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 
 `guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`.
 
+### Review shortcuts
+
+These are added to the YouTube map in the Review and Studio tiers. Each works only while its feature is on, and `Shift+?` lists what is live.
+
+| Keys | Action |
+| --- | --- |
+| `,` `.` | Step one frame back or forward (pauses first) |
+| `←` `→` while paused | Step one frame. While playing they seek 5 s, as in Share |
+| `Shift+←` `Shift+→` | Jump 10 frames |
+| `I` `O` | Set In, set Out at the current frame |
+| `Shift+I` `Shift+O` | Clear In, clear Out |
+| `R` | Loop the range on or off |
+| `[` `]` | Previous cut, next cut (chapters, or `markers` when there are no chapters) |
+| `G` | Grab the current frame as a PNG |
+
+### Links to a frame
+
+Copy link writes the position into the page URL's hash as `#t=HH:MM:SS:FF`, the timecode on screen, and keeps anything else the host app has in the hash. A page opened with such a hash seeks to that frame, paused. Plain seconds (`#t=12.5`) are also read.
+
+### Grabbing frames
+
+Grab frame saves the raw frame at the video's own resolution, without guides or adjustments. The browser only allows this when the video is loaded with CORS: set `crossOrigin` on the media element and serve CORS headers (Mux does). Otherwise the skin says the host does not allow frame capture.
+
 ### Styling hooks
 
-The player container carries `data-tier`, `data-density`, and one attribute per active guide, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`). The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
+The player container carries `data-tier`, `data-density`, `data-bar="pro"` while pro controls are in the bar, and one attribute per active guide, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`). The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
 ### Frame accuracy
 
