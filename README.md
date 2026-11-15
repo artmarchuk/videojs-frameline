@@ -33,7 +33,7 @@ import { ProSkin } from '@/pro';
 
 With `tier="share"` (the default) and no flags, it is the clean Share player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
-**Status:** the Share tier, the Review transport and the ruler timeline are complete: frame stepping, timecode, in/out and loop, previous/next cut, markers, grab frame, copy link and poster frame. Guides and the Studio tools arrive in later steps, so `tier="studio"` currently shows the same controls as `tier="review"`.
+**Status:** the Share tier, the Review transport, the ruler timeline and the dock layout are complete: frame stepping, timecode, in/out and loop, previous/next cut, markers, grab frame, copy link and poster frame. Guides and the Studio tools arrive in later steps, so `tier="studio"` currently shows the same controls as `tier="review"`.
 
 ### Props
 
@@ -45,9 +45,10 @@ With `tier="share"` (the default) and no flags, it is the clean Share player and
 | `startTimecode` | `string` | `'00:00:00:00'` | Timecode of the first frame |
 | `dropFrame` | `boolean` | `false` | Drop-frame timecode; only for 29.97 and 59.94 |
 | `markers` | `{ time, label, end?, id? }[]` | none | Timeline markers, times in seconds |
+| `layout` | `'dock' \| 'overlay'` | `'overlay'` for Share, `'dock'` for Review and Studio | Where the controls sit: in a dock below the picture, or over it. See "Layout" |
 | `density` | `'comfortable' \| 'compact'` | `'comfortable'` | Control spacing. Touch always gets comfortable, with 44 px targets |
 | `debug` | `boolean` | `false` | Shows the debug readout. `?debug` in the page URL does the same |
-| `slots` | `{ toolbarStart?, toolbarEnd?, overlay? }` | none | Host UI: in the control bar after play and volume, in the control bar before captions, and over the picture (visual only) |
+| `slots` | `{ toolbarStart?, toolbarEnd?, overlay? }` | none | Host UI: in the control bar after the transport and time controls, in the control bar before the playback controls, and over the picture (visual only) |
 | `onInOutChange` | `({ in, out }) => void` | none | The in or out point changed. Seconds, or `null` |
 | `onMarkerSelect` | `(marker) => void` | none | The user selected a marker |
 | `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
@@ -94,7 +95,38 @@ These are added to the YouTube map in the Review and Studio tiers. Each works on
 | `Shift+I` `Shift+O` | Clear In, clear Out |
 | `R` | Loop the range on or off |
 | `[` `]` | Previous cut, next cut (chapters, or `markers` when there are no chapters) |
+| `←` `→` on an In or Out handle | Move the handle one frame; `Shift` ten; `Delete` clears it |
 | `G` | Grab the current frame as a PNG |
+
+### Layout
+
+**Dock** (the default in Review and Studio): the picture has its own stage and the controls are a panel below it. They never cover the picture, never hide, and stay in fullscreen, because the whole component goes fullscreen.
+
+- **The aspect ratio applies to the stage, not to the component.** The component's height is the stage plus the dock. Set the ratio with `--pro-stage-ratio` (default `16 / 9`).
+- The dock is about 163 px tall with the Tools tray closed and about 220 px with it open (comfortable density, wide player); more on narrow players, where it has two rows.
+- If you give the component a fixed height or a `max-height`, the dock keeps its height and the stage takes the rest, with the picture letterboxed. Opening the tray then makes the picture smaller, not the component taller.
+- `--pro-frame-border: 1` draws a hairline and a 10 px radius around the component. The default is none.
+
+**Overlay** (the default in Share): the controls sit over the picture and hide while idle.
+
+```tsx
+<ProSkin tier="review" layout="overlay" />  {/* Review controls over the picture */}
+<ProSkin tier="share" layout="dock" />      {/* the Share player with a dock */}
+```
+
+### Controls
+
+The dock has three rows.
+
+1. **Timeline.**
+2. **Main row**, always visible: **Transport** (previous cut, step back, Play, step forward, next cut), the **timecode** field (press it to switch to seconds), the **Tools** button, and **Playback** (mute, volume, captions, settings, picture-in-picture, fullscreen).
+3. **Tools tray**, opened by the Tools button ("Range, Capture, View"):
+   - **Range:** In, Out, Loop, a menu with Play range and Clear range, and the range's timecodes and length.
+   - **Capture:** Grab frame (with a menu: download or copy), Copy link, Use frame as poster.
+   - **Markers:** every marker, when `markers` are passed.
+   - **View:** Guides (arrives in the next step).
+
+The tray only changes what is visible: every shortcut works with it closed, and the closed button shows a summary such as `17 s range`. Escape inside the tray closes it. The layout follows the player's own width: one line from 900 px, fewer inline controls down to 560 px, and two rows with a stacked tray below that (below 680 px on touch).
 
 ### The timeline
 
@@ -126,7 +158,7 @@ In the Review and Studio tiers the seek bar is a ruler timeline. It is still the
 | `end` | `number`, optional | Makes it a range marker, drawn as a bar |
 | `id` | `string`, optional | Your own identifier, passed back in `onMarkerSelect` |
 
-Point markers are flags and range markers are bars. Points too close to tell apart collapse into a badge with a count. Clicking a marker seeks to it and calls `onMarkerSelect`. For the keyboard and screen readers every marker is an item in the **Markers** list, and `[` `]` move between markers when the media has no chapters. The skin draws markers and reports selection; creating and storing them is the host app's job. About 200 markers is the design limit.
+Point markers are flags and range markers are bars. Points too close to tell apart collapse into a badge with a count. Clicking a marker seeks to it and calls `onMarkerSelect`. For the keyboard and screen readers every marker is an item in the **Markers** menu of the Tools tray, and `[` `]` move between markers when the media has no chapters. The skin draws markers and reports selection; creating and storing them is the host app's job. About 200 markers is the design limit.
 
 ### Links to a frame
 
@@ -138,7 +170,9 @@ Grab frame saves the raw frame at the video's own resolution, without guides or 
 
 ### Styling hooks
 
-The player container carries `data-tier`, `data-density`, `data-bar="pro"` while pro controls are in the bar, and one attribute per active guide, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`). The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
+The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide`, `medium` or `narrow`) in the pro tiers, and one attribute per active guide, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`). The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
+
+**The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--pro-accent`, or `--media-accent-color`) is reserved for progress and the played part of the range, the In/Out handles, the focus ring and a selected marker. Toggled-on controls use a lighter graphite (`--pro-on`), Play is a neutral filled button, and the playhead is white.
 
 ### Frame accuracy
 
@@ -150,7 +184,7 @@ Frame numbers are best effort. Where the browser has `requestVideoFrameCallback`
 npm run dev
 ```
 
-The workbench opens your skin in a slimmed-down version of the Video.js sandbox. It plays NASA's Cosmic Dawn trailer from Mux, with chapters; change the media in `apps/preview/src/frame/media.ts`. The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
+The workbench opens your skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Review; `?tier=share`, `?tier=studio`, `?density=compact`, `?layout=dock|overlay` and `?debug` (debug readout and event log) set its state. It plays NASA's Cosmic Dawn trailer from Mux, with chapters; change the media in `apps/preview/src/frame/media.ts`. The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
 
 ## Deploy
 

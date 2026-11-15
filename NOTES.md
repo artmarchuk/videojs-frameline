@@ -297,9 +297,145 @@ The Share JS grew by 1.1 kB raw. About half is the skin (the `timeline` slot and
 
 The Claude-in-Chrome window was not used. Screenshots and behaviour checks ran in **headless Google Chrome** (the installed Chrome, so H.264 plays), driven by `playwright-core` from a scratch folder outside the repository, at 2x device scale. Each image was opened and looked at. Files: `design/screenshots/step-5/`.
 
+## Step 5b: Dock layout, Tools tray and restyle (15 Nov 2026)
+
+### What I thought was wrong with the old Review bar (written before changing it, from the first real screenshots)
+
+See "What looked wrong in the step 4 bar" under step 5. In short: no hierarchy (fourteen equal buttons), controls over the picture and taller than it on a phone, an invisible range, lime and monospace louder than the footage, a small player on a white page.
+
+### Verified APIs
+
+- **Fullscreen targets the `Container`** (docs: "When the user goes fullscreen, the container goes fullscreen, not the video element"; `requestFullscreen()` "targets the player container" when the Fullscreen API exists, and falls back to the media element's native presentation otherwise, as on iPhone Safari). So the dock is a child of the `Container`, next to the stage, and stays in fullscreen. No workaround was needed.
+- Media registers through context, so the media element does not have to be a direct child of the `Container`; it sits in the stage.
+- `Controls.Root visibility="always"` keeps the controls visible and reports the user as active. The dock uses it: no auto-hide.
+- `Gesture` ignores pointer activity that starts on interactive controls or on anything marked `data-interactive`. The dock carries `data-interactive`, so a click between its buttons does not toggle playback; a click on the picture still does. On touch in the dock layout a tap on the picture plays or pauses (there are no controls to reveal).
+- Hotkeys skip events with `defaultPrevented`; `Tooltip.Trigger render` reads its child element's ref, which React 19 warns about when the child was given a `ref`, so no ref is put on tooltip children.
+
+### How it is built
+
+- `ProSkin layout="dock" | "overlay"`; default `overlay` for Share and `dock` for Review and Studio (`resolveLayout`, tested). `data-layout` on the container; shown in the debug readout.
+- Dock structure, in the Share skin so that Share can dock too without pro code: `Container` > `.pro-stage` (media, poster, overlay layer, pro layers, indicators) + the control bar as a static panel. The skin is a flex column; the stage has `aspect-ratio: var(--pro-stage-ratio, 16 / 9)` and may shrink, the dock may not. With a fixed height (or fullscreen) the stage takes what is left and the picture is letterboxed.
+- The pro bar's main row is rendered by the Share skin as groups with slots: `time-start`, Transport (`transport-start`, Play, `transport-end`), `time`, host slot, `tools`, `tray`, spacer, host slot, Playback. The Review module fills the slots.
+- **Tray position:** in the DOM the tray comes right after the Tools button (so Tab goes Tools → tray → Playback, as the brief asks); CSS `order` lays it out as a full-width row under the main row.
+- **Narrow order:** below 560 px (680 px on touch) the order of controls changes (timecode, step, Play, cut), so the DOM changes with it. The Review module measures the container, picks `wide`, `medium` or `narrow` (`chooseDockSize`, tested) and writes `data-dock-size` on the container. Everything else is container queries.
+- `toolsOpen` is in the pro store (default closed, `setToolsOpen`, tested). Persistence comes in step 6.
+- `--pro-frame-border: 1` draws a 1 px hairline and a 10 px radius around the player. Default: none. The preview page sets it.
+
+### Decisions, and where I chose differently from the brief or the mockups
+
+- **Markers, Play range, Clear range, Copy frame image** had no place in the brief's tray (the old More menu is gone). Now: Range has a chevron menu (Play range, Clear range); Grab has its chevron menu (Download PNG, Copy frame image), as the brief says; and the tray has a fourth group, **Markers** (button with a count, menu of every marker), shown only when there are markers.
+- **Responsive, 560 to 899 px:** the full main row needs about 900 px, so it cannot stay on one line down to 560 px without giving things up. In order: volume slider (under 900), PiP button and fps label (under 820; PiP moves into the settings menu), the Tools summary (under 760), the full Tools label, replaced by "Tools" (under 700; the accessible name stays "Range, Capture, View"), the captions button (under 640; `C` and the settings menu remain). With that the row is one line at every width from 560 px.
+- **Touch stays narrow up to 680 px**, because 44 px targets need the room.
+- **Narrow row 2** is Tools, Mute, Settings, Fullscreen: Settings fits, and it holds captions, speed and PiP, so no separate More menu is needed. Under 352 px the Tools label is the short one and the range readout shows the length only.
+- **320 px:** four 40 px buttons do not fit beside Play and the timecode (they would be 31 px wide). Under 350 px the previous/next cut buttons step aside; step, Play, timecode, Tools, Mute, Settings and Fullscreen stay, all 44 px tall and at least 40 px wide. `[` `]` and the Markers menu still work. The brief asked me to say so.
+- **Ruler at a narrow width:** the mockup shows a tick per second at 326 px; the 6 px rule gives a tick every 2 s there. The rule won.
+- **Toggled-on (`--pro-on`) against the control fill is only 1.48:1**, too little for a state. "On" buttons in the dock also draw a short bar in the text colour (8.4:1). Loop uses it.
+- **Dim text on `--pro-surface-3` is 4.05:1** with the proposed `--pro-text-dim`. Added `--pro-text-dim-raised` (#B2B2B8, 5.37:1) for dim text in tooltips and on hovered controls.
+- `--pro-track` (the unfilled track over footage in the Share overlay) moved to a neutral #85858C; the dock's track is `--pro-surface-2` as specified.
+- In/Out buttons no longer light up when a point is set: they are not toggles, and the band shows the range.
+- The timecode field shows the current frame only; the total moved to its tooltip and its accessible description.
+- **Seconds-only ruler labels** are used up to and including 60 s (the mockup's 60 s clip reads `0s … 50s`).
+- The preview page **opens in the Review tier** (`?tier=share` for Share), since the page is now a monitor. `?layout=dock|overlay` and `?density=compact` are also read.
+- Also changed beyond the brief: tooltips lost their keycap chips everywhere (Share too), popups got one soft shadow, the Share playhead is white, the Share primary dialog button is neutral, captions-on and PiP-on use `--pro-on`.
+
+### Contrast (computed by `node scripts/contrast.mjs`)
+
+| Pair | Ratio | Minimum | Result |
+| --- | --- | --- | --- |
+| text on surface-0 (timecode field) | 17.25:1 | 4.5 | PASS |
+| text on surface-1 (dock, menus) | 14.89:1 | 4.5 | PASS |
+| text on surface-2 (controls) | 12.45:1 | 4.5 | PASS |
+| text on surface-3 (hover, tooltips, badges) | 10.13:1 | 4.5 | PASS |
+| text on --pro-on (a toggle that is on) | 8.39:1 | 4.5 | PASS |
+| text-dim on surface-0 (fps label) | 6.89:1 | 4.5 | PASS |
+| text-dim on surface-1 (labels, ruler labels) | 5.95:1 | 4.5 | PASS |
+| text-dim on surface-2 (controls) | 4.97:1 | 4.5 | PASS |
+| text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time) | 5.37:1 | 4.5 | PASS |
+| text-dim on surface-3: NOT USED for text (see text-dim-raised) | 4.05:1 | - | PASS |
+| ink on text fill (Play, playhead bubble) | 15.22:1 | 4.5 | PASS |
+| accent-ink on accent (handle bubble) | 6.88:1 | 4.5 | PASS |
+| white text on accent: NEVER USED, shown as a warning | 2.72:1 | - | PASS |
+| text on scrim (0.88) over white frame | 12.66:1 | 4.5 | PASS |
+| text-dim on scrim (0.88) over white frame | 5.06:1 | 4.5 | PASS |
+| accent (progress fill) on scrim over white frame | 5.20:1 | 3 | PASS |
+| slider track (--pro-track) on surface-0 | 5.26:1 | 3 | PASS |
+| slider track (--pro-track) on scrim over white | 3.86:1 | 3 | PASS |
+| Share playhead (text) on scrim over white | 12.66:1 | 3 | PASS |
+| focus ring: accent on surface-0 | 7.08:1 | 3 | PASS |
+| focus ring: accent on surface-1 (dock) | 6.11:1 | 3 | PASS |
+| focus ring: accent on surface-2 | 5.11:1 | 3 | PASS |
+| focus ring: accent on --pro-on | 3.45:1 | 3 | PASS |
+| focus ring halo: surface-0 vs white frame | 19.28:1 | 3 | PASS |
+| playhead (text) over the unplayed band (--pro-range) | 3.82:1 | 3 | PASS |
+| playhead (text) over the played band (accent) | 2.44:1 | - | PASS |
+| playhead outline (surface-0) over the played band (accent) | 7.08:1 | 3 | PASS |
+| playhead (text) over the neutral track (surface-2) | 12.45:1 | 3 | PASS |
+| unplayed band (--pro-range) against the neutral track | 3.26:1 | 3 | PASS |
+| played band (accent) against the unplayed band, decorative: position also shown by the playhead | 1.57:1 | - | PASS |
+| played band / progress fill (accent) against the neutral track | 5.11:1 | 3 | PASS |
+| bracket handles (accent) against the dock (surface-1) | 6.11:1 | 3 | PASS |
+| bracket handles (accent) against the neutral track | 5.11:1 | 3 | PASS |
+| bracket handles (accent) against the unplayed band, decorative: the handle also has a shape | 1.57:1 | - | PASS |
+| markers (text-dim) on the dock | 5.95:1 | 3 | PASS |
+| selected marker (accent) on the dock | 6.11:1 | 3 | PASS |
+| major ticks on the dock | 5.11:1 | 3 | PASS |
+| mid ticks on the dock, decorative | 3.74:1 | - | PASS |
+| minor ticks on the dock, decorative | 2.25:1 | - | PASS |
+| neutral track (surface-2) on the dock, decorative: the playhead and fill carry the value | 1.20:1 | - | PASS |
+| buffered line on the dock, decorative | 1.89:1 | - | PASS |
+| hairline (line) on surface-1, decorative | 1.32:1 | - | PASS |
+| Play fill (text) against the dock | 14.89:1 | 3 | PASS |
+| toggle on (--pro-on) against control fill (surface-2): too low alone, so "on" also draws a bar in the text colour | 1.48:1 | - | PASS |
+| toggle-on bar (text) against --pro-on | 8.39:1 | 3 | PASS |
+
+The white playhead over the played (accent) band is 2.44:1 on its own; its dark outline is 7.08:1 against the accent, which is what makes it visible there. Over the unplayed band it is 3.82:1, and the unplayed band is 3.26:1 against the neutral track.
+
+### Tabular figures
+
+Measured in Chrome on macOS (SF Pro through `-apple-system`): with `font-variant-numeric: tabular-nums` ten of each digit are all 105.09 px wide at 17 px; without it they range from 77.28 px (`1`) to 107.58 px. No slashed or dotted zero. **Windows (Segoe UI Variable / Segoe UI) and Android (Roboto) were not run**; both fonts ship tabular figures, so digits should hold, but that is from documentation, not a test.
+
+### Checks (headless Google Chrome, driven by Playwright; 1440x900 unless noted)
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 118 passing (13 new: layout resolution, dock size chooser, Tools summary, `toolsOpen`, selected marker; ruler labels updated) |
+| Controls never cover the picture | Stage bottom = dock top (656 px); the dock has no auto-hide (`data-visible` always) |
+| Fits 1440x900 | Tray closed: stage 657 + dock 163. Tray open: stage 600 + dock 220, picture letterboxed. No page scroll in either |
+| Other sizes | 1100x800 and 800x800: main row one line, no scroll (the tray wraps to two lines at 800). 390x800 and 320x700: two rows, no horizontal overflow; the page scrolls vertically at 320x700 with the tray open (618 px player) |
+| Tab order, tray closed | Player, Seek, In point, Out point, Previous cut, Step back, Play, Step forward, Next cut, Time in seconds, Tools, Mute, Volume, Captions, Settings, PiP, Fullscreen |
+| Tab order, tray open | …Tools, Set In, Set Out, Loop, Range options, Grab frame, Grab options, Copy link, Poster, Markers, Guides, then Mute… |
+| Tools button | `aria-expanded` false/true; Enter and Space toggle; opening moves focus nowhere; next Tab is Set In; Escape in the tray closes it and focus returns to the Tools button; Escape in an open menu closes only the menu |
+| Groups | `role="group"` named Transport, Range, Capture, Go to (markers), View, Playback; no `role="toolbar"` |
+| Shortcuts with the tray closed | `I`, `O`, `R`, `.` work; the closed button shows "17 s range" |
+| Actions from the tray | Loop off, "Link copied" (`link:copy` logged), "Poster frame: 00:00:20:01" (`poster:frame` logged), grab downloads `frame_00-00-20-01.png`, Set In by button, Grab menu lists Download PNG and Copy frame image |
+| View | Present, `aria-disabled`, "Guides. Coming in the next step" |
+| Click on the picture / on the dock | Picture toggles play; a click between dock buttons does nothing |
+| Fixed-height host | Skin forced to the window size: stage 0–680, dock 680–900, dock fully visible, picture letterboxed |
+| **Fullscreen** | **Not driven: headless Chrome refuses `requestFullscreen` ("not granted").** The request goes to the container that holds stage and dock (docs), and the fixed-height case above is the same layout. The author should press `F` once |
+| Share tier, new palette (step 2 gate re-run) | Keyboard only: tab order Player, Play, Mute, Volume, Seek, time, Captions, Settings, PiP, Fullscreen; `K`/`Space`, `←` `→` 5 s, `J` `L` 10 s, `5`, `Home`, `M`, `↓`, `C`, `Shift+?` (11 rows, focus in, `Esc`, focus back). Free keys (`I O , . [ ] R G Shift+←/→`) do nothing. No pro chunk requested. Narrow embed 320 px: stacked bar, nothing overflows, same keys pass |
+| Share with `layout="dock"`, Review with `layout="overlay"` | Both render and work (screenshots) |
+| Touch emulation, 390 px | Narrow layout, 44 px controls, no horizontal overflow |
+| Reduced motion (emulated) | No transition or animation above 0 ms |
+| Captions on the stage | Not looked at with a captions track showing in the dock layout; the lift for overlay controls is switched off there |
+
+### Chunk sizes (gzip)
+
+| Chunk | Step 5 | Step 5b |
+| --- | --- | --- |
+| Share path JS | 285.0 kB (965.8 kB raw) | 285.6 kB (967.7 kB raw) |
+| Skin CSS (with the preview page's own CSS) | 5.9 kB (31.6 kB raw) | 6.4 kB (34.6 kB raw) |
+| Pro runtime | 3.5 kB | 3.6 kB |
+| Review JS + CSS | 12.2 kB + 2.9 kB | 13.2 kB + 3.9 kB |
+
+The Share JS grew 1.9 kB raw. It is one bundle with the preview page, whose new top bar and switches are part of that; the skin's share (the grouped pro row, the stage wrapper, the layout resolver, two strings) is roughly half. That is more than "a few hundred bytes"; none of it is Review logic (searched for `pro-tray`, `toolsSummary`, `chooseDockSize`, `pro-tl-`). The CSS growth is the dock rules (about 1 kB) and the preview page.
+
+### Screenshots
+
+`design/screenshots/step-5b/`, taken in headless Google Chrome at 2x as in step 5: Review and Studio at 1440x900, 1100x800, 800x800, 390x800 and 320x700 with the tray closed and open; focus rings on the seek thumb, the In handle, Play and the timecode field; the playhead inside and outside the band, and an open range; the ruler at 10 s, 60 s and 10 min; loop on; the Markers menu; compact density; the fixed-height (fullscreen-like) layout; Share at 1440 and 390; the two layout overrides; touch emulation at 390. **Not captured: real fullscreen.**
+
 ## Deployed URL
 
-- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. Player alone: `/preview.html`.
+- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. The monitor page: `/preview.html` (opens in Review; `?tier=share`, `?tier=studio`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
@@ -323,6 +459,9 @@ The Claude-in-Chrome window was not used. Screenshots and behaviour checks ran i
 
 ## Later
 
+- Persist `toolsOpen` with the other View choices (step 6).
+- The overlay layer covers the stage, not the picture: step 6 guides must be positioned on the picture's rectangle when the stage is letterboxed.
+- A `layout="overlay"` Review bar still covers a small player; consider a compact overlay variant if a host needs it.
 - Give `ProSkin` a title for grabbed file names (`<title>_<timecode>.png`).
 - Stop the Out frame flashing at the loop point (jump one frame earlier) if it bothers in use.
 - Translate the Review strings (`src/pro/review/strings.ts`).
@@ -340,6 +479,10 @@ The Claude-in-Chrome window was not used. Screenshots and behaviour checks ran i
 
 ## Unverified
 
+- **Step 5b: real fullscreen with the dock.** Headless Chrome refuses fullscreen. Verified instead: the documented fullscreen target and the fixed-height layout.
+- **Step 5b: Firefox, Safari, Windows and Android fonts, a real phone.** Chrome on macOS only; touch was emulated.
+- **Step 5b: captions over the picture in the dock layout** were not looked at.
+- **Step 5b: the fullscreen `:fullscreen .pro-stage` rule** (stage fills the screen) is untested for the same reason.
 - **Step 5: Firefox and Safari.** Only Chrome was run. `:has()` (hides the seek preview over a marker), `color-mix()` and `mask-image` are inside the browser floor on paper, not tested.
 - **Step 5: a real touch device.** Touch was emulated in Chrome.
 - **Step 5: `onCopyLink` and `onPosterFrame` in the event log** were not pressed in the step 5 run (checked in step 5b).
