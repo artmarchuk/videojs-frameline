@@ -1,7 +1,12 @@
 /** @jsxImportSource react */
 
 import { Menu } from '@videojs/react';
-import { useEffect, useMemo, useRef, type MouseEvent, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
+
+import { cn } from '@/lib/resolve-class-name';
+
+import { Button } from '../../video/shared/button';
+import { ButtonTooltip } from '../../video/shared/tooltip';
 
 import { useProStore, useProStoreApi } from '../context';
 import type { ProStore } from '../store';
@@ -15,7 +20,7 @@ const DRAG_THRESHOLD = 3;
 export type PanDirection = 'left' | 'right' | 'up' | 'down';
 
 export interface ZoomController {
-  /** `Alt` + an arrow: move the view by a tenth of what is visible. Does nothing at Fit, and stops at the edges. */
+  /** `Shift+Alt` + an arrow: move the view by a tenth of what is visible. Does nothing at Fit, and stops at the edges. */
   pan(direction: PanDirection): void;
 }
 
@@ -214,8 +219,8 @@ export function createZoomActions(store: ProStore, announce: Announce, note: Ref
       store.setZoom(level);
       say();
     },
-    cycle() {
-      store.cycleZoom();
+    cycle(direction: 1 | -1 = 1) {
+      store.cycleZoom(direction);
       say();
     },
   };
@@ -233,33 +238,52 @@ export function useZoomActions(note: string | null): ZoomActions {
 }
 
 /**
- * The Zoom group of the View menu: Fit, 100%, 200%, one at a time. Like the other groups, choosing keeps the menu
- * open. While zoomed, the chosen item also says when a lower rendition than the best one is playing, because a 100%
- * check of a 540p rendition is not a check of the source.
+ * The Zoom button and its menu. The button shows the level as text ("Fit", "150%") at a fixed width; zoomed, it takes
+ * the "on" fill. The menu is a radio group, one level at a time, with one line of help under it. While zoomed, the
+ * chosen item also says when a lower rendition than the best one is playing, because a 100% check of a 540p rendition
+ * is not a check of the source.
  */
-export function ZoomSection({ actions, note }: { actions: ZoomActions; note: string | null }) {
+export function ZoomMenu({ actions, note }: { actions: ZoomActions; note: string | null }) {
   const level = useProStore((state) => state.zoom);
-  const onClick = (value: ZoomLevel) => (event: MouseEvent) => {
-    event.preventDefault();
-    actions.set(value);
-  };
+  const name = t.zoomNames[level] ?? level;
 
   return (
-    <Menu.RadioGroup className={'pro-menu-group'} value={level} onValueChange={(value) => actions.set(value as ZoomLevel)}>
-      <Menu.GroupLabel className={'pro-menu-label pro-menu-label-keyed'}>
-        <span>{t.zoom}</span>
-        <kbd className={'pro-kbd'}>Z</kbd>
-      </Menu.GroupLabel>
-      {ZOOM_LEVELS.map((value) => (
-        <Menu.RadioItem key={value} className={'media-menu-item'} value={value} onClick={onClick(value)} data-zoom-item={value}>
-          <span className={'pro-menu-mark'} aria-hidden="true">
-            {value === level && <span className={'pro-menu-dot'} />}
-          </span>
-          <span>{t.zoomNames[value]}</span>
-          {value === level && value !== 'fit' && note && <span className={'pro-menu-sub'}>{note}</span>}
-        </Menu.RadioItem>
-      ))}
-      <p className={'pro-menu-note'}>{t.zoomNote}</p>
-    </Menu.RadioGroup>
+    <Menu.Root side="top" align="end">
+      <ButtonTooltip
+        label={
+          <>
+            <span>{t.zoom}</span>
+            <kbd className={'pro-kbd'}>Z</kbd>
+          </>
+        }
+      >
+        <Menu.Trigger
+          render={<Button />}
+          className={'pro-tool pro-tool-zoom'}
+          aria-label={t.zoomLabel(name)}
+          aria-keyshortcuts="Z"
+          data-pressed={level === 'fit' ? undefined : ''}
+          data-pro-menu="zoom"
+        >
+          {name}
+        </Menu.Trigger>
+      </ButtonTooltip>
+      <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-menu-popup', 'pro-zoom-popup')}>
+        <Menu.Content className={'media-menu-content'}>
+          <Menu.RadioGroup className={'pro-menu-group'} aria-label={t.zoom} value={level} onValueChange={(value) => actions.set(value as ZoomLevel)}>
+            {ZOOM_LEVELS.map((value) => (
+              <Menu.RadioItem key={value} className={'media-menu-item'} value={value} data-zoom-item={value}>
+                <span className={'pro-menu-mark'} aria-hidden="true">
+                  {value === level && <span className={'pro-menu-dot'} />}
+                </span>
+                <span>{t.zoomNames[value]}</span>
+                {value === level && value !== 'fit' && note && <span className={'pro-menu-sub'}>{note}</span>}
+              </Menu.RadioItem>
+            ))}
+            <p className={'pro-menu-note'}>{t.zoomNote}</p>
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Popup>
+    </Menu.Root>
   );
 }

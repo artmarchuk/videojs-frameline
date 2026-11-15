@@ -3,13 +3,14 @@
  * only. The main row is three columns, as on a professional monitor: timecode on the left, transport in the centre,
  * tools and playback on the right. It responds to the player's own width (container queries on `media-root`); one
  * row sheds, in this order, as it narrows:
- *   < 1040px  the volume slider
- *   <  980px  the "of duration" text
- *   <  880px  the captions button (the C key and the settings menu remain)
- *   <  840px  the menu buttons' chevrons; the timecode field gets narrower
- *   <  740px  the count badges and the divider; tighter gaps
- *   narrow    (under 640px, or a touch device; set as data-dock-size by the module, because the order of the
- *             controls changes): timecode, step, Play, cut; then In, Out, Loop and Capture, Guides, Settings, Fullscreen
+ *   < 1100px  the volume slider
+ *   < 1040px  the "of duration" text
+ *   <  940px  the captions button (the C key and the settings menu remain)
+ *   <  900px  the menu buttons' chevrons; the timecode field gets narrower
+ *   <  800px  the count badges and the divider; tighter gaps
+ *   narrow    (under 700px, or a touch device; set as data-dock-size by the module, because the order of the
+ *             controls changes): timecode, step, Play, cut; then In, Out, Loop and Capture, Guides, Zoom, Settings, Fullscreen
+ *             (under 410px In, Out, Loop take a row of their own)
  * Picture-in-picture is in the settings menu at every width.
  */
 @layer components {
@@ -460,7 +461,7 @@
     opacity: 0.5;
   }
 
-  @container media-root (width < 640px) {
+  @container media-root (width < 700px) {
     .pro-skin .media-menu-popup.pro-guides-popup,
     .pro-skin .media-menu-popup.pro-guides-popup[data-columns="1"] {
       width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
@@ -479,25 +480,25 @@
 
   /* ---------- Responsive: one row that sheds ---------- */
 
-  @container media-root (width < 1040px) {
+  @container media-root (width < 1100px) {
     .pro-skin[data-bar="pro"] .media-volume-slider {
       display: none;
     }
   }
 
-  @container media-root (width < 980px) {
+  @container media-root (width < 1040px) {
     .pro-skin .pro-timecode-total {
       display: none;
     }
   }
 
-  @container media-root (width < 880px) {
+  @container media-root (width < 940px) {
     .pro-skin[data-bar="pro"] .media-captions-button {
       display: none;
     }
   }
 
-  @container media-root (width < 840px) {
+  @container media-root (width < 900px) {
     .pro-skin .pro-tool-menu .pro-chevron-down {
       display: none;
     }
@@ -508,7 +509,7 @@
     }
   }
 
-  @container media-root (width < 740px) {
+  @container media-root (width < 800px) {
     .pro-skin .pro-tool-menu .pro-badge,
     .pro-skin .pro-main-divider {
       display: none;
@@ -614,7 +615,13 @@
       gap: calc(var(--media-spacing) * 1.5);
     }
 
-    /* The second row cannot hold seven 40px targets either: In, Out, Loop take a row, the four menus the next. */
+  }
+
+  /*
+   * Under 410px the second row cannot hold In, Out, Loop and five 44px buttons (Capture, Guides, Zoom, Settings,
+   * Fullscreen; it needs about 405px): In, Out, Loop take a row of their own and the five buttons the next.
+   */
+  @container media-root (width < 410px) {
     .pro-skin[data-dock-size="narrow"] .pro-range {
       flex: 1 0 100%;
     }
@@ -625,11 +632,30 @@
     }
   }
 
-  /* A group label with its shortcut beside it: "Zoom  Z". */
-  .pro-skin .pro-menu-label-keyed {
+  /*
+   * The Zoom button: the current level as text. Tabular figures and a fixed width that fits the widest label
+   * ("400%"), so the row does not move when the level changes. Zoomed, it takes the "on" fill like Loop.
+   */
+  .pro-skin .pro-tool-zoom {
     display: flex;
-    align-items: center;
-    gap: calc(var(--media-spacing) * 2);
+    justify-content: center;
+    width: calc(var(--media-spacing) * 13);
+    padding-inline: 0;
+    font-size: var(--pro-text-sm);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /*
+   * Video.js sizes a menu by measuring its content at its natural (max-content) width, where a paragraph is one long
+   * line. The help line has a width of its own, so it wraps the same when measured and when shown, and sets the
+   * menu's width.
+   */
+  .pro-skin .pro-zoom-popup .pro-menu-note {
+    box-sizing: border-box;
+    width: calc(var(--media-spacing) * 58);
+    max-width: calc(100cqw - var(--media-spacing) * 10);
   }
 
   /* ---------- Zoom ---------- */
@@ -649,8 +675,9 @@
     cursor: grabbing;
   }
 
-  /* At 200% a video pixel is four device pixels or more: show them as squares, not smoothed. */
-  .pro-skin[data-zoom="200"] .pro-picture video {
+  /* From 200% a video pixel is four device pixels or more: show them as squares, not smoothed. */
+  .pro-skin[data-zoom="200"] .pro-picture video,
+  .pro-skin[data-zoom="400"] .pro-picture video {
     image-rendering: pixelated;
   }
 

@@ -2,30 +2,40 @@
  * Zoom: how closely the picture is looked at. Pure: no React, no DOM.
  *
  * Zoom never changes the picture, only its size on screen: Fit (the whole picture in the stage), 100% (one video
- * pixel on one device pixel) and 200%. While zoomed the picture can be panned; the pan is kept as the point of the
+ * pixel on one device pixel) and its multiples 150%, 200% and 400%. While zoomed the picture can be panned; the pan is kept as the point of the
  * picture that sits in the middle of the stage, so it survives a resize or a rendition of another size.
  */
 
-export const ZOOM_LEVELS = ['fit', '100', '200'] as const;
+export const ZOOM_LEVELS = ['fit', '100', '150', '200', '400'] as const;
 
 export type ZoomLevel = (typeof ZOOM_LEVELS)[number];
 
 export const isZoomLevel = (value: unknown): value is ZoomLevel => typeof value === 'string' && (ZOOM_LEVELS as readonly string[]).includes(value);
 
-/** `Z` walks Fit, 100%, 200% and back to Fit. */
+/** `Z` walks Fit, 100%, 150%, 200%, 400% and back to Fit. */
 export function nextZoom(level: ZoomLevel): ZoomLevel {
   return ZOOM_LEVELS[(ZOOM_LEVELS.indexOf(level) + 1) % ZOOM_LEVELS.length]!;
 }
 
-/** Video pixels per device pixel, the other way round: device pixels drawn for one video pixel. */
-const FACTOR: Record<ZoomLevel, number> = { fit: 0, '100': 1, '200': 2 };
+/** `Shift+Z` walks the other way: from Fit to 400%, then down. */
+export function previousZoom(level: ZoomLevel): ZoomLevel {
+  return ZOOM_LEVELS[(ZOOM_LEVELS.indexOf(level) + ZOOM_LEVELS.length - 1) % ZOOM_LEVELS.length]!;
+}
+
+/** From this multiple of 100% up a video pixel covers four device pixels or more, and is drawn as a square. */
+export const PIXELATED_FROM = 2;
+
+export const isPixelated = (level: ZoomLevel): boolean => FACTOR[level] >= PIXELATED_FROM;
+
+/** Device pixels drawn for one video pixel, along one side: every level is a multiple of 100%. Fit has none. */
+const FACTOR: Record<ZoomLevel, number> = { fit: 0, '100': 1, '150': 1.5, '200': 2, '400': 4 };
 
 /** One arrow press with Alt moves the view by this share of what is visible. */
 export const PAN_STEP = 0.1;
 
 /**
  * The scale to apply to the fitted picture. At 100% one video pixel covers one device pixel:
- * `(videoWidth / picture width in CSS px) / devicePixelRatio`; 200% is twice that. A small video on a large screen
+ * `(videoWidth / picture width in CSS px) / devicePixelRatio`; 150%, 200% and 400% are multiples of that. A small video on a large screen
  * gives a scale below 1, and it is applied as it is, so the label stays true. Fit, or sizes not known yet, is 1.
  */
 export function zoomScale(level: ZoomLevel, videoWidth: number, pictureWidth: number, devicePixelRatio: number): number {

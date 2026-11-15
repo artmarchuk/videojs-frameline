@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { resolveFeatures } from './features';
 import { createProStore } from './store';
+import { allowedView } from './view';
 
 describe('pro store', () => {
   it('keeps in before out by swapping', () => {
@@ -211,12 +213,16 @@ describe('selectedMarker', () => {
     const allowedView = { guides: [], crops: [], zones: [], zoom: true };
     const store = createProStore({ allowedView });
     expect(store.getState().zoom).toBe('fit');
-    store.cycleZoom();
-    expect(store.getState().zoom).toBe('100');
-    store.cycleZoom();
+    const walk = [];
+    for (let i = 0; i < 5; i++) {
+      store.cycleZoom();
+      walk.push(store.getState().zoom);
+    }
+    expect(walk).toEqual(['100', '150', '200', '400', 'fit']);
+    store.cycleZoom(-1);
+    expect(store.getState().zoom).toBe('400');
+    store.cycleZoom(-1);
     expect(store.getState().zoom).toBe('200');
-    store.cycleZoom();
-    expect(store.getState().zoom).toBe('fit');
     store.setZoom('200');
     store.setZoom('300' as never);
     expect(store.getState().zoom).toBe('200');
@@ -227,6 +233,23 @@ describe('selectedMarker', () => {
     store.setZoom('100');
     store.cycleZoom();
     expect(store.getState().zoom).toBe('fit');
+  });
+
+  it('guides and zoom are independent flags', () => {
+    // guides: false with zoom on: zoom works, no guide can be switched on.
+    const zoomOnly = createProStore({ allowedView: allowedView(resolveFeatures('studio', { guides: false })) });
+    zoomOnly.setZoom('150');
+    zoomOnly.toggleGuide('thirds');
+    zoomOnly.setCrop('1:1');
+    expect(zoomOnly.getState()).toMatchObject({ zoom: '150', view: { guides: [], crop: null } });
+
+    // zoom: false with guides on: guides work, zoom stays at Fit.
+    const guidesOnly = createProStore({ allowedView: allowedView(resolveFeatures('studio', { zoom: false })) });
+    guidesOnly.toggleGuide('thirds');
+    guidesOnly.setZoom('200');
+    guidesOnly.cycleZoom();
+    guidesOnly.cycleZoom(-1);
+    expect(guidesOnly.getState()).toMatchObject({ zoom: 'fit', view: { guides: ['thirds'] } });
   });
 
   it('zoom is off without the flag', () => {

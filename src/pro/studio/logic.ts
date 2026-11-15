@@ -12,10 +12,10 @@ import { formatTimecode, framesFromSeconds, parseTimecode, resolveFrameRate, typ
 export const SEEK_OFFSET = 0.5;
 
 /** Below this player width the dock uses its narrow arrangement. */
-export const DOCK_NARROW_BELOW = 640;
+export const DOCK_NARROW_BELOW = 700;
 
 /**
- * The dock's narrow arrangement: a player under 640 px wide (the one-row arrangement needs about 640 px even after
+ * The dock's narrow arrangement: a player under 700 px wide (the one-row arrangement needs about 690 px even after
  * it has shed what it can), or any touch device (which has no keyboard for `I` and
  * `O`, so it gets In and Out buttons). A width that is not measured yet counts as wide.
  */

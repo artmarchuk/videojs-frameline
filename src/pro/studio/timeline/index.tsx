@@ -138,9 +138,9 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
     (event: ReactKeyboardEvent<HTMLDivElement>, stock?: (event: ReactKeyboardEvent<HTMLDivElement>) => void) => {
       const forward = event.key === 'ArrowRight' || event.key === 'ArrowUp';
       const back = event.key === 'ArrowLeft' || event.key === 'ArrowDown';
-      // Alt + an arrow pans the zoomed picture: it is left for the player's hotkeys, and the slider does not move.
-      if ((forward || back) && event.altKey && !event.ctrlKey && !event.metaKey) return;
-      if ((!forward && !back) || event.ctrlKey || event.metaKey) {
+      // Shift+Alt + an arrow pans the zoomed picture: it is left for the player's hotkeys, and the slider does not move.
+      if ((forward || back) && event.altKey && event.shiftKey && !event.ctrlKey && !event.metaKey) return;
+      if ((!forward && !back) || event.altKey || event.ctrlKey || event.metaKey) {
         stock?.(event);
         return;
       }

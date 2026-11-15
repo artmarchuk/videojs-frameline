@@ -99,8 +99,9 @@ These are added to the YouTube map in the Studio tier. Each works only while its
 | `←` `→` on an In or Out handle | Move the handle one frame; `Shift` ten; `Home` `End` to its limits; `Delete` unsets it |
 | `G` | Grab the current frame as a PNG |
 | `Shift+V` | Hide every guide, or show them again |
-| `Z` | Zoom: Fit, 100%, 200%, and Fit again |
-| `Alt+←` `Alt+→` `Alt+↑` `Alt+↓` | Move around the zoomed picture, a tenth of the view per press. Only while zoomed |
+| `Z` | Zoom: the next level (Fit, 100%, 150%, 200%, 400%, and Fit again) |
+| `Shift+Z` | Zoom: the previous level |
+| `Shift+Alt+←` `→` `↑` `↓` | Move around the zoomed picture, a tenth of the visible area per press. Only while zoomed. `Alt` + arrows alone are left to the browser (Back and Forward on Windows and Linux) |
 
 ### Layout
 
@@ -127,15 +128,16 @@ The Studio dock has two rows.
 2. **Main row**, in three columns, as on an editor's monitor:
    - **Left:** the **timecode** of the current frame (press it to switch to seconds) and the duration beside it.
    - **Centre:** **transport** (previous cut, step back, Play, step forward, next cut), then **Loop** and, only while a range is set, a small **Reset range** button.
-   - **Right:** the **Markers**, **Capture** and **Guides** menus, then **playback**: captions, settings, mute with a short volume slider, fullscreen. Picture-in-picture is in the settings menu.
+   - **Right:** the **Markers**, **Capture** and **Guides** menus and the **Zoom** button, then **playback**: captions, settings, mute with a short volume slider, fullscreen. Picture-in-picture is in the settings menu.
 
 The menus open upward and are real menus: arrow keys, Enter, Escape, and focus returns to the button.
 
 - **Markers** lists the host's markers with their timecodes, and the media's chapters under a second heading. Choosing one seeks to it.
 - **Capture:** Grab frame (downloads a PNG, `G`), Copy frame image, Copy link at timecode.
 - **Guides:** guides, crop masks and platform zones. See "The Guides menu".
+- **Zoom:** a text button that shows the level ("Fit", "150%") and opens the list of levels. See "Zoom".
 
-The row follows the player's own width. It is one row down to 640 px, shedding in this order: the volume slider (under 1040 px), the duration text (980), the captions button (880; `C` and the settings menu remain), the menu chevrons (840), the count badges (740). **Under 640 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, Guides, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 350 px the cut buttons step aside (`[` `]` and the markers list still work) and In, Out, Loop take a row of their own.
+The row follows the player's own width. It is one row down to 700 px, shedding in this order: the volume slider (under 1100 px), the duration text (1040), the captions button (940; `C` and the settings menu remain), the menu chevrons (900), the count badges (800). **Under 700 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, Guides, Zoom, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 410 px In, Out, Loop take a row of their own (three rows), and under 350 px the cut buttons step aside (`[` `]` and the markers list still work).
 
 ### The timeline
 
@@ -216,23 +218,23 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 
 ### Zoom
 
-Zoom changes how closely you look at the picture, never the picture itself. It is in the View menu and on `Z`.
+Zoom changes how closely you look at the picture, never the picture itself. The **Zoom button** sits after Guides: it shows the current level, takes the "on" fill while zoomed, and opens a menu of the levels. `Z` goes to the next level and `Shift+Z` to the previous one.
 
 | Level | What it shows |
 | --- | --- |
 | Fit | The whole picture in the stage. No transform |
-| 100% | One video pixel on one device pixel: scale = `videoWidth` / the picture's width in CSS pixels / `devicePixelRatio`. On a small video and a large screen this is smaller than Fit, and it is applied as it is |
-| 200% | Twice that, drawn with `image-rendering: pixelated`, so single pixels are visible |
+| 100% | One video pixel on one device pixel: scale = `videoWidth` / the picture's width in CSS pixels / `devicePixelRatio`. On a small video, or on a high-density screen, this can be smaller than Fit, and it is applied as it is |
+| 150%, 200%, 400% | Multiples of 100%. From 200% up the picture is drawn with `image-rendering: pixelated`, so single pixels are visible |
 
-- **Pan** while the zoomed picture is larger than the stage: drag it (mouse, pen or one finger), or press `Alt` and an arrow. The pan stops at the picture's edges, so the stage never shows an empty band. A drag longer than 3 px is not a click: it neither plays nor pauses. There is no pinch zoom.
+- **Pan** while the zoomed picture is larger than the stage: drag it (mouse, pen or one finger), or press `Shift+Alt` and an arrow. The pan stops at the picture's edges, so the stage never shows an empty band. A drag longer than 3 px is not a click: it neither plays nor pauses. There is no pinch zoom.
 - Entering a level starts from the centre of the picture. Zoom **always starts at Fit**: unlike the guides it is not remembered.
 - **Guides zoom with the picture** (they are in the same box), with their lines and labels kept at the same size on screen.
 - **Grab frame and Copy frame image always capture the whole frame** at the video's own resolution, whatever the zoom and pan. Copy link is not affected either.
 - The scale is recomputed when the player or the window changes size, in fullscreen, and when the media reports new dimensions.
-- `features.zoom` is on in Studio. It adds one wrapper element (`.pro-picture`) around the media and the overlay layer; without the flag (the Viewer tier) that element does not exist. The container carries `data-zoom="100"` or `"200"` while zoomed.
+- `features.zoom` is on in Studio; `zoom: false` removes the button and its shortcuts. Guides and zoom are independent: either works without the other. The flag adds one wrapper element (`.pro-picture`) around the media and the overlay layer; without it (the Viewer tier) that element does not exist. The container carries `data-zoom="100"`, `"150"`, `"200"` or `"400"` while zoomed.
 - Captions drawn by the browser belong to the video element and are scaled with it.
 
-**Which rendition you are looking at.** An adaptive stream (HLS) may play a smaller rendition than the source: the engine picks one for the connection and, by default, for the player's size. 100% then means 100% of *that* rendition. Two places say so. Settings → Quality shows what Auto is playing ("Auto (720p)", from Video.js). And while zoomed with a rendition below the best one the stream offers, the chosen zoom level in the View menu and the announcement add it: "100% · showing 720p". To check the source's own pixels, pick the top rendition in Settings → Quality, or have the host lift the cap (`capRenditionToPlayerSize: false` in the media's `source`, a Video.js option).
+**Which rendition you are looking at.** An adaptive stream (HLS) may play a smaller rendition than the source: the engine picks one for the connection and, by default, for the player's size. 100% then means 100% of *that* rendition. Two places say so. Settings → Quality shows what Auto is playing ("Auto (720p)", from Video.js). And while zoomed with a rendition below the best one the stream offers, the chosen level in the Zoom menu and the announcement add it: "100% · showing 720p". To check the source's own pixels, pick the top rendition in Settings → Quality, or have the host lift the cap (`capRenditionToPlayerSize: false` in the media's `source`, a Video.js option).
 
 ### Links to a frame
 
@@ -244,7 +246,7 @@ Grab frame (in the Capture menu, or `G`) saves the raw frame at the video's own 
 
 ### Styling hooks
 
-The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"` or `"200"` while zoomed. The picture's rectangle inside the stage is published as `--pro-picture-x`, `--pro-picture-y`, `--pro-picture-w` and `--pro-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
+The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"`, `"150"`, `"200"` or `"400"` while zoomed. The picture's rectangle inside the stage is published as `--pro-picture-x`, `--pro-picture-y`, `--pro-picture-w` and `--pro-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
 **The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--pro-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter graphite (`--pro-on`), Play is a neutral filled button, and the playhead is white.
 

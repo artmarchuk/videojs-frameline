@@ -28,7 +28,7 @@ import { Guides } from './guides';
 import { usePictureRect } from './guides/use-picture-rect';
 import { useChapters, useCuts, type Chapter } from './use-cuts';
 import { useGuidesActions, GuidesMenu, type GuidesActions } from './guides-menu';
-import { useZoom, useZoomActions, ZoomSection, type ZoomActions, type ZoomController } from './zoom';
+import { useZoom, useZoomActions, ZoomMenu, type ZoomActions, type ZoomController } from './zoom';
 
 export interface StudioLayerProps {
   features: Readonly<FeatureFlags>;
@@ -222,6 +222,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
             )}
             {capture && <CaptureMenu controller={controller} features={features} />}
             {guides && <GuidesMenu allowed={allowed} actions={guidesActions} />}
+            {allowed.zoom && <ZoomMenu actions={zoomActions} note={renditionNote} />}
           </>,
           tools
         )}
@@ -590,17 +591,18 @@ function StudioHotkeys({
 }
 
 /**
- * Zoom shortcuts. `Z` is free in the YouTube map and in ours. `Alt` + an arrow pans; patterns match modifiers exactly,
- * so the plain arrows (seek, frame step, volume) and `Shift` + arrows (jump) are not touched. They are registered only
- * while zoomed, so at Fit `Alt+←` and `Alt+→` stay with the browser (Back and Forward on Windows and Linux).
+ * Zoom shortcuts. `Z` and `Shift+Z` are free in the YouTube map and in ours. `Shift+Alt` + an arrow pans; patterns
+ * match modifiers exactly, so the plain arrows (seek, frame step, volume), `Shift` + arrows (jump) and `Alt` + arrows
+ * (the browser's Back and Forward on Windows and Linux) are not touched. Pan is registered only while zoomed.
  */
 function ZoomHotkeys({ zoom, actions }: { zoom: ZoomController; actions: ZoomActions }) {
   const fit = useProStore((state) => state.zoom === 'fit');
-  useHotkey({ keys: 'z', action: 'zoom', repeatable: false, onActivate: actions.cycle });
-  useHotkey({ keys: 'Alt+ArrowLeft', action: 'pan', disabled: fit, onActivate: () => zoom.pan('left') });
-  useHotkey({ keys: 'Alt+ArrowRight', action: 'pan', disabled: fit, onActivate: () => zoom.pan('right') });
-  useHotkey({ keys: 'Alt+ArrowUp', action: 'pan', disabled: fit, onActivate: () => zoom.pan('up') });
-  useHotkey({ keys: 'Alt+ArrowDown', action: 'pan', disabled: fit, onActivate: () => zoom.pan('down') });
+  useHotkey({ keys: 'z', action: 'zoom', repeatable: false, onActivate: () => actions.cycle(1) });
+  useHotkey({ keys: 'Shift+z', action: 'zoomBack', repeatable: false, onActivate: () => actions.cycle(-1) });
+  useHotkey({ keys: 'Shift+Alt+ArrowLeft', action: 'pan', disabled: fit, onActivate: () => zoom.pan('left') });
+  useHotkey({ keys: 'Shift+Alt+ArrowRight', action: 'pan', disabled: fit, onActivate: () => zoom.pan('right') });
+  useHotkey({ keys: 'Shift+Alt+ArrowUp', action: 'pan', disabled: fit, onActivate: () => zoom.pan('up') });
+  useHotkey({ keys: 'Shift+Alt+ArrowDown', action: 'pan', disabled: fit, onActivate: () => zoom.pan('down') });
   return null;
 }
 
@@ -630,7 +632,8 @@ function HelpRows({ features, guides, zoom }: { features: Readonly<FeatureFlags>
     if (guides) list.push({ keys: ['Shift', 'V'], label: t.help.guides });
     if (zoom) {
       list.push({ keys: ['Z'], label: t.help.zoom });
-      list.push({ keys: ['Alt', '←', '→', '↑', '↓'], label: t.help.pan });
+      list.push({ keys: ['Shift', 'Z'], label: t.help.zoomBack });
+      list.push({ keys: ['Shift', 'Alt', '←', '→', '↑', '↓'], label: t.help.pan });
     }
     return list;
   }, [features, guides, zoom]);

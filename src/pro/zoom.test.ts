@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { clampCentre, nextZoom, panCentre, PAN_STEP, PICTURE_CENTRE, zoomScale, zoomTransform, type ZoomInput } from './zoom';
+import { clampCentre, isPixelated, nextZoom, panCentre, PAN_STEP, PICTURE_CENTRE, previousZoom, ZOOM_LEVELS, zoomScale, zoomTransform, type ZoomInput, type ZoomLevel } from './zoom';
 
 describe('zoomScale', () => {
   it('is 1 at Fit and while sizes are unknown', () => {
@@ -16,9 +16,19 @@ describe('zoomScale', () => {
     expect(zoomScale('100', 1920, 1280, 2)).toBe(0.75);
   });
 
-  it('doubles that at 200%', () => {
+  it('makes 150%, 200% and 400% multiples of 100%', () => {
+    for (const ratio of [1, 2]) {
+      const one = zoomScale('100', 1920, 960, ratio);
+      expect(zoomScale('150', 1920, 960, ratio)).toBe(one * 1.5);
+      expect(zoomScale('200', 1920, 960, ratio)).toBe(one * 2);
+      expect(zoomScale('400', 1920, 960, ratio)).toBe(one * 4);
+    }
     expect(zoomScale('200', 1920, 960, 1)).toBe(4);
-    expect(zoomScale('200', 1920, 960, 2)).toBe(2);
+    expect(zoomScale('400', 1920, 960, 2)).toBe(4);
+  });
+
+  it('draws pixels as squares from 200% up', () => {
+    expect(ZOOM_LEVELS.filter(isPixelated)).toEqual(['200', '400']);
   });
 
   it('applies 100% exactly when it is smaller than Fit', () => {
@@ -28,11 +38,23 @@ describe('zoomScale', () => {
   });
 });
 
-describe('nextZoom', () => {
-  it('cycles Fit, 100%, 200%, Fit', () => {
-    expect(nextZoom('fit')).toBe('100');
-    expect(nextZoom('100')).toBe('200');
-    expect(nextZoom('200')).toBe('fit');
+describe('the level list and the Z cycle', () => {
+  it('lists Fit, 100%, 150%, 200%, 400%', () => {
+    expect(ZOOM_LEVELS).toEqual(['fit', '100', '150', '200', '400']);
+  });
+
+  it('Z goes up a level and from 400% back to Fit', () => {
+    const walk: ZoomLevel[] = [];
+    let level: ZoomLevel = 'fit';
+    for (let i = 0; i < 6; i++) walk.push((level = nextZoom(level)));
+    expect(walk).toEqual(['100', '150', '200', '400', 'fit', '100']);
+  });
+
+  it('Shift+Z goes down a level and from Fit to 400%', () => {
+    const walk: ZoomLevel[] = [];
+    let level: ZoomLevel = 'fit';
+    for (let i = 0; i < 6; i++) walk.push((level = previousZoom(level)));
+    expect(walk).toEqual(['400', '200', '150', '100', 'fit', '400']);
   });
 });
 

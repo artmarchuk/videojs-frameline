@@ -105,7 +105,7 @@ export default function ProRuntime({
 
   // Mirror the guides that are drawn, and the zoom level, up to the container's data attributes.
   useEffect(() => {
-    // `data-zoom` ("100", "200") is there only while zoomed.
+    // `data-zoom` ("100", "150", "200", "400") is there only while zoomed.
     const attributes = () => {
       const { view, zoom } = store.getState();
       return zoom === 'fit' ? viewAttributes(view) : { ...viewAttributes(view), 'data-zoom': zoom };

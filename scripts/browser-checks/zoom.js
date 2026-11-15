@@ -1,10 +1,11 @@
-// Browser check (step 7, zoom). Body of an async function; `page` is a Playwright page on
+// Browser check (step 7 and 7b, zoom). Body of an async function; `page` is a Playwright page on
 // http://localhost:4173/preview.html?tier=studio (npm run build; npx vite preview) or the public URL, 1440x900.
 // Run it at device scale factor 1 and 2: 100% is a different scale on each.
 // Checks: (1) a frame grabbed at 200% with a pan is the same image as one grabbed at Fit; (2) the guides overlay's box
 // is transformed with the picture at 200%; (3) a 10 px drag on the zoomed picture pans and does not change the paused
-// state, while a click still does; (4) Alt+arrows stop at the picture's edges; plus the Z cycle, the announcements and
-// the menu's reading order.
+// state, while a click still does; (4) Shift+Alt+arrows stop at the picture's edges; plus the Z and Shift+Z cycle over
+// five levels, the announcements, the Zoom button and its menu, Alt+arrow on the seek slider (not ours: it seeks as
+// before zoom existed), and the Guides menu's reading order.
 const out = {};
 await page.evaluate(() => localStorage.setItem('videojs-pro:v1', JSON.stringify({ v: 1, guides: ['title-safe', 'thirds'], crop: null, zones: null, timeDisplay: 'timecode' })));
 await page.reload(); await page.waitForTimeout(3000);
@@ -51,14 +52,21 @@ await page.keyboard.press('g'); await page.waitForTimeout(800);
 await page.keyboard.press('z'); await page.waitForTimeout(300);
 const at100 = await state();
 await page.keyboard.press('z'); await page.waitForTimeout(300);
+const at150 = await state();
+await page.keyboard.press('z'); await page.waitForTimeout(300);
 const at200 = await state();
-out.cycle = [at100.zoom, at200.zoom];
-out.said = [at100.said, at200.said];
+await page.keyboard.press('z'); await page.waitForTimeout(300);
+const at400 = await state();
+await page.keyboard.press('Shift+z'); await page.waitForTimeout(300);
+const backTo200 = await state();
+out.cycle = [at100.zoom, at150.zoom, at200.zoom, at400.zoom, backTo200.zoom];
+out.cycleOk = out.cycle.join() === '100,150,200,400,200';
+out.said = [at100.said, at150.said, at200.said, at400.said];
 const ratio = await page.evaluate(() => devicePixelRatio);
 const videoWidth = await page.evaluate(() => document.querySelector('video').videoWidth);
-out.scale = { devicePixelRatio: ratio, videoWidth, at100: +(at100.video.width / fit.video.width).toFixed(4), expected100: +(videoWidth / fit.video.width / ratio).toFixed(4), at200: +(at200.video.width / fit.video.width).toFixed(4) };
-out.scaleOk = same(at100.video.width * ratio, videoWidth) && same(at200.video.width * ratio, videoWidth * 2);
-out.pixelated = at200.rendering === 'pixelated' && at100.rendering !== 'pixelated';
+out.scale = { devicePixelRatio: ratio, videoWidth, at100: +(at100.video.width / fit.video.width).toFixed(4), expected100: +(videoWidth / fit.video.width / ratio).toFixed(4), at150: +(at150.video.width / fit.video.width).toFixed(4), at200: +(at200.video.width / fit.video.width).toFixed(4), at400: +(at400.video.width / fit.video.width).toFixed(4) };
+out.scaleOk = same(at100.video.width * ratio, videoWidth) && same(at150.video.width * ratio, videoWidth * 1.5) && same(at200.video.width * ratio, videoWidth * 2) && same(at400.video.width * ratio, videoWidth * 4);
+out.pixelated = at200.rendering === 'pixelated' && at400.rendering === 'pixelated' && at100.rendering !== 'pixelated' && at150.rendering !== 'pixelated';
 
 // (2) the guides' box transforms with the picture, and the picture rectangle still describes the unzoomed picture
 out.guidesFollow = same(at200.guide.left, at200.video.left) && same(at200.guide.top, at200.video.top) && same(at200.guide.width, at200.video.width) && same(at200.guide.height, at200.video.height) && at200.guide.width > fit.guide.width * 1.5;
@@ -89,47 +97,78 @@ out.clickStillPauses = (await state()).paused;
 out.dragOk = out.dragPaused.pausedBefore === out.dragPaused.pausedAfter && same(out.dragPaused.movedPx, 10) && out.dragPlaying.pausedBefore === false && out.dragPlaying.pausedAfter === false && same(out.dragPlaying.movedPx, -10) && out.dragsNoFullscreen && out.clickStillPauses;
 out.cursor = await page.evaluate(() => getComputedStyle(document.querySelector('.pro-picture')).cursor);
 
-// (4) Alt+arrows stop at the edges
+// (4) Shift+Alt+arrows stop at the edges
 await page.evaluate(() => { const v = document.querySelector('video'); v.pause(); v.currentTime = 20; });
 await page.waitForTimeout(1200);
 await page.focus('.pro-skin');
 const press = async (key, times) => { for (let i = 0; i < times; i++) await page.keyboard.press(key); await page.waitForTimeout(250); };
 const start = await state();
-await press('Alt+ArrowRight', 1);
+await press('Shift+Alt+ArrowRight', 1);
 const one = await state();
 out.oneStepPx = +(start.video.left - one.video.left).toFixed(2);
 out.oneStepIsTenth = same(out.oneStepPx, start.stage.width * 0.1);
-await press('Alt+ArrowRight', 30); await press('Alt+ArrowDown', 30);
+await press('Shift+Alt+ArrowRight', 30); await press('Shift+Alt+ArrowDown', 30);
 const far = await state();
-await press('Alt+ArrowLeft', 30); await press('Alt+ArrowUp', 30);
+await press('Shift+Alt+ArrowLeft', 30); await press('Shift+Alt+ArrowUp', 30);
 const near = await state();
 out.edges = { rightBottom: [far.video.right - far.stage.right, far.video.bottom - far.stage.bottom].map((n) => +n.toFixed(2)), leftTop: [near.video.left - near.stage.left, near.video.top - near.stage.top].map((n) => +n.toFixed(2)) };
 out.edgesOk = out.edges.rightBottom.concat(out.edges.leftTop).every((n) => Math.abs(n) < 0.6);
 out.arrowsDidNotSeek = same(near.time, start.time) || Math.abs(near.time - start.time) < 0.001;
 
 // (1b) grab at 200%, panned into a corner: the same image as at Fit
-await press('Alt+ArrowRight', 3);
+await press('Shift+Alt+ArrowRight', 3);
 await page.keyboard.press('g'); await page.waitForTimeout(800);
 out.grabs = await page.evaluate(() => window.__grabs);
 out.grabSame = out.grabs.length === 2 && out.grabs[0].sum === out.grabs[1].sum && out.grabs[0].width === videoWidthOf() && out.grabs[1].width === out.grabs[0].width;
 function videoWidthOf() { return videoWidth; }
 
-// Back to Fit: nothing is left behind
-await page.keyboard.press('z'); await page.waitForTimeout(300);
+// Alt+arrows are not ours any more: with no focus on the slider nothing moves; on the seek slider Alt+→ is the stock
+// slider's key again (it moved the playhead before step 7), and Shift+Alt+→ there pans.
+const beforeAlt = await state();
+await press('Alt+ArrowLeft', 2);
+const afterAlt = await state();
+out.altAloneDoesNotPan = same(beforeAlt.video.left, afterAlt.video.left) && Math.abs(beforeAlt.time - afterAlt.time) < 0.001;
+await page.focus('[role=slider][aria-label="Seek"]').catch(() => {});
+out.sliderFocused = await page.evaluate(() => document.activeElement.getAttribute('role') === 'slider');
+await press('Alt+ArrowRight', 1); await page.waitForTimeout(500);
+const afterSliderAlt = await state();
+out.sliderAlt = { seekedBy: +(afterSliderAlt.time - afterAlt.time).toFixed(3), panned: !same(afterSliderAlt.video.left, afterAlt.video.left) };
+await press('Shift+Alt+ArrowLeft', 1);
+const afterSliderPan = await state();
+out.sliderShiftAlt = { seekedBy: +(afterSliderPan.time - afterSliderAlt.time).toFixed(3), pannedPx: +(afterSliderPan.video.left - afterSliderAlt.video.left).toFixed(1) };
+out.sliderOk = out.sliderFocused && out.sliderAlt.seekedBy > 0 && !out.sliderAlt.panned && out.sliderShiftAlt.seekedBy === 0 && out.sliderShiftAlt.pannedPx > 0;
+await page.focus('.pro-skin');
+
+// Back to Fit: nothing is left behind (200% -> 400% -> Fit)
+await page.keyboard.press('z'); await page.keyboard.press('z'); await page.waitForTimeout(300);
 const back = await state();
 out.backToFit = back.zoom === 'fit' && back.transform === '' && back.said === 'Zoom fit' && same(back.video.width, fit.video.width);
+await page.keyboard.press('Shift+z'); await page.waitForTimeout(200);
+out.shiftZFromFit = (await state()).zoom;
+await page.keyboard.press('z'); await page.waitForTimeout(200);
 
-// The menu: opens on the first item, Zoom comes after Platform zones, choosing keeps it open
+// The Guides menu: opens on the first item, reading order, no Zoom group in it
 await page.focus('[data-pro-menu="guides"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(500);
 const current = () => page.evaluate(() => document.activeElement.textContent.trim().slice(0, 22));
-out.menuOrder = [await current()];
-for (let i = 0; i < 17; i++) { await page.keyboard.press('ArrowDown'); await page.waitForTimeout(50); out.menuOrder.push(await current()); }
-out.menuFirst = out.menuOrder[0].startsWith('Title safe');
-await page.focus('[data-zoom-item="100"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(300);
-out.menuChoice = await page.evaluate(() => ({ zoom: document.querySelector('.pro-skin').dataset.zoom, checked: document.querySelector('[data-zoom-item="100"]').getAttribute('aria-checked'), role: document.querySelector('[data-zoom-item="100"]').getAttribute('role'), open: document.querySelector('[data-pro-menu="guides"]').getAttribute('aria-expanded'), text: document.querySelector('[data-zoom-item="100"]').textContent }));
+out.guidesOrder = [await current()];
+for (let i = 0; i < 14; i++) { await page.keyboard.press('ArrowDown'); await page.waitForTimeout(50); out.guidesOrder.push(await current()); }
+out.guidesOk = out.guidesOrder[0].startsWith('Title safe') && out.guidesOrder[14].startsWith('Hide guides') && !out.guidesOrder.some((text) => /^(Fit|\d+%)/.test(text));
 await page.keyboard.press('Escape'); await page.waitForTimeout(300);
-out.notRemembered = !(await page.evaluate(() => localStorage.getItem('videojs-pro:v1'))).includes('zoom');
-await page.keyboard.press('z'); await page.keyboard.press('z'); await page.waitForTimeout(200);
 
-out.pass = out.scaleOk && out.pixelated && out.guidesFollow && out.rectUnchanged && out.afterResize.rectIsUnzoomed && out.afterResize.stillCovers && out.dragOk && out.oneStepIsTenth && out.edgesOk && out.arrowsDidNotSeek && out.grabSame && out.backToFit && out.menuFirst && out.menuChoice.zoom === '100' && out.menuChoice.open === 'true' && out.notRemembered;
+// The Zoom button and its menu
+const button = () => page.evaluate(() => { const b = document.querySelector('[data-pro-menu="zoom"]'); const r = b.getBoundingClientRect(); return { text: b.textContent, name: b.getAttribute('aria-label'), on: b.hasAttribute('data-pressed'), width: +r.width.toFixed(1), height: +r.height.toFixed(1), left: +r.left.toFixed(1), numerals: getComputedStyle(b).fontVariantNumeric, expanded: b.getAttribute('aria-expanded') }; });
+out.buttonFit = await button();
+await page.focus('[data-pro-menu="zoom"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(500);
+out.zoomMenu = await page.evaluate(() => ({ items: [...document.querySelectorAll('.pro-zoom-popup [role=menuitemradio]')].map((e) => e.textContent + (e.getAttribute('aria-checked') === 'true' ? '*' : '')), help: document.querySelector('.pro-zoom-popup .pro-menu-note').textContent, focus: document.activeElement.textContent }));
+await page.focus('[data-zoom-item="400"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(500);
+out.button400 = await button();
+out.focusBack = await page.evaluate(() => document.activeElement.getAttribute('data-pro-menu'));
+const neighbour = () => page.evaluate(() => +document.querySelector('.media-settings-button').getBoundingClientRect().left.toFixed(1));
+const settingsAt400 = await neighbour();
+await page.focus('.pro-skin'); await page.keyboard.press('z'); await page.waitForTimeout(300);
+out.rowDoesNotShift = out.buttonFit.width === out.button400.width && out.buttonFit.left === out.button400.left && settingsAt400 === (await neighbour());
+out.buttonOk = out.buttonFit.text === 'Fit' && out.buttonFit.name === 'Zoom, Fit' && !out.buttonFit.on && out.button400.text === '400%' && out.button400.name === 'Zoom, 400%' && out.button400.on && out.focusBack === 'zoom' && out.zoomMenu.items.map((text) => text.replace(/showing.*/, '').replace('*', '')).join() === 'Fit,100%,150%,200%,400%' && out.zoomMenu.help.includes('Shift+Alt') && out.buttonFit.numerals.includes('tabular-nums') && out.rowDoesNotShift;
+out.notRemembered = !(await page.evaluate(() => localStorage.getItem('videojs-pro:v1'))).includes('zoom');
+
+out.pass = out.cycleOk && out.scaleOk && out.pixelated && out.guidesFollow && out.rectUnchanged && out.afterResize.rectIsUnzoomed && out.afterResize.stillCovers && out.dragOk && out.oneStepIsTenth && out.edgesOk && out.arrowsDidNotSeek && out.grabSame && out.altAloneDoesNotPan && out.sliderOk && out.backToFit && out.shiftZFromFit === '400' && out.guidesOk && out.buttonOk && out.notRemembered;
 return out;

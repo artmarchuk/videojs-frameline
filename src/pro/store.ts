@@ -29,7 +29,7 @@ import {
   type ViewState,
   type ZoneId,
 } from './view';
-import { isZoomLevel, nextZoom, type ZoomLevel } from './zoom';
+import { isZoomLevel, nextZoom, previousZoom, type ZoomLevel } from './zoom';
 
 /** A marker on the timeline. With `end` it is a range marker. Times are in seconds. */
 export interface Marker {
@@ -105,8 +105,8 @@ export interface ProStore {
   toggleGuidesHidden(): void;
   /** Picks a zoom level. Ignored while the host does not allow zoom. */
   setZoom(level: ZoomLevel): void;
-  /** `Z`: Fit, 100%, 200%, and Fit again. */
-  cycleZoom(): void;
+  /** `Z`: the next level, and Fit again after the last. `-1` (`Shift+Z`) goes the other way. */
+  cycleZoom(direction?: 1 | -1): void;
   selectMarker(marker: Marker): void;
   /** Drops the selection without telling the host: the playhead moved away from the marker. */
   deselectMarker(): void;
@@ -246,8 +246,8 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       commit({ zoom: level });
     },
 
-    cycleZoom() {
-      if (allowed.zoom) commit({ zoom: nextZoom(state.zoom) });
+    cycleZoom(direction = 1) {
+      if (allowed.zoom) commit({ zoom: direction === -1 ? previousZoom(state.zoom) : nextZoom(state.zoom) });
     },
 
     selectMarker(marker) {
