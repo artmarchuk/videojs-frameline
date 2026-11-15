@@ -144,3 +144,45 @@ describe('pro store', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('toolsOpen', () => {
+  it('is closed by default and can start open', () => {
+    expect(createProStore().getState().toolsOpen).toBe(false);
+    expect(createProStore({ toolsOpen: true }).getState().toolsOpen).toBe(true);
+  });
+
+  it('toggles with no argument and sets with one', () => {
+    const store = createProStore();
+    store.setToolsOpen();
+    expect(store.getState().toolsOpen).toBe(true);
+    store.setToolsOpen();
+    expect(store.getState().toolsOpen).toBe(false);
+    store.setToolsOpen(true);
+    store.setToolsOpen(true);
+    expect(store.getState().toolsOpen).toBe(true);
+  });
+
+  it('notifies only on a change and leaves the range alone', () => {
+    const store = createProStore();
+    store.setIn(2);
+    let calls = 0;
+    store.subscribe(() => calls++);
+    store.setToolsOpen(false);
+    expect(calls).toBe(0);
+    store.setToolsOpen(true);
+    expect(calls).toBe(1);
+    expect(store.getState().inPoint).toBe(2);
+  });
+});
+
+describe('selectedMarker', () => {
+  it('remembers the selected marker and reports it', () => {
+    const store = createProStore();
+    const seen: unknown[] = [];
+    store.setCallbacks({ onMarkerSelect: (marker) => seen.push(marker) });
+    const marker = { time: 3, label: 'a' };
+    store.selectMarker(marker);
+    expect(store.getState().selectedMarker).toBe(marker);
+    expect(seen).toEqual([marker]);
+  });
+});

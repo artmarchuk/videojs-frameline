@@ -142,13 +142,13 @@ export function buildTicks(plan: TickPlan, duration: number, width: number): Tic
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /**
- * Compact, seconds-first ruler label: `0s`, `10s` when the whole clip is under a minute; `0:30`, `1:30` when it
+ * Compact, seconds-first ruler label: `0s`, `10s` when the whole clip is a minute or less; `0:30`, `1:30` when it
  * needs minutes; `1:00:00` only for positions of an hour or more. An hours field that would be zero is never shown,
  * and the `s` suffix appears only in the seconds-only format.
  */
 export function formatRulerLabel(seconds: number, duration: number): string {
   const total = Math.max(0, Math.round(seconds));
-  if (duration < 60) return `${total}s`;
+  if (duration <= 60) return `${total}s`;
   const s = total % 60;
   if (total < 3600) return `${Math.floor(total / 60)}:${pad(s)}`;
   return `${Math.floor(total / 3600)}:${pad(Math.floor(total / 60) % 60)}:${pad(s)}`;

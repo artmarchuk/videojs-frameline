@@ -96,7 +96,8 @@ describe('ruler labels', () => {
   });
 
   it('uses minutes and seconds when the duration needs minutes', () => {
-    expect(formatRulerLabel(0, 60)).toBe('0:00');
+    expect(formatRulerLabel(50, 60)).toBe('50s');
+    expect(formatRulerLabel(0, 61)).toBe('0:00');
     expect(formatRulerLabel(30, 90)).toBe('0:30');
     expect(formatRulerLabel(60, 90)).toBe('1:00');
     expect(formatRulerLabel(90, 90)).toBe('1:30');
@@ -113,7 +114,7 @@ describe('ruler labels', () => {
 
   it('never shows an hours field below an hour, or a minutes field below a minute', () => {
     for (const duration of [10, 59]) for (let t = 0; t <= duration; t += 7) expect(formatRulerLabel(t, duration)).toMatch(/^\d+s$/);
-    for (const duration of [60, 90, 600, 3 * 3600]) for (let t = 0; t <= Math.min(duration, 3599); t += 15) expect(formatRulerLabel(t, duration)).toMatch(/^\d+:\d\d$/);
+    for (const duration of [61, 90, 600, 3 * 3600]) for (let t = 0; t <= Math.min(duration, 3599); t += 15) expect(formatRulerLabel(t, duration)).toMatch(/^\d+:\d\d$/);
     expect(formatRulerLabel(7200, 3 * 3600)).not.toMatch(/^0:/);
   });
 

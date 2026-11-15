@@ -11,6 +11,18 @@ export type Tier = 'share' | 'review' | 'studio';
 
 export const TIERS: readonly Tier[] = ['share', 'review', 'studio'];
 
+/** Where the controls sit: over the picture, or in a dock below it. */
+export type Layout = 'overlay' | 'dock';
+
+/**
+ * The layout for a tier. Share is the audience's player, so its controls overlay the picture. Review and Studio are
+ * tools, where nothing may cover the picture, so they dock. A host can override either way; anything else is ignored.
+ */
+export function resolveLayout(tier: Tier, layout?: unknown): Layout {
+  if (layout === 'overlay' || layout === 'dock') return layout;
+  return tier === 'share' ? 'overlay' : 'dock';
+}
+
 /** Guides and masks that can be drawn over the picture. */
 export const GUIDE_IDS = ['title-safe', 'action-safe', 'thirds', 'centre', '9:16', '4:5', '1:1', '2.39'] as const;
 

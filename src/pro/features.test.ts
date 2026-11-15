@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetWarnings } from './dev';
-import { GUIDE_IDS, guideAttribute, hasProFeatures, resolveFeatures, type FeatureOverrides } from './features';
+import { GUIDE_IDS, guideAttribute, hasProFeatures, resolveFeatures, resolveLayout, type FeatureOverrides } from './features';
 
 describe('resolveFeatures', () => {
   let warn: ReturnType<typeof vi.spyOn>;
@@ -74,5 +74,23 @@ describe('resolveFeatures', () => {
     expect(guideAttribute('title-safe')).toBe('data-guide-title-safe');
     expect(guideAttribute('9:16')).toBe('data-guide-9-16');
     expect(guideAttribute('2.39')).toBe('data-guide-2-39');
+  });
+});
+
+describe('resolveLayout', () => {
+  it('defaults to overlay for share and dock for review and studio', () => {
+    expect(resolveLayout('share')).toBe('overlay');
+    expect(resolveLayout('review')).toBe('dock');
+    expect(resolveLayout('studio')).toBe('dock');
+  });
+
+  it('lets the host override either way', () => {
+    expect(resolveLayout('share', 'dock')).toBe('dock');
+    expect(resolveLayout('review', 'overlay')).toBe('overlay');
+  });
+
+  it('ignores anything that is not a layout', () => {
+    expect(resolveLayout('review', 'sidebar')).toBe('dock');
+    expect(resolveLayout('share', null)).toBe('overlay');
   });
 });

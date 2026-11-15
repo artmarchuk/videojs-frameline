@@ -63,6 +63,8 @@ export interface ProState {
   duration: number;
   /** The marker the user last selected (timeline, Markers list, or previous/next cut); drawn in the accent. */
   selectedMarker: Marker | null;
+  /** The Tools tray (Range, Capture, View) is open. Only what is visible changes; every shortcut works either way. */
+  toolsOpen: boolean;
 }
 
 export interface ProCallbacks {
@@ -81,6 +83,8 @@ export interface ProStore {
   clearInOut(): void;
   setLoopMode(mode: LoopMode): void;
   toggleTimeDisplay(): void;
+  /** Opens or closes the Tools tray; with no argument, toggles it. */
+  setToolsOpen(open?: boolean): void;
   toggleOverlay(id: string, on?: boolean): void;
   setInspection(patch: Partial<Inspection>): void;
   resetInspection(): void;
@@ -104,6 +108,8 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 export interface ProStoreOptions {
   allowedOverlays?: readonly (GuideId | string)[];
   timeDisplay?: TimeDisplay;
+  /** Start with the Tools tray open. Default closed. */
+  toolsOpen?: boolean;
 }
 
 export function createProStore(options: ProStoreOptions = {}): ProStore {
@@ -120,6 +126,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     clockPrecision: null,
     duration: 0,
     selectedMarker: null,
+    toolsOpen: options.toolsOpen ?? false,
   };
   let allowed = new Set<string>(options.allowedOverlays ?? []);
   let callbacks: ProCallbacks = {};
@@ -193,6 +200,11 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
 
     toggleTimeDisplay() {
       commit({ timeDisplay: state.timeDisplay === 'timecode' ? 'seconds' : 'timecode' });
+    },
+
+    setToolsOpen(open) {
+      const next = typeof open === 'boolean' ? open : !state.toolsOpen;
+      if (next !== state.toolsOpen) commit({ toolsOpen: next });
     },
 
     toggleOverlay(id, on) {
