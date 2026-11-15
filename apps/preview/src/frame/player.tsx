@@ -22,7 +22,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
     <>
       <VideoPlayer poster={MEDIA.poster}>
         <ProSkin tier={tier} fps={MEDIA.fps}>
-          <MuxVideo {...media} src={MEDIA.src} playsInline crossOrigin="">
+          <MuxVideo {...media} src={MEDIA.src} playsInline crossOrigin={MEDIA.noCors ? undefined : ''}>
             {MEDIA.chapters && <track kind="chapters" label="English" srcLang="en" src={MEDIA.chapters} default />}
           </MuxVideo>
         </ProSkin>

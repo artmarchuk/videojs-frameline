@@ -6,6 +6,8 @@ export interface PreviewMedia {
   poster?: string;
   /** Frames per second of the source. The player cannot detect it. */
   fps?: number;
+  /** Leave out the `crossorigin` attribute, so frame capture is blocked. For testing the error path. */
+  noCors?: boolean;
   /** Chapters for the time slider, served from `apps/preview/public`. */
   chapters?: string;
 }
@@ -22,9 +24,11 @@ const DEFAULT: PreviewMedia = {
  * Test sources for the gate checklist, chosen with `?media=<name>` on `/preview.html`:
  * - `plain`: the sample stream the Video.js docs use; no captions, no chapters.
  * - `error`: a source that does not exist, to exercise the error dialog and retry.
+ * - `nocors`: a progressive MP4 loaded without `crossorigin`, so grabbing a frame is refused by the browser.
  */
 const VARIANTS: Record<string, PreviewMedia> = {
   plain: { src: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8' },
+  nocors: { src: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4', noCors: true },
   error: { src: 'https://stream.mux.com/this-playback-id-does-not-exist.m3u8' },
 };
 
