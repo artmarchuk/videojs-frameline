@@ -953,3 +953,6 @@ The Zoom button adds 56 px (52 + gap) to the right column. Measured with a range
 - **The cap lift on a slow connection, on native HLS (Safari), and with a host `source` object.** Chrome with hls.js on a fast connection only. On Safari the media has no renditions, so the hook does nothing.
 - **How the jump in size feels** when a higher rendition arrives mid-zoom.
 - **A real phone:** the three-row dock at 390 was seen in emulation.
+
+### Step 7b public-URL checks (https://videojs-pro.vercel.app)
+Viewer gate at 1440 and 320 in headless Chrome: tab order, `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**; `Z`, `Shift+Z` and `Shift+Alt+arrows` do nothing in the Viewer; its DOM (every element's tag, classes and role) is identical to the step 6d deploy. Studio: `zoom.js` passes at device scale factor 1 and 2, `guides-menu-focus.js` opens on "Title safe" and returns focus to "Guides", `zoom-rendition-cap.js` passes (720p, 2160p while zoomed, 720p again, no reload).
