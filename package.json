@@ -11,7 +11,8 @@
     "deploy": "node apps/preview/deploy.mjs",
     "deploy:vercel": "npx --yes vercel@64 build --prod && npx --yes vercel@64 deploy --prebuilt --prod",
     "deploy:netlify": "npx --yes netlify-cli@27 deploy --build",
-    "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy dist --project-name videojs-pro"
+    "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy dist --project-name videojs-pro",
+    "test": "vitest run"
   },
   "dependencies": {
     "@videojs/core": "10.4.0",
@@ -31,7 +32,8 @@
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "vitest": "5.1.0"
   },
   "engines": {
     "node": "24.x"
