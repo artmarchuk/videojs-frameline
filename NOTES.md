@@ -4,7 +4,7 @@ Read this at the start of every step, along with `specs/PROJECT-OVERVIEW.md` and
 
 **Tier names.** Until step 6 there were three tiers: Share, Review and Studio. Step 6 merged Review and Studio into **Studio** and renamed Share to **Viewer**. The sections for steps 2 to 5b below were renamed with the code, so "Studio" there means what was then called Review (the old Studio tier had no UI). Things step 6 removed are still described in those sections as history: the Tools tray, the Tools button, the playhead's permanent bubble, the marker lane and its cluster badges, Play range, `toolsOpen`. The git tag `step-2-share-gate` keeps its name.
 
-**The skin is now Frameline.** Step 8 renamed Video.js PRO to **Frameline** ("Frameline — a Video.js skin for video creators"). The text below was renamed with the code: `ProSkin` is `FramelineSkin`, the `--pro-*` tokens are `--fl-*`, the storage key `videojs-pro:v1` is `frameline:v1`, the package is `videojs-frameline`. Not renamed: the Vercel project and URL (`videojs-pro.vercel.app`), the repo folder, `src/pro/`, the `.pro-*` classes and `data-pro-*` attributes, and the old step files in `specs/`.
+**The skin is now Frameline.** Step 8 renamed Video.js PRO to **Frameline** ("Frameline — a Video.js skin for video creators"). The text below was renamed with the code: `ProSkin` is `FramelineSkin`, the `--pro-*` tokens are `--fl-*`, the storage key `videojs-pro:v1` is `frameline:v1`, the package is `videojs-frameline`. Not renamed: the Vercel project and URL (`videojs-frameline.vercel.app`), the repo folder, `src/pro/`, the `.pro-*` classes and `data-pro-*` attributes, and the old step files in `specs/`.
 
 **View is now Guides.** Step 7b renamed the View menu to **Guides** and moved zoom to a button of its own. Sections up to step 7 still say "View menu", `onViewChange`, `view:change`, `ViewMenu` and `view-menu-focus.js`: read them as Guides menu, `onGuidesChange`, `guides:change`, `GuidesMenu` and `guides-menu-focus.js`. Step 7's Zoom group in the View menu, its three levels and `Alt+arrows` are history too (see step 7b).
 
@@ -647,7 +647,7 @@ No conflict: `V` is not in the YouTube map or ours, the pattern needs Shift alon
 
 ### Public URL (after the 6b deploy)
 
-Guides, zones and the stored choices work on https://videojs-pro.vercel.app/preview.html; the View menu's keyboard behaviour, announcements and `view:change` events match the local run; the Viewer gate checks pass again (tab order, keys, free keys, help dialog, no pro chunk, 40 px targets). In the 6a run Escape once failed to close the help dialog at 1440 px on the public URL; it closed in every later run, so I take that for a timing slip in the test script, not a defect, but it was not reproduced on purpose.
+Guides, zones and the stored choices work on https://videojs-frameline.vercel.app/preview.html; the View menu's keyboard behaviour, announcements and `view:change` events match the local run; the Viewer gate checks pass again (tab order, keys, free keys, help dialog, no pro chunk, 40 px targets). In the 6a run Escape once failed to close the help dialog at 1440 px on the public URL; it closed in every later run, so I take that for a timing slip in the test script, not a defect, but it was not reproduced on purpose.
 
 ### Screenshots
 
@@ -655,7 +655,7 @@ Guides, zones and the stored choices work on https://videojs-pro.vercel.app/prev
 
 ## Deployed URL
 
-- https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`; the name stayed when the skin became Frameline). Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
+- https://videojs-frameline.vercel.app (Vercel production, project `videojs-pro`). The domain became `videojs-frameline.vercel.app` after step 8; the old `videojs-pro.vercel.app` redirects to it. The earlier "public-URL checks" sections below ran on the old domain. Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
@@ -787,7 +787,7 @@ Studio, range set, View menu open, headless Chrome 2x (`design/screenshots/step-
 ### Step 6c checks
 Tests 172 passing, build passes. Platform zones screenshot: `zones-tiktok.png` (top 12.5%, bottom 34.4%).
 
-### Step 6c public-URL checks (https://videojs-pro.vercel.app)
+### Step 6c public-URL checks (https://videojs-frameline.vercel.app)
 Viewer gate run on the public URL in headless Chrome: tab order Seek, Play, Mute, Volume, time, captions, Settings, PiP, Fullscreen; Space, K, J, L, arrows, M, 0-9, Home, captions `C` and the help dialog (`Shift+?`, focus in and back) work; 40 px targets; no horizontal overflow at 1440 and 320; **no pro chunk requested** (Studio requests `runtime`, `studio` JS and CSS only). Studio chunk names for 6c: `runtime-_dcTh6Bf.js`, `studio-DGHWJDs5.js`.
 
 ### 6c follow-up: playhead as one shape, marker at 0
@@ -898,7 +898,7 @@ Unit tests: 192 passing (19 new: scale at devicePixelRatio 1 and 2, 100% smaller
 - **Screen reader:** announcements were read from the live region's text.
 - **Windows and Linux:** that `preventDefault` on `Alt+←` stops the browser's Back while zoomed was not run there.
 
-### Step 7 public-URL checks (https://videojs-pro.vercel.app)
+### Step 7 public-URL checks (https://videojs-frameline.vercel.app)
 Viewer gate in headless Chrome at 1440 and 320: tab order (Seek, Play, Mute, Volume, time, captions, Settings, PiP, Fullscreen; the 320 px set is shorter as before), `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**. The Viewer's DOM (every element's tag, classes and role) is identical to the step 6d deploy, with no `.pro-picture`; `Z` and `Alt+arrows` do nothing there. Studio: `scripts/browser-checks/zoom.js` passes at device scale factor 1 and 2.
 
 ## Step 7b: Guides menu and Zoom button (15 Nov 2026)
@@ -956,7 +956,7 @@ The Zoom button adds 56 px (52 + gap) to the right column. Measured with a range
 - **How the jump in size feels** when a higher rendition arrives mid-zoom.
 - **A real phone:** the three-row dock at 390 was seen in emulation.
 
-### Step 7b public-URL checks (https://videojs-pro.vercel.app)
+### Step 7b public-URL checks (https://videojs-frameline.vercel.app)
 Viewer gate at 1440 and 320 in headless Chrome: tab order, `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**; `Z`, `Shift+Z` and `Shift+Alt+arrows` do nothing in the Viewer; its DOM (every element's tag, classes and role) is identical to the step 6d deploy. Studio: `zoom.js` passes at device scale factor 1 and 2, `guides-menu-focus.js` opens on "Title safe" and returns focus to "Guides", `zoom-rendition-cap.js` passes (720p, 2160p while zoomed, 720p again, no reload).
 
 ## Step 8: Configurator page, demo media, features doc (15 Nov 2026)
@@ -972,7 +972,7 @@ Viewer gate at 1440 and 320 in headless Chrome: tab order, `K`/Space, arrows, `J
 ### 8.R: the rename
 - Renamed: the package (`videojs-frameline`, also `skin.json`, the lockfile, the workbench's config), the public component (`FramelineSkin`, `FramelineSkinProps`, `FramelineSkinSlots`; file `src/pro/frameline-skin.tsx`; no alias), the page titles and the monitor page's heading, README, NOTES, the overview, `CLAUDE.md`, the comments that named the product, the development warning prefix (`[frameline]`), and the storage key (`frameline:v1`; a browser that remembered guides under `videojs-pro:v1` starts fresh).
 - **Tokens: `--pro-*` is `--fl-*`.** It was mechanical: one substitution over `src`, `apps`, `scripts` and the docs (69 token names, 13 files). Checked beyond typecheck, tests and the contrast script: the computed styles of every element of the skin (20 properties and both pseudo-elements, Studio, Viewer and compact) are identical before and after, and the set of tokens that CSS reads but only script sets is the same eight names.
-- Left as they are (internal): `src/pro/`, the `.pro-*` classes, `data-pro-*`, `ProStore`, `ProRuntime`, `useProStore`, the chunk names. Also left: the old step files in `specs/` (history), **the Vercel project and its URL `videojs-pro.vercel.app`**, and the repo folder. A search for "Video.js PRO", "VideoJS PRO" and "PRO" as a name finds them only in `specs/step-*.md` and in the notes that describe the rename.
+- Left as they are (internal): `src/pro/`, the `.pro-*` classes, `data-pro-*`, `ProStore`, `ProRuntime`, `useProStore`, the chunk names. Also left: the old step files in `specs/` (history), **the Vercel project and its URL `videojs-frameline.vercel.app`**, and the repo folder. A search for "Video.js PRO", "VideoJS PRO" and "PRO" as a name finds them only in `specs/step-*.md` and in the notes that describe the rename.
 
 ### 8.0: 100% means the source
 - `sourceWidth()` in `src/pro/zoom.ts`: the widest rendition in Video.js's `videoRenditionList` (a rendition that gives only its height takes its width from the playing picture's aspect ratio); with no list, the decoded `videoWidth`. `useZoom` takes the list and recomputes when its widest entry changes.
@@ -996,7 +996,7 @@ Viewer gate at 1440 and 320 in headless Chrome: tab order, `K`/Space, arrows, `J
 - **Show me** never moves focus (checked: focus is still on the button). It scrolls the player into view. A task whose flags are off is disabled and says which feature to switch on. Times are taken from the video's duration, so the copy holds for any source.
 - **Event log:** the last 20, newest first, each with the player's timecode. `onFrameChange` is left out (one per frame). Not a live region.
 - **Theme:** the page follows the system; the player stays dark. Links and focus rings are the accent in the dark theme and a darker shade of it (`#1D5FD1`) in the light theme, because `#5B9DFF` is 2.7:1 on a light page. Checked boxes and the chosen segment are neutral. 28 new rows in `scripts/contrast.mjs`, all pass.
-- **Meta:** title, description, Open Graph and Twitter tags with absolute URLs on `videojs-pro.vercel.app`; `og.png` (1200x630) from `scripts/og-image.mjs`; `favicon.svg`, the Guides icon on the dock's graphite.
+- **Meta:** title, description, Open Graph and Twitter tags with absolute URLs on `videojs-frameline.vercel.app`; `og.png` (1200x630) from `scripts/og-image.mjs`; `favicon.svg`, the Guides icon on the dock's graphite.
 - **Checks** (`scripts/browser-checks/configurator.js`, local and public, all pass): opens on Studio; a flag changes the player and the snippet; tier changes both and resets the flags; a pro flag over Viewer; layout; no reload; the radio groups work with arrow keys; each of the six "Show me" (three frames stepped, range and loop and playing, 9:16 with TikTok, title safe, 200% and panned, a PNG named `frame_<timecode>.png`); the log's lines, its cap of 20, Clear; Copy; four query strings round-trip; Viewer on the page requests no pro chunk. Structure at 1440, 1024, 390 (touch) and 320: one h1, h2 per section, header/main/footer/nav, no unlabelled control, no target under 24 px (44 on touch), no horizontal overflow.
 
 ### Bundle sizes (raw / gzip -9)
@@ -1015,7 +1015,7 @@ The page also loads a small shared `timecode-*.js` (the pure timecode functions,
 ### Screenshots
 `design/screenshots/step-8/` (headless Chrome; each opened and looked at): `page-1440-light`, `page-1440-dark`, `page-1024`, `page-390` (touch, dark), `page-320`, `event-log-entries`, `page-1440-after-show-me`, `og-image`.
 
-### Step 8 public-URL checks (https://videojs-pro.vercel.app)
+### Step 8 public-URL checks (https://videojs-frameline.vercel.app)
 Viewer gate at 1440 and 320 on `/?tier=viewer` and on `/preview.html?tier=viewer`: tab order, `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**. The Viewer's DOM (every element's tag, classes and role, and the video's children) is identical to the step 7b deploy on both pages. `configurator.js`, `zoom.js` at 1x and 2x, `guides-menu-focus.js`, `zoom-rendition-cap.js` and `zoom-rendition-note.js` (both with `?cap=1`) pass. `/`, `/preview.html`, `/workbench.html`, `/og.png`, `/favicon.svg` and the demo files answer 200.
 
 ### 8.6: not done
