@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import './timeline.css';
-import { Slider as SliderPrimitive, TimeSlider } from '@videojs/react';
+import { Slider as SliderPrimitive, Thumbnail, TimeSlider } from '@videojs/react';
 import {
   memo,
   useCallback,
@@ -152,7 +152,7 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
     [controller, video]
   );
 
-  const handleProps = { points, duration, fps, width, root, format, setDraft, controller, markers };
+  const handleProps = { points, duration, fps, width, root, format, setDraft, controller, markers, renderThumbnail };
 
   return (
     <div className={'pro-timeline'} dir="ltr" style={style} data-range={band ? 'set' : 'none'} data-display={seconds ? 'seconds' : 'timecode'} data-interactive="">
@@ -385,6 +385,7 @@ function RangeHandle({
   setDraft,
   controller,
   markers,
+  renderThumbnail,
 }: {
   which: 'in' | 'out';
   points: RangePoints;
@@ -396,6 +397,7 @@ function RangeHandle({
   setDraft: (draft: RangePoints | null) => void;
   controller: StudioController;
   markers: readonly Marker[];
+  renderThumbnail?: TimelineProps['renderThumbnail'];
 }) {
   const store = useProStoreApi();
   const announce = useAnnounce();
@@ -504,7 +506,8 @@ function RangeHandle({
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const current = drag.current;
     if (!current) return;
-    event.stopPropagation();
+    // Not stopped: the slider keeps tracking the pointer for its hover preview (hidden during the drag), so when the
+    // handle is released the hover preview is already where the pointer is, not where the drag started.
     const time = handleDragTime(event.clientX - current.left - current.offset, width, duration, fps, current.magnets);
     if (time === current.time) return;
     const move = resolveHandleMove(which, time, current.base, duration, fps);
@@ -522,7 +525,13 @@ function RangeHandle({
     room,
     otherX: timeToX(otherValue, duration, width),
   });
-  const bubbleX = dragTime === null ? 0 : clampBubble(timeToX(dragTime, duration, width), 92, width);
+  // Centre the drag preview on the anchor, then pull it back inside the timeline (its width changes with the image).
+  const preview = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const element = preview.current;
+    if (!element || dragTime === null) return;
+    element.style.left = `${clampBubble(timeToX(dragTime, duration, width), element.offsetWidth, width)}px`;
+  });
 
   return (
     <>
@@ -553,9 +562,13 @@ function RangeHandle({
         onDoubleClick={clear}
       />
       {dragTime !== null && (
-        <span className={'pro-tl-bubble pro-tl-bubble-drag'} style={{ left: bubbleX }} aria-hidden="true">
-          {format(dragTime)}
-        </span>
+        // The same preview as a playhead drag: the frame at the handle's point and its timecode, over the anchor.
+        <div ref={preview} className={'pro-tl-drag-preview'} aria-hidden="true">
+          <Thumbnail.Root time={dragTime} className={'media-slider-thumbnail'}>
+            <Thumbnail.Image render={renderThumbnail} className={'media-slider-thumbnail-image'} />
+          </Thumbnail.Root>
+          <span className={'pro-tl-bubble'}>{format(dragTime)}</span>
+        </div>
       )}
     </>
   );

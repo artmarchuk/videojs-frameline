@@ -481,15 +481,25 @@
     display: none;
   }
 
-  /* The bubble of a handle being dragged: the same bubble, centred on the handle and kept inside the timeline. */
-  .pro-skin .pro-tl-bubble-drag {
+  /*
+   * A handle being dragged has its own preview, the same as the playhead's (the frame at the handle's point, then
+   * its timecode), centred on the anchor and kept inside the timeline. The slider's hover preview and hairline are
+   * hidden meanwhile, so only one timecode shows.
+   */
+  .pro-skin .pro-tl-drag-preview {
     position: absolute;
     bottom: calc(100% + var(--media-spacing) * 2);
     z-index: 8;
-    width: var(--tl-bubble-width);
-    padding-inline: 0;
+    display: grid;
+    justify-items: center;
+    gap: var(--media-spacing);
     pointer-events: none;
     transform: translateX(-50%);
+  }
+
+  .pro-skin .pro-tl:has(.pro-tl-handle[data-dragging]) .pro-tl-preview,
+  .pro-skin .pro-tl:has(.pro-tl-handle[data-dragging]) .pro-tl-hairline {
+    opacity: 0;
   }
 
   @media (forced-colors: active) {
