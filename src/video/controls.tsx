@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { Controls, Tooltip } from '@videojs/react';
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 
 import { useStacked } from './hooks/use-stacked';
 import { CaptionsToggle } from './shared/captions-button';
@@ -22,7 +22,11 @@ import { Volume } from './shared/volume';
  *
  * The children are rendered in the order they appear, so the focus order always matches the visual order.
  */
-export function VideoControls({ renderThumbnail }: ThumbnailSlot = {}) {
+export function VideoControls({
+  renderThumbnail,
+  toolbarStart,
+  toolbarEnd,
+}: ThumbnailSlot & { toolbarStart?: ReactNode; toolbarEnd?: ReactNode } = {}) {
   const bar = useRef<HTMLDivElement>(null);
   const stacked = useStacked(bar);
 
@@ -37,6 +41,7 @@ export function VideoControls({ renderThumbnail }: ThumbnailSlot = {}) {
             <Controls.Group className={'pro-bar-row'}>
               <PlayButton />
               <Volume />
+              {toolbarStart}
               {stacked ? (
                 <>
                   <TimeGroup />
@@ -49,6 +54,7 @@ export function VideoControls({ renderThumbnail }: ThumbnailSlot = {}) {
                   <DurationTime />
                 </>
               )}
+              {toolbarEnd}
               <CaptionsToggle />
               <SettingsMenu />
               <PiPButton />

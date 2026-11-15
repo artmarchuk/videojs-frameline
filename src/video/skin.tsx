@@ -25,6 +25,14 @@ export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children
   children?: ReactNode;
   renderPoster?: PosterPrimitive.ImageProps['render'];
   renderThumbnail?: SliderPrimitive.Thumbnail.ImageProps['render'];
+  /** Host controls in the control bar, after play and volume. */
+  toolbarStart?: ReactNode;
+  /** Host controls in the control bar, before the captions button. */
+  toolbarEnd?: ReactNode;
+  /** Drawn in the overlay layer over the picture, which is `aria-hidden` and ignores the pointer. */
+  overlay?: ReactNode;
+  /** Extra layers inside the container, above the overlay layer. `ProSkin` mounts the pro runtime here. */
+  extras?: ReactNode;
 }
 
 /**
@@ -33,7 +41,17 @@ export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children
  * Layers, bottom to top: media, poster, the overlay layer (empty here; the Review tier draws guides in it),
  * transient indicators, controls, dialogs.
  */
-export function VideoSkin({ children, className, renderPoster, renderThumbnail, ...props }: VideoSkinProps = {}) {
+export function VideoSkin({
+  children,
+  className,
+  renderPoster,
+  renderThumbnail,
+  toolbarStart,
+  toolbarEnd,
+  overlay,
+  extras,
+  ...props
+}: VideoSkinProps = {}) {
   return (
     <ContainerPrimitive
       className={cn('media-skin', 'media-container', 'media-video', 'pro-skin', className)}
@@ -46,9 +64,12 @@ export function VideoSkin({ children, className, renderPoster, renderThumbnail, 
       <ShortcutsProvider>
         {children}
         <Poster renderImage={renderPoster} />
-        <div className={'pro-overlay'} aria-hidden="true" />
+        <div className={'pro-overlay'} aria-hidden="true">
+          {overlay}
+        </div>
+        {extras}
         <ErrorDialog />
-        <VideoControls renderThumbnail={renderThumbnail} />
+        <VideoControls renderThumbnail={renderThumbnail} toolbarStart={toolbarStart} toolbarEnd={toolbarEnd} />
 
         <VideoHotkeys />
         <VideoGestures />
