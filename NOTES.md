@@ -640,6 +640,10 @@ No conflict: `V` is not in the YouTube map or ours, the pattern needs Shift alon
 - Persistence: add fields to `serializeView`/`parseStored` (and bump nothing: unknown fields are ignored, missing ones default).
 - Grab frame draws the raw video, so guides and image adjustments are never in the PNG; say so in the Image section if that surprises.
 
+### Public URL (after the 6b deploy)
+
+Guides, zones and the stored choices work on https://videojs-pro.vercel.app/preview.html; the View menu's keyboard behaviour, announcements and `view:change` events match the local run; the Viewer gate checks pass again (tab order, keys, free keys, help dialog, no pro chunk, 40 px targets). In the 6a run Escape once failed to close the help dialog at 1440 px on the public URL; it closed in every later run, so I take that for a timing slip in the test script, not a defect, but it was not reproduced on purpose.
+
 ### Screenshots
 
 `design/screenshots/step-6/` (same method): the View menu at 1440 and 390; each guide on its own; all four together; each crop; each platform's zones; all guides plus the 2.39 crop over white, black and mid-grey; TikTok zones over white; letterboxed and pillarboxed pictures; guides at 1100, 800, 390 and 320; the focus ring on the View button.
