@@ -14,7 +14,7 @@ export interface PreviewMedia {
   noCors?: boolean;
   /** Chapters for the time slider, served from `apps/preview/public`. */
   chapters?: string;
-  /** Sample markers for the Review timeline. */
+  /** Sample markers for the Studio timeline. */
   markers?: Marker[];
 }
 
@@ -25,7 +25,7 @@ const DEFAULT: PreviewMedia = {
   chapters: './cosmic-dawn-chapters.vtt',
   // Measured: the frame clock reports media times in steps of 1/30 s for this stream.
   fps: 30,
-  // Samples that exercise the marker lane: a point, a range, the two ends, and three within a second (a cluster).
+  // Samples that exercise the marker pins: a point, one with an end time, the two ends, and three within a second.
   markers: [
     { id: 'start', time: 0, label: 'Head' },
     { id: 'logo', time: 8.4, label: 'Logo too small' },

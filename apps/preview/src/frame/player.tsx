@@ -14,12 +14,12 @@ const EventLog = lazy(() => import('./event-log'));
 
 const QUERY = new URLSearchParams(window.location.search);
 const DEBUG = QUERY.has('debug');
-const START_TIER = TIERS.find((tier) => tier === QUERY.get('tier')) ?? 'review';
+const START_TIER = TIERS.find((tier) => tier === QUERY.get('tier')) ?? 'studio';
 // `?layout=dock|overlay` overrides the tier's default layout, to check both layouts in any tier.
 const LAYOUT = QUERY.get('layout') === 'dock' ? 'dock' : QUERY.get('layout') === 'overlay' ? 'overlay' : undefined;
 const START_DENSITY: Density = QUERY.get('density') === 'compact' ? 'compact' : 'comfortable';
 
-const TIER_LABELS: Record<Tier, string> = { share: 'Share', review: 'Review', studio: 'Studio' };
+const TIER_LABELS: Record<Tier, string> = { viewer: 'Viewer', studio: 'Studio' };
 const DENSITIES: { value: Density; label: string }[] = [
   { value: 'comfortable', label: 'Comfortable' },
   { value: 'compact', label: 'Compact' },
@@ -49,7 +49,7 @@ function Segmented<T extends string>({
 
 /**
  * The preview page: a monitor. A slim top bar (product, file, tier and density switches) and the player, as large as
- * the window allows. `?tier=share|review|studio`, `?density=compact` and `?layout=dock|overlay` set the starting state; `?debug` adds the
+ * the window allows. `?tier=viewer|studio`, `?density=compact` and `?layout=dock|overlay` set the starting state; `?debug` adds the
  * debug readout and the event log. `media` carries the workbench's playback options.
  */
 export function Player({ media }: { media?: PlaybackProps }) {

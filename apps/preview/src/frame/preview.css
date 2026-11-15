@@ -6,7 +6,7 @@
   color-scheme: dark;
   --monitor-bar: 56px;
   --monitor-pad: 24px;
-  --monitor-bottom: 24px;
+  --monitor-bottom: 6px;
 }
 
 body {
@@ -24,10 +24,10 @@ body {
   padding: 0 var(--monitor-pad) var(--monitor-bottom);
 }
 
-/* The bar and the player share one column, up to 1200px wide, centred. */
+/* The bar and the player are one column, up to 1280px wide, centred. */
 .preview-player {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
   margin-inline: auto;
 }
 
@@ -106,7 +106,7 @@ body {
 }
 
 .monitor-switch button[aria-pressed="true"] {
-  background: #46464b;
+  background: #3a3a3e;
   color: #f2f2f4;
   font-weight: 500;
 }
@@ -136,7 +136,7 @@ body {
 
 /*
  * Stage plus dock fit the window: the player may not be taller than what is left under the top bar. The dock keeps
- * its height, so when the Tools tray opens the stage gets shorter and the picture is letterboxed.
+ * its height; on a short window the stage gets shorter and the picture is letterboxed.
  */
 .monitor-stage .media-skin[data-layout="dock"] {
   max-height: calc(100dvh - var(--monitor-bar) - var(--monitor-bottom));
