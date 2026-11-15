@@ -33,7 +33,7 @@ import { ProSkin } from '@/pro';
 
 With `tier="share"` (the default) and no flags, it is the clean Share player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
-**Status:** the Share tier and the Review transport are complete: frame stepping, timecode, in/out and loop, previous/next cut, grab frame, copy link and poster frame. The ruler timeline, guides and the Studio tools arrive in later steps, so `tier="studio"` currently shows the same controls as `tier="review"`.
+**Status:** the Share tier, the Review transport and the ruler timeline are complete: frame stepping, timecode, in/out and loop, previous/next cut, markers, grab frame, copy link and poster frame. Guides and the Studio tools arrive in later steps, so `tier="studio"` currently shows the same controls as `tier="review"`.
 
 ### Props
 
@@ -56,7 +56,7 @@ With `tier="share"` (the default) and no flags, it is the clean Share player and
 
 An invalid `fps`, an unknown tier or an unknown feature name logs one warning in development and falls back to the default. Nothing throws.
 
-`startTimecode` and `dropFrame` shape the timecode display and links. `markers` feed previous/next cut when the media has no chapters; they are drawn on the timeline in a later step.
+`startTimecode` and `dropFrame` shape the timecode display and links.
 
 ### Feature flags
 
@@ -95,6 +95,38 @@ These are added to the YouTube map in the Review and Studio tiers. Each works on
 | `R` | Loop the range on or off |
 | `[` `]` | Previous cut, next cut (chapters, or `markers` when there are no chapters) |
 | `G` | Grab the current frame as a PNG |
+
+### The timeline
+
+In the Review and Studio tiers the seek bar is a ruler timeline. It is still the Video.js `TimeSlider`, so it is a normal slider for the keyboard, the pointer and assistive technology; its value is read as timecode.
+
+- **Ruler:** tick intervals follow the duration, the width and `fps`. Labels are compact and seconds-first (`10s`, `1:30`, `1:00:00`). The playhead's bubble, the timecode field and the readouts show full timecode.
+- **Seeking snaps to frames.** Every seek lands in the middle of a frame, the same rule frame stepping uses. Best effort, like all frame numbers here.
+- **Keys on the focused seek slider:** `←` `→` step one frame while paused and seek 5 s while playing; `Shift+←` `Shift+→` jump 10 frames; `Home`, `End`, `PageUp`, `PageDown` as on any Video.js slider.
+- **In and Out:** the range is a band on the track, brighter where it has played. Each point has a handle that can be dragged, or moved with the keyboard when focused: `←` `→` one frame, `Shift` ten, `Home` `End` to its limits, `Delete` or `Backspace` to clear it. `onInOutChange` fires when a drag is released, not while it moves.
+- **Chapters** show as gaps in the track and feed previous/next cut.
+
+### Markers
+
+```tsx
+<ProSkin
+  tier="review"
+  markers={[
+    { id: 'logo', time: 8.4, label: 'Logo too small' }, // a point
+    { id: 'grade', time: 34, end: 44, label: 'Check the grade' }, // a range
+  ]}
+  onMarkerSelect={(marker) => openComment(marker.id)}
+>
+```
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `time` | `number` | Position in seconds |
+| `label` | `string` | Shown in the tooltip and the Markers list |
+| `end` | `number`, optional | Makes it a range marker, drawn as a bar |
+| `id` | `string`, optional | Your own identifier, passed back in `onMarkerSelect` |
+
+Point markers are flags and range markers are bars. Points too close to tell apart collapse into a badge with a count. Clicking a marker seeks to it and calls `onMarkerSelect`. For the keyboard and screen readers every marker is an item in the **Markers** list, and `[` `]` move between markers when the media has no chapters. The skin draws markers and reports selection; creating and storing them is the host app's job. About 200 markers is the design limit.
 
 ### Links to a frame
 

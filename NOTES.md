@@ -222,6 +222,81 @@ The Share bar renders four empty slots (`transport-start`, `transport-end`, `tim
 
 The Share path grew by 1.7 kB raw: the bar slots, the "arrows only while playing" switch and the extra help rows are hooks that have to live in the Share skin. No Review logic is in it (searched for its identifiers).
 
+## Step 5: Ruler timeline (15 Nov 2026)
+
+Built with the step 5b look from the start (the author's instruction): system typeface, graphite palette, white playhead, blue range band, compact ruler labels. The step 2 lime, the monospace font and the full-timecode ruler labels were never built. The dock layout itself is step 5b; at this checkpoint the timeline still sits in the overlay bar.
+
+### Verified APIs (`@videojs/react` 10.4.0, docs and `dist/` source)
+
+- `TimeSlider.Root` props: `label`, `step` (1 s), `largeStep` (10 s), `changeThrottle` (100 ms), `pauseOnDrag`, `thumbAlignment`, `disabled`, `onDragStart`, `onDragEnd`. It sets `--media-slider-fill`, `--media-slider-pointer`, `--media-slider-buffer` and `data-dragging`, `data-pointing`, `data-interactive`, `data-seeking`, `data-disabled` on the root. It has **no** value-format or seek hook: it calls the store's `seek()` itself.
+- Parts: `Track`, `Fill`, `Buffer`, `Thumb`, `Preview` (`overflow="clamp" | "visible"`, positions itself at the pointer), `Value` (`type="pointer" | "current"`, `format`), `ChapterTitle`, `Chapters` (`renderChapter(props, state)`; sets `--media-slider-chapter-start/end` on each range), `Markers` (draws cues of a text track; not used, our markers are a prop).
+- `Thumb` carries `role="slider"`, `aria-label` ("Seek"), `aria-valuenow/min/max`, `aria-valuetext`, and takes the keys in `onKeyDownCapture`: arrows ±`step` (after rounding the time to a multiple of `step`), `Shift`+arrow and `PageUp`/`PageDown` ±`largeStep`, `Home`, `End`. It calls `preventDefault`, so the player's hotkeys skip the key. Its `render` prop receives all of this.
+- Pointer: the **root** owns `pointerdown/move/up` with pointer capture; a drag starts after a small movement threshold; `lostpointercapture` ends it. Hotkeys are a native `keydown` listener on the container that ignores events with `defaultPrevented`.
+- `Slider.Thumbnail.Root / Image` use the media's storyboard; the demo stream has one, and a chapters track.
+- `Controls.Root visibility="always"` exists (for step 5b). The fullscreen request targets the `Container`.
+
+### How it is built
+
+- `src/pro/review/timeline/`: `logic.ts` (pure), `index.tsx`, `timeline.css`. It is part of the lazily loaded Review chunk, not a chunk of its own: no flag turns the timeline off on its own, so a second request would only add a flash.
+- The Share bar renders a `timeline` slot instead of its seek bar when pro controls are on; the Review module portals the timeline into it.
+- **Ticks** are drawn on one `<canvas>` at device-pixel positions (crisp at any DPR; two device pixels wide from 3x). Only the labels of major ticks are DOM text (at most width / 80). Redrawn on `ResizeObserver`, duration or fps change.
+- **Tick chooser:** steps 1, 2, 5, 10 frames (only those that divide a second at the given rate), then 1, 2, 5, 10, 15, 30 s, 1, 2, 5, 10, 15, 30 min, 1 h and up. Minor ticks at least 6 px apart; labelled ticks at least 80 px apart and always on whole seconds. A labelled interval that leaves room for a middle level is preferred when it is at most twice the smallest that fits (60 s at 1166 px: 1 s, 5 s, 10 s).
+- **Ruler labels** (5b.6): `0s`, `10s` when the clip is under a minute; `0:30`, `1:30` otherwise; `1:00:00` only for positions of an hour or more, so a zero hours field never shows. The ruler counts from zero; `startTimecode` applies to the bubble, field and readouts, not to the ruler.
+- **Markers:** points are flags, ranges are bars, and points within 12 px collapse into one **cluster badge with a count** (one lane; two stacked rows were too tall and unreadable at phone width). Shape tells the kinds apart. Positions clamp so markers at 0 and at the end stay inside. A marker past the end is drawn at the end. More than 200 render (clustered) with a dev warning. The lane is pointer-only and `aria-hidden`; every marker is a menu item in More > Markers, and `[` `]` use markers when the media has no chapters.
+- **Selected marker** is new store state (`selectedMarker`), drawn in the accent.
+- **Range band:** drawn inside each chapter's track, so chapter gaps cut through it. Its geometry is two CSS variables; the played part follows `--media-slider-fill`, so nothing re-renders per frame. It is drawn to the Out time. The loop shows the Out frame before jumping (step 4), so the range in effect **includes the Out frame**; that is under a pixel at normal widths.
+- **Handles:** `role="slider"` elements after the seek thumb in the DOM. A drag is previewed locally and committed on release, so `onInOutChange` fires once per drag. Each key press on a handle commits (one event per press). Handle keys use a native listener on the handle so they are marked handled before the player's hotkeys run.
+
+### Decisions
+
+- **Slider keys, one behaviour:** on the focused seek slider `←` `→` (and `↑` `↓`, as on any slider) step one frame while paused and seek 5 s while playing; `Shift` jumps 10 frames. These replace the stock 1 s / 10 s arrow steps, and are prevented so the global map does not also fire. `Home`, `End`, `PageUp`, `PageDown` stay stock (start, end, ±10 s), then snap.
+- **Frame snapping:** a `seeking` listener moves every seek in Review and Studio (timeline, slider keys, `J` `L`, number keys, `Home` `End`) to the middle of the frame it lands in, with the step 4 function. It runs inside the `seeking` event, so the browser does one seek. Scrubbing stays as smooth as stock: Video.js already throttles drag seeks to one per 100 ms. `End` therefore lands on the last frame, not on "ended".
+- The quiet hover bubble and thumbnail float above the timeline; over a marker the marker's tooltip replaces them.
+- Toggled-on tool buttons use `--pro-on`, not the accent (5b.2), already here.
+
+### Checks (headless Google Chrome 1280x800 unless noted, driven by Playwright; see "How screenshots were taken")
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 105 passing (43 new: tick chooser, labels, time and pixels, snapping, marker layout, handle maths, band, bubble clamp) |
+| Seek slider semantics | `role="slider"`, name "Seek", `aria-valuetext` `00:00:10:00` |
+| Slider keys, paused | `→` 300→301, `←` `←` →299, `Shift+→` →309, `PageUp` +10 s, `End` last frame (3332), `Home` frame 0; each seek lands on a frame centre |
+| Slider keys, playing | `→` seeks 5 s, playback continues |
+| Click and drag | Click at 50% → 55.55 s (frame 1666 centre). Drag leaving the track vertically keeps tracking; released at 70% → 77.78 s; no stuck drag |
+| Handles by keyboard | Tab order Seek, In point, Out point. `→` +1 frame, `Shift+←` −10, `End`/`Home` to the limits (one frame from the other point), `Delete` clears and focus returns to the seek slider. The playhead does not move. Announced: "In point moved to 00:00:13:21", "Out point cleared" |
+| Handles by mouse | Bubble shows the timecode while dragging; store unchanged until release; one `inout:change` per drag; dragging In past Out swaps and says so |
+| Markers | Tooltip "Logo too small 00:00:08:12"; click seeks to frame 252 and fires `marker:select`; the marker turns blue; More > Markers lists all and seeks |
+| Events in the log (`?debug`) | `inout:change`, `marker:select`, `frame:change` seen. `link:copy` and `poster:frame` are wired the same way; not pressed in this run |
+| Touch (Chrome touch emulation, CDP touch events, coarse pointer) | Dragging the playhead and the Out handle moves them; the page (made 3 screens tall) did not scroll; bar buttons are 44 px |
+| Reduced motion (emulated) | No element of the skin has a transition or animation duration above 0 |
+| Long video | A one-hour duration (the element's `duration` overridden in the page): labels `0:00 10:00 … 50:00` at 1280 px, `0:00 30:00` at 320 px. 10 s: `0s … 9s` with frame ticks |
+| Bar height | 170 px at 1280 px wide (34% of a 504 px picture). **At 360 px: 242 px on a 176 px picture; the bar is taller than the video and its top is clipped.** Not tightened: step 5b moves the controls into a dock below the picture, which removes the problem |
+| Share tier | Tab order, play/pause, seek keys, mute, volume, captions, help dialog and focus return, free keys: all as in step 2. No pro chunk requested. 320 px: nothing overflows |
+
+### Moodboard comparison
+
+Matches: a ruler with fine ticks and sparse labels, a bubble riding the playhead, a highlighted range with handles at both ends, graphite panels, controls on their own surface. Different on purpose: the accent is a soft blue kept for the range, where the moodboard uses yellow for everything selected; the playhead and its bubble are white; the bubble shows full timecode, not `mm:ss`; labels are seconds-first; there is one track, not clip lanes, thumbnails or audio (out of scope); markers get their own lane.
+
+### What looked wrong in the step 4 bar (first time anyone saw it)
+
+Fourteen icon buttons of equal weight in one strip with no grouping; the eye finds nothing first. The cut buttons read as rewind and fast-forward. The In/Out range could not be seen on a 4 px bar. The lime accent and the monospace timecode were the loudest things on the screen. At 360 px the bar wrapped into three ragged rows and covered most of the picture. The preview page showed a small player on a white page. Step 5b addresses all of these.
+
+### Chunk sizes (gzip)
+
+| Chunk | Step 4 | Step 5 |
+| --- | --- | --- |
+| Share path JS | 284.6 kB (964.7 kB raw) | 285.0 kB (965.8 kB raw) |
+| Skin CSS | 5.6 kB | 5.9 kB (31.6 kB raw: new tokens) |
+| Monospace font | 4.9 kB | removed |
+| Pro runtime | 3.5 kB | 3.5 kB |
+| Review JS + CSS | 7.6 kB + 1.2 kB | 12.2 kB + 2.9 kB |
+
+The Share JS grew by 1.1 kB raw. About half is the skin (the `timeline` slot and passing `renderThumbnail` to pro modules); the rest is the preview app (sample markers, event handlers). No timeline code is in it (searched for `chooseTicks`, `snapSeekTime`, `pro-tl-`).
+
+### How screenshots were taken
+
+The Claude-in-Chrome window was not used. Screenshots and behaviour checks ran in **headless Google Chrome** (the installed Chrome, so H.264 plays), driven by `playwright-core` from a scratch folder outside the repository, at 2x device scale. Each image was opened and looked at. Files: `design/screenshots/step-5/`.
+
 ## Deployed URL
 
 - https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. Player alone: `/preview.html`.
@@ -241,7 +316,7 @@ The Share path grew by 1.7 kB raw: the bar slots, the "arrows only while playing
 - Step 2: the volume control is an inline horizontal slider, not the scaffold's hover popover.
 - Step 2: AirPlay and Cast buttons, the title and the centre seek buttons were removed. They are not in the Share control list.
 - Step 2: no `@scope` and no CSS nesting, to hold the browser floor. `:dir(rtl)` has an attribute fallback for Chrome 111–119.
-- Step 2: the mono font is JetBrains Mono 500 (OFL 1.1), from `@fontsource/jetbrains-mono` 5.3.0, subset with fonttools to printable ASCII plus `×`, `−` and arrows: 4.9 kB woff2. Licence in `src/assets/fonts/OFL.txt`.
+- Step 2: the mono font was JetBrains Mono 500. **Removed in step 5** (5b.2): the skin uses the system UI stack only.
 - Step 2: icons are our own drawings (no base set), in `src/video/icons/`.
 - Step 2: the skin's own strings are in `src/video/strings.ts` (English only). Video.js control labels come from Video.js i18n and do follow the locale.
 - Only `@videojs/*` packages are pinned exactly. The other dependencies keep the scaffold's caret ranges, locked by the lockfile.
@@ -265,6 +340,11 @@ The Share path grew by 1.7 kB raw: the bar slots, the "arrows only while playing
 
 ## Unverified
 
+- **Step 5: Firefox and Safari.** Only Chrome was run. `:has()` (hides the seek preview over a marker), `color-mix()` and `mask-image` are inside the browser floor on paper, not tested.
+- **Step 5: a real touch device.** Touch was emulated in Chrome.
+- **Step 5: `onCopyLink` and `onPosterFrame` in the event log** were not pressed in the step 5 run (checked in step 5b).
+- **Step 5: the one-hour case** used an overridden `duration` on the element, not a real one-hour file.
+- **Step 5: screen reader.** Names, values and announcements were read from the DOM, not heard.
 - **Step 4: nothing was looked at.** The Chrome window was hidden for the whole step (0×0 viewport, screenshots timed out), so the Review bar's appearance, the new icons, the wrapping and breakpoints, focus rings, tooltips and the toast were never seen. Behaviour was tested through page scripts. This needs a visual pass before step 5.
 - **Step 4: mouse-only range and loop** was exercised by clicking buttons from script, not with a real pointer. **320 px layout**, **touch**, **Firefox** and **Safari** were not run.
 - **Step 4: Copy frame image** gave no result in the hidden window: neither success nor failure was announced, so the clipboard call probably never settled. Untested in a visible window.
