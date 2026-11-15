@@ -58,8 +58,8 @@ export const studioStrings = {
   chapters: 'Chapters',
   untitledChapter: (index: number) => `Chapter ${index}`,
 
-  view: 'View',
-  viewCount: (count: number) => (count === 0 ? 'View' : count === 1 ? 'View, 1 guide on' : `View, ${count} guides on`),
+  guides: 'Guides',
+  guidesCount: (count: number) => (count === 0 ? 'Guides' : count === 1 ? 'Guides, 1 guide on' : `Guides, ${count} guides on`),
   none: 'None',
   approximate: 'Approximate',
   sections: { safe: 'Safe areas', composition: 'Composition', crop: 'Crop', zones: 'Platform zones' },

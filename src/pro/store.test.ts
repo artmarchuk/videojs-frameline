@@ -120,21 +120,21 @@ describe('pro store', () => {
     expect(store.getState().view.guides).toEqual([]);
   });
 
-  it('fires onViewChange when the drawn set changes, not for the starting view', () => {
+  it('fires onGuidesChange when the drawn set changes, not for the starting view', () => {
     const allowedView = { guides: ['title-safe', 'thirds'], crops: ['9:16' as const, '1:1' as const], zones: ['tiktok' as const], zoom: false };
     const store = createProStore({ allowedView, view: { guides: ['thirds'], crop: null, zones: null, hidden: false } });
-    const onViewChange = vi.fn();
-    store.setCallbacks({ onViewChange });
+    const onGuidesChange = vi.fn();
+    store.setCallbacks({ onGuidesChange });
     expect(store.getState().view.guides).toEqual(['thirds']);
-    expect(onViewChange).not.toHaveBeenCalled();
+    expect(onGuidesChange).not.toHaveBeenCalled();
     store.toggleGuide('thirds', true); // already on
     store.setZones('tiktok');
-    expect(onViewChange).toHaveBeenLastCalledWith({ guides: ['thirds'], crop: '9:16', zones: 'tiktok' });
+    expect(onGuidesChange).toHaveBeenLastCalledWith({ guides: ['thirds'], crop: '9:16', zones: 'tiktok' });
     store.toggleGuidesHidden();
-    expect(onViewChange).toHaveBeenLastCalledWith({ guides: [], crop: null, zones: null });
+    expect(onGuidesChange).toHaveBeenLastCalledWith({ guides: [], crop: null, zones: null });
     store.toggleGuidesHidden();
-    expect(onViewChange).toHaveBeenLastCalledWith({ guides: ['thirds'], crop: '9:16', zones: 'tiktok' });
-    expect(onViewChange).toHaveBeenCalledTimes(3);
+    expect(onGuidesChange).toHaveBeenLastCalledWith({ guides: ['thirds'], crop: '9:16', zones: 'tiktok' });
+    expect(onGuidesChange).toHaveBeenCalledTimes(3);
   });
 
   it('starts from a remembered view only as far as the host allows it', () => {

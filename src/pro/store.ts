@@ -25,7 +25,7 @@ import {
   toggleHidden as hiddenView,
   type AllowedView,
   type CropId,
-  type EffectiveView,
+  type EffectiveGuides,
   type ViewState,
   type ZoneId,
 } from './view';
@@ -59,7 +59,7 @@ export interface ProState {
   outPoint: number | null;
   loopMode: LoopMode;
   timeDisplay: TimeDisplay;
-  /** Guides, crop mask and platform zones: what the end user chose in the View menu. Replaced on every change. */
+  /** Guides, crop mask and platform zones: what the end user chose in the Guides menu. Replaced on every change. */
   view: Readonly<ViewState>;
   /** How closely the picture is looked at. Always starts at Fit: it is not remembered. */
   zoom: ZoomLevel;
@@ -80,7 +80,7 @@ export interface ProCallbacks {
   onMarkerSelect?: ((marker: Marker) => void) | undefined;
   onFrameChange?: ((frame: FrameInfo) => void) | undefined;
   /** The set of guides that is drawn changed. Not fired for the set the store starts with. */
-  onViewChange?: ((view: EffectiveView) => void) | undefined;
+  onGuidesChange?: ((view: EffectiveGuides) => void) | undefined;
 }
 
 export interface ProStore {
@@ -159,7 +159,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     const before = effectiveView(state.view);
     commit({ view: Object.freeze(next) });
     const after = effectiveView(next);
-    if (!sameEffective(before, after)) callbacks.onViewChange?.(after);
+    if (!sameEffective(before, after)) callbacks.onGuidesChange?.(after);
   }
 
   function clampTime(time: number): number | null {

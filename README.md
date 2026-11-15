@@ -33,14 +33,14 @@ import { ProSkin } from '@/pro';
 
 With `tier="viewer"` (the default) and no flags, it is the clean Viewer player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
-**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools and View menu (guides, crop masks, platform zones, zoom) are complete.
+**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools, Guides menu (guides, crop masks, platform zones) and zoom are complete.
 
 ### Tiers
 
 | Tier | For | What it is |
 | --- | --- | --- |
 | `viewer` (default) | The creator's client or audience | Controls over the picture: seek bar, Play, mute and volume, time, captions, settings, picture-in-picture, fullscreen. Loads no pro code |
-| `studio` | The creator | Controls in a dock below the picture: a compact ruler timeline with draggable In and Out handles, frame-by-frame transport, timecode, markers, guides and crop masks over the picture, zoom to check detail, and the Markers, Capture and View menus |
+| `studio` | The creator | Controls in a dock below the picture: a compact ruler timeline with draggable In and Out handles, frame-by-frame transport, timecode, markers, guides and crop masks over the picture, zoom to check detail, and the Markers, Capture and Guides menus |
 
 Viewer is for watching. Studio is for checking timing and framing: it adds controls and overlays around the picture and never processes the picture.
 
@@ -62,8 +62,8 @@ Viewer is for watching. Studio is for checking timing and framing: it adds contr
 | `onMarkerSelect` | `(marker) => void` | none | The user selected a marker |
 | `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
 | `onCopyLink` | `({ url, frame, time }) => void` | none | A link to the current frame was copied |
-| `onViewChange` | `({ guides, crop, zones }) => void` | none | The guides that are drawn changed: `guides` is a list of ids, `crop` and `zones` an id or `null`. Not fired for the remembered set the player starts with |
-| `persist` | `boolean \| string` | `true` | Remember the end user's View choices and the time display in `localStorage`. `true` uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off |
+| `onGuidesChange` | `({ guides, crop, zones }) => void` | none | The guides that are drawn changed: `guides` is a list of ids, `crop` and `zones` an id or `null`. Not fired for the remembered set the player starts with |
+| `persist` | `boolean \| string` | `true` | Remember the end user's Guides choices and the time display in `localStorage`. `true` uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off |
 
 An invalid `fps`, an unknown tier or an unknown feature name logs one warning in development and falls back to the default. Nothing throws.
 
@@ -81,7 +81,7 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 
 A host can turn any single feature on over Viewer or off over Studio, for example `<ProSkin tier="viewer" features={{ timecode: true, frameStep: true }} />`.
 
-`guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `platformZones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The View menu".
+`guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `platformZones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The Guides menu".
 
 ### Studio shortcuts
 
@@ -127,15 +127,15 @@ The Studio dock has two rows.
 2. **Main row**, in three columns, as on an editor's monitor:
    - **Left:** the **timecode** of the current frame (press it to switch to seconds) and the duration beside it.
    - **Centre:** **transport** (previous cut, step back, Play, step forward, next cut), then **Loop** and, only while a range is set, a small **Reset range** button.
-   - **Right:** the **Markers**, **Capture** and **View** menus, then **playback**: captions, settings, mute with a short volume slider, fullscreen. Picture-in-picture is in the settings menu.
+   - **Right:** the **Markers**, **Capture** and **Guides** menus, then **playback**: captions, settings, mute with a short volume slider, fullscreen. Picture-in-picture is in the settings menu.
 
 The menus open upward and are real menus: arrow keys, Enter, Escape, and focus returns to the button.
 
 - **Markers** lists the host's markers with their timecodes, and the media's chapters under a second heading. Choosing one seeks to it.
 - **Capture:** Grab frame (downloads a PNG, `G`), Copy frame image, Copy link at timecode.
-- **View:** guides, crop masks, platform zones and zoom. See "The View menu" and "Zoom".
+- **Guides:** guides, crop masks and platform zones. See "The Guides menu".
 
-The row follows the player's own width. It is one row down to 640 px, shedding in this order: the volume slider (under 1040 px), the duration text (980), the captions button (880; `C` and the settings menu remain), the menu chevrons (840), the count badges (740). **Under 640 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, View, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 350 px the cut buttons step aside (`[` `]` and the markers list still work) and In, Out, Loop take a row of their own.
+The row follows the player's own width. It is one row down to 640 px, shedding in this order: the volume slider (under 1040 px), the duration text (980), the captions button (880; `C` and the settings menu remain), the menu chevrons (840), the count badges (740). **Under 640 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, Guides, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 350 px the cut buttons step aside (`[` `]` and the markers list still work) and In, Out, Loop take a row of their own.
 
 ### The timeline
 
@@ -184,7 +184,7 @@ The range lives on the timeline, like the work-area bar of an editor. **Two hand
 
 There is **one visual**: a small pin on the ruler at the marker's time. No count badges and no clusters; pins that are close together overlap, later ones on top. Hovering a pin shows its label and timecode; clicking it seeks to the marker's frame and calls `onMarkerSelect`. The selected marker's pin takes the accent until the playhead moves away. Pins are not tab stops: for the keyboard and screen readers every marker is an item in the **Markers** menu, and `[` `]` move between cuts (chapters, or markers when the media has no chapters). About 200 markers is the design limit.
 
-### The View menu
+### The Guides menu
 
 Guides are drawn **on the picture**, never on letterbox bars, and never over the controls. They are white lines with a dark edge, so they read over bright and dark footage alike; the layer is `aria-hidden` and ignores the pointer. Grabbed frames never include them.
 
@@ -194,22 +194,21 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 | Composition | Rule of thirds (`thirds`), Centre cross (`centre`) | Independent |
 | Crop | None, 2.39:1 (`2.39`), 1.85:1 (`1.85`), 1:1, 4:5, 9:16 | One at a time. Dims the picture outside a centred crop of that ratio |
 | Platform zones | None, YouTube Shorts (`shorts`), Instagram Reels (`reels`), TikTok (`tiktok`) | One at a time. Shows where the app's own interface covers a vertical video: a top bar, captions and profile, and the buttons on the right |
-| Zoom | Fit, 100%, 200% (`Z`) | One at a time. See "Zoom" |
 | Footer | Hide guides / Show guides, `Shift+V` | Switches everything off, and brings the same set back |
 
-- Toggling keeps the menu open, so several guides can be switched in one visit. Escape closes it and focus returns to the View button, whose badge counts what is on (its accessible name says "View, 3 guides on").
+- Toggling keeps the menu open, so several guides can be switched in one visit. Escape closes it and focus returns to the Guides button, whose badge counts what is on (its accessible name says "Guides, 3 guides on").
 - **Platform zones are approximate**, and the menu says so on every platform. Apps change their layouts, and the layout depends on the caption and on whether the video is an ad; check the platform's current guidance before you deliver. Where sources disagree, the largest unsafe margin is used, so a guide never promises space the app may cover. The numbers are in one file, `src/pro/studio/guides/platform-zones.ts`, in percent of the 9:16 frame.
 - Zones are drawn inside the 9:16 frame: the whole picture when the video is 9:16, otherwise a centred 9:16 crop. So **choosing a platform turns on the 9:16 crop**, and choosing another crop clears the zones.
 - Labels (Title safe, Action safe, the zone names) are hidden on a picture narrower than 480 px.
 
-**What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the guides (the View button stays while `zoom` is on, with the Zoom group only). `platformZones: false` removes that section and `zoom: false` the Zoom group.
+**What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the Guides button. `platformZones: false` removes that section. Zoom is a separate control with its own flag.
 
 ```tsx
 <ProSkin
   tier="studio"
   features={{ guides: ['title-safe', 'action-safe', '9:16'], platformZones: false }}
   persist="my-app:monitor"
-  onViewChange={({ guides, crop, zones }) => analytics.track('view', { guides, crop, zones })}
+  onGuidesChange={({ guides, crop, zones }) => analytics.track('guides', { guides, crop, zones })}
 >
 ```
 

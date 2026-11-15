@@ -36,7 +36,8 @@ describe('allowedView', () => {
     const some = allowedView(resolveFeatures('studio', { guides: ['title-safe', '9:16'] }));
     expect(some).toEqual({ guides: ['title-safe'], crops: ['9:16'], zones: ['shorts', 'reels', 'tiktok'], zoom: true });
     expect(allowedView(resolveFeatures('studio', { platformZones: false })).zones).toEqual([]);
-    expect(hasViewMenu(allowedView(resolveFeatures('studio', { guides: false, zoom: false })))).toBe(false);
+    expect(hasViewMenu(allowedView(resolveFeatures('studio', { guides: false })))).toBe(false);
+    expect(hasViewMenu(allowedView(resolveFeatures('studio', { zoom: false })))).toBe(true);
   });
 
   it('offers zoom by its own flag, with or without guides', () => {
@@ -45,7 +46,8 @@ describe('allowedView', () => {
     expect(allowedView(resolveFeatures('viewer')).zoom).toBe(false);
     const zoomOnly = allowedView(resolveFeatures('studio', { guides: false }));
     expect(zoomOnly).toEqual({ guides: [], crops: [], zones: [], zoom: true });
-    expect(hasViewMenu(zoomOnly)).toBe(true);
+    // Zoom has its own button: with no guides there is no Guides button.
+    expect(hasViewMenu(zoomOnly)).toBe(false);
     expect(allowedView(resolveFeatures('viewer', { zoom: true })).zoom).toBe(true);
   });
 
@@ -54,7 +56,7 @@ describe('allowedView', () => {
   });
 });
 
-describe('the View menu model', () => {
+describe('the Guides menu model', () => {
   it('offers every section in Studio, with None first in the radio sections', () => {
     const sections = viewMenuModel(EMPTY_VIEW, ALL);
     expect(sections.map((section) => [section.id, section.kind, section.column])).toEqual([

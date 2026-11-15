@@ -17,7 +17,7 @@ import {
 } from './features';
 import type { CopyLinkInfo } from './studio/controller';
 import type { FrameInfo, InOutRange, Marker } from './store';
-import type { EffectiveView } from './view';
+import type { EffectiveGuides } from './view';
 import { DEFAULT_FPS, isValidFps } from './fps';
 
 // The pro runtime (store, frame clock, the Studio layer) is a separate chunk. The Viewer tier never requests it.
@@ -92,9 +92,9 @@ export interface ProSkinProps extends Omit<VideoSkinProps, InternalSkinProps> {
    * Fires when the guides that are drawn change: `guides` (ids), `crop` and `zones` (an id or `null`). Not fired for
    * the remembered set the player starts with.
    */
-  onViewChange?: (view: EffectiveView) => void;
+  onGuidesChange?: (view: EffectiveGuides) => void;
   /**
-   * Remember the end user's View choices (guides, crop, zones) and the time display in this browser's
+   * Remember the end user's Guides choices (guides, crop, zones) and the time display in this browser's
    * `localStorage`. `true` (default) uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off.
    * The `features` always win over a remembered value.
    */
@@ -135,7 +135,7 @@ export function ProSkin({
   onMarkerSelect,
   onFrameChange,
   onCopyLink,
-  onViewChange,
+  onGuidesChange,
   persist = true,
   children,
   ...skinProps
@@ -215,7 +215,7 @@ export function ProSkin({
               skinRenders={renders}
               onViewAttributes={onViewAttributes}
               persist={persist}
-              onViewChange={onViewChange}
+              onGuidesChange={onGuidesChange}
               onInOutChange={onInOutChange}
               onMarkerSelect={onMarkerSelect}
               onFrameChange={onFrameChange}

@@ -27,7 +27,7 @@ import { allowedView, hasViewMenu } from '../view';
 import { Guides } from './guides';
 import { usePictureRect } from './guides/use-picture-rect';
 import { useChapters, useCuts, type Chapter } from './use-cuts';
-import { useViewActions, ViewMenu, type ViewActions } from './view-menu';
+import { useGuidesActions, GuidesMenu, type GuidesActions } from './guides-menu';
 import { useZoom, useZoomActions, ZoomSection, type ZoomActions, type ZoomController } from './zoom';
 
 export interface StudioLayerProps {
@@ -44,7 +44,7 @@ export interface StudioLayerProps {
 
 /**
  * The Studio tier: the compact ruler timeline with the range handles, frame-by-frame transport, the timecode, and
- * the Markers, Capture and View menus. Loaded lazily, only when a Studio feature is on. The controls are portalled
+ * the Markers, Capture and Guides menus. Loaded lazily, only when a Studio feature is on. The controls are portalled
  * into the control bar's slots, so they sit in the bar's layout and focus order.
  */
 export default function StudioLayer(props: StudioLayerProps) {
@@ -117,10 +117,9 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
   // Guides: what the host allows, where the picture is, and the actions the menu and `Shift+V` share.
   const allowed = useMemo(() => allowedView(features), [features]);
-  const viewMenu = hasViewMenu(allowed);
-  const guides = allowed.guides.length > 0 || allowed.crops.length > 0 || allowed.zones.length > 0;
+  const guides = hasViewMenu(allowed);
   const picture = usePictureRect(video, anchor);
-  const viewActions = useViewActions();
+  const guidesActions = useGuidesActions();
 
   // Zoom: the picture wrapper is scaled and moved; the guides are inside it and follow.
   const renditionNote = useRenditionNote();
@@ -162,7 +161,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
   return (
     <>
-      <StudioHotkeys controller={controller} features={features} paused={paused} viewActions={guides ? viewActions : null} />
+      <StudioHotkeys controller={controller} features={features} paused={paused} guidesActions={guides ? guidesActions : null} />
       {allowed.zoom && <ZoomHotkeys zoom={zoom} actions={zoomActions} />}
       <HelpRows features={features} guides={guides} zoom={allowed.zoom} />
       {guides && <Guides rect={picture.rect} layer={picture.layer} />}
@@ -222,7 +221,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
               <MarkersMenu markers={listed} chapters={listedChapters} controller={controller} fps={fps} />
             )}
             {capture && <CaptureMenu controller={controller} features={features} />}
-            {viewMenu && <ViewMenu allowed={allowed} actions={viewActions} extra={allowed.zoom ? <ZoomSection actions={zoomActions} note={renditionNote} /> : undefined} />}
+            {guides && <GuidesMenu allowed={allowed} actions={guidesActions} />}
           </>,
           tools
         )}
@@ -559,12 +558,12 @@ function StudioHotkeys({
   controller,
   features,
   paused,
-  viewActions,
+  guidesActions,
 }: {
   controller: StudioController;
   features: Readonly<FeatureFlags>;
   paused: boolean;
-  viewActions: ViewActions | null;
+  guidesActions: GuidesActions | null;
 }) {
   const noStep = !features.frameStep;
   const noInOut = !features.inOut;
@@ -585,7 +584,7 @@ function StudioHotkeys({
   useHotkey({ keys: ']', action: 'nextCut', repeatable: false, disabled: noCuts, onActivate: () => controller.goToCut('next') });
   useHotkey({ keys: 'g', action: 'grabFrame', repeatable: false, disabled: !features.grabFrame, onActivate: controller.grabFrame });
   // Shift alone with V; the hotkey layer ignores keys typed into text fields and matches modifiers exactly.
-  useHotkey({ keys: 'Shift+v', action: 'toggleGuides', repeatable: false, disabled: !viewActions, onActivate: () => viewActions?.toggleHidden() });
+  useHotkey({ keys: 'Shift+v', action: 'toggleGuides', repeatable: false, disabled: !guidesActions, onActivate: () => guidesActions?.toggleHidden() });
 
   return null;
 }

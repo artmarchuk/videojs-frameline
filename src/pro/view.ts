@@ -1,8 +1,8 @@
 /**
- * The View model: which guides, crop mask and platform zones are on. Pure: no React, no DOM.
+ * The guides model (the Guides menu, once called View): which guides, crop mask and platform zones are on. Pure: no React, no DOM.
  *
  * Three layers decide what is drawn. The host's `features` say what may be offered (`AllowedView`); the end user picks
- * from that in the View menu (`ViewState`); and the choice is remembered per browser (`serializeView`, `parseStored`).
+ * from that in the Guides menu (`ViewState`); and the choice is remembered per browser (`serializeView`, `parseStored`).
  * The host always wins: a remembered value the host no longer allows is dropped.
  */
 import type { FeatureFlags } from './features';
@@ -47,7 +47,7 @@ export interface AllowedView {
 export const NOTHING_ALLOWED: Readonly<AllowedView> = Object.freeze({ guides: [], crops: [], zones: [], zoom: false });
 
 /**
- * What the feature flags allow. `guides: false` allows nothing (and removes the View button). A list restricts the
+ * What the feature flags allow. `guides: false` allows nothing (and removes the Guides button). A list restricts the
  * checkbox guides and the crops to the ids in it. Platform zones need `platformZones` and some guides to be on; they
  * always bring the 9:16 crop with them, whether or not `9:16` is in the host's list.
  */
@@ -119,23 +119,23 @@ export function toggleHidden(view: ViewState): ViewState {
   return { ...view, hidden: !view.hidden };
 }
 
-/** What is actually drawn: the chosen set, or nothing while hidden. This is also what `onViewChange` reports. */
-export interface EffectiveView {
+/** What is actually drawn: the chosen set, or nothing while hidden. This is also what `onGuidesChange` reports. */
+export interface EffectiveGuides {
   guides: string[];
   crop: string | null;
   zones: string | null;
 }
 
-export function effectiveView(view: ViewState): EffectiveView {
+export function effectiveView(view: ViewState): EffectiveGuides {
   if (view.hidden) return { guides: [], crop: null, zones: null };
   return { guides: [...view.guides], crop: view.crop, zones: view.zones };
 }
 
-export function sameEffective(a: EffectiveView, b: EffectiveView): boolean {
+export function sameEffective(a: EffectiveGuides, b: EffectiveGuides): boolean {
   return a.crop === b.crop && a.zones === b.zones && sameList(a.guides, b.guides);
 }
 
-/** The number on the View button: guides that are on. A crop counts as one; a zone and its 9:16 frame count as one. */
+/** The number on the Guides button: guides that are on. A crop counts as one; a zone and its 9:16 frame count as one. */
 export function activeCount(view: ViewState): number {
   if (view.hidden) return 0;
   return view.guides.length + (view.zones !== null || view.crop !== null ? 1 : 0);
@@ -160,7 +160,7 @@ export function viewAttributes(view: ViewState): Record<string, string> {
   return attributes;
 }
 
-/* ---------- The View menu ---------- */
+/* ---------- The Guides menu ---------- */
 
 export interface ViewMenuItem {
   id: string;
@@ -170,14 +170,14 @@ export interface ViewMenuItem {
 export interface ViewMenuSection {
   id: 'safe' | 'composition' | 'crop' | 'zones';
   kind: 'checkbox' | 'radio';
-  /** Wide menus have two columns; the Zoom group goes under the zones, in the right one. */
+  /** Wide menus have two columns. */
   column: 'left' | 'right';
   /** For a radio section the first item is `none`. */
   items: ViewMenuItem[];
 }
 
 /**
- * The sections of the View menu for what the host allows. A section with nothing to offer is left out; a radio
+ * The sections of the Guides menu for what the host allows. A section with nothing to offer is left out; a radio
  * section offers "none" plus the allowed values and has exactly one item checked.
  */
 export function viewMenuModel(view: ViewState, allowed: AllowedView): ViewMenuSection[] {
@@ -201,9 +201,9 @@ export function viewMenuModel(view: ViewState, allowed: AllowedView): ViewMenuSe
   return sections;
 }
 
-/** True when the menu has anything to show, which is when the View button is rendered. */
+/** True when the Guides menu has anything to show, which is when the Guides button is rendered. Zoom has its own button. */
 export function hasViewMenu(allowed: AllowedView): boolean {
-  return allowed.guides.length > 0 || allowed.crops.length > 0 || allowed.zones.length > 0 || allowed.zoom;
+  return allowed.guides.length > 0 || allowed.crops.length > 0 || allowed.zones.length > 0;
 }
 
 /* ---------- Remembered choices ---------- */

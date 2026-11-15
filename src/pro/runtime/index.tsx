@@ -68,7 +68,7 @@ export default function ProRuntime({
   onInOutChange,
   onMarkerSelect,
   onFrameChange,
-  onViewChange,
+  onGuidesChange,
 }: ProRuntimeProps) {
   // One store per ProSkin instance, created on first render and kept for the life of the component.
   // It starts from the choices remembered in this browser, read here (not in an effect) so the first render already
@@ -83,8 +83,8 @@ export default function ProRuntime({
   const video = useVideoElement(anchor);
 
   useEffect(() => {
-    store.setCallbacks({ onInOutChange, onMarkerSelect, onFrameChange, onViewChange });
-  }, [store, onInOutChange, onMarkerSelect, onFrameChange, onViewChange]);
+    store.setCallbacks({ onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange });
+  }, [store, onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange]);
 
   // The host's features always win: what is no longer allowed is switched off.
   useEffect(() => {

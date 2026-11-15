@@ -9,7 +9,7 @@
  *   <  840px  the menu buttons' chevrons; the timecode field gets narrower
  *   <  740px  the count badges and the divider; tighter gaps
  *   narrow    (under 640px, or a touch device; set as data-dock-size by the module, because the order of the
- *             controls changes): timecode, step, Play, cut; then In, Out, Loop and Capture, View, Settings, Fullscreen
+ *             controls changes): timecode, step, Play, cut; then In, Out, Loop and Capture, Guides, Settings, Fullscreen
  * Picture-in-picture is in the settings menu at every width.
  */
 @layer components {
@@ -382,31 +382,31 @@
     text-overflow: ellipsis;
   }
 
-  /* ---------- The View menu ---------- */
+  /* ---------- The Guides menu ---------- */
 
   /* Two columns on a wide player; one scrolling column on a narrow one. */
-  .pro-skin .media-menu-popup.pro-view-popup {
+  .pro-skin .media-menu-popup.pro-guides-popup {
     width: min(calc(var(--media-spacing) * 140), var(--media-menu-available-width, 100cqw));
   }
 
-  .pro-skin .media-menu-popup.pro-view-popup[data-columns="1"] {
+  .pro-skin .media-menu-popup.pro-guides-popup[data-columns="1"] {
     width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
   }
 
-  .pro-skin .pro-view-columns {
+  .pro-skin .pro-guides-columns {
     display: flex;
     flex: none;
     gap: calc(var(--media-spacing) * 1.5);
   }
 
-  .pro-skin .pro-view-column {
+  .pro-skin .pro-guides-column {
     display: flex;
     flex: 1 1 0;
     flex-direction: column;
     min-width: 0;
   }
 
-  .pro-skin .pro-view-column + .pro-view-column {
+  .pro-skin .pro-guides-column + .pro-guides-column {
     padding-inline-start: calc(var(--media-spacing) * 1.5);
     border-inline-start: 1px solid var(--pro-divider);
   }
@@ -461,17 +461,17 @@
   }
 
   @container media-root (width < 640px) {
-    .pro-skin .media-menu-popup.pro-view-popup,
-    .pro-skin .media-menu-popup.pro-view-popup[data-columns="1"] {
+    .pro-skin .media-menu-popup.pro-guides-popup,
+    .pro-skin .media-menu-popup.pro-guides-popup[data-columns="1"] {
       width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
     }
 
-    .pro-skin .pro-view-columns {
+    .pro-skin .pro-guides-columns {
       flex-direction: column;
       gap: 0;
     }
 
-    .pro-skin .pro-view-column + .pro-view-column {
+    .pro-skin .pro-guides-column + .pro-guides-column {
       padding-inline-start: 0;
       border-inline-start: 0;
     }

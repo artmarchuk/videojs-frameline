@@ -120,13 +120,13 @@ const back = await state();
 out.backToFit = back.zoom === 'fit' && back.transform === '' && back.said === 'Zoom fit' && same(back.video.width, fit.video.width);
 
 // The menu: opens on the first item, Zoom comes after Platform zones, choosing keeps it open
-await page.focus('[data-pro-menu="view"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(500);
+await page.focus('[data-pro-menu="guides"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(500);
 const current = () => page.evaluate(() => document.activeElement.textContent.trim().slice(0, 22));
 out.menuOrder = [await current()];
 for (let i = 0; i < 17; i++) { await page.keyboard.press('ArrowDown'); await page.waitForTimeout(50); out.menuOrder.push(await current()); }
 out.menuFirst = out.menuOrder[0].startsWith('Title safe');
 await page.focus('[data-zoom-item="100"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(300);
-out.menuChoice = await page.evaluate(() => ({ zoom: document.querySelector('.pro-skin').dataset.zoom, checked: document.querySelector('[data-zoom-item="100"]').getAttribute('aria-checked'), role: document.querySelector('[data-zoom-item="100"]').getAttribute('role'), open: document.querySelector('[data-pro-menu="view"]').getAttribute('aria-expanded'), text: document.querySelector('[data-zoom-item="100"]').textContent }));
+out.menuChoice = await page.evaluate(() => ({ zoom: document.querySelector('.pro-skin').dataset.zoom, checked: document.querySelector('[data-zoom-item="100"]').getAttribute('aria-checked'), role: document.querySelector('[data-zoom-item="100"]').getAttribute('role'), open: document.querySelector('[data-pro-menu="guides"]').getAttribute('aria-expanded'), text: document.querySelector('[data-zoom-item="100"]').textContent }));
 await page.keyboard.press('Escape'); await page.waitForTimeout(300);
 out.notRemembered = !(await page.evaluate(() => localStorage.getItem('videojs-pro:v1'))).includes('zoom');
 await page.keyboard.press('z'); await page.keyboard.press('z'); await page.waitForTimeout(200);

@@ -37,8 +37,8 @@ There are two tiers on purpose. Finer control comes from feature flags, so a hos
 
 1. **Tier**: `tier="viewer" | "studio"` sets the default bundle and layout.
 2. **Feature flags**: override single features, such as `features={{ timecode: true, guides: ['title-safe','9:16'], zoom: false }}`.
-3. **View menu (end user)**: show or hide the guides and zoom the developer allowed; guides are remembered per browser, zoom is not.
-4. **Slots and events**: host app adds its own controls (`toolbar-start`, `toolbar-end`, `overlay`) and listens to `inout:change`, `marker:select`, `frame:change`.
+3. **Guides menu and Zoom button (end user)**: show or hide the guides and zoom the developer allowed; guides are remembered per browser, zoom is not.
+4. **Slots and events**: host app adds its own controls (`toolbar-start`, `toolbar-end`, `overlay`) and listens to `inout:change`, `marker:select`, `frame:change`, `guides:change`.
 5. **Tokens**: the 8 public `--media-*` tokens plus our own `--pro-*` tokens, and `density="comfortable" | "compact"`.
 
 Only enabled modules load. Viewer must stay as light as a stock skin.
@@ -91,7 +91,7 @@ Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** me
 
 ## Look
 
-Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no monospace, no slashed zeros) with tabular numerals for all changing numbers, and one soft blue accent (`#5B9DFF`) **reserved** for the most important indications: the played part of the range band, the In/Out handles, the focus ring and a selected marker. Toggled-on states use a lighter graphite, Play is a neutral filled button, the playhead is white. Controls live in a **dock below the picture** in the Studio tier (never over it, also in fullscreen); the Viewer tier keeps an overlay. The main row follows the pro-monitor convention: timecode on the left, transport in the centre, Markers, Capture and View menus plus playback on the right. The picture gets the room; the timeline is compact (about 46 px) with a white playhead and no permanent bubble. The ruler uses compact seconds-first labels (`10s`, `1:30`); the full timecode shows in the toolbar field and in the hover bubble. Guides are white at reduced opacity with a dark outline so they read over any footage; verify every guide over bright footage. Treat the look as a creator's tool, not a media-site player.
+Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no monospace, no slashed zeros) with tabular numerals for all changing numbers, and one soft blue accent (`#5B9DFF`) **reserved** for the most important indications: the played part of the range band, the In/Out handles, the focus ring and a selected marker. Toggled-on states use a lighter graphite, Play is a neutral filled button, the playhead is white. Controls live in a **dock below the picture** in the Studio tier (never over it, also in fullscreen); the Viewer tier keeps an overlay. The main row follows the pro-monitor convention: timecode on the left, transport in the centre, Markers, Capture and Guides menus and the Zoom button, plus playback on the right. The picture gets the room; the timeline is compact (about 46 px) with a white playhead and no permanent bubble. The ruler uses compact seconds-first labels (`10s`, `1:30`); the full timecode shows in the toolbar field and in the hover bubble. Guides are white at reduced opacity with a dark outline so they read over any footage; verify every guide over bright footage. Treat the look as a creator's tool, not a media-site player.
 
 ## Hard rules
 
@@ -111,8 +111,8 @@ Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no m
 3. Pro core: config, state, frame clock. *(done)*
 4. Review transport: timecode, frame step, in/out, loop, grab frame, copy link, previous/next cut. *(done; its controls are rearranged in step 6)*
 5. Ruler timeline, and 5b: dock layout and restyle. *(done; the timeline and toolbar are reworked in step 6)*
-6. Viewer and Studio rework, then View menu and guides (`step-6-viewer-studio-rework-and-guides.md`), with the fixes of 6c and 6d: two tiers, compact timeline, range handles, one marker pin, new main row; then guides, crop masks, platform zones, remembered choices. *(done)*
-7. **Studio zoom: Fit, 100%, 200%, pan, rendition notes** (`step-7-studio-zoom.md`).
+6. Viewer and Studio rework, then the Guides menu (called View until step 7b) and guides (`step-6-viewer-studio-rework-and-guides.md`), with the fixes of 6c and 6d: two tiers, compact timeline, range handles, one marker pin, new main row; then guides, crop masks, platform zones, remembered choices. *(done)*
+7. Studio zoom: Fit, 100%, 200%, pan, rendition notes (`step-7-studio-zoom.md`), and 7b: View split into a Guides menu and a Zoom button with five levels (`step-7b-guides-and-zoom-buttons.md`). *(done)*
 8. Configurator page and demo video.
 9. Hardening and audit: keyboard, phone, bright and dark footage, reduced motion, Firefox and Safari, deploy.
 

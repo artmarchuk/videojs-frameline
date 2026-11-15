@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { Menu } from '@videojs/react';
-import { useCallback, useMemo, type MouseEvent, type ReactNode } from 'react';
+import { useCallback, useMemo, type MouseEvent } from 'react';
 
 import { cn } from '@/lib/resolve-class-name';
 
@@ -12,16 +12,16 @@ import { useProStore, useProStoreApi } from '../context';
 import type { ProStore } from '../store';
 import { activeCount, viewMenuModel, type AllowedView, type CropId, type ViewMenuSection, type ZoneId } from '../view';
 import { useAnnounce } from './announcer';
-import { EyeIcon } from './icons';
+import { GuidesIcon } from './icons';
 import { studioStrings as t } from './strings';
 
 type Announce = ReturnType<typeof useAnnounce>;
 
 /**
- * Every change to the view goes through these, from the menu and from `Shift+V`, so each one is announced once
+ * Every change to the guides goes through these, from the menu and from `Shift+V`, so each one is announced once
  * through the Studio live region (there is no second region) in the same words.
  */
-export function createViewActions(store: ProStore, announce: Announce) {
+export function createGuidesActions(store: ProStore, announce: Announce) {
   return {
     toggleGuide(id: string) {
       store.toggleGuide(id);
@@ -54,7 +54,7 @@ export function createViewActions(store: ProStore, announce: Announce) {
   };
 }
 
-export type ViewActions = ReturnType<typeof createViewActions>;
+export type GuidesActions = ReturnType<typeof createGuidesActions>;
 
 /** The leading mark of an item: a check for a checkbox that is on, a dot for the chosen radio item. */
 function Mark({ kind, checked }: { kind: 'checkbox' | 'radio'; checked: boolean }) {
@@ -65,7 +65,7 @@ function Mark({ kind, checked }: { kind: 'checkbox' | 'radio'; checked: boolean 
   );
 }
 
-function Section({ section, actions }: { section: ViewMenuSection; actions: ViewActions }) {
+function Section({ section, actions }: { section: ViewMenuSection; actions: GuidesActions }) {
   const label = <Menu.GroupLabel className={'pro-menu-label'}>{t.sections[section.id]}</Menu.GroupLabel>;
 
   if (section.kind === 'checkbox') {
@@ -121,20 +121,18 @@ function Section({ section, actions }: { section: ViewMenuSection; actions: View
 function focusFirstOnOpen(open: boolean) {
   if (!open) return;
   requestAnimationFrame(() => {
-    const first = document.querySelector<HTMLElement>('.pro-view-popup [role^="menuitem"]:not([aria-disabled="true"])');
+    const first = document.querySelector<HTMLElement>('.pro-guides-popup [role^="menuitem"]:not([aria-disabled="true"])');
     first?.focus({ preventScroll: true });
   });
 }
 
 /**
- * The View menu: safe areas and composition guides (independent), one crop mask, one platform's zones, and a footer
+ * The Guides menu: safe areas and composition guides (independent), one crop mask, one platform's zones, and a footer
  * that hides or shows them all. Two columns on a wide player, one scrolling column on a narrow one. The host's
  * `features` decide what is offered; a section with nothing left is not shown. Toggling keeps the menu open; Escape
  * closes it and returns focus to the button.
- *
- * `extra` is the Zoom group, under the platform zones.
  */
-export function ViewMenu({ allowed, actions, extra }: { allowed: AllowedView; actions: ViewActions; extra?: ReactNode }) {
+export function GuidesMenu({ allowed, actions }: { allowed: AllowedView; actions: GuidesActions }) {
   const view = useProStore((state) => state.view);
   const count = activeCount(view);
   const sections = viewMenuModel(view, allowed);
@@ -153,46 +151,49 @@ export function ViewMenu({ allowed, actions, extra }: { allowed: AllowedView; ac
 
   return (
     <Menu.Root side="top" align="end" onOpenChange={focusFirstOnOpen}>
-      <ButtonTooltip label={<span>{t.view}</span>}>
-        <Menu.Trigger render={<Button />} className={'pro-tool pro-tool-menu'} aria-label={t.viewCount(count)} data-pro-menu="view">
+      <ButtonTooltip
+        label={
+          <>
+            <span>{t.guides}</span>
+            <kbd className={'pro-kbd'}>Shift+V</kbd>
+          </>
+        }
+      >
+        <Menu.Trigger render={<Button />} className={'pro-tool pro-tool-menu'} aria-label={t.guidesCount(count)} aria-keyshortcuts="Shift+V" data-pro-menu="guides">
           <span className={'media-button-icon pro-tool-icon'}>
-            <EyeIcon />
+            <GuidesIcon />
           </span>
-          <span className={'pro-tool-word'}>{t.view}</span>
+          <span className={'pro-tool-word'}>{t.guides}</span>
           {count > 0 && <span className={'pro-badge'}>{count}</span>}
           <ChevronIcon className={'pro-chevron-down'} />
         </Menu.Trigger>
       </ButtonTooltip>
-      <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-menu-popup', 'pro-view-popup')} data-columns={left.length > 0 && (right.length > 0 || extra) ? 2 : 1}>
+      <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-menu-popup', 'pro-guides-popup')} data-columns={left.length > 0 && right.length > 0 ? 2 : 1}>
         <Menu.Content className={'media-menu-content'}>
-          <div className={'pro-view-columns'} role="none">
+          <div className={'pro-guides-columns'} role="none">
             {left.length > 0 && (
-              <div className={'pro-view-column'} role="none">
+              <div className={'pro-guides-column'} role="none">
                 {left.map((section) => (
                   <Section key={section.id} section={section} actions={actions} />
                 ))}
               </div>
             )}
-            {(right.length > 0 || extra) && (
-              <div className={'pro-view-column'} role="none">
+            {right.length > 0 && (
+              <div className={'pro-guides-column'} role="none">
                 {right.map((section) => (
                   <Section key={section.id} section={section} actions={actions} />
                 ))}
-                {extra}
               </div>
             )}
           </div>
-          {/* Only where there are guides to hide: with zoom alone the menu is just the Zoom group. */}
-          {sections.length > 0 && <Menu.Separator className={'pro-menu-separator'} />}
-          {sections.length > 0 && (
-            <Menu.Item className={'media-menu-item'} disabled={!anything} onClick={onFooterClick}>
-              <Mark kind="checkbox" checked={false} />
-              <span>{view.hidden ? t.showGuides : t.hideGuides}</span>
-              <span className={'media-menu-hint'}>
-                <kbd className={'pro-kbd'}>Shift+V</kbd>
-              </span>
-            </Menu.Item>
-          )}
+          <Menu.Separator className={'pro-menu-separator'} />
+          <Menu.Item className={'media-menu-item'} disabled={!anything} onClick={onFooterClick}>
+            <Mark kind="checkbox" checked={false} />
+            <span>{view.hidden ? t.showGuides : t.hideGuides}</span>
+            <span className={'media-menu-hint'}>
+              <kbd className={'pro-kbd'}>Shift+V</kbd>
+            </span>
+          </Menu.Item>
         </Menu.Content>
       </Menu.Popup>
     </Menu.Root>
@@ -200,9 +201,9 @@ export function ViewMenu({ allowed, actions, extra }: { allowed: AllowedView; ac
 }
 
 /** Keeps `useProStoreApi` and the announcer together for the menu and the hotkey. */
-export function useViewActions(): ViewActions {
+export function useGuidesActions(): GuidesActions {
   const store = useProStoreApi();
   const announce = useAnnounce();
   // The store and the announcer are stable for the life of the tier.
-  return useMemo(() => createViewActions(store, announce), [store, announce]);
+  return useMemo(() => createGuidesActions(store, announce), [store, announce]);
 }

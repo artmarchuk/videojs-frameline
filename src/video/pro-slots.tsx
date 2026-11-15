@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
  * `timeline` (in place of the seek bar), `time` (the left column: the timecode), `transport-start` (before Play),
  * `transport-end` (after Play), `range` (after the transport, in the centre column: Loop and Reset range),
  * `range-narrow` (start of the right column: In, Out and Loop on narrow and touch layouts) and `tools` (the Markers,
- * Capture and View menus). The Viewer tier renders none of this. Each slot is an element with `display: contents`,
+ * Capture and Guides menus). The Viewer tier renders none of this. Each slot is an element with `display: contents`,
  * so what is portalled into it takes part in the bar's layout and sits at that point of the focus order.
  */
 export type ProSlotName = 'timeline' | 'time' | 'transport-start' | 'transport-end' | 'range' | 'range-narrow' | 'tools';

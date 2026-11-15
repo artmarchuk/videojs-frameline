@@ -81,7 +81,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
             onMarkerSelect: (marker: unknown) => log('marker:select', marker),
             onCopyLink: (info: unknown) => log('link:copy', info),
             onFrameChange: (frame: unknown) => log('frame:change', frame),
-            onViewChange: (view: unknown) => log('view:change', view),
+            onGuidesChange: (view: unknown) => log('guides:change', view),
           }
         : {},
     [log]

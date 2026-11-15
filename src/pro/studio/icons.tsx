@@ -49,10 +49,11 @@ export const GrabFrameIcon = (props: IconProps) => (
   </Icon>
 );
 
-export const EyeIcon = (props: IconProps) => (
+/** Guides: the picture's frame with a dashed safe area inside it. */
+export const GuidesIcon = (props: IconProps) => (
   <Icon {...props}>
-    <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" />
-    <circle cx="12" cy="12" r="2.75" />
+    <rect x="3.5" y="5" width="17" height="14" rx="2" />
+    <rect x="7" y="8.5" width="10" height="7" rx="0.5" strokeDasharray="2 2" strokeDashoffset="1" />
   </Icon>
 );
 

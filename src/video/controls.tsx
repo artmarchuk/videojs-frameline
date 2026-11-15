@@ -31,7 +31,7 @@ export interface VideoControlsProps extends ThumbnailSlot {
  *
  * Studio (`pro`): the timeline row, then the main row in three columns, as on a professional monitor. Left: the
  * timecode. Centre: transport (cut and step either side of Play), Loop and Reset range. Right: the Markers, Capture
- * and View menus, then playback (captions, settings, mute and volume, fullscreen). Everything pro is portalled into
+ * and Guides menus, then playback (captions, settings, mute and volume, fullscreen). Everything pro is portalled into
  * the slots by the lazily loaded module; only the Viewer controls are rendered here.
  *
  * The children are rendered in the order they appear, so the focus order always matches the visual order.
