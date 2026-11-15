@@ -26,10 +26,7 @@ const STUDIO_FLAGS = [
   'copyTimecodeLink',
   'guides',
   'platformZones',
-  'channels',
-  'gainGamma',
   'zoom',
-  'infoHud',
 ] as const satisfies readonly (keyof FeatureFlags)[];
 const NO_MARKERS: readonly Marker[] = [];
 

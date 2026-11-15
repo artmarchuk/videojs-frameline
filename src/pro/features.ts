@@ -53,14 +53,8 @@ export interface FeatureFlags {
   guides: false | readonly GuideId[];
   /** Approximate platform UI zones for Shorts, Reels and TikTok. */
   platformZones: boolean;
-  /** Channel view: R, G, B, luma. */
-  channels: boolean;
-  /** Display gain and gamma (view only). */
-  gainGamma: boolean;
-  /** Zoom and pan, 100% pixel view. */
+  /** Zoom the picture to 100% or 200% of its pixels, and pan it. Never changes what a grabbed frame holds. */
   zoom: boolean;
-  /** Info HUD: file, resolution, fps. */
-  infoHud: boolean;
   /** Debug readout. */
   debug: boolean;
 }
@@ -81,10 +75,7 @@ const OFF: FeatureFlags = {
   copyTimecodeLink: false,
   guides: false,
   platformZones: false,
-  channels: false,
-  gainGamma: false,
   zoom: false,
-  infoHud: false,
   debug: false,
 };
 
@@ -100,11 +91,7 @@ const STUDIO: FeatureFlags = {
   copyTimecodeLink: true,
   guides: ALL_GUIDES,
   platformZones: true,
-  // No UI until step 7; on, so the tier's bundle is complete.
-  channels: true,
-  gainGamma: true,
   zoom: true,
-  infoHud: true,
 };
 
 /** The default bundle of each tier. */

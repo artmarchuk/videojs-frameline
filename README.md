@@ -33,7 +33,7 @@ import { ProSkin } from '@/pro';
 
 With `tier="viewer"` (the default) and no flags, it is the clean Viewer player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
-**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools and View menu (guides, crop masks, platform zones) are complete. The image tools (channels, gain and gamma, zoom) arrive in the next step.
+**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools and View menu (guides, crop masks, platform zones) are complete. Zoom arrives in the next step.
 
 ### Tiers
 
@@ -74,7 +74,7 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 | `timecode`, `frameStep`, `inOut`, `loop`, `markers`, `shotNav`, `grabFrame`, `copyTimecodeLink` | off | on |
 | `guides` | off | all |
 | `platformZones` | off | on |
-| `channels`, `gainGamma`, `zoom`, `infoHud` | off | on (no UI yet) |
+| `zoom` | off | on |
 | `debug` | off | off |
 
 A host can turn any single feature on over Viewer or off over Studio, for example `<ProSkin tier="viewer" features={{ timecode: true, frameStep: true }} />`.

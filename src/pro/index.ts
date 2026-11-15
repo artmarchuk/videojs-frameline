@@ -6,14 +6,11 @@ export type { FeatureFlags, FeatureOverrides, GuideId, Layout, Tier } from './fe
 export type { CopyLinkInfo } from './studio/controller';
 export type { CropId, EffectiveView, ZoneId } from './view';
 export type {
-  Channel,
   FrameClockPrecision,
   FrameClockSource,
   FrameInfo,
   InOutRange,
-  Inspection,
   LoopMode,
   Marker,
   TimeDisplay,
-  Zoom,
 } from './store';

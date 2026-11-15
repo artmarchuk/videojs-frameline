@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createProStore, DEFAULT_INSPECTION } from './store';
+import { createProStore } from './store';
 
 describe('pro store', () => {
   it('keeps in before out by swapping', () => {
@@ -145,16 +145,6 @@ describe('pro store', () => {
     });
     expect(store.getState().view).toMatchObject({ guides: ['thirds'], crop: null, zones: null });
     expect(store.getState().timeDisplay).toBe('seconds');
-  });
-
-  it('validates inspection values and resets them', () => {
-    const store = createProStore();
-    store.setInspection({ channel: 'luma', gain: 99, gamma: -1, zoom: 2 });
-    expect(store.getState().inspection).toEqual({ channel: 'luma', gain: 8, gamma: 0.1, zoom: 2 });
-    store.setInspection({ channel: 'x' as never, zoom: -1 });
-    expect(store.getState().inspection.channel).toBe('luma');
-    store.resetInspection();
-    expect(store.getState().inspection).toBe(DEFAULT_INSPECTION);
   });
 
   it('passes marker selection to the host', () => {

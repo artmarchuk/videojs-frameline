@@ -24,7 +24,7 @@ describe('resolveFeatures', () => {
     const studio = resolveFeatures('studio');
     expect(studio).toMatchObject({ timecode: true, frameStep: true, inOut: true, loop: true, markers: true });
     expect(studio).toMatchObject({ shotNav: true, grabFrame: true, copyTimecodeLink: true });
-    expect(studio).toMatchObject({ platformZones: true, channels: true, gainGamma: true, zoom: true, infoHud: true });
+    expect(studio).toMatchObject({ platformZones: true, zoom: true });
     expect(studio.debug).toBe(false);
     expect(studio.guides).toEqual([...GUIDE_IDS]);
     expect(studio.guides).toContain('1.85');

@@ -39,19 +39,8 @@ export interface Marker {
 
 export type LoopMode = 'off' | 'range' | 'whole';
 export type TimeDisplay = 'timecode' | 'seconds';
-export type Channel = 'rgb' | 'r' | 'g' | 'b' | 'luma';
-export type Zoom = 'fit' | '100%' | number;
 export type FrameClockSource = 'rvfc' | 'raf';
 export type FrameClockPrecision = 'frame' | 'approximate';
-
-export interface Inspection {
-  channel: Channel;
-  /** Display gain, a multiplier. 1 is unchanged. Clamped to 0–8. */
-  gain: number;
-  /** Display gamma. 1 is unchanged. Clamped to 0.1–4. */
-  gamma: number;
-  zoom: Zoom;
-}
 
 export interface InOutRange {
   in: number | null;
@@ -70,7 +59,6 @@ export interface ProState {
   timeDisplay: TimeDisplay;
   /** Guides, crop mask and platform zones: what the end user chose in the View menu. Replaced on every change. */
   view: Readonly<ViewState>;
-  inspection: Readonly<Inspection>;
   /** Current frame number, from the frame clock. Best effort. */
   frame: number;
   /** Media time of the current frame, in seconds. */
@@ -111,8 +99,6 @@ export interface ProStore {
   setZones(zones: ZoneId | null): void;
   /** Hides every guide, or shows the hidden set again. */
   toggleGuidesHidden(): void;
-  setInspection(patch: Partial<Inspection>): void;
-  resetInspection(): void;
   selectMarker(marker: Marker): void;
   /** Drops the selection without telling the host: the playhead moved away from the marker. */
   deselectMarker(): void;
@@ -125,9 +111,6 @@ export interface ProStore {
   setCallbacks(callbacks: ProCallbacks): void;
 }
 
-export const DEFAULT_INSPECTION: Readonly<Inspection> = Object.freeze({ channel: 'rgb', gain: 1, gamma: 1, zoom: 'fit' });
-
-const CHANNELS: readonly Channel[] = ['rgb', 'r', 'g', 'b', 'luma'];
 const LOOP_MODES: readonly LoopMode[] = ['off', 'range', 'whole'];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -146,7 +129,6 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     loopMode: 'off',
     timeDisplay: options.timeDisplay ?? 'timecode',
     view: sanitizeView(options.view ?? EMPTY_VIEW, options.allowedView ?? NOTHING_ALLOWED),
-    inspection: DEFAULT_INSPECTION,
     frame: 0,
     mediaTime: 0,
     clockSource: null,
@@ -249,31 +231,6 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     setCrop: (crop) => commitView(cropView(state.view, crop, allowed)),
     setZones: (zones) => commitView(zonesView(state.view, zones, allowed)),
     toggleGuidesHidden: () => commitView(hiddenView(state.view)),
-
-    setInspection(patch) {
-      const next: Inspection = { ...state.inspection };
-      if (patch.channel !== undefined && CHANNELS.includes(patch.channel)) next.channel = patch.channel;
-      if (patch.gain !== undefined && Number.isFinite(patch.gain)) next.gain = clamp(patch.gain, 0, 8);
-      if (patch.gamma !== undefined && Number.isFinite(patch.gamma)) next.gamma = clamp(patch.gamma, 0.1, 4);
-      if (patch.zoom !== undefined) {
-        if (patch.zoom === 'fit' || patch.zoom === '100%') next.zoom = patch.zoom;
-        else if (typeof patch.zoom === 'number' && Number.isFinite(patch.zoom) && patch.zoom > 0) next.zoom = patch.zoom;
-      }
-
-      const current = state.inspection;
-      if (
-        next.channel === current.channel &&
-        next.gain === current.gain &&
-        next.gamma === current.gamma &&
-        next.zoom === current.zoom
-      )
-        return;
-      commit({ inspection: Object.freeze(next) });
-    },
-
-    resetInspection() {
-      if (state.inspection !== DEFAULT_INSPECTION) commit({ inspection: DEFAULT_INSPECTION });
-    },
 
     selectMarker(marker) {
       if (marker !== state.selectedMarker) commit({ selectedMarker: marker });

@@ -16,26 +16,28 @@ Place in the top three of the **Video.js Skins Design Challenge** on Contra (spo
 - **Submission:** a public URL showing the v10 player playing video, a visual, and a short design-thinking text. The author submits it manually on Monday morning.
 - **Minimum gate (must pass or the entry is out):** it works, with the essential controls (play/pause, seek, time, volume/mute, fullscreen), it is responsive, and it is keyboard-operable. Licence: Apache 2.0.
 - **Scoring (25 points):** visual design and originality 10, usability and interaction 5, accessibility 5, execution and polish 5.
-- **Bonuses (+1 each):** the demo video is hosted on Mux (playback ID, kept live); a real live site (artoix.com) uses the skin.
+- **Bonuses (+1 each):** the demo video is hosted on Mux (playback ID, kept live); a real live site (artmarchuk.me) uses the skin.
 
 What wins: a distinct point of view with real craft, not a restyle of a consumer player. Execution is only 5 points, but a half-built feature costs more than an absent one, so cut early.
 
 ## The product
 
-One skin, three tiers. A developer building a video tool picks a tier and switches single features on or off.
+One skin, two tiers. A developer building a video tool picks a tier and switches single features on or off.
 
 | Tier | For | What it is |
 | --- | --- | --- |
 | **Viewer** | The creator's client or audience; how work leaves the tool | A clean player with overlay controls on the picture: play/pause, seek bar, time, volume/mute, captions, settings, fullscreen. Ships no pro code |
-| **Studio** | The creator making, checking and reviewing video | A professional monitor: controls in a dock **below** the picture, a compact ruler timeline with draggable In/Out handles, frame-accurate transport, timecode, markers, guides and crop masks, frame grab, and (step 7) image inspection |
+| **Studio** | The creator making, checking and reviewing video | A professional monitor: controls in a dock **below** the picture, a compact ruler timeline with draggable In/Out handles, frame-accurate transport, timecode, markers, guides and crop masks, frame grab, and zoom to check detail |
+
+> **Viewer is for watching. Studio is for checking timing and framing.** Studio adds controls and overlays around the picture; it never processes the picture.
 
 There are two tiers on purpose. Finer control comes from feature flags, so a host can turn a single feature on over Viewer or off over Studio.
 
 ### Customisation layers (coarse to fine)
 
 1. **Tier**: `tier="viewer" | "studio"` sets the default bundle and layout.
-2. **Feature flags**: override single features, such as `features={{ timecode: true, guides: ['title-safe','9:16'], scopes: false }}`.
-3. **View menu (end user)**: show or hide the guides (and, in step 7, the image tools) the developer allowed; remembered per browser.
+2. **Feature flags**: override single features, such as `features={{ timecode: true, guides: ['title-safe','9:16'], zoom: false }}`.
+3. **View menu (end user)**: show or hide the guides and zoom the developer allowed; guides are remembered per browser, zoom is not.
 4. **Slots and events**: host app adds its own controls (`toolbar-start`, `toolbar-end`, `overlay`) and listens to `inout:change`, `marker:select`, `frame:change`.
 5. **Tokens**: the 8 public `--media-*` tokens plus our own `--pro-*` tokens, and `density="comfortable" | "compact"`.
 
@@ -63,18 +65,15 @@ Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** me
 - Rule-of-thirds and proportional grids [Studio] [Contest]
 - Aspect masks: 9:16, 4:5, 1:1, 2.39, 1.85 [Studio] [Contest]
 - Platform UI zones for Shorts, Reels and TikTok (approximate, labelled so) [Studio] [Contest]
-- Region of interest; info HUD (file, resolution, fps, rendition, take or version label) [Studio] [Later]
+- Region of interest [Studio] [Later]
 
 ### Creator actions
 - Grab frame (download PNG or copy; needs CORS, which Mux provides) [Studio] [Contest]
 - Copy link at timecode (URL fragment plus an event) [Studio] [Contest]
 - Time-coded comments: the skin shows markers and fires events; the host app stores comments [Studio] [Contest, markers and events only]
 
-### Image inspection
-- Channel view: R, G, B, luma (SVG `feColorMatrix`, no pixel reading) [Studio] [Contest]
-- Display gain/exposure and gamma, view only (SVG or CSS filters) [Studio] [Contest]
+### Zoom
 - Zoom and pan, 100% pixel view [Studio] [Contest]
-- Zebra / false colour, scopes (waveform, vectorscope, histogram), pixel probe, snapshot compare [Studio] [Later] (WebGL or canvas; needs CORS)
 
 ### Compare and audio
 - A/B wipe, side by side, onion skin, difference, compare two takes (needs two synced media elements) [Later]
@@ -85,6 +84,10 @@ Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** me
 - Full keyboard operation; the YouTube keyboard map is kept in every tier. Pro shortcuts use only keys that don't conflict: `I`, `O`, `,`, `.`, `Shift+←/→`. The help dialog (`Shift+?`) lists the active map.
 - Every pro control has a visible tooltip with its shortcut and an accessible name that matches.
 - The configurator page (the submission URL): tier switch, feature checkboxes, density switch, and a live code snippet.
+
+## Out of scope
+
+- Image processing and analysis (channels, exposure, gamma, scopes, false colour): belongs to a grading or monitoring engine, not a player skin.
 
 ## Look
 
@@ -108,15 +111,15 @@ Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no m
 3. Pro core: config, state, frame clock. *(done)*
 4. Review transport: timecode, frame step, in/out, loop, grab frame, copy link, previous/next cut. *(done; its controls are rearranged in step 6)*
 5. Ruler timeline, and 5b: dock layout and restyle. *(done; the timeline and toolbar are reworked in step 6)*
-6. **Viewer and Studio rework, then View menu and guides** (two parts, `step-6-viewer-studio-rework-and-guides.md`): two tiers, compact timeline, range handles, one marker pin, new main row; then guides, crop masks, platform zones, remembered choices.
-7. Studio image tools: channels, gain/gamma, zoom (an "Image" section in the View menu).
+6. Viewer and Studio rework, then View menu and guides (`step-6-viewer-studio-rework-and-guides.md`), with the fixes of 6c and 6d: two tiers, compact timeline, range handles, one marker pin, new main row; then guides, crop masks, platform zones, remembered choices. *(done)*
+7. **Studio zoom: Fit, 100%, 200%, pan, rendition notes** (`step-7-studio-zoom.md`).
 8. Configurator page and demo video.
 9. Hardening and audit: keyboard, phone, bright and dark footage, reduced motion, Firefox and Safari, deploy.
 
-Then Monday 07:00 to 09:00 Nicosia: the author polishes, embeds on artoix.com and submits.
+Then Monday 07:00 to 09:00 Nicosia: the author polishes, embeds on artmarchuk.me and submits.
 
 ## Open items the author decides
 
 - Demo video: generation tool and editor, music source, title. It is a 40 to 60 second, 24 fps, 1920×1080 file hosted on Mux.
-- Mux asset and playback ID, and the artoix.com stack for the live-site bonus.
+- Mux asset and playback ID, and the artmarchuk.me stack for the live-site bonus.
 - `J` / `K` / `L` meaning across tiers: postponed; keep the YouTube map in every tier for now.
