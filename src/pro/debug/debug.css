@@ -1,0 +1,37 @@
+/* Debug readout: a development tool, loaded only with `debug` or `?debug`. */
+@layer components {
+  .pro-skin .pro-debug {
+    position: absolute;
+    top: calc(var(--media-spacing) * 2);
+    left: calc(var(--media-spacing) * 2);
+    z-index: var(--pro-z-indicators);
+    max-width: calc(100% - var(--media-spacing) * 4);
+    padding: calc(var(--media-spacing) * 2);
+    border: 1px solid var(--pro-line);
+    border-radius: var(--pro-radius);
+    background-color: var(--pro-scrim);
+    color: var(--pro-text);
+    font-family: var(--pro-font-mono);
+    font-size: var(--pro-text-xs);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    line-height: 1.5;
+    pointer-events: none;
+  }
+
+  .pro-skin .pro-debug-row {
+    display: flex;
+    gap: calc(var(--media-spacing) * 2);
+  }
+
+  .pro-skin .pro-debug dt {
+    flex: none;
+    width: 9ch;
+    color: var(--pro-text-dim);
+  }
+
+  .pro-skin .pro-debug dd {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
