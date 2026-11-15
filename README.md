@@ -2,17 +2,24 @@
 
 Frameline is a player skin for Video.js v10 (React, plain CSS) built for the tools video creators use: editors, AI video generators, and review platforms. One skin has two tiers: **Viewer**, the clean player a creator's client or audience gets, and **Studio**, the creator's own monitor for making, checking and reviewing video. Finer control comes from feature flags: switch a single feature on over Viewer, or off over Studio.
 
-**Live URL:** https://videojs-pro.vercel.app (host: Vercel; the player alone is at `/preview.html`)
+**Live:** https://videojs-pro.vercel.app is the configurator page: pick a tier, switch features, copy the snippet. The player alone, as a monitor, is at [`/preview.html`](https://videojs-pro.vercel.app/preview.html).
 
-## Quick start
+**What it does:** see [FEATURES.md](FEATURES.md) for the full list, with where to find each thing. **Licence:** Apache 2.0.
+
+## Install and run
+
+Node 24 (the version the host builds with; newer versions also build) and npm.
 
 ```sh
 npm install
-npm run dev        # workbench at http://localhost:5173
-npm run build      # production build into dist/
+npm run dev        # http://localhost:5173: the configurator; /preview.html: the monitor; /workbench.html: the CLI's workbench
+npm run typecheck
 npm test           # unit tests (Vitest)
-npm run deploy vercel   # deploy the workbench to Vercel (production URL)
+npm run build      # production build into dist/
+npm run deploy vercel   # deploy to Vercel (production URL)
 ```
+
+The skin is the source in `src/`. It is not published to npm: copy `src/` into your app (it imports nothing from `apps/`) and install `@videojs/react` 10.4.0.
 
 ## Use the skin
 
@@ -31,9 +38,25 @@ import { FramelineSkin } from '@/pro';
 </VideoPlayer>;
 ```
 
-With `tier="viewer"` (the default) and no flags, it is the clean Viewer player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
+The two tiers, at their smallest:
 
-**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools, Guides menu (guides, crop masks, platform zones) and zoom are complete.
+```tsx
+// Viewer: the clean player for a client or an audience. Loads no pro code.
+<VideoPlayer>
+  <FramelineSkin>
+    <MuxVideo src="https://stream.mux.com/….m3u8" playsInline />
+  </FramelineSkin>
+</VideoPlayer>
+
+// Studio: the creator's monitor. Give it the source's frame rate, and CORS so frames can be grabbed.
+<VideoPlayer>
+  <FramelineSkin tier="studio" fps={24}>
+    <MuxVideo src="https://stream.mux.com/….m3u8" playsInline crossOrigin="" />
+  </FramelineSkin>
+</VideoPlayer>
+```
+
+With `tier="viewer"` (the default) and no flags, it is the clean Viewer player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
 ### Tiers
 
@@ -63,11 +86,54 @@ Viewer is for watching. Studio is for checking timing and framing: it adds contr
 | `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
 | `onCopyLink` | `({ url, frame, time }) => void` | none | A link to the current frame was copied |
 | `onGuidesChange` | `({ guides, crop, zones }) => void` | none | The guides that are drawn changed: `guides` is a list of ids, `crop` and `zones` an id or `null`. Not fired for the remembered set the player starts with |
+| `onZoomChange` | `(level) => void` | none | The zoom level changed: `'fit'`, `'100'`, `'150'`, `'200'` or `'400'` |
+| `onFrameGrab` | `(info) => void` | none | A frame was grabbed. See "Events" |
+| `apiRef` | `Ref<FramelineApi>` | none | A handle for driving the Studio tools from your own UI. See "Driving the player" |
 | `persist` | `boolean \| string` | `true` | Remember the end user's Guides choices and the time display in `localStorage`. `true` uses the key `frameline:v1`, a string uses that key, `false` turns it off |
 
 An invalid `fps`, an unknown tier or an unknown feature name logs one warning in development and falls back to the default. Nothing throws.
 
 `startTimecode` and `dropFrame` shape the timecode display and links.
+
+### Events
+
+Events are callback props. The skin dispatches no DOM events.
+
+| Prop | Payload | Fires when |
+| --- | --- | --- |
+| `onInOutChange` | `{ in: number \| null, out: number \| null }`, seconds | The In or Out point changes: on `I` and `O`, when a handle drag is released, on Reset range, on `apiRef.setRange` |
+| `onMarkerSelect` | the marker: `{ time, label, end?, id? }` | The user selects a marker: a pin, the Markers menu, or previous/next cut landing on one |
+| `onFrameChange` | `{ frame: number, time: number }` | The current frame number changes. Every frame while playing, so keep the handler light |
+| `onCopyLink` | `{ url: string, frame: number, time: number }` | A link to the current frame was copied |
+| `onGuidesChange` | `{ guides: string[], crop: string \| null, zones: string \| null }` | The guides that are drawn change. Not fired for the remembered set the player starts with |
+| `onZoomChange` | `'fit' \| '100' \| '150' \| '200' \| '400'` | The zoom level changes |
+| `onFrameGrab` | `{ frame, time, timecode, width, height, target: 'file' \| 'clipboard', fileName? }` | A frame was downloaded as a PNG or copied as an image |
+
+### Driving the player
+
+`apiRef` gives your own UI a handle on the Studio tools: a comment that jumps to its range, a "check the safe area" button.
+
+```tsx
+const frameline = useRef<FramelineApi>(null);
+
+<FramelineSkin tier="studio" fps={24} apiRef={frameline}>…</FramelineSkin>
+
+frameline.current?.setRange({ in: 12, out: 16 });
+frameline.current?.setGuides({ guides: ['title-safe'], crop: null, zones: null });
+```
+
+| Method | What it does |
+| --- | --- |
+| `seek(time)` | Seeks to the frame that contains `time` (seconds) |
+| `step(frames)` | Steps that many frames from the current one; negative steps back. Pauses first. Needs `frameStep` |
+| `setRange({ in, out })` | Sets In and Out in seconds; `null` leaves that side open. Needs `inOut` |
+| `setLoop(on)` | Loop on or off. Needs `loop` |
+| `setGuides({ guides?, crop?, zones? })` | Sets what is drawn. `guides` is the full list of checkbox guides to have on; fields left out are not changed |
+| `setZoom(level)` | `'fit'`, `'100'`, `'150'`, `'200'` or `'400'`. Needs `zoom` |
+| `pan(direction)` | Moves the zoomed view a tenth of what is visible: `'left'`, `'right'`, `'up'`, `'down'` |
+| `grabFrame()` | Downloads the current frame as a PNG. Needs `grabFrame` |
+
+The handle is `null` in the Viewer tier and until the pro code has loaded. A call for a feature that is switched off does nothing. Calls are not announced to screen readers: your own control should say what it did. The matching event fires as it does for the user's own action.
 
 ### Feature flags
 
@@ -83,7 +149,9 @@ A host can turn any single feature on over Viewer or off over Studio, for exampl
 
 `guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `platformZones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The Guides menu".
 
-### Studio shortcuts
+### Keyboard shortcuts
+
+Both tiers keep the YouTube map: `Space` or `K` play and pause, `←` `→` seek 5 s, `J` `L` seek 10 s, `↑` `↓` volume, `M` mute, `C` captions, `F` fullscreen, `0`–`9` seek to a tenth, `Home` `End`, `<` `>` speed. `Shift+?` opens the help dialog, which lists the keys that are live in the current configuration.
 
 These are added to the YouTube map in the Studio tier. Each works only while its feature is on, and `Shift+?` lists what is live.
 
@@ -223,7 +291,7 @@ Zoom changes how closely you look at the picture, never the picture itself. The 
 | Level | What it shows |
 | --- | --- |
 | Fit | The whole picture in the stage. No transform |
-| 100% | One video pixel on one device pixel: scale = `videoWidth` / the picture's width in CSS pixels / `devicePixelRatio`. On a small video, or on a high-density screen, this can be smaller than Fit, and it is applied as it is |
+| 100% | One pixel of the source on one device pixel: scale = the source's width / the picture's width in CSS pixels / `devicePixelRatio`. The source is the largest rendition the stream offers (Video.js's `videoRenditionList`), or the decoded `videoWidth` when there is no rendition list, so the scale does not change when the player switches rendition; a lower rendition is drawn larger and the menu says "showing 720p". On a small video, or on a high-density screen, this can be smaller than Fit, and it is applied as it is |
 | 150%, 200%, 400% | Multiples of 100%. From 200% up the picture is drawn with `image-rendering: pixelated`, so single pixels are visible |
 
 - **Pan** while the zoomed picture is larger than the stage: drag it (mouse, pen or one finger), or press `Shift+Alt` and an arrow. The pan stops at the picture's edges, so the stage never shows an empty band. A drag longer than 3 px is not a click: it neither plays nor pauses. There is no pinch zoom.
@@ -249,6 +317,29 @@ Grab frame (in the Capture menu, or `G`) saves the raw frame at the video's own 
 The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"`, `"150"`, `"200"` or `"400"` while zoomed. The picture's rectangle inside the stage is published as `--fl-picture-x`, `--fl-picture-y`, `--fl-picture-w` and `--fl-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--fl-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
 **The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--fl-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter graphite (`--fl-on`), Play is a neutral filled button, and the playhead is white.
+
+### Tokens
+
+The skin reads Video.js's public tokens, so a host that already themes a Video.js player themes this one: `--media-accent-color`, `--media-accent-text-color`, `--media-border-color`, `--media-border-radius`, `--media-spacing`, `--media-object-fit`, `--media-object-position`, and `--media-controls-before-start: hidden` to hide the bar until playback starts.
+
+Its own tokens are `--fl-*`, all defined in `src/styles/tokens.css`. The ones a host is most likely to set:
+
+| Token | Default | What it is |
+| --- | --- | --- |
+| `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent: played range, set handles, focus ring, selected marker |
+| `--fl-surface-0` … `--fl-surface-3` | `#0e0e10` … `#3a3a3e` | Graphite surfaces: behind the picture, the dock, control fill, hover |
+| `--fl-on` | `#46464b` | A toggle that is on |
+| `--fl-text`, `--fl-text-dim` | `#f2f2f4`, `#9a9aa0` | Text and secondary text |
+| `--fl-stage-ratio` | `16 / 9` | The picture's stage in the dock layout |
+| `--fl-frame-border` | `0` | `1` draws a hairline and a 10 px radius around the player |
+
+The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectangle) on the container.
+
+### Browser support
+
+The floor the code is written for: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4.
+
+**Tested so far: Google Chrome on macOS only** (desktop, and phone sizes with touch emulation), by scripted checks and screenshots. Firefox, Safari, iOS and real touch devices have not been run yet; that is the next step's work. `NOTES.md` lists what is unverified.
 
 ### Frame accuracy
 
@@ -300,6 +391,10 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
   - `public/demo/`: the files of each demo source: chapters, captions, markers.
 - `vercel.json`, `netlify.toml`: how those hosts build the workbench.
 - `skin.json`: what this skin is built from. Keep it; it records the Video.js version the skin was created with.
+
+## Licence
+
+Apache 2.0. See [LICENSE](LICENSE).
 
 ## Learn more
 
