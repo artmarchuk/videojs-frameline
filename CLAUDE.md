@@ -39,6 +39,7 @@ Test for every decision: does it help someone make, check, review or deliver a v
 ## Where things live
 
 - `src/`: the skin. `src/video/skin.tsx` is the entry point.
-- `apps/preview/`: the CLI's workbench. Don't change it, except `apps/preview/src/frame/media.ts`, the one place that names the demo media.
+- `apps/preview/`: the site. `index.html` and `src/page/` are the configurator page (the site root, the submission URL); `preview.html` and `src/frame/` the monitor page; `workbench.html` and `src/shell/` the CLI's workbench, which you don't change. `src/frame/media.ts` is the one place that names the demo media.
+- `FEATURES.md`: every feature, where to try it, and the tag it shipped in. Update it in every step.
 - `specs/`: the project overview and per-step requirements.
 - `NOTES.md`: versions, deployed URL, decisions, Later, Unverified.

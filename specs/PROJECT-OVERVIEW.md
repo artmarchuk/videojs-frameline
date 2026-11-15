@@ -1,5 +1,7 @@
 # Frameline: project overview for Claude Code
 
+The skin's name is **Frameline** (display form: "Frameline — a Video.js skin for video creators"). It was called Video.js PRO until step 8.
+
 Read this file at the start of every step, together with `NOTES.md` and that step's requirements file. It gives the big picture so that each step's decisions fit the whole.
 
 ## North star
@@ -38,7 +40,7 @@ There are two tiers on purpose. Finer control comes from feature flags, so a hos
 1. **Tier**: `tier="viewer" | "studio"` sets the default bundle and layout.
 2. **Feature flags**: override single features, such as `features={{ timecode: true, guides: ['title-safe','9:16'], zoom: false }}`.
 3. **Guides menu and Zoom button (end user)**: show or hide the guides and zoom the developer allowed; guides are remembered per browser, zoom is not.
-4. **Slots and events**: host app adds its own controls (`toolbar-start`, `toolbar-end`, `overlay`) and listens to `inout:change`, `marker:select`, `frame:change`, `guides:change`.
+4. **Slots, events and a handle**: the host app adds its own controls (`slots={{ toolbarStart, toolbarEnd, overlay }}`), listens through callback props (`onInOutChange`, `onMarkerSelect`, `onFrameChange`, `onCopyLink`, `onGuidesChange`, `onZoomChange`, `onFrameGrab`) and drives the Studio tools from its own UI through `apiRef`.
 5. **Tokens**: the 8 public `--media-*` tokens plus our own `--fl-*` tokens, and `density="comfortable" | "compact"`.
 
 Only enabled modules load. Viewer must stay as light as a stock skin.
@@ -83,7 +85,7 @@ Tiers in brackets. **[Contest]** means we build it for the entry. **[Later]** me
 ### Always, in every tier
 - Full keyboard operation; the YouTube keyboard map is kept in every tier. Pro shortcuts use only keys that don't conflict: `I`, `O`, `,`, `.`, `Shift+←/→`. The help dialog (`Shift+?`) lists the active map.
 - Every pro control has a visible tooltip with its shortcut and an accessible name that matches.
-- The configurator page (the submission URL): tier switch, feature checkboxes, density switch, and a live code snippet.
+- The configurator page (the submission URL, the site root): tier switch, feature checkboxes, layout switch, a live code snippet, an event log and six tasks to try. `FEATURES.md` lists every feature; every step updates it.
 
 ## Out of scope
 
@@ -113,7 +115,7 @@ Calm and macOS-like: graphite surfaces, the system UI typeface (no webfont, no m
 5. Ruler timeline, and 5b: dock layout and restyle. *(done; the timeline and toolbar are reworked in step 6)*
 6. Viewer and Studio rework, then the Guides menu (called View until step 7b) and guides (`step-6-viewer-studio-rework-and-guides.md`), with the fixes of 6c and 6d: two tiers, compact timeline, range handles, one marker pin, new main row; then guides, crop masks, platform zones, remembered choices. *(done)*
 7. Studio zoom: Fit, 100%, 200%, pan, rendition notes (`step-7-studio-zoom.md`), and 7b: View split into a Guides menu and a Zoom button with five levels (`step-7b-guides-and-zoom-buttons.md`). *(done)*
-8. Configurator page and demo video.
+8. Configurator page, demo media entries, `FEATURES.md`, the rename to Frameline (`step-8-configurator-page.md`). *(done; the reel's playback ID and files are still placeholders)*
 9. Hardening and audit: keyboard, phone, bright and dark footage, reduced motion, Firefox and Safari, deploy.
 
 Then Monday 07:00 to 09:00 Nicosia: the author polishes, embeds on artmarchuk.me and submits.

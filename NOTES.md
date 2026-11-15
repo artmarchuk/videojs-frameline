@@ -958,3 +958,13 @@ The Zoom button adds 56 px (52 + gap) to the right column. Measured with a range
 
 ### Step 7b public-URL checks (https://videojs-pro.vercel.app)
 Viewer gate at 1440 and 320 in headless Chrome: tab order, `K`/Space, arrows, `J` `L`, `5`, `Home`, `M`, `↓`, `C`, the help dialog (11 rows, focus in and back), 40 px targets, no overflow, **no pro chunk requested**; `Z`, `Shift+Z` and `Shift+Alt+arrows` do nothing in the Viewer; its DOM (every element's tag, classes and role) is identical to the step 6d deploy. Studio: `zoom.js` passes at device scale factor 1 and 2, `guides-menu-focus.js` opens on "Title safe" and returns focus to "Guides", `zoom-rendition-cap.js` passes (720p, 2160p while zoomed, 720p again, no reload).
+
+## Step 8: Configurator page, demo media, features doc (15 Nov 2026)
+
+### 8.3: the six open items, answered from the code
+1. **Events.** They are **callback props** on `FramelineSkin`; the skin dispatches no DOM events (`grep dispatchEvent|CustomEvent src` finds nothing). The colon names in the overview (`inout:change`, `marker:select`, `frame:change`, `guides:change`, and `link:copy` in the monitor page's debug log) were only labels in that log; they are not an API. The props and payloads: `onInOutChange({ in, out })` (seconds or `null`); `onMarkerSelect(marker)` (`{ time, label, end?, id? }`); `onFrameChange({ frame, time })`; `onCopyLink({ url, frame, time })`; `onGuidesChange({ guides, crop, zones })`; and, new in this step, `onZoomChange(level)` and `onFrameGrab({ frame, time, timecode, width, height, target, fileName? })`.
+2. **Captions shortcut: yes, `C`** (`src/video/behaviors/hotkeys.tsx`: `keys="c" action="toggleSubtitles"`), in both tiers.
+3. **Viewer touch gestures** (`src/video/behaviors/gestures.tsx`): a tap shows or hides the controls (the centre button plays); a double tap on the left or right third seeks 10 s back or forward; a double tap on the centre third toggles fullscreen. In a dock layout a tap plays or pauses instead, because the controls never hide. No swipe, no pinch. (Studio adds one-finger pan while zoomed.)
+4. **`[` and `]`: previous and next cut.** The cut list is the media's chapter starts when it has chapters, **otherwise** the host's markers (`buildCutList` in `src/pro/studio/logic.ts`). Never both. When a cut comes from a marker, the marker is also selected.
+5. **`density`: exists and is public** (`FramelineSkinProps.density`, `'comfortable' | 'compact'`). Touch always gets comfortable.
+6. **Slots: they exist, as one prop**, `slots={{ toolbarStart, toolbarEnd, overlay }}` (camelCase keys; the overview's kebab names were never the API). `overlay` is drawn in the `aria-hidden` layer over the picture.
