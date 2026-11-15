@@ -9,6 +9,8 @@ export const strings = {
   shortcutsClose: 'Close',
   shortcutsOr: 'or',
   pictureInPicture: 'Picture-in-picture',
+  mute: 'Mute',
+  unmute: 'Unmute',
   retry: 'Retry',
   transport: 'Transport',
   playback: 'Playback',

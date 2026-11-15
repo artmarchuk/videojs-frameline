@@ -10,7 +10,7 @@ import { Button } from './button';
 interface ShortcutsContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
-  /** Rows added by the active pro tier, listed after the Share map. */
+  /** Rows added by the active pro tier, listed after the Viewer map. */
   extraRows: ShortcutRow[];
   setExtraRows: (rows: ShortcutRow[]) => void;
 }
@@ -67,8 +67,8 @@ export interface ShortcutRow {
   label: string;
 }
 
-/** The Share map. Later tiers append their own rows. */
-export const SHARE_SHORTCUTS: ShortcutRow[] = [
+/** The Viewer map. Later tiers append their own rows. */
+export const VIEWER_SHORTCUTS: ShortcutRow[] = [
   { keys: ['Space', 'K'], label: strings.shortcut.playPause },
   { keys: ['←', '→'], label: strings.shortcut.seekShort },
   { keys: ['J', 'L'], label: strings.shortcut.seekLong },
@@ -88,7 +88,7 @@ export const SHARE_SHORTCUTS: ShortcutRow[] = [
  */
 export function ShortcutsDialog() {
   const { open, setOpen, extraRows } = useShortcutsDialog();
-  const rows = extraRows.length ? [...SHARE_SHORTCUTS, ...extraRows] : SHARE_SHORTCUTS;
+  const rows = extraRows.length ? [...VIEWER_SHORTCUTS, ...extraRows] : VIEWER_SHORTCUTS;
   const toggle = useCallback(() => setOpen(!open), [open, setOpen]);
 
   // `?` is what a keyboard reports for the shifted key; `Shift+/` covers layouts and tools that report the base key.

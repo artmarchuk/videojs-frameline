@@ -47,9 +47,9 @@ export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children
 }
 
 /**
- * Video.js PRO, Share tier: the clean player a creator's client or audience gets.
+ * Video.js PRO, Viewer tier: the clean player a creator's client or audience gets.
  *
- * Layers, bottom to top: media, poster, the overlay layer (empty here; the Review tier draws guides in it),
+ * Layers, bottom to top: media, poster, the overlay layer (empty here; the Studio tier draws guides in it),
  * transient indicators, controls, dialogs. With `layout="dock"` the picture layers sit in a stage and the controls in
  * a dock below it; the `Container` holds both, so fullscreen keeps the dock.
  */
@@ -103,7 +103,7 @@ export function VideoSkin({
       className={cn('media-skin', 'media-container', 'media-video', 'pro-skin', className)}
       data-theme="pro"
       data-preset="video"
-      data-tier="share"
+      data-tier="viewer"
       data-density="comfortable"
       data-layout={layout}
       {...props}

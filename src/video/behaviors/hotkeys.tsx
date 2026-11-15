@@ -4,7 +4,7 @@ import { Hotkey, selectPlayback, usePlayer } from '@videojs/react';
 
 export interface VideoHotkeysProps {
   disabled?: boolean | undefined;
-  /** Pro tiers: the arrow keys seek only while playing; while paused the Review tier uses them to step frames. */
+  /** Pro tiers: the arrow keys seek only while playing; while paused the Studio tier uses them to step frames. */
   arrowSeekWhilePlayingOnly?: boolean | undefined;
 }
 
@@ -24,7 +24,7 @@ function ArrowSeekWhilePlaying({ disabled = false }: { disabled?: boolean }) {
 
 /**
  * The YouTube keyboard map, kept in every tier. `I`, `O`, `,`, `.` and `Shift+←/→` are deliberately left free for the
- * Review tier. `Shift+?` (the help dialog) is registered by `ShortcutsDialog`.
+ * Studio tier. `Shift+?` (the help dialog) is registered by `ShortcutsDialog`.
  */
 export function VideoHotkeys({ disabled = false, arrowSeekWhilePlayingOnly = false }: VideoHotkeysProps = {}) {
   return (

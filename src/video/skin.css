@@ -91,7 +91,7 @@
     background-image: none;
   }
 
-  .pro-skin[data-layout="dock"] .pro-bar[data-layout="stacked"] .media-time-slider::before {
+  .pro-skin[data-layout="dock"] .pro-bar .media-time-slider::before {
     bottom: auto;
     top: 50%;
     transform: translateY(-50%);
@@ -123,7 +123,7 @@
     object-position: var(--media-object-position, center);
   }
 
-  /* Above the video, below the controls. Empty in the Share tier; guides are drawn here later. */
+  /* Above the video, below the controls. Empty in the Viewer tier; guides are drawn here later. */
   .pro-skin .pro-overlay {
     position: absolute;
     inset: 0;
@@ -283,6 +283,31 @@
     );
     pointer-events: auto;
     transition: opacity var(--pro-duration-fade) var(--pro-ease);
+  }
+
+  /* Viewer overlay: 40px targets, a little more air at the sides, as a client-facing player. */
+  .pro-skin[data-layout="overlay"]:not([data-bar="pro"]) {
+    --pro-control-size: max(40px, var(--pro-density-control));
+  }
+
+  .pro-skin[data-layout="overlay"]:not([data-bar="pro"]) .pro-bar {
+    gap: calc(var(--media-spacing) * 1.5);
+    padding: calc(var(--media-spacing) * 18) calc(var(--media-spacing) * 5) calc(var(--media-spacing) * 4);
+    background-image: linear-gradient(to top, var(--pro-scrim) 0, var(--pro-scrim) 50%, transparent 100%);
+  }
+
+  .pro-skin[data-layout="overlay"]:not([data-bar="pro"]) .pro-bar-row {
+    gap: calc(var(--media-spacing) * 1.5);
+  }
+
+  @container media-root (width < 480px) {
+    .pro-skin[data-layout="overlay"]:not([data-bar="pro"]) .pro-bar {
+      padding: calc(var(--media-spacing) * 8) calc(var(--media-spacing) * 2) calc(var(--media-spacing) * 2);
+    }
+
+    .pro-skin[data-layout="overlay"]:not([data-bar="pro"]) .pro-bar-row {
+      gap: 0;
+    }
   }
 
   .pro-skin .pro-controls:not([data-visible]) .pro-bar,
@@ -472,13 +497,13 @@
     transform: translateY(-50%);
   }
 
-  .pro-skin .pro-bar[data-layout="stacked"] .media-time-slider {
+  /* The seek bar has its own row above the buttons; the extra target grows upwards so it does not cover them. */
+  .pro-skin .pro-bar .media-time-slider {
     flex: none;
     width: 100%;
   }
 
-  /* When stacked, the extra target grows upwards so it does not cover the buttons below. */
-  .pro-skin .pro-bar[data-layout="stacked"] .media-time-slider::before {
+  .pro-skin .pro-bar .media-time-slider::before {
     top: auto;
     bottom: calc(var(--pro-density-gap) * -0.5);
     transform: none;
@@ -557,7 +582,7 @@
       calc(100% - var(--media-slider-fill, 0%)),
       calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
     );
-    background-color: var(--pro-accent);
+    background-color: var(--pro-text);
   }
 
   .pro-skin .media-time-slider[data-dragging] .media-time-slider-fill {
@@ -567,7 +592,7 @@
     );
   }
 
-  /* The thumb is a playhead: a thin white bar with a dark outline inside a 24px focusable box. */
+  /* The thumb: a small white dot with a dark outline, inside a 24px focusable box. No accent in the Viewer bar. */
   .pro-skin .media-time-slider-thumb {
     position: absolute;
     left: var(--media-slider-fill, 0%);
@@ -586,11 +611,11 @@
 
   .pro-skin .media-time-slider-thumb::after {
     content: "";
-    width: var(--pro-playhead-width);
-    height: var(--pro-playhead-height);
-    border-radius: 1px;
+    width: calc(var(--media-spacing) * 3);
+    height: calc(var(--media-spacing) * 3);
+    border-radius: 50%;
     background-color: var(--pro-text);
-    box-shadow: 0 0 0 1px var(--pro-surface-0);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--pro-surface-0) 60%, transparent);
   }
 
   .pro-skin .media-time-slider-preview {
@@ -688,6 +713,38 @@
 
   .pro-skin .media-volume-slider[data-hidden] {
     display: none;
+  }
+
+  /*
+   * Viewer bar: the row shows the mute button; the volume slider slides out beside it when the pointer is over the
+   * volume control or the keyboard focus is inside it. It stays in the tab order while it is closed, and opens as
+   * soon as it gets focus. On touch it stays closed: phones set the volume with their own buttons.
+   */
+  .pro-skin:not([data-bar="pro"]) .media-volume-slider {
+    width: 0;
+    margin-right: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      width var(--pro-duration) var(--pro-ease),
+      opacity var(--pro-duration) var(--pro-ease);
+  }
+
+  .pro-skin:not([data-bar="pro"]) .pro-volume:focus-within .media-volume-slider,
+  .pro-skin:not([data-bar="pro"]) .media-volume-slider[data-dragging] {
+    width: calc(var(--media-spacing) * 16);
+    margin-right: calc(var(--media-spacing) * 2);
+    overflow: visible;
+    opacity: 1;
+  }
+
+  @media (hover: hover) {
+    .pro-skin:not([data-bar="pro"]) .pro-volume:hover .media-volume-slider {
+      width: calc(var(--media-spacing) * 16);
+      margin-right: calc(var(--media-spacing) * 2);
+      overflow: visible;
+      opacity: 1;
+    }
   }
 
   .pro-skin .media-volume-slider-track {
@@ -972,8 +1029,9 @@
     white-space: nowrap;
   }
 
-  /* PiP as a menu item only where the PiP button is hidden. */
-  .pro-skin .pro-menu-item-narrow {
+  /* PiP and mute as menu items only where their buttons are hidden. */
+  .pro-skin .pro-menu-item-narrow,
+  .pro-skin .pro-menu-item-dock-narrow {
     display: none;
   }
 

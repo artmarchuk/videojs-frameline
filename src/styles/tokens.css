@@ -19,7 +19,7 @@
     --pro-surface-3: #3a3a3e; /* hover, tooltips, small badges */
     --pro-on: #46464b; /* a toggle that is on */
     --pro-line: #333336; /* hairlines, dividers */
-    --pro-track: #85858c; /* unfilled slider track over footage (Share overlay): 3:1 on the scrim over a white frame */
+    --pro-track: #85858c; /* unfilled slider track over footage (Viewer overlay): 3:1 on the scrim over a white frame */
     --pro-text: #f2f2f4; /* primary text and icons; the playhead */
     --pro-text-dim: #9a9aa0; /* secondary text on surface-0 to surface-2 */
     --pro-text-dim-raised: #b2b2b8; /* secondary text on surface-3: tooltips, hovered controls (4.5:1 there) */
@@ -31,6 +31,8 @@
     --pro-tick-mid: #77777e;
     --pro-tick-major: #8e8e95;
     --pro-buffer: #4a4a50; /* buffered range under the timeline track */
+    --pro-handle-idle: #77777e; /* a range handle whose point is not set */
+    --pro-ruler-label: #b8b8c0; /* ruler labels are blended (difference) with the dock: the result there is --pro-text-dim */
     --pro-divider: rgb(255 255 255 / 0.1); /* dividers inside a control fill */
     --pro-frame-line: var(--media-border-color, var(--pro-line)); /* hairline around the player, see --pro-frame-border */
 
@@ -153,6 +155,8 @@
       --pro-tick-mid: CanvasText;
       --pro-tick-major: CanvasText;
       --pro-buffer: GrayText;
+      --pro-handle-idle: GrayText;
+      --pro-ruler-label: CanvasText;
       --pro-divider: CanvasText;
       --pro-line: CanvasText;
       --pro-track: CanvasText;

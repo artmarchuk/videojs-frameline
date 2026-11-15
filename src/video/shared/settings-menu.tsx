@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
 import { Text as TextPrimitive } from '@videojs/react';
-import { Menu, selectPiP, usePlayer } from '@videojs/react';
+import { Menu, selectPiP, selectVolume, usePlayer } from '@videojs/react';
 import { AudioTrackRadioGroup } from '@videojs/react/ui/audio-track-radio-group';
 import { CaptionsRadioGroup } from '@videojs/react/ui/captions-radio-group';
 import { PlaybackRateRadioGroup } from '@videojs/react/ui/playback-rate-radio-group';
@@ -18,7 +18,10 @@ import {
   QualityIcon,
   SettingsIcon,
   SpeedIcon,
+  VolumeHighIcon,
+  VolumeMutedIcon,
 } from '../icons';
+import { useProSettingsItems } from '../pro-slots';
 import { strings } from '../strings';
 import { Button } from './button';
 import { RadioItem } from './menu-item';
@@ -162,7 +165,23 @@ function CaptionsMenu() {
   );
 }
 
-/** Picture-in-picture as a menu item. CSS shows it only on narrow players, where the PiP button is hidden. */
+/** Mute as a menu item. CSS shows it only where the mute button is hidden: the narrow Studio dock. */
+function MuteMenuItem() {
+  const volume = usePlayer(selectVolume);
+  if (!volume || volume.mutedAvailability !== 'available') return null;
+
+  return (
+    <Menu.Item className={'media-menu-item pro-menu-item-dock-narrow'} onSelect={() => volume.setMuted(!volume.muted)}>
+      {volume.muted ? <VolumeMutedIcon className={'media-menu-icon'} /> : <VolumeHighIcon className={'media-menu-icon'} />}
+      <span>{volume.muted ? strings.unmute : strings.mute}</span>
+      <span className={'media-menu-hint'}>
+        <kbd className={'pro-kbd'}>M</kbd>
+      </span>
+    </Menu.Item>
+  );
+}
+
+/** Picture-in-picture as a menu item. CSS shows it only where the PiP button is hidden. */
 function PiPMenuItem() {
   const pip = usePlayer(selectPiP);
   if (!pip || pip.pictureInPictureAvailability !== 'available') return null;
@@ -183,6 +202,7 @@ function PiPMenuItem() {
 
 export function SettingsMenu() {
   const shortcuts = useShortcutsDialog();
+  const proItems = useProSettingsItems();
 
   return (
     <Menu.Root side="top" align="end">
@@ -200,6 +220,8 @@ export function SettingsMenu() {
           <QualityMenu />
           <CaptionsMenu />
           <AudioTrackMenu />
+          <MuteMenuItem />
+          {proItems}
           <PiPMenuItem />
           <Menu.Item className={'media-menu-item'} onSelect={() => shortcuts.setOpen(true)}>
             <KeyboardIcon className={'media-menu-icon'} />
