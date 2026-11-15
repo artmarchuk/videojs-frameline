@@ -33,14 +33,14 @@ import { ProSkin } from '@/pro';
 
 With `tier="viewer"` (the default) and no flags, it is the clean Viewer player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
-**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers and capture tools are complete. The View menu (guides, crop masks, platform zones) and the image tools arrive in the next steps; until then the View button is in its place and says "Coming next".
+**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools and View menu (guides, crop masks, platform zones) are complete. The image tools (channels, gain and gamma, zoom) arrive in the next step.
 
 ### Tiers
 
 | Tier | For | What it is |
 | --- | --- | --- |
 | `viewer` (default) | The creator's client or audience | Controls over the picture: seek bar, Play, mute and volume, time, captions, settings, picture-in-picture, fullscreen. Loads no pro code |
-| `studio` | The creator | Controls in a dock below the picture: a compact ruler timeline with draggable In and Out handles, frame-accurate transport, timecode, markers, and the Markers, Capture and View menus |
+| `studio` | The creator | Controls in a dock below the picture: a compact ruler timeline with draggable In and Out handles, frame-by-frame transport, timecode, markers, guides and crop masks over the picture, and the Markers, Capture and View menus |
 
 ### Props
 
@@ -61,6 +61,8 @@ With `tier="viewer"` (the default) and no flags, it is the clean Viewer player a
 | `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
 | `onCopyLink` | `({ url, frame, time }) => void` | none | A link to the current frame was copied |
 | `onPosterFrame` | `({ frame, time, timecode }) => void` | none | The user chose the current frame as the poster. The host saves it; the skin stores nothing |
+| `onViewChange` | `({ guides, crop, zones }) => void` | none | The guides that are drawn changed: `guides` is a list of ids, `crop` and `zones` an id or `null`. Not fired for the remembered set the player starts with |
+| `persist` | `boolean \| string` | `true` | Remember the end user's View choices and the time display in `localStorage`. `true` uses the key `videojs-pro:v1`, a string uses that key, `false` turns it off |
 
 An invalid `fps`, an unknown tier or an unknown feature name logs one warning in development and falls back to the default. Nothing throws.
 
@@ -78,7 +80,7 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 
 A host can turn any single feature on over Viewer or off over Studio, for example `<ProSkin tier="viewer" features={{ timecode: true, frameStep: true }} />`.
 
-`guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`.
+`guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `platformZones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The View menu".
 
 ### Studio shortcuts
 
@@ -95,6 +97,7 @@ These are added to the YouTube map in the Studio tier. Each works only while its
 | `[` `]` | Previous cut, next cut (chapters, or `markers` when there are no chapters) |
 | `←` `→` on an In or Out handle | Move the handle one frame; `Shift` ten; `Home` `End` to its limits; `Delete` unsets it |
 | `G` | Grab the current frame as a PNG |
+| `Shift+V` | Hide every guide, or show them again |
 
 ### Layout
 
@@ -127,7 +130,7 @@ The menus open upward and are real menus: arrow keys, Enter, Escape, and focus r
 
 - **Markers** lists the host's markers with their timecodes, and the media's chapters under a second heading. Choosing one seeks to it.
 - **Capture:** Grab frame (downloads a PNG, `G`), Copy frame image, Copy link at timecode, Use frame as poster.
-- **View:** guides, crop masks and platform zones (next step).
+- **View:** guides, crop masks and platform zones. See "The View menu".
 
 The row follows the player's own width. It is one row down to 640 px, shedding in this order: the volume slider (under 1040 px), the duration text (980), the captions button (880; `C` and the settings menu remain), the menu chevrons (840), the count badges (740). **Under 640 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, View, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 350 px the cut buttons step aside (`[` `]` and the markers list still work) and In, Out, Loop take a row of their own.
 
@@ -178,6 +181,36 @@ The range lives on the timeline, like the work-area bar of an editor. **Two hand
 
 There is **one visual**: a small pin on the ruler at the marker's time. No count badges and no clusters; pins that are close together overlap, later ones on top. Hovering a pin shows its label and timecode; clicking it seeks to the marker's frame and calls `onMarkerSelect`. The selected marker's pin takes the accent until the playhead moves away. Pins are not tab stops: for the keyboard and screen readers every marker is an item in the **Markers** menu, and `[` `]` move between cuts (chapters, or markers when the media has no chapters). About 200 markers is the design limit.
 
+### The View menu
+
+Guides are drawn **on the picture**, never on letterbox bars, and never over the controls. They are white lines with a dark edge, so they read over bright and dark footage alike; the layer is `aria-hidden` and ignores the pointer. Grabbed frames never include them.
+
+| Section | Items | Behaviour |
+| --- | --- | --- |
+| Safe areas | Title safe (`title-safe`), Action safe (`action-safe`) | Independent. Broadcast 16:9 figures: the central 90% and 93% of the picture (EBU R95, ITU-R BT.1848) |
+| Composition | Rule of thirds (`thirds`), Centre cross (`centre`) | Independent |
+| Crop | None, 2.39:1 (`2.39`), 1.85:1 (`1.85`), 1:1, 4:5, 9:16 | One at a time. Dims the picture outside a centred crop of that ratio |
+| Platform zones | None, YouTube Shorts (`shorts`), Instagram Reels (`reels`), TikTok (`tiktok`) | One at a time. Shows where the app's own interface covers a vertical video: a top bar, captions and profile, and the buttons on the right |
+| Footer | Hide guides / Show guides, `Shift+V` | Switches everything off, and brings the same set back |
+
+- Toggling keeps the menu open, so several guides can be switched in one visit. Escape closes it and focus returns to the View button, whose badge counts what is on (its accessible name says "View, 3 guides on").
+- **Platform zones are approximate**, and the menu says so on every platform. Apps change their layouts, and the layout depends on the caption and on whether the video is an ad; check the platform's current guidance before you deliver. The numbers are in one file, `src/pro/studio/guides/platform-zones.ts`, in percent of the 9:16 frame.
+- Zones are drawn inside the 9:16 frame: the whole picture when the video is 9:16, otherwise a centred 9:16 crop. So **choosing a platform turns on the 9:16 crop**, and choosing another crop clears the zones.
+- Labels (Title safe, Action safe, the zone names) are hidden on a picture narrower than 480 px.
+
+**What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the View button. `platformZones: false` removes that section.
+
+```tsx
+<ProSkin
+  tier="studio"
+  features={{ guides: ['title-safe', 'action-safe', '9:16'], platformZones: false }}
+  persist="my-app:monitor"
+  onViewChange={({ guides, crop, zones }) => analytics.track('view', { guides, crop, zones })}
+>
+```
+
+**Remembered choices.** The guides, the crop, the zones and the timecode/seconds choice are remembered per browser (`persist`). The range, Loop and the playhead are not. What is read back is validated: unknown ids, ids the current `features` do not allow, wrong types and broken JSON are dropped silently. **The host's `features` always win** over a remembered value, and the skin works the same when storage is blocked, full or empty.
+
 ### Links to a frame
 
 Copy link writes the position into the page URL's hash as `#t=HH:MM:SS:FF`, the timecode on screen, and keeps anything else the host app has in the hash. A page opened with such a hash seeks to that frame, paused. Plain seconds (`#t=12.5`) are also read.
@@ -188,7 +221,7 @@ Grab frame (in the Capture menu, or `G`) saves the raw frame at the video's own 
 
 ### Styling hooks
 
-The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, and one attribute per active guide, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`). The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
+The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"` and `data-zones="tiktok"`. The picture's rectangle inside the stage is published as `--pro-picture-x`, `--pro-picture-y`, `--pro-picture-w` and `--pro-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
 **The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--pro-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter graphite (`--pro-on`), Play is a neutral filled button, and the playhead is white.
 
@@ -202,7 +235,7 @@ Frame numbers are best effort. Where the browser has `requestVideoFrameCallback`
 npm run dev
 ```
 
-The workbench opens your skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay` and `?debug` (debug readout and event log) set its state. It plays NASA's Cosmic Dawn trailer from Mux, with chapters; change the media in `apps/preview/src/frame/media.ts`. The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
+The workbench opens your skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (the host's guide list; `?guides=0` for none), `?zones=0` and `?debug` (debug readout and event log) set its state. It plays NASA's Cosmic Dawn trailer from Mux, with chapters; change the media in `apps/preview/src/frame/media.ts`. The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
 
 ## Deploy
 

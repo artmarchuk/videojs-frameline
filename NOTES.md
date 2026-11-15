@@ -541,6 +541,109 @@ The Tools tray, the Tools disclosure button, group labels, the range readout, Pl
 
 `design/screenshots/step-6/`, headless Google Chrome at 2x as before, each opened and looked at: Studio with and without a range and Viewer at 1440, 1100, 800, 390 and 320; Studio at 680, 700, 760, 860, 900, 1000; the hover bubble; Markers and Capture menus at 1440, Capture at 390; focus rings on the In handle, an idle Out handle, the Markers and Capture buttons; compact density; touch emulation at 390; the Viewer's volume slider open.
 
+## Step 6, Part B: View menu and guides (15 Nov 2026)
+
+### Verified APIs
+
+- `Menu.CheckboxItem (checked, onCheckedChange)`: `role="menuitemcheckbox"`, `aria-checked`, and it does **not** close the menu (source: no `completeMenuItemSelection`). Space and Enter toggle it (tested).
+- `Menu.RadioGroup (value, onValueChange)` / `Menu.RadioItem (value)`: `role="menuitemradio"`. A radio item closes the menu after selecting, so each item has an `onClick` that does the selection itself and calls `preventDefault()`, which the item checks before its own select-and-close (source: `radio-item.js`). The same trick keeps the footer `Menu.Item` open.
+- `Menu.Group` / `Menu.GroupLabel` / `Menu.Separator` for the sections. The two column wrappers are plain `role="none"` elements inside `Menu.Content`.
+- **Observed, not documented:** when the menu opens by keyboard, focus goes to the first *checked radio* item (Crop: None) rather than the first item (Title safe). Arrow keys reach everything from there and wrap. Not changed.
+- `useHotkey({ keys: 'Shift+v' })` matches Shift alone and is skipped in text fields, like the other pro keys.
+
+### Safe areas: numbers and sources (verified)
+
+Action safe is the central 93% of width and height (a 3.5% margin on each side) and title safe the central 90% (5% on each side): **EBU R95** ("Safe areas for 16:9 television production", the "graphics safe area") and the matching table in **ITU-R BT.1848**. The menu's dim sub-line reads "Broadcast, 90%" / "Broadcast, 93%". These equal the brief's proposal; nothing changed. The older 80%/90% "title/action safe" pair that editing software still offers is the SD-era convention and is not used.
+
+Sources: https://tech.ebu.ch/docs/r/r095.pdf, https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.1848-1-201510-I!!PDF-E.pdf (found by search; the PDFs themselves were not opened, the figures come from the search summaries of them).
+
+### Platform zones: numbers and sources (**not verified against the platforms' own files**)
+
+None of the three platforms publishes one fixed set of pixel margins as text: each offers a downloadable safe-zone template or an in-product overlay, the zone depends on caption length and on organic versus ad placement, and I could not open the templates. The numbers used are from secondary sites that say they are quoting those templates. Percent of a 1080x1920 frame:
+
+| Platform | Top | Bottom | Right rail | Where from | Status |
+| --- | --- | --- | --- | --- | --- |
+| YouTube Shorts | 0–15% (288 px) | 65–100% (672 px) | right 18% (192 px), drawn from 36% to 65% of the height | socialync.io and adkit.so safe-zone tools, which point at Google's "Use square and vertical video" help article (support.google.com/google-ads/answer/9128498); that page shows a diagram whose numbers did not come through in text | Secondary source. The rail's vertical extent is my estimate |
+| Instagram Reels | 0–14% | 65–100% (35%) | right 12%, from 38% to 65% | 14% / 35% / 6% is repeated consistently (socialync.io, lilachbullock.com, adkit.so) and attributed to Meta's ads guide. The 6% is a side margin; the button column is wider, and 12% is the brief's proposal | Top and bottom from secondary sources; the rail is an estimate |
+| TikTok | 0–8% (154 px) | 78–100% (422 px) | right 16% (173 px), from 38% to 78% | Sources **disagree**: top 154, 160 or 240 px; bottom 422, 480 or 660 px; right 120 to 173 px (manypixels.co, relevantaudience.com and others). I took the smallest reserved areas; TikTok's own answer is a template per caption length | Unverified |
+
+So the brief's proposed defaults were replaced for Shorts and Reels (bigger bottom bands: 35%, not 20% and 28%) and kept in spirit for TikTok. Every platform item says "Approximate", the menu carries a note ("Apps change their layouts: check the platform's current guidance"), the announcement says "approximate", and the README says the same. **The author should overlay each platform's current template once and correct `src/pro/studio/guides/platform-zones.ts`**; it is the only file to edit.
+
+### How the picture rectangle is computed and kept current
+
+- `pictureRect(stageW, stageH, videoW, videoH, fit)` in `src/pro/studio/guides/geometry.ts` (pure, tested): for `contain` the largest centred rectangle with the ratio `videoWidth / videoHeight`. It also handles `fill`, `cover` (the rectangle is then larger than the stage), `none` and `scale-down`; the mode is read from the video element's computed `object-fit`. `object-position` is taken as centred.
+- `usePictureRect` measures the `<video>` element's own box (so any CSS on it is respected), places the result relative to the overlay layer's parent, rounds the edges to device pixels, and writes `--pro-picture-x/y/w/h` on the container. The Viewer skin's `.pro-overlay` rule uses those variables (falling back to the whole parent), so the overlay layer **is** the picture and guides are drawn in its coordinates. The host's `overlay` slot is positioned the same way in Studio.
+- Recomputed on: a `ResizeObserver` on the video element and on the stage (covers window resizes, density changes, the dock changing height, entering and leaving fullscreen), the media's `loadedmetadata`, `resize` and `emptied` (a new source, a rendition of another shape), `fullscreenchange`, and window `resize`. Before metadata there is no rectangle and nothing is drawn.
+- No workaround was needed. **Pixel aspect ratio is ignored**: `videoWidth / videoHeight` is taken as the display ratio (browsers report anamorphic sources already scaled). Rotation metadata likewise.
+
+### How the guides are drawn
+
+- One `<svg>` per guide (`data-guide="title-safe"`, `"9:16"`, `"zones-tiktok"`…), each the size of the picture, with user units equal to CSS pixels and coordinates on device-pixel centres (`crisp`, `crispRect`), `shape-rendering: crispEdges`.
+- **Every line is drawn twice:** a 3 px stroke of black at 50%, then a 1 px white stroke at 75% on top. Over white the dark edge shows; over black the white line shows. Dashed for safe areas and zones, solid for thirds, the centre cross and the crop's edge. No accent.
+- Crop: the outside is filled `rgb(0 0 0 / .55)`; when the picture already has the ratio only the outline is drawn (`cropMask(...).full`). Zones: `rgb(0 0 0 / .35)` plus the dashed outline.
+- Labels are HTML pills (10.5 px, `--pro-text` on `rgb(14 14 16 / .72)`), hidden under a 480 px wide picture. Title safe's label sits inside its top-left corner; Action safe's sits **on** its top edge, because the gap between the two rectangles (1.5% of the height) is too small for a label. The rail's label sits to its left.
+- The centre cross is 5% of the picture height tip to tip, at least 8 px.
+
+### View state, persistence, events
+
+- `src/pro/view.ts` (pure, in the runtime chunk): `ViewState { guides, crop, zones, hidden }`, `allowedView(features)`, the reducers (`toggleGuide`, `setCrop`, `setZones`, `toggleHidden`), `viewMenuModel`, `activeCount`, `viewAttributes`, `serializeView`, `parseStored`. The store's old `activeOverlays` set is replaced by `view`.
+- **Zones and the 9:16 crop:** a zone always carries crop `9:16`, also when the host's guide list does not offer 9:16 as a crop (zones need the frame); choosing another crop, or None, clears the zone ("Crop 1:1. Platform zones off"). Setting zones to None keeps the 9:16 crop only if the host offers it.
+- **Badge:** checkbox guides, plus one for a crop; a zone with its frame counts as one. Hidden counts as zero.
+- **Hide/Show** keeps the set and flips `hidden`. Any choice made while hidden shows the guides again. `hidden` is not persisted: a reload shows the remembered set.
+- **Persistence:** one key (`videojs-pro:v1` or the host's), JSON `{ v: 1, guides, crop, zones, timeDisplay }`, read synchronously in the store's initialiser (in `ProRuntime`'s `useState`), so the first render already has it; there is no visible flash because guides wait for the picture rectangle anyway. Written on every change of `view` or `timeDisplay`. Every access is in `try/catch`. **Storage can come back empty, blocked or holding anything, and nothing depends on it.**
+- A remembered value the host does not allow is dropped on read, but the stored string is only rewritten at the next change. So a user who visits a restricted player and changes nothing keeps their fuller set for other players on the same origin.
+- `onViewChange({ guides, crop, zones })` reports the *drawn* set (empty while hidden), fires when it changes, and not for the starting set.
+- Container attributes: `data-guide-<id>` for each drawn guide **and for the crop** (`data-guide-9-16`), plus `data-crop="9-16"` and `data-zones="tiktok"`.
+- The preview page reads `?guides=…` and `?zones=0` so the host side can be exercised.
+
+### `Shift+V`
+
+No conflict: `V` is not in the YouTube map or ours, the pattern needs Shift alone, and it does nothing in the Viewer tier (checked with the other free keys). With nothing switched on it says "No guides are on". It is listed in the help dialog.
+
+### Checks (headless Google Chrome via Playwright, 2x)
+
+| Check | Result |
+| --- | --- |
+| Unit tests | 168 passing (49 new: view model, menu model for different `features`, radio sections hold one value, zone sets crop 9:16, another crop clears it, hide and restore, badge count, attributes, serialise and parse with invalid JSON, unknown ids, disallowed ids and wrong types, storage key; picture rectangle in six shapes and five fit modes, safe areas, thirds, cross, crop masks, platform zone tables, crisp lines; store view actions and `onViewChange`) |
+| Menu roles | 4 `menuitemcheckbox`, 6 + 4 `menuitemradio`, 1 `menuitem`; `aria-checked` follows the state |
+| Keyboard | Enter opens; Space and Enter toggle and the menu stays open; arrows move through both columns; Escape closes and focus returns to the View button; Tab closes it and focus moves on to Captions |
+| Announcements | "Crop 2.39:1", "Rule of thirds on", "Platform zones: TikTok, approximate. Crop 9:16", "Guides hidden", "Guides shown" (one live region) |
+| `Shift+V` | Attributes and SVGs go and come back; the badge reads 0 while hidden |
+| Zone and crop | Choosing TikTok set `data-crop="9-16"` and `data-zones="tiktok"`; the Crop radio shows 9:16 |
+| Guides on the picture | 16:9 stage: overlay 0,0 1280x720. Stage 1:1 (letterbox): overlay 0,186.5 852x479.5. Stage 21:9 (pillarbox): overlay 152.5,0 975x548.5. Looked at in screenshots |
+| White, black, mid-grey | All guides plus the 2.39 crop over a pure white, pure black and #808080 frame: every line and label legible (screenshots) |
+| Remembered | A stored set with seconds display came back after a reload, with no guide flash seen in the first screenshot |
+| Host wins | `?guides=title-safe,1:1&zones=0` with a fuller remembered set: only Title safe drawn; menu offers Title safe, None, 1:1. `?guides=0`: no View button, nothing drawn |
+| Bad storage | Invalid JSON, an array, unknown ids and wrong types: the player loads, nothing or only the valid id is applied, no error |
+| Blocked storage | `localStorage` made to throw: no page error; guides still toggle |
+| `onViewChange` | Logged for thirds on, Reels (with crop 9:16), and hide (empty set) |
+| Help dialog | Lists `Shift V` "Hide or show the guides" |
+| Narrow (390 px) | The menu is one column and scrolls inside the player |
+
+### Chunk sizes (raw / gzip -9)
+
+| Chunk | Step 6a | Step 6b |
+| --- | --- | --- |
+| Viewer path JS | 968,072 / 284,726 B | 968,226 / 284,770 B (+154 B: the preview page's `?guides` reader and one more event handler) |
+| Skin CSS (with the preview page's) | 36.2 kB / 6.6 kB | 36.3 kB / 6.6 kB |
+| Pro runtime | 8.5 kB / 3.6 kB | 12.4 kB / 4.9 kB (the view model and persistence) |
+| Studio JS | 37.4 kB / 12.3 kB | 48.8 kB / 15.8 kB |
+| Studio CSS | 19.3 kB / 3.5 kB | 22.1 kB / 4.0 kB |
+
+### For step 7
+
+- **The Image section goes into `ViewMenu`'s `extra` prop** (`src/pro/studio/view-menu.tsx`): it is rendered under Platform zones in the right column, inside the same `Menu.Content`, so `Menu.RadioGroup`/`Menu.RadioItem` work there. Use the `onClick` + `preventDefault` pattern to keep the menu open.
+- **The image tools should use the picture rectangle**: `usePictureRect` returns `{ rect, layer }` and publishes `--pro-picture-*`. Zoom and pan are the risk: the hook measures the video element's box and re-measures on `ResizeObserver`, which does **not** fire for a CSS `transform`. If zoom transforms the video, the guides will not follow unless the transform is put on a wrapper that holds both the video and the overlay layer, or the hook is told to re-measure. Decide first whether guides should zoom with the picture (probably yes).
+- Channel and gain/gamma filters on the video do not affect the overlay layer (it is a sibling), which is what we want: guides stay white.
+- The store still has `inspection` (channel, gain, gamma, zoom) from step 3, unused. `infoHud`, `channels`, `gainGamma`, `zoom` are on in Studio with no UI.
+- The badge counts guides only; decide whether an active image tool counts.
+- Persistence: add fields to `serializeView`/`parseStored` (and bump nothing: unknown fields are ignored, missing ones default).
+- Grab frame draws the raw video, so guides and image adjustments are never in the PNG; say so in the Image section if that surprises.
+
+### Screenshots
+
+`design/screenshots/step-6/` (same method): the View menu at 1440 and 390; each guide on its own; all four together; each crop; each platform's zones; all guides plus the 2.39 crop over white, black and mid-grey; TikTok zones over white; letterboxed and pillarboxed pictures; guides at 1100, 800, 390 and 320; the focus ring on the View button.
+
 ## Deployed URL
 
 - https://videojs-pro.vercel.app (Vercel production, project `videojs-pro`). Deploy: `npm run deploy vercel`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
@@ -567,12 +670,12 @@ The Tools tray, the Tools disclosure button, group labels, the range readout, Pl
 
 ## Later
 
-- The overlay layer covers the stage, not the picture: step 6 guides must be positioned on the picture's rectangle when the stage is letterboxed.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
 - Give `ProSkin` a title for grabbed file names (`<title>_<timecode>.png`).
 - Stop the Out frame flashing at the loop point (jump one frame earlier) if it bothers in use.
 - Translate the Studio strings (`src/pro/studio/strings.ts`).
-- Persist View choices (overlays, time display) per browser: step 6. `activeOverlays` is a set of ids and `timeDisplay` a string, so both serialise directly.
+- Overlay each platform's current safe-zone template and correct `platform-zones.ts` (step 6b used secondary sources).
+- Open the View menu on its first item rather than on the first checked radio item, if Video.js gains a way to say so.
 - Measure the Viewer skin's own weight against a stock Video.js skin.
 - Redraw the settings icon: it reads a little like a sun.
 - AirPlay and Cast buttons (removed in step 2), with custom icons.
@@ -585,6 +688,15 @@ The Tools tray, the Tools disclosure button, group labels, the range readout, Pl
 - Update the deploy script's `vercel@64` if Vercel 64 causes problems; 65 is current.
 
 ## Unverified
+
+- **Step 6b: the platform zone numbers.** Secondary sources only; TikTok's sources disagree. See "Platform zones: numbers and sources".
+- **Step 6b: the EBU and ITU documents** were not opened; the 3.5% and 5% margins come from search summaries of them.
+- **Step 6b: guides in real fullscreen.** Headless Chrome refuses fullscreen. The rectangle is recomputed on `fullscreenchange` and by the `ResizeObserver`; the letterboxed and pillarboxed stages are the same code path.
+- **Step 6b: a 9:16 or 1:1 source.** The demo stream is 16:9; other picture shapes were covered by the unit tests and by changing the stage's ratio, not by another video.
+- **Step 6b: `object-fit` other than `contain`** is unit-tested only.
+- **Step 6b: Firefox and Safari** (SVG `vector-effect`, `shape-rendering`, the menu's two-column layout).
+- **Step 6b: screen reader.** Roles, checked states and announcements were read from the DOM.
+- **Step 6b: a no-flash guarantee.** The remembered set is in the first render by construction; I saw no flash in screenshots but did not record frames.
 
 - **Step 6a: real fullscreen with the new dock.** Headless Chrome still refuses fullscreen; the layout is the same flex column as in 5b.
 - **Step 6a: how the magnetic snap feels**, and dragging in general, with a real mouse or finger. Positions were checked from script.
