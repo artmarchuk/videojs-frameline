@@ -19,10 +19,12 @@ const START_TIER = TIERS.find((tier) => tier === QUERY.get('tier')) ?? 'studio';
 const LAYOUT = QUERY.get('layout') === 'dock' ? 'dock' : QUERY.get('layout') === 'overlay' ? 'overlay' : undefined;
 // `?guides=title-safe,9:16` restricts the View menu to those ids (`?guides=0` removes it) and `?zones=0` switches the
 // platform zones off: the host's side of the feature flags, for checking that they win over remembered choices.
+// `?zoom=0` switches zoom off, and `?zoom=1` on (over the Viewer tier too).
 const GUIDES = QUERY.get('guides');
 const FEATURES = {
   ...(GUIDES === null ? {} : { guides: GUIDES === '0' ? false : GUIDES.split(',') }),
   ...(QUERY.get('zones') === '0' ? { platformZones: false } : {}),
+  ...(QUERY.get('zoom') === '0' ? { zoom: false } : QUERY.get('zoom') === '1' ? { zoom: true } : {}),
 };
 
 const START_DENSITY: Density = QUERY.get('density') === 'compact' ? 'compact' : 'comfortable';

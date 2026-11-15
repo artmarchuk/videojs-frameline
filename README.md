@@ -33,14 +33,16 @@ import { ProSkin } from '@/pro';
 
 With `tier="viewer"` (the default) and no flags, it is the clean Viewer player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
 
-**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools and View menu (guides, crop masks, platform zones) are complete. Zoom arrives in the next step.
+**Status:** the Viewer tier and the Studio tier's transport, timeline, range handles, markers, capture tools and View menu (guides, crop masks, platform zones, zoom) are complete.
 
 ### Tiers
 
 | Tier | For | What it is |
 | --- | --- | --- |
 | `viewer` (default) | The creator's client or audience | Controls over the picture: seek bar, Play, mute and volume, time, captions, settings, picture-in-picture, fullscreen. Loads no pro code |
-| `studio` | The creator | Controls in a dock below the picture: a compact ruler timeline with draggable In and Out handles, frame-by-frame transport, timecode, markers, guides and crop masks over the picture, and the Markers, Capture and View menus |
+| `studio` | The creator | Controls in a dock below the picture: a compact ruler timeline with draggable In and Out handles, frame-by-frame transport, timecode, markers, guides and crop masks over the picture, zoom to check detail, and the Markers, Capture and View menus |
+
+Viewer is for watching. Studio is for checking timing and framing: it adds controls and overlays around the picture and never processes the picture.
 
 ### Props
 
@@ -97,6 +99,8 @@ These are added to the YouTube map in the Studio tier. Each works only while its
 | `←` `→` on an In or Out handle | Move the handle one frame; `Shift` ten; `Home` `End` to its limits; `Delete` unsets it |
 | `G` | Grab the current frame as a PNG |
 | `Shift+V` | Hide every guide, or show them again |
+| `Z` | Zoom: Fit, 100%, 200%, and Fit again |
+| `Alt+←` `Alt+→` `Alt+↑` `Alt+↓` | Move around the zoomed picture, a tenth of the view per press. Only while zoomed |
 
 ### Layout
 
@@ -129,7 +133,7 @@ The menus open upward and are real menus: arrow keys, Enter, Escape, and focus r
 
 - **Markers** lists the host's markers with their timecodes, and the media's chapters under a second heading. Choosing one seeks to it.
 - **Capture:** Grab frame (downloads a PNG, `G`), Copy frame image, Copy link at timecode.
-- **View:** guides, crop masks and platform zones. See "The View menu".
+- **View:** guides, crop masks, platform zones and zoom. See "The View menu" and "Zoom".
 
 The row follows the player's own width. It is one row down to 640 px, shedding in this order: the volume slider (under 1040 px), the duration text (980), the captions button (880; `C` and the settings menu remain), the menu chevrons (840), the count badges (740). **Under 640 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, View, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 350 px the cut buttons step aside (`[` `]` and the markers list still work) and In, Out, Loop take a row of their own.
 
@@ -190,6 +194,7 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 | Composition | Rule of thirds (`thirds`), Centre cross (`centre`) | Independent |
 | Crop | None, 2.39:1 (`2.39`), 1.85:1 (`1.85`), 1:1, 4:5, 9:16 | One at a time. Dims the picture outside a centred crop of that ratio |
 | Platform zones | None, YouTube Shorts (`shorts`), Instagram Reels (`reels`), TikTok (`tiktok`) | One at a time. Shows where the app's own interface covers a vertical video: a top bar, captions and profile, and the buttons on the right |
+| Zoom | Fit, 100%, 200% (`Z`) | One at a time. See "Zoom" |
 | Footer | Hide guides / Show guides, `Shift+V` | Switches everything off, and brings the same set back |
 
 - Toggling keeps the menu open, so several guides can be switched in one visit. Escape closes it and focus returns to the View button, whose badge counts what is on (its accessible name says "View, 3 guides on").
@@ -197,7 +202,7 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 - Zones are drawn inside the 9:16 frame: the whole picture when the video is 9:16, otherwise a centred 9:16 crop. So **choosing a platform turns on the 9:16 crop**, and choosing another crop clears the zones.
 - Labels (Title safe, Action safe, the zone names) are hidden on a picture narrower than 480 px.
 
-**What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the View button. `platformZones: false` removes that section.
+**What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the guides (the View button stays while `zoom` is on, with the Zoom group only). `platformZones: false` removes that section and `zoom: false` the Zoom group.
 
 ```tsx
 <ProSkin
@@ -210,6 +215,24 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 
 **Remembered choices.** The guides, the crop, the zones and the timecode/seconds choice are remembered per browser (`persist`). The range, Loop and the playhead are not. What is read back is validated: unknown ids, ids the current `features` do not allow, wrong types and broken JSON are dropped silently. **The host's `features` always win** over a remembered value, and the skin works the same when storage is blocked, full or empty.
 
+### Zoom
+
+Zoom changes how closely you look at the picture, never the picture itself. It is in the View menu and on `Z`.
+
+| Level | What it shows |
+| --- | --- |
+| Fit | The whole picture in the stage. No transform |
+| 100% | One video pixel on one device pixel: scale = `videoWidth` / the picture's width in CSS pixels / `devicePixelRatio`. On a small video and a large screen this is smaller than Fit, and it is applied as it is |
+| 200% | Twice that, drawn with `image-rendering: pixelated`, so single pixels are visible |
+
+- **Pan** while the zoomed picture is larger than the stage: drag it (mouse, pen or one finger), or press `Alt` and an arrow. The pan stops at the picture's edges, so the stage never shows an empty band. A drag longer than 3 px is not a click: it neither plays nor pauses. There is no pinch zoom.
+- Entering a level starts from the centre of the picture. Zoom **always starts at Fit**: unlike the guides it is not remembered.
+- **Guides zoom with the picture** (they are in the same box), with their lines and labels kept at the same size on screen.
+- **Grab frame and Copy frame image always capture the whole frame** at the video's own resolution, whatever the zoom and pan. Copy link is not affected either.
+- The scale is recomputed when the player or the window changes size, in fullscreen, and when the media reports new dimensions.
+- `features.zoom` is on in Studio. It adds one wrapper element (`.pro-picture`) around the media and the overlay layer; without the flag (the Viewer tier) that element does not exist. The container carries `data-zoom="100"` or `"200"` while zoomed.
+- Captions drawn by the browser belong to the video element and are scaled with it.
+
 ### Links to a frame
 
 Copy link writes the position into the page URL's hash as `#t=HH:MM:SS:FF`, the timecode on screen, and keeps anything else the host app has in the hash. A page opened with such a hash seeks to that frame, paused. Plain seconds (`#t=12.5`) are also read.
@@ -220,7 +243,7 @@ Grab frame (in the Capture menu, or `G`) saves the raw frame at the video's own 
 
 ### Styling hooks
 
-The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"` and `data-zones="tiktok"`. The picture's rectangle inside the stage is published as `--pro-picture-x`, `--pro-picture-y`, `--pro-picture-w` and `--pro-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
+The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"` or `"200"` while zoomed. The picture's rectangle inside the stage is published as `--pro-picture-x`, `--pro-picture-y`, `--pro-picture-w` and `--pro-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--pro-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
 **The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--pro-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter graphite (`--pro-on`), Play is a neutral filled button, and the playhead is white.
 

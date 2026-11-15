@@ -5,6 +5,7 @@ export { GUIDE_IDS, TIER_DEFAULTS, TIERS, resolveFeatures, resolveLayout } from 
 export type { FeatureFlags, FeatureOverrides, GuideId, Layout, Tier } from './features';
 export type { CopyLinkInfo } from './studio/controller';
 export type { CropId, EffectiveView, ZoneId } from './view';
+export type { ZoomLevel } from './zoom';
 export type {
   FrameClockPrecision,
   FrameClockSource,

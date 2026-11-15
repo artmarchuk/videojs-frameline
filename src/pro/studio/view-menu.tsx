@@ -132,7 +132,7 @@ function focusFirstOnOpen(open: boolean) {
  * `features` decide what is offered; a section with nothing left is not shown. Toggling keeps the menu open; Escape
  * closes it and returns focus to the button.
  *
- * `extra` is where step 7 adds its "Image" section, under the platform zones.
+ * `extra` is the Zoom group, under the platform zones.
  */
 export function ViewMenu({ allowed, actions, extra }: { allowed: AllowedView; actions: ViewActions; extra?: ReactNode }) {
   const view = useProStore((state) => state.view);
@@ -182,14 +182,17 @@ export function ViewMenu({ allowed, actions, extra }: { allowed: AllowedView; ac
               </div>
             )}
           </div>
-          <Menu.Separator className={'pro-menu-separator'} />
-          <Menu.Item className={'media-menu-item'} disabled={!anything} onClick={onFooterClick}>
-            <Mark kind="checkbox" checked={false} />
-            <span>{view.hidden ? t.showGuides : t.hideGuides}</span>
-            <span className={'media-menu-hint'}>
-              <kbd className={'pro-kbd'}>Shift+V</kbd>
-            </span>
-          </Menu.Item>
+          {/* Only where there are guides to hide: with zoom alone the menu is just the Zoom group. */}
+          {sections.length > 0 && <Menu.Separator className={'pro-menu-separator'} />}
+          {sections.length > 0 && (
+            <Menu.Item className={'media-menu-item'} disabled={!anything} onClick={onFooterClick}>
+              <Mark kind="checkbox" checked={false} />
+              <span>{view.hidden ? t.showGuides : t.hideGuides}</span>
+              <span className={'media-menu-hint'}>
+                <kbd className={'pro-kbd'}>Shift+V</kbd>
+              </span>
+            </Menu.Item>
+          )}
         </Menu.Content>
       </Menu.Popup>
     </Menu.Root>

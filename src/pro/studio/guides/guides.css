@@ -20,16 +20,17 @@
 
   .pro-skin .pro-guide-line {
     stroke: rgb(255 255 255 / 0.75);
-    stroke-width: 1;
+    /* The overlay is scaled with the picture while zoomed; the lines keep their width on screen. */
+    stroke-width: calc(1px / var(--pro-zoom-scale, 1));
   }
 
   .pro-skin .pro-guide-under {
     stroke: rgb(0 0 0 / 0.5);
-    stroke-width: 3;
+    stroke-width: calc(3px / var(--pro-zoom-scale, 1));
   }
 
   .pro-skin .pro-guide-dashed {
-    stroke-dasharray: 6 4;
+    stroke-dasharray: calc(6px / var(--pro-zoom-scale, 1)) calc(4px / var(--pro-zoom-scale, 1));
   }
 
   /* Outside a crop: dimmed. */
@@ -55,6 +56,13 @@
     pointer-events: none;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* Labels keep their size on screen while the picture is zoomed. */
+    scale: calc(1 / var(--pro-zoom-scale, 1));
+    transform-origin: 0 0;
+  }
+
+  .pro-skin .pro-guide-label-end {
+    transform-origin: 100% 0;
   }
 
   .pro-skin .pro-guide-label-straddle {

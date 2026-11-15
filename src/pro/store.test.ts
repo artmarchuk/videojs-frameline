@@ -104,7 +104,7 @@ describe('pro store', () => {
   });
 
   it('only switches on what the host allows, and drops what stops being allowed', () => {
-    const store = createProStore({ allowedView: { guides: ['title-safe'], crops: ['9:16'], zones: [] } });
+    const store = createProStore({ allowedView: { guides: ['title-safe'], crops: ['9:16'], zones: [], zoom: false } });
     store.toggleGuide('thirds');
     store.setCrop('1:1');
     store.setZones('tiktok');
@@ -114,14 +114,14 @@ describe('pro store', () => {
     store.toggleGuide('title-safe');
     expect(store.getState().view).toMatchObject({ guides: ['title-safe'], crop: '9:16' });
     expect(store.getState().view).not.toBe(before);
-    store.setAllowedView({ guides: ['title-safe'], crops: [], zones: [] });
+    store.setAllowedView({ guides: ['title-safe'], crops: [], zones: [], zoom: false });
     expect(store.getState().view).toMatchObject({ guides: ['title-safe'], crop: null });
     store.toggleGuide('title-safe');
     expect(store.getState().view.guides).toEqual([]);
   });
 
   it('fires onViewChange when the drawn set changes, not for the starting view', () => {
-    const allowedView = { guides: ['title-safe', 'thirds'], crops: ['9:16' as const, '1:1' as const], zones: ['tiktok' as const] };
+    const allowedView = { guides: ['title-safe', 'thirds'], crops: ['9:16' as const, '1:1' as const], zones: ['tiktok' as const], zoom: false };
     const store = createProStore({ allowedView, view: { guides: ['thirds'], crop: null, zones: null, hidden: false } });
     const onViewChange = vi.fn();
     store.setCallbacks({ onViewChange });
@@ -139,7 +139,7 @@ describe('pro store', () => {
 
   it('starts from a remembered view only as far as the host allows it', () => {
     const store = createProStore({
-      allowedView: { guides: ['thirds'], crops: [], zones: [] },
+      allowedView: { guides: ['thirds'], crops: [], zones: [], zoom: false },
       view: { guides: ['title-safe', 'thirds'], crop: '1:1', zones: 'reels', hidden: false },
       timeDisplay: 'seconds',
     });
@@ -157,7 +157,7 @@ describe('pro store', () => {
   });
 
   it('is per instance: two stores do not share state', () => {
-    const allowedView = { guides: ['thirds'], crops: [], zones: [] };
+    const allowedView = { guides: ['thirds'], crops: [], zones: [], zoom: false };
     const a = createProStore({ allowedView });
     const b = createProStore({ allowedView });
     a.setIn(5);
@@ -205,5 +205,34 @@ describe('selectedMarker', () => {
     store.deselectMarker();
     expect(store.getState().selectedMarker).toBeNull();
     expect(onMarkerSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('zoom: starts at Fit, cycles with Z, and the host flag switches it off', () => {
+    const allowedView = { guides: [], crops: [], zones: [], zoom: true };
+    const store = createProStore({ allowedView });
+    expect(store.getState().zoom).toBe('fit');
+    store.cycleZoom();
+    expect(store.getState().zoom).toBe('100');
+    store.cycleZoom();
+    expect(store.getState().zoom).toBe('200');
+    store.cycleZoom();
+    expect(store.getState().zoom).toBe('fit');
+    store.setZoom('200');
+    store.setZoom('300' as never);
+    expect(store.getState().zoom).toBe('200');
+
+    // The host turns the feature off: back to Fit, and nothing switches it on again.
+    store.setAllowedView({ ...allowedView, zoom: false });
+    expect(store.getState().zoom).toBe('fit');
+    store.setZoom('100');
+    store.cycleZoom();
+    expect(store.getState().zoom).toBe('fit');
+  });
+
+  it('zoom is off without the flag', () => {
+    const store = createProStore();
+    store.cycleZoom();
+    store.setZoom('100');
+    expect(store.getState().zoom).toBe('fit');
   });
 });

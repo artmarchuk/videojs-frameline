@@ -38,6 +38,11 @@ export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children
   /** Pro tiers only: render the pro bar, whose slots lazily loaded pro controls are placed in. */
   proBar?: boolean;
   /**
+   * Pro only (zoom): put the media, the poster and the overlay layer in one wrapper, which the Studio module scales
+   * and moves. Without it nothing is added, so the Viewer tier's DOM is the same as before zoom existed.
+   */
+  pictureWrapper?: boolean;
+  /**
    * `'overlay'`: the controls sit over the picture and hide while idle. `'dock'`: the picture has its own stage and
    * the controls are a panel below it that never hides; the aspect ratio then applies to the stage, and the skin's
    * height is the stage plus the dock.
@@ -64,6 +69,7 @@ export function VideoSkin({
   overlay,
   extras,
   proBar = false,
+  pictureWrapper = false,
   layout = 'overlay',
   arrowSeekWhilePlayingOnly = false,
   onBlur,
@@ -82,13 +88,19 @@ export function VideoSkin({
   }, []);
 
   // Everything that belongs to the picture. In the dock layout it lives in the stage, so nothing covers the dock.
-  const picture = (
+  const image = (
     <>
       {children}
       <Poster renderImage={renderPoster} />
       <div className={'pro-overlay'} aria-hidden="true">
         {overlay}
       </div>
+    </>
+  );
+
+  const picture = (
+    <>
+      {pictureWrapper ? <div className={'pro-picture'}>{image}</div> : image}
       {extras}
       {dock && <BufferingIndicator />}
       <Indicators>

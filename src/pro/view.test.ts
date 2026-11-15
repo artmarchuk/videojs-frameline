@@ -34,9 +34,23 @@ describe('allowedView', () => {
 
   it('follows the host list and the platformZones flag', () => {
     const some = allowedView(resolveFeatures('studio', { guides: ['title-safe', '9:16'] }));
-    expect(some).toEqual({ guides: ['title-safe'], crops: ['9:16'], zones: ['shorts', 'reels', 'tiktok'] });
+    expect(some).toEqual({ guides: ['title-safe'], crops: ['9:16'], zones: ['shorts', 'reels', 'tiktok'], zoom: true });
     expect(allowedView(resolveFeatures('studio', { platformZones: false })).zones).toEqual([]);
-    expect(hasViewMenu(allowedView(resolveFeatures('studio', { guides: false })))).toBe(false);
+    expect(hasViewMenu(allowedView(resolveFeatures('studio', { guides: false, zoom: false })))).toBe(false);
+  });
+
+  it('offers zoom by its own flag, with or without guides', () => {
+    expect(ALL.zoom).toBe(true);
+    expect(allowedView(resolveFeatures('studio', { zoom: false })).zoom).toBe(false);
+    expect(allowedView(resolveFeatures('viewer')).zoom).toBe(false);
+    const zoomOnly = allowedView(resolveFeatures('studio', { guides: false }));
+    expect(zoomOnly).toEqual({ guides: [], crops: [], zones: [], zoom: true });
+    expect(hasViewMenu(zoomOnly)).toBe(true);
+    expect(allowedView(resolveFeatures('viewer', { zoom: true })).zoom).toBe(true);
+  });
+
+  it('does not remember the zoom', () => {
+    expect(serializeView(EMPTY_VIEW, 'timecode')).not.toContain('zoom');
   });
 });
 

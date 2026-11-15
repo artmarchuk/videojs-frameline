@@ -2,6 +2,14 @@ import { useEffect, useState, type RefObject } from 'react';
 
 import { pictureRect, sameRect, toFitMode, type Rect } from './geometry';
 
+/** The scale of an element's own CSS transform (1 when it has none). */
+function transformScale(element: HTMLElement): number {
+  const value = getComputedStyle(element).transform;
+  if (!value || value === 'none') return 1;
+  const scale = new DOMMatrixReadOnly(value).a;
+  return scale > 0 ? scale : 1;
+}
+
 const VARIABLES = ['--pro-picture-x', '--pro-picture-y', '--pro-picture-w', '--pro-picture-h'] as const;
 
 /**
@@ -35,14 +43,17 @@ export function usePictureRect(video: HTMLVideoElement | null, anchor: RefObject
     const update = () => {
       const box = video.getBoundingClientRect();
       const origin = parent.getBoundingClientRect();
+      // While zoomed the parent (the picture wrapper) is scaled, and both boxes with it. The rectangle describes the
+      // unzoomed picture, so the measurements are taken back to the wrapper's own, unscaled pixels.
+      const k = 1 / transformScale(parent);
       const fit = toFitMode(getComputedStyle(video).objectFit);
-      const inside = pictureRect(box.width, box.height, video.videoWidth, video.videoHeight, fit);
+      const inside = pictureRect(box.width * k, box.height * k, video.videoWidth, video.videoHeight, fit);
       let next: Rect | null = null;
       if (inside) {
         const ratio = Math.max(1, window.devicePixelRatio || 1);
         const snap = (value: number) => Math.round(value * ratio) / ratio;
-        const x = snap(box.left - origin.left + inside.x);
-        const y = snap(box.top - origin.top + inside.y);
+        const x = snap((box.left - origin.left) * k + inside.x);
+        const y = snap((box.top - origin.top) * k + inside.y);
         next = { x, y, width: snap(inside.width), height: snap(inside.height) };
       }
       if (sameRect(next, last)) return;

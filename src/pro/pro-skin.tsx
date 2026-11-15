@@ -42,6 +42,7 @@ type InternalSkinProps =
   | 'overlay'
   | 'extras'
   | 'proBar'
+  | 'pictureWrapper'
   | 'layout'
   | 'arrowSeekWhilePlayingOnly';
 
@@ -181,7 +182,8 @@ export function ProSkin({
     features.inOut ||
     features.loop ||
     features.grabFrame ||
-    features.copyTimecodeLink;
+    features.copyTimecodeLink ||
+    features.zoom;
 
   return (
     <VideoSkin
@@ -191,6 +193,7 @@ export function ProSkin({
       data-density={safeDensity}
       data-bar={proBar ? 'pro' : undefined}
       proBar={proBar}
+      pictureWrapper={features.zoom}
       layout={safeLayout}
       arrowSeekWhilePlayingOnly={features.frameStep}
       toolbarStart={slots?.toolbarStart}

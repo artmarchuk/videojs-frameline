@@ -11,6 +11,7 @@
  * - Loop is on or off. While on, `loopMode` says what loops: `'range'` when a point is set, `'whole'` otherwise;
  *   the store keeps it in step as points are set and cleared.
  * - Only guides, crops and zones the host allowed can be switched on (the rules are in `view.ts`).
+ * - Zoom starts at Fit and goes back to Fit when the host stops allowing it.
  */
 import {
   EMPTY_VIEW,
@@ -28,6 +29,7 @@ import {
   type ViewState,
   type ZoneId,
 } from './view';
+import { isZoomLevel, nextZoom, type ZoomLevel } from './zoom';
 
 /** A marker on the timeline. With `end` it is a range marker. Times are in seconds. */
 export interface Marker {
@@ -59,6 +61,8 @@ export interface ProState {
   timeDisplay: TimeDisplay;
   /** Guides, crop mask and platform zones: what the end user chose in the View menu. Replaced on every change. */
   view: Readonly<ViewState>;
+  /** How closely the picture is looked at. Always starts at Fit: it is not remembered. */
+  zoom: ZoomLevel;
   /** Current frame number, from the frame clock. Best effort. */
   frame: number;
   /** Media time of the current frame, in seconds. */
@@ -99,6 +103,10 @@ export interface ProStore {
   setZones(zones: ZoneId | null): void;
   /** Hides every guide, or shows the hidden set again. */
   toggleGuidesHidden(): void;
+  /** Picks a zoom level. Ignored while the host does not allow zoom. */
+  setZoom(level: ZoomLevel): void;
+  /** `Z`: Fit, 100%, 200%, and Fit again. */
+  cycleZoom(): void;
   selectMarker(marker: Marker): void;
   /** Drops the selection without telling the host: the playhead moved away from the marker. */
   deselectMarker(): void;
@@ -129,6 +137,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     loopMode: 'off',
     timeDisplay: options.timeDisplay ?? 'timecode',
     view: sanitizeView(options.view ?? EMPTY_VIEW, options.allowedView ?? NOTHING_ALLOWED),
+    zoom: 'fit',
     frame: 0,
     mediaTime: 0,
     clockSource: null,
@@ -232,6 +241,15 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     setZones: (zones) => commitView(zonesView(state.view, zones, allowed)),
     toggleGuidesHidden: () => commitView(hiddenView(state.view)),
 
+    setZoom(level) {
+      if (!allowed.zoom || !isZoomLevel(level) || level === state.zoom) return;
+      commit({ zoom: level });
+    },
+
+    cycleZoom() {
+      if (allowed.zoom) commit({ zoom: nextZoom(state.zoom) });
+    },
+
     selectMarker(marker) {
       if (marker !== state.selectedMarker) commit({ selectedMarker: marker });
       callbacks.onMarkerSelect?.(marker);
@@ -270,6 +288,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
 
     setAllowedView(next) {
       allowed = next;
+      if (!allowed.zoom && state.zoom !== 'fit') commit({ zoom: 'fit' });
       commitView(sanitizeView(state.view, allowed));
     },
 

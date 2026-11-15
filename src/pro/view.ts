@@ -40,22 +40,26 @@ export interface AllowedView {
   guides: readonly string[];
   crops: readonly CropId[];
   zones: readonly ZoneId[];
+  /** Zoom (Fit, 100%, 200%) is offered. It has nothing to do with the guides: it works with `guides: false` too. */
+  zoom: boolean;
 }
 
-export const NOTHING_ALLOWED: Readonly<AllowedView> = Object.freeze({ guides: [], crops: [], zones: [] });
+export const NOTHING_ALLOWED: Readonly<AllowedView> = Object.freeze({ guides: [], crops: [], zones: [], zoom: false });
 
 /**
  * What the feature flags allow. `guides: false` allows nothing (and removes the View button). A list restricts the
  * checkbox guides and the crops to the ids in it. Platform zones need `platformZones` and some guides to be on; they
  * always bring the 9:16 crop with them, whether or not `9:16` is in the host's list.
  */
-export function allowedView(features: Pick<FeatureFlags, 'guides' | 'platformZones'>): AllowedView {
-  if (features.guides === false) return NOTHING_ALLOWED;
+export function allowedView(features: Pick<FeatureFlags, 'guides' | 'platformZones'> & Partial<Pick<FeatureFlags, 'zoom'>>): AllowedView {
+  const zoom = features.zoom === true;
+  if (features.guides === false) return zoom ? { ...NOTHING_ALLOWED, zoom } : NOTHING_ALLOWED;
   const list = features.guides as readonly string[];
   return {
     guides: CHECK_IDS.filter((id) => list.includes(id)),
     crops: CROP_IDS.filter((id) => list.includes(id)),
     zones: features.platformZones ? [...ZONE_IDS] : [],
+    zoom,
   };
 }
 
@@ -166,7 +170,7 @@ export interface ViewMenuItem {
 export interface ViewMenuSection {
   id: 'safe' | 'composition' | 'crop' | 'zones';
   kind: 'checkbox' | 'radio';
-  /** Wide menus have two columns; a future "Image" section goes under the zones, in the right one. */
+  /** Wide menus have two columns; the Zoom group goes under the zones, in the right one. */
   column: 'left' | 'right';
   /** For a radio section the first item is `none`. */
   items: ViewMenuItem[];
@@ -199,7 +203,7 @@ export function viewMenuModel(view: ViewState, allowed: AllowedView): ViewMenuSe
 
 /** True when the menu has anything to show, which is when the View button is rendered. */
 export function hasViewMenu(allowed: AllowedView): boolean {
-  return allowed.guides.length > 0 || allowed.crops.length > 0 || allowed.zones.length > 0;
+  return allowed.guides.length > 0 || allowed.crops.length > 0 || allowed.zones.length > 0 || allowed.zoom;
 }
 
 /* ---------- Remembered choices ---------- */
@@ -218,7 +222,7 @@ export interface Remembered {
   timeDisplay: TimeDisplay | null;
 }
 
-/** What is written: the guides, the crop, the zone and the time display. Not the range, the loop or the playhead. */
+/** What is written: the guides, the crop, the zone and the time display. Not the range, the loop, the playhead or the zoom. */
 export function serializeView(view: ViewState, timeDisplay: TimeDisplay): string {
   return JSON.stringify({ v: 1, guides: [...view.guides], crop: view.crop, zones: view.zones, timeDisplay });
 }

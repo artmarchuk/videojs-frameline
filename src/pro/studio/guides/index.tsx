@@ -81,7 +81,7 @@ const GuideSet = memo(function GuideSet({ width, height, guides, crop, zones }: 
               // The rail is too narrow for a label inside it: its label sits to its left.
               const style: CSSProperties = zone.part === 'rail' ? { right: width - area.x + 6, top: area.y + 6 } : { left: area.x + 6, top: area.y + 6 };
               return (
-                <span key={zone.part} className={'pro-guide-label'} style={style}>
+                <span key={zone.part} className={zone.part === 'rail' ? 'pro-guide-label pro-guide-label-end' : 'pro-guide-label'} style={style}>
                   {name}
                 </span>
               );

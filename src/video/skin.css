@@ -95,6 +95,17 @@
 
   /* ---------- Poster and overlay layer ---------- */
 
+  /*
+   * Only with the zoom feature: one box around the media, the poster and the overlay layer, filling the stage. The
+   * Studio module scales and moves it, so the guides stay on the picture. Untransformed it changes nothing.
+   */
+  .pro-skin .pro-picture {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0;
+  }
+
   .pro-skin .media-poster {
     position: absolute;
     inset: 0;

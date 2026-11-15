@@ -42,7 +42,7 @@ export interface ProRuntimeProps extends ProCallbacks {
   onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
   /** Counts renders of `ProSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
   skinRenders: RefObject<number>;
-  /** Reports the container attributes of the guides that are drawn: `data-guide-*`, `data-crop`, `data-zones`. */
+  /** Reports the container attributes of the guides that are drawn (`data-guide-*`, `data-crop`, `data-zones`) and `data-zoom`. */
   onViewAttributes: (attributes: Record<string, string>) => void;
   /** Remember the View choices and the time display per browser: the default key, a key of the host's, or not at all. */
   persist?: boolean | string | undefined;
@@ -103,15 +103,20 @@ export default function ProRuntime({
     });
   }, [store, key]);
 
-  // Mirror the guides that are drawn up to the container's data attributes.
+  // Mirror the guides that are drawn, and the zoom level, up to the container's data attributes.
   useEffect(() => {
-    let last = store.getState().view;
-    onViewAttributes(viewAttributes(last));
+    // `data-zoom` ("100", "200") is there only while zoomed.
+    const attributes = () => {
+      const { view, zoom } = store.getState();
+      return zoom === 'fit' ? viewAttributes(view) : { ...viewAttributes(view), 'data-zoom': zoom };
+    };
+    let last = store.getState();
+    onViewAttributes(attributes());
     const unsubscribe = store.subscribe(() => {
-      const next = store.getState().view;
-      if (next === last) return;
+      const next = store.getState();
+      if (next.view === last.view && next.zoom === last.zoom) return;
       last = next;
-      onViewAttributes(viewAttributes(next));
+      onViewAttributes(attributes());
     });
     return () => {
       unsubscribe();

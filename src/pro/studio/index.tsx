@@ -28,6 +28,7 @@ import { Guides } from './guides';
 import { usePictureRect } from './guides/use-picture-rect';
 import { useChapters, useCuts, type Chapter } from './use-cuts';
 import { useViewActions, ViewMenu, type ViewActions } from './view-menu';
+import { useZoom, useZoomActions, ZoomSection, type ZoomActions, type ZoomController } from './zoom';
 
 export interface StudioLayerProps {
   features: Readonly<FeatureFlags>;
@@ -117,8 +118,14 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   // Guides: what the host allows, where the picture is, and the actions the menu and `Shift+V` share.
   const allowed = useMemo(() => allowedView(features), [features]);
   const viewMenu = hasViewMenu(allowed);
+  const guides = allowed.guides.length > 0 || allowed.crops.length > 0 || allowed.zones.length > 0;
   const picture = usePictureRect(video, anchor);
   const viewActions = useViewActions();
+
+  // Zoom: the picture wrapper is scaled and moved; the guides are inside it and follow.
+  const renditionNote: string | null = null;
+  const zoom = useZoom(video, picture.rect, picture.layer, allowed.zoom);
+  const zoomActions = useZoomActions(renditionNote);
 
   const timeline = useProSlot('timeline');
   const renderThumbnail = useProThumbnailRenderer<TimelineProps['renderThumbnail']>();
@@ -155,9 +162,10 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
   return (
     <>
-      <StudioHotkeys controller={controller} features={features} paused={paused} viewActions={viewMenu ? viewActions : null} />
-      <HelpRows features={features} guides={viewMenu} />
-      {viewMenu && <Guides rect={picture.rect} layer={picture.layer} />}
+      <StudioHotkeys controller={controller} features={features} paused={paused} viewActions={guides ? viewActions : null} />
+      {allowed.zoom && <ZoomHotkeys zoom={zoom} actions={zoomActions} />}
+      <HelpRows features={features} guides={guides} zoom={allowed.zoom} />
+      {guides && <Guides rect={picture.rect} layer={picture.layer} />}
 
       {timeline &&
         createPortal(
@@ -214,7 +222,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
               <MarkersMenu markers={listed} chapters={listedChapters} controller={controller} fps={fps} />
             )}
             {capture && <CaptureMenu controller={controller} features={features} />}
-            {viewMenu && <ViewMenu allowed={allowed} actions={viewActions} />}
+            {viewMenu && <ViewMenu allowed={allowed} actions={viewActions} extra={allowed.zoom ? <ZoomSection actions={zoomActions} note={renditionNote} /> : undefined} />}
           </>,
           tools
         )}
@@ -223,6 +231,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 }
 
 const NO_MARKERS: readonly Marker[] = [];
+
 const NO_CHAPTERS: readonly Chapter[] = [];
 
 /** A segmented control: buttons that share one fill. Renders nothing when it has no buttons. */
@@ -568,8 +577,23 @@ function StudioHotkeys({
   return null;
 }
 
+/**
+ * Zoom shortcuts. `Z` is free in the YouTube map and in ours. `Alt` + an arrow pans; patterns match modifiers exactly,
+ * so the plain arrows (seek, frame step, volume) and `Shift` + arrows (jump) are not touched. They are registered only
+ * while zoomed, so at Fit `Alt+←` and `Alt+→` stay with the browser (Back and Forward on Windows and Linux).
+ */
+function ZoomHotkeys({ zoom, actions }: { zoom: ZoomController; actions: ZoomActions }) {
+  const fit = useProStore((state) => state.zoom === 'fit');
+  useHotkey({ keys: 'z', action: 'zoom', repeatable: false, onActivate: actions.cycle });
+  useHotkey({ keys: 'Alt+ArrowLeft', action: 'pan', disabled: fit, onActivate: () => zoom.pan('left') });
+  useHotkey({ keys: 'Alt+ArrowRight', action: 'pan', disabled: fit, onActivate: () => zoom.pan('right') });
+  useHotkey({ keys: 'Alt+ArrowUp', action: 'pan', disabled: fit, onActivate: () => zoom.pan('up') });
+  useHotkey({ keys: 'Alt+ArrowDown', action: 'pan', disabled: fit, onActivate: () => zoom.pan('down') });
+  return null;
+}
+
 /** Adds the live Studio shortcuts to the `Shift+?` help dialog, and removes them when the tier goes away. */
-function HelpRows({ features, guides }: { features: Readonly<FeatureFlags>; guides: boolean }) {
+function HelpRows({ features, guides, zoom }: { features: Readonly<FeatureFlags>; guides: boolean; zoom: boolean }) {
   const { setExtraRows } = useShortcutsDialog();
 
   const rows = useMemo(() => {
@@ -592,8 +616,12 @@ function HelpRows({ features, guides }: { features: Readonly<FeatureFlags>; guid
       list.push({ keys: ['Delete'], label: t.help.handlesClear });
     }
     if (guides) list.push({ keys: ['Shift', 'V'], label: t.help.guides });
+    if (zoom) {
+      list.push({ keys: ['Z'], label: t.help.zoom });
+      list.push({ keys: ['Alt', '←', '→', '↑', '↓'], label: t.help.pan });
+    }
     return list;
-  }, [features, guides]);
+  }, [features, guides, zoom]);
 
   useEffect(() => {
     setExtraRows(rows);

@@ -625,6 +625,35 @@
     }
   }
 
+  /* A group label with its shortcut beside it: "Zoom  Z". */
+  .pro-skin .pro-menu-label-keyed {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--media-spacing) * 2);
+  }
+
+  /* ---------- Zoom ---------- */
+
+  /*
+   * The picture wrapper carries the zoom transform (set in script). While there is something to pan it takes drags:
+   * a grab cursor, and one finger moves the picture instead of scrolling the page.
+   */
+  .pro-skin .pro-picture[data-pannable] {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .pro-skin .pro-picture[data-panning] {
+    cursor: grabbing;
+  }
+
+  /* At 200% a video pixel is four device pixels or more: show them as squares, not smoothed. */
+  .pro-skin[data-zoom="200"] .pro-picture video {
+    image-rendering: pixelated;
+  }
+
   /* ---------- Toast ---------- */
 
   .pro-skin .pro-toast {
