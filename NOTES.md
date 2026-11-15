@@ -793,3 +793,22 @@ Viewer gate run on the public URL in headless Chrome: tab order Seek, Play, Mute
 
 ### 6c follow-up: the playhead wins over a marker pin
 A pin under the playhead caught the press (it stops propagation so the slider does not also seek), so the playhead could not be grabbed from a marker. Now a press within 10 px of the playhead's centre goes on to the slider (grab and drag), and the click that follows does not select the marker. Pins away from the playhead behave as before. Checked in Chrome: click the "Logo too small" pin (8.42 s), press on the playhead and drag 120 px right: playback position 19.32 s; another pin still seeks to its marker.
+
+## Step 6d
+
+### D1: wider touch timeline
+- A handle's target is built by `handleBox`: it grows away from the range, 44 px wide on touch (24 on desktop). Near an end of the track it would pass the player's edge, so it is slid back inside the player's box (`useRoom` measures how far the box reaches past the track: gutter plus dock padding) and so reaches over the track by the rest. Where the two targets meet (a very short range near an end) they split the overlap halfway between the anchors, so a fresh press goes to the nearer handle; a dragged handle keeps the pointer through pointer capture.
+- The narrow and touch gutter is 13 px (was 29); desktop stays 12 px. Timeline width: **302 px at 390 (was 270), 232 px at 320 (was 200)**; the mockup has 326 at 390 because it clamps the handles inside the track, which F3 forbids.
+- Measured with touch emulation (CSS px): In target 16 to 60 (player left edge 16), Out target 330 to 374 at 390 (player right edge 374); both 44 wide and 44 high (the 44 px height comes from `::before`). A press 4 px inside the target, over the padding, and a drag moved In to 44.1 s and Out to 74.3 s (390); 57.5 s and 62.6 s at 320.
+- Bug found on the way: the slider's ref is a composed ref that is not attached while a child's layout effects run, so measuring in `useLayoutEffect` saw `null`; `useRoom` uses a passive effect.
+- Screenshots: `design/screenshots/step-6d/timeline-390-idle.png`, `timeline-320-idle.png` (handles at 0 and at the end).
+
+### D2: handle focus ring
+The pointer mark is cleared on the next `keydown` on the handle and on `blur`. `scripts/browser-checks/handle-focus-ring.js` runs both sequences (drag, then an arrow key: ring and one frame; click, Tab away, Shift+Tab back: ring).
+
+### D3: fullscreen after the container change
+Checked in code (installed `@videojs/core` 10.x, `dom/presentation/fullscreen.js` and `dom/media-actions.js`):
+- `toggleFullscreen` calls `requestFullscreen(container, media)`, which calls `container.requestFullscreen()` (or the webkit one); it needs the element and a user gesture, not focus and not a tab stop. It also calls `hideOpenPopovers(container)`. The `F` hotkey is a keydown listener on the container (see F4), so it fires from any focused control.
+Checked in the browser with the Fullscreen API stubbed (headless Chrome refuses the real one), Viewer and Studio, `scripts/browser-checks/fullscreen-focus.js`: `F` from the first control and `F` after a click on the picture both call `requestFullscreen` on the container; when fullscreen ends with focus on the body, focus goes back inside the player.
+Changes: `FullscreenFocus` (on `fullscreenchange` leaving fullscreen with focus on the body: the fullscreen button, or the container when the button is hidden); and a fix found by the check: in the Viewer the first click on the picture left focus on the body (the big play button takes focus on press, then hides), so `F` and `K` did nothing until a second click. The skin now focuses the container when a press inside the player ends with focus on the body.
+Left for the hand test: real fullscreen entry and exit (Escape and the button) in Chrome, Safari (the container request and `webkit` prefix) and Firefox; that the dock is included in fullscreen; where focus is after Escape.

@@ -6,10 +6,11 @@ import '../styles/tokens.css';
 import '../styles/base.css';
 import './skin.css';
 import { Container as ContainerPrimitive, Poster as PosterPrimitive, Slider as SliderPrimitive } from '@videojs/react';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 import { cn } from '@/lib/resolve-class-name';
 
+import { FullscreenFocus } from './behaviors/fullscreen-focus';
 import { VideoGestures } from './behaviors/gestures';
 import { VideoHotkeys } from './behaviors/hotkeys';
 import { VideoControls } from './controls';
@@ -65,9 +66,20 @@ export function VideoSkin({
   proBar = false,
   layout = 'overlay',
   arrowSeekWhilePlayingOnly = false,
+  onBlur,
+  onPointerDownCapture,
   ...props
 }: VideoSkinProps = {}) {
   const dock = layout === 'dock';
+  const container = useRef<HTMLDivElement>(null);
+  const pressedInside = useRef(false);
+  useEffect(() => {
+    const onDown = (event: PointerEvent) => {
+      pressedInside.current = container.current?.contains(event.target as Node) ?? false;
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, []);
 
   // Everything that belongs to the picture. In the dock layout it lives in the stage, so nothing covers the dock.
   const picture = (
@@ -93,6 +105,7 @@ export function VideoSkin({
 
       <VideoHotkeys arrowSeekWhilePlayingOnly={arrowSeekWhilePlayingOnly} />
       <VideoGestures dock={dock} />
+      <FullscreenFocus />
       <StatusAnnouncer />
       <ShortcutsDialog />
     </>
@@ -110,6 +123,23 @@ export function VideoSkin({
       // still focusable from code (a click on the picture focuses it so the hotkeys keep working) but a keyboard
       // user never lands on it, so it needs no ring of its own.
       tabIndex={-1}
+      ref={container}
+      // A press inside the player that ends with focus on the page body (the big play button takes it on press and
+      // goes away when playback starts) puts focus on the container, so the hotkeys keep working after a click on the
+      // picture. A press outside the player, or focus moving to another element, is left alone.
+      onPointerDownCapture={(event) => {
+        pressedInside.current = true;
+        onPointerDownCapture?.(event);
+      }}
+      onBlur={(event) => {
+        onBlur?.(event);
+        if (event.relatedTarget || !pressedInside.current) return;
+        const element = event.currentTarget;
+        window.setTimeout(() => {
+          const active = document.activeElement;
+          if (!active || active === document.body) element.focus({ preventScroll: true });
+        }, 0);
+      }}
       {...props}
     >
       <ShortcutsProvider>{proBar ? <ProSlotsProvider renderThumbnail={renderThumbnail}>{body}</ProSlotsProvider> : body}</ShortcutsProvider>
