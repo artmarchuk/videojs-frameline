@@ -817,3 +817,79 @@ Setting a poster or thumbnail is the host product's job, with back-end work behi
 
 ### 6d follow-up: handle drag preview
 Dragging In or Out left the slider's hover preview frozen where the drag started (the handle stopped the pointer moves from reaching the slider), next to the handle's own timecode bubble: two timecodes. Now a handle drag shows one preview, the same as a playhead drag: `Thumbnail.Root time={dragTime}` (verified in the installed `@videojs/react` docs, `thumbnail.md`; `Slider.Thumbnail.Root` is the same component without `time`) with `Thumbnail.Image` and the timecode bubble, centred on the anchor and kept inside the timeline. The slider's hover preview and hairline are hidden while a handle is dragged (`:has(.pro-tl-handle[data-dragging])`), and the pointer moves are no longer stopped, so after release the hover preview is already at the pointer. Checked in Chrome: at three points of a drag the preview's centre equals the In anchor (187.7, 307.7, 437.6) and the stock preview is hidden; after release only the stock preview shows. The chapter title is not shown in the drag preview. Screenshot: `design/screenshots/step-6d/handle-drag-preview.png`.
+
+## Step 7: Studio zoom (15 Nov 2026)
+
+Step 7 was "Studio image tools"; it is zoom only. The rule: **Viewer is for watching, Studio is for checking timing and framing.** Studio adds controls and overlays around the picture and never processes it. The "For step 7" list under step 6b above is history: channels, gain and gamma, the info readout were never built and are out of scope now.
+
+### Z1: overview and flags
+- `specs/PROJECT-OVERVIEW.md`: two tiers, the rule, the View menu line, a "Zoom" section with one item, a new "Out of scope" section, "info HUD" dropped from the Region of interest line, step 6 marked done, step 7 renamed, artoix.com replaced by artmarchuk.me (three places). "Use frame as poster" was already gone. The feature-flag example used `scopes: false`, a flag that never existed; it reads `zoom: false` now.
+- Flags removed: `channels`, `gainGamma`, `infoHud` (types, defaults, the runtime's list, the test, README). With them the store's unused `inspection` state (`setInspection`, `resetInspection`, `Inspection`, `Channel`, `Zoom` types). The preview page had no controls for them. `specs/step-7-studio-image-tools.md` was not in the repo. `CLAUDE.md` said "channel views" and "(step 7) image inspection"; corrected.
+
+### Verified APIs (`@videojs/react` and `@videojs/core` 10.4.0, installed)
+- **Hotkeys** (`core/dist/dev/dom/hotkey/hotkey.js`, `matchesHotkeyEvent`): modifiers must match exactly for letters and named keys. So `z` does not fire with Shift, Ctrl, Alt or Cmd, and `Alt+ArrowLeft` never matches the plain `ArrowLeft` bindings (seek, frame step) or `Shift+ArrowLeft` (jump), and the other way round. `Z` is in neither the YouTube map (`src/video/behaviors/hotkeys.tsx`) nor ours.
+- **Gestures** (`core/dist/dev/dom/gesture/coordinator.js`): a tap is a `pointerup` on the container within 250 ms of the `pointerdown`; there is **no movement threshold**, so a quick drag counts as a tap. The listener is on the container in the bubble phase, which is why stopping the `pointerup` on the picture wrapper keeps a pan away from click-to-play and from the double-tap recogniser.
+- **Rendition** (`core/dist/dev/core/store/features/quality.js`, `docs/reference/api/feature-quality.md`): `usePlayer(selectQuality)` gives `videoRenditionList` and `activeVideoRendition`, "the rendition currently playing, including when automatic ABR is selected". For `MuxVideo` (hls.js) it is set from the engine's `LEVEL_SWITCHED` event (`hlsjs-video/dist/dev/media-tracks.js`), and the feature also re-syncs on the media's `resize`. When the engine reports nothing it falls back to matching `videoWidth`/`videoHeight` against the list, and gives `null` if that is ambiguous.
+- **`capRenditionToPlayerSize`** (`docs/guides/media-sources.md`): on by default; automatic selection is held to the smallest rendition that covers the element.
+
+### Z2: how zoom is built
+- **Picture wrapper.** `VideoSkin` takes `pictureWrapper`; `ProSkin` sets it from `features.zoom`. With it, the media, the poster and `.pro-overlay` sit in one `div.pro-picture` (100% of the stage, `transform-origin: 0 0`). Without the flag the element is not rendered: the Viewer's DOM was compared element by element (tag, classes, role) with the deployed 6d build and is identical. The wrapper's one CSS rule is in `skin.css`, because the element is rendered by the Viewer chunk and must be laid out before the Studio CSS arrives; it matches nothing in the Viewer.
+- **Transform.** `src/pro/zoom.ts` (pure, tested): `zoomScale`, `clampCentre`, `zoomTransform`, `panCentre`, `nextZoom`. `useZoom` (`src/pro/studio/zoom.tsx`) writes `translate(x, y) scale(s)` on the wrapper. Fit removes the transform. 100%: `videoWidth / picture width / devicePixelRatio`; 200% twice that; a scale below 1 is applied as it is. The zoomed picture's corner is rounded to a whole device pixel of the screen.
+- **Pan** is kept as the point of the picture at the centre of the stage (shares of its width and height), so a resize or a rendition of another size keeps the same spot. Clamped per axis: a picture larger than the stage stops with its edge on the stage's edge; a smaller one stays centred and cannot be panned. Entering a level resets to the centre.
+- **Picture rectangle.** `usePictureRect` measures with `getBoundingClientRect`, which includes the transform, so it divides by the wrapper's scale (read from its computed transform). The rectangle and `--pro-picture-*` describe the unzoomed picture at every level; a `ResizeObserver` does not fire for a transform, and a resize while zoomed gives the right numbers (checked).
+- **Guides** are inside the wrapper and scale with it. Their strokes, dashes and labels divide by `--pro-zoom-scale` (set on the wrapper), so a line is still about 1 px and a label the same size at 200%. Device-pixel snapping of the lines is only exact at Fit.
+- **Pointer.** Native listeners on the wrapper. A drag over 3 px takes pointer capture and pans; its `pointerup` and the click after it are stopped, and focus is put on the container if it was on the body (the container did not see the press end). `touch-action: none` on the wrapper while there is something to pan, so one finger pans and the page does not scroll. No pinch zoom. Cursor `grab` / `grabbing`.
+- **Recomputed** on: level, a new picture rectangle, a `ResizeObserver` on the stage, the media's `loadedmetadata`, `resize` and `emptied`, `fullscreenchange`, window `resize`.
+- **State.** `zoom` is a field of the store (`'fit' | '100' | '200'`), not of `ViewState`, so it is never serialised. `AllowedView` has `zoom`; `setZoom` and `cycleZoom` do nothing without it, and `setAllowedView` puts the level back to Fit when the host turns the flag off. The container carries `data-zoom="100" | "200"` while zoomed (not at Fit).
+- **Menu.** The Zoom radio group is the View menu's `extra`, under Platform zones, with the same click-and-prevent pattern to stay open. Opening the menu still focuses "Title safe"; arrow order ends …TikTok, Fit, 100%, 200%, Hide guides. With `guides: false` and zoom on, the View button stays and the menu is the Zoom group alone (no "Hide guides" footer). The badge still counts guides only.
+- `image-rendering: pixelated` on the video at 200% (`data-zoom="200"`).
+
+### Shortcuts
+- `Z` cycles Fit, 100%, 200%. No conflict.
+- `Alt+arrows` pan, registered only while zoomed. No conflict with the map or with Video.js. Two things found:
+  1. **The seek slider.** With the slider focused, `Alt+→` moved the playhead (our key handler passed Alt combinations to the stock slider). Now Alt + an arrow on the slider is left to the hotkeys, so it pans. On an In or Out handle it already did.
+  2. **The browser.** On Windows and Linux `Alt+←` and `Alt+→` are Back and Forward. While zoomed and with focus in the player the skin takes them (`preventDefault`); at Fit they are not registered and stay with the browser. On macOS Option + arrow has no browser meaning outside a text field. Kept as the brief asks. If the author would rather not shadow Back and Forward at all, `Shift+Alt+arrows` is free.
+
+### Z3: rendition notes
+- **Available**, from `selectQuality` (see above). `useRenditionNote` compares `activeVideoRendition.height` with the largest height in `videoRenditionList`; below it, the note is "showing 720p". It is added to the chosen Zoom item ("100% showing 720p", the note in dim text) and to the announcement ("Zoom 100% · showing 720p"), and only while zoomed. No on-picture badge.
+- **Settings → Quality: nothing added.** Video.js already shows the playing rendition under Auto, as "Auto (720p)", in the item and in the settings row, updated on a rendition change and translated (`autoWithLabelText`, `core/dist/dev/core/ui/quality-radio-group/core.js`). The brief's "Auto · 1080p" would have meant replacing a translated string with our own for a different separator.
+- **What this showed.** The demo stream offers 360p to 2160p. Under Auto the engine caps the rendition to the player's size, so on a 1280 px stage it plays 720p at 1x (1440p at 2x) and **100% is the same size as Fit**; 200% is 2x. That is correct by the brief's formula and it is what the note is for, but it reads as "100% does nothing". With 2160p picked by hand, 100% is 3x at 1x. Options for the author, none taken: leave it; set `capRenditionToPlayerSize: false` on the demo's `MuxVideo` source in step 8; or have zoom pick the top rendition while zoomed (changes playback, so not done without a decision).
+
+### Checks (headless Google Chrome via Playwright; local production build, then the public URL)
+`scripts/browser-checks/zoom.js`, run at device scale factor 1 and 2, all passing:
+| Check | Result |
+| --- | --- |
+| Scale | 1x: video 1280 wide in a 1280 px picture, 100% = 1, 200% = 2. 2x: video 2560 wide, 100% = 1, 200% = 2 (video box x devicePixelRatio = videoWidth, and twice that) |
+| Pixelated | `image-rendering: pixelated` at 200% only |
+| Guides follow | the thirds SVG's box equals the video's box at 200% (2560x1440 at 1x); `--pro-picture-*` unchanged by zooming; after a window resize while zoomed the rectangle is the new unzoomed size and the picture still covers the stage |
+| 10 px drag | paused: stays paused, picture moved 10 px. Playing: keeps playing, moved 10 px. Two quick drags: no fullscreen request, still playing. A click afterwards pauses |
+| Alt+arrows | one press moves 128 px (a tenth of 1280); 30 presses each way stop with the picture's edges exactly on the stage's edges (0 px gap on all four); the playhead did not move |
+| Grab frame | `G` at Fit and `G` at 200% panned into a corner: same canvas size (the video's own) and the same pixel checksum |
+| Z cycle, announcements | Fit, 100%, 200%, Fit; "Zoom 100%", "Zoom 200%", "Zoom fit" (with the rendition note when it applies) |
+| Menu | opens on "Title safe"; order ends TikTok, Fit, 100%, 200%, Hide guides; choosing 100% checks it (`menuitemradio`, `aria-checked`) and the menu stays open; the stored value has no zoom |
+`scripts/browser-checks/zoom-rendition-note.js`: Auto shows "Auto (720p)"; note present under Auto, absent with the top rendition picked and playing (2160p).
+Also checked: touch emulation at 390 px (one-finger drag panned 60 px by 30 px, the page did not scroll, a tap still plays; Zoom items 44 px tall; the menu stays inside the player); Alt+→ on the focused seek slider and on the In handle pans and does not seek; help dialog lists `Z` and `Alt ← → ↑ ↓`; `?zoom=0` (no wrapper, no Zoom group), `?guides=0` (View menu with Zoom only), `?guides=0&zoom=0` (no View button), `?tier=viewer&zoom=1` (overlay layout: zoom and drag work under the controls).
+Unit tests: 192 passing (19 new: scale at devicePixelRatio 1 and 2, 100% smaller than Fit, clamping, centring, a letterboxed picture, device-pixel start, pan steps to the edge, the Z cycle, the flag turning zoom off, zoom not serialised, `allowedView` with and without guides).
+
+### Chunk sizes (raw / gzip -9)
+| Chunk | Step 6d | Step 7 |
+| --- | --- | --- |
+| Viewer path JS (`preview-*.js`) | 969,319 / 285,076 B | 969,469 / 285,102 B (+150 B raw: the wrapper branch, the `pictureWrapper` prop, the preview page's `?zoom`) |
+| Skin CSS (with the preview page's) | 36,020 / 6,545 B | 36,105 / 6,561 B (the `.pro-picture` rule) |
+| Pro runtime | 12,351 / 4,876 B | 12,964 / 5,204 B |
+| Studio JS | 50,709 / 16,397 B | 56,312 / 17,975 B |
+| Studio CSS | 22,529 / 4,062 B | 23,111 / 4,189 B |
+
+### Screenshots
+`design/screenshots/step-7/` (same method, 1x so that 200% shows real pixels; each opened and looked at): `zoom-fit`, `zoom-100`, `zoom-200` with title safe and thirds on; `zoom-200-panned` (the top-left corner, with the title-safe corner in view); `zoom-100-1080p-picked` (1080p chosen by hand: 100% is 1.5x); `view-menu-zoom-1440`, `view-menu-zoom-390`; `zoom-200-390`; `settings-quality-auto`. `zoom-100` looks like `zoom-fit` for the reason under Z3.
+
+### Unverified (step 7)
+- **Real fullscreen while zoomed** (headless Chrome refuses fullscreen). The transform is recomputed on `fullscreenchange` and by the stage's `ResizeObserver`.
+- **Firefox and Safari:** `image-rendering: pixelated` on a `<video>`, `calc()` with a custom property in `stroke-width` and `stroke-dasharray`, the `scale` property on the labels, `DOMMatrixReadOnly` from a computed transform. All inside the browser floor on paper; only Chrome was run. If `calc()` in a stroke property is not supported, the lines are thicker while zoomed and nothing else changes.
+- **A real mouse, trackpad and finger.** Drags were scripted (Playwright mouse, CDP touch events). How the 3 px threshold feels, and panning on a real phone, need a hand.
+- **Pixel-exact 100%.** The scale and the device-pixel start were measured from element boxes; whether Chrome then draws one video pixel on one device pixel without resampling was not measured from a screenshot.
+- **A rendition switch while zoomed** (Auto stepping up or down mid-view): the transform is recomputed on the media's `resize` and the pan keeps its centre, but it was only seen as a manual switch between zoom presses, not during one.
+- **Captions while zoomed**: the browser draws them inside the video element, so they scale and can be cut off. Not looked at.
+- **A video smaller than the stage** (100% below Fit) is unit-tested; no such source was played.
+- **Screen reader:** announcements were read from the live region's text.
+- **Windows and Linux:** that `preventDefault` on `Alt+←` stops the browser's Back while zoomed was not run there.
