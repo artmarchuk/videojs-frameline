@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import './studio.css';
-import { Menu, selectPlayback, selectQuality, useHotkey, usePlayer } from '@videojs/react';
+import { Menu, selectPlayback, selectQuality, useHotkey, useMedia, usePlayer } from '@videojs/react';
 import { useEffect, useId, useLayoutEffect, useMemo, useState, type ReactElement, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -125,6 +125,8 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const renditionNote = useRenditionNote();
   const zoom = useZoom(video, picture.rect, picture.layer, allowed.zoom);
   const zoomActions = useZoomActions(renditionNote);
+  const zoomed = useProStore((state) => state.zoom !== 'fit');
+  useLiftRenditionCap(allowed.zoom && zoomed);
 
   const timeline = useProSlot('timeline');
   const renderThumbnail = useProThumbnailRenderer<TimelineProps['renderThumbnail']>();
@@ -588,6 +590,44 @@ function StudioHotkeys({
   useHotkey({ keys: 'Shift+v', action: 'toggleGuides', repeatable: false, disabled: !guidesActions, onActivate: () => guidesActions?.toggleHidden() });
 
   return null;
+}
+
+/**
+ * While zoomed with Quality on Auto, lets the engine pick a rendition by bandwidth alone. By default the HLS engine
+ * holds automatic selection to the smallest rendition that covers the player (`capRenditionToPlayerSize`, on by
+ * default), so a zoomed picture would be upscaled from a rendition chosen for the unzoomed size. The cap is a field
+ * of the media's `source`; assigning a source with the same `src` and engine options applies it to the running
+ * engine without a reload (installed `@videojs/hlsjs-video` `adapter.js`: `set source` calls `#applyRenditionCaps`,
+ * and only a new `src` or new engine options request a load).
+ *
+ * Nothing is forced: no rendition is selected, and a quality the user picked by hand is left alone (the cap only
+ * bounds automatic selection, and it is not touched while a rendition is selected). At Fit the host's own value is
+ * put back, unless the source was replaced in the meantime. Media without a `source` and renditions (a plain
+ * `<video>`, native HLS) are left alone.
+ */
+function useLiftRenditionCap(lift: boolean) {
+  const media = useMedia();
+  const quality = usePlayer(selectQuality);
+  const auto = quality ? quality.videoRenditionList.length > 0 && quality.videoRenditionList.every((rendition) => !rendition.selected) : false;
+  const active = lift && auto;
+
+  useEffect(() => {
+    if (!active || !media) return;
+    const target = media as unknown as { source?: Record<string, unknown> | null; videoRenditions?: unknown };
+    if (!('source' in target) || !('videoRenditions' in target)) return;
+    const before = target.source;
+    // No structured source to edit, or the host switched the cap off itself: nothing to do, nothing to restore.
+    if (!before || before.capRenditionToPlayerSize === false) return;
+
+    const lifted = { ...before, capRenditionToPlayerSize: false };
+    target.source = lifted;
+
+    return () => {
+      // Only undo our own change: if the host gave the media another source meanwhile, that one stands.
+      if (target.source !== lifted) return;
+      target.source = before;
+    };
+  }, [active, media]);
 }
 
 /**
