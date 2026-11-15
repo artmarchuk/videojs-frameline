@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import './studio.css';
-import { Menu, selectPlayback, useHotkey, usePlayer } from '@videojs/react';
+import { Menu, selectPlayback, selectQuality, useHotkey, usePlayer } from '@videojs/react';
 import { useEffect, useId, useLayoutEffect, useMemo, useState, type ReactElement, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -123,7 +123,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const viewActions = useViewActions();
 
   // Zoom: the picture wrapper is scaled and moved; the guides are inside it and follow.
-  const renditionNote: string | null = null;
+  const renditionNote = useRenditionNote();
   const zoom = useZoom(video, picture.rect, picture.layer, allowed.zoom);
   const zoomActions = useZoomActions(renditionNote);
 
@@ -232,6 +232,19 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
 const NO_MARKERS: readonly Marker[] = [];
 
+/**
+ * "showing 540p" while the rendition that is playing is smaller than the best one the stream offers, otherwise
+ * `null`. Adaptive streams pick a rendition for the connection and the player's size, so a 100% view is not always a
+ * view of the source. From Video.js's quality feature: `activeVideoRendition` is the rendition the engine reports as
+ * playing (also under automatic selection) and `videoRenditionList` what the manifest offers.
+ */
+function useRenditionNote(): string | null {
+  const quality = usePlayer(selectQuality);
+  const playing = quality?.activeVideoRendition?.height;
+  if (!playing || !quality) return null;
+  const best = Math.max(0, ...quality.videoRenditionList.map((rendition) => rendition.height ?? 0));
+  return playing < best ? t.showing(playing) : null;
+}
 const NO_CHAPTERS: readonly Chapter[] = [];
 
 /** A segmented control: buttons that share one fill. Renders nothing when it has no buttons. */

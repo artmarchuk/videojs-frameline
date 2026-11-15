@@ -233,6 +233,8 @@ Zoom changes how closely you look at the picture, never the picture itself. It i
 - `features.zoom` is on in Studio. It adds one wrapper element (`.pro-picture`) around the media and the overlay layer; without the flag (the Viewer tier) that element does not exist. The container carries `data-zoom="100"` or `"200"` while zoomed.
 - Captions drawn by the browser belong to the video element and are scaled with it.
 
+**Which rendition you are looking at.** An adaptive stream (HLS) may play a smaller rendition than the source: the engine picks one for the connection and, by default, for the player's size. 100% then means 100% of *that* rendition. Two places say so. Settings → Quality shows what Auto is playing ("Auto (720p)", from Video.js). And while zoomed with a rendition below the best one the stream offers, the chosen zoom level in the View menu and the announcement add it: "100% · showing 720p". To check the source's own pixels, pick the top rendition in Settings → Quality, or have the host lift the cap (`capRenditionToPlayerSize: false` in the media's `source`, a Video.js option).
+
 ### Links to a frame
 
 Copy link writes the position into the page URL's hash as `#t=HH:MM:SS:FF`, the timecode on screen, and keeps anything else the host app has in the hash. A page opened with such a hash seeks to that frame, paused. Plain seconds (`#t=12.5`) are also read.
