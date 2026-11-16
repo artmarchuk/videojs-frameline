@@ -39,7 +39,7 @@ import {
   resolveHandleMove,
   snapFrame,
   snapSeekTime,
-    timeToX,
+  timeToX,
   type MarkerPin,
   type RangePoints,
 } from './logic';
@@ -123,10 +123,14 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
   const [draft, setDraft] = useState<RangePoints | null>(null);
   const points: RangePoints = range ? (draft ?? { in: storeIn, out: storeOut }) : { in: null, out: null };
   const band = rangeBand(points, 0, duration);
+  // A cleared band keeps its last place while it fades out; the styles hide it (`data-range="none"`).
+  const lastBand = useRef(band);
+  if (band) lastBand.current = band;
+  const drawn = band ?? lastBand.current;
 
   const style = {
-    '--fl-band-start': band ? `${band.start}%` : undefined,
-    '--fl-band-end': band ? `${band.end}%` : undefined,
+    '--fl-band-start': drawn ? `${drawn.start}%` : undefined,
+    '--fl-band-end': drawn ? `${drawn.end}%` : undefined,
   } as CSSProperties;
 
   /**
@@ -157,7 +161,7 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
   const handleProps = { points, duration, fps, width, root, format, setDraft, controller, markers, renderThumbnail };
 
   return (
-    <div className={'pro-timeline'} dir="ltr" style={style} data-range={band ? 'set' : 'none'} data-display={seconds ? 'seconds' : 'timecode'} data-interactive="">
+    <div className={'pro-timeline'} dir="ltr" style={style} data-range={band ? 'set' : 'none'} data-handles={range ? '' : undefined} data-display={seconds ? 'seconds' : 'timecode'} data-interactive="">
       <TimeSlider.Root ref={root} className={'pro-tl'} label={t.seek}>
         <Ruler duration={duration} width={width} fps={fps} />
         {markers.length > 0 && <MarkerPins markers={markers} duration={duration} width={width} format={format} controller={controller} />}
@@ -225,9 +229,9 @@ const Ruler = memo(function Ruler({ duration, width, fps }: { duration: number; 
     const styles = getComputedStyle(element);
     const colour = (name: string, fallback: string) => styles.getPropertyValue(name).trim() || fallback;
     const paint = {
-      minor: { colour: colour('--fl-tick-minor', '#55555b'), height: 0.2 },
-      mid: { colour: colour('--fl-tick-mid', '#77777e'), height: 0.4 },
-      major: { colour: colour('--fl-tick-major', '#8e8e95'), height: 1 },
+      minor: { colour: colour('--fl-tick-minor', '#565656'), height: 0.2 },
+      mid: { colour: colour('--fl-tick-mid', '#787878'), height: 0.4 },
+      major: { colour: colour('--fl-tick-major', '#8f8f8f'), height: 1 },
     };
     // One device pixel wide; two on very dense screens, where one would be too faint.
     const line = ratio >= 3 ? 2 : 1;

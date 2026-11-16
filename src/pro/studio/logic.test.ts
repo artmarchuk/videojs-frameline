@@ -236,9 +236,9 @@ describe('links', () => {
 });
 
 describe('dock arrangement', () => {
-  it('is narrow under 700 px, and always on touch', () => {
-    expect(isNarrowDock(699)).toBe(true);
-    expect(isNarrowDock(700)).toBe(false);
+  it('is narrow under 740 px, and always on touch', () => {
+    expect(isNarrowDock(739)).toBe(true);
+    expect(isNarrowDock(740)).toBe(false);
     expect(isNarrowDock(1280)).toBe(false);
     expect(isNarrowDock(1280, true)).toBe(true);
     expect(isNarrowDock(0)).toBe(false); // not measured yet

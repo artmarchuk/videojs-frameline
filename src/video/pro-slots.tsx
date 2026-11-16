@@ -5,12 +5,12 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 /**
  * Named places in the control bar where the lazily loaded pro module puts its controls, in this order:
  * `timeline` (in place of the seek bar), `time` (the left column: the timecode), `transport-start` (before Play),
- * `transport-end` (after Play), `range` (after the transport, in the centre column: Loop and Reset range),
- * `range-narrow` (start of the right column: In, Out and Loop on narrow and touch layouts) and `tools` (the Markers,
- * Capture and Guides menus). The Viewer tier renders none of this. Each slot is an element with `display: contents`,
+ * `transport-end` (after Play), `range` (after the transport, in the centre column: Loop and Reset range) and
+ * `tools` (the Markers, Capture, Guides and Zoom menus; on narrow and touch layouts also Loop and the link button).
+ * The Viewer tier renders none of this. Each slot is an element with `display: contents`,
  * so what is portalled into it takes part in the bar's layout and sits at that point of the focus order.
  */
-export type ProSlotName = 'timeline' | 'time' | 'transport-start' | 'transport-end' | 'range' | 'range-narrow' | 'tools';
+export type ProSlotName = 'timeline' | 'time' | 'transport-start' | 'transport-end' | 'range' | 'tools';
 
 interface ProSlotsValue {
   nodes: Partial<Record<ProSlotName, HTMLElement | null>>;
@@ -18,7 +18,7 @@ interface ProSlotsValue {
   /** The host's thumbnail renderer, handed on to the pro timeline's preview. */
   renderThumbnail?: unknown;
   /**
-   * Items the pro module adds to the settings menu (on narrow layouts: the markers). They are rendered inside the
+   * Items the pro module adds to the settings menu (on the smallest dock: Copy link at timecode). They are rendered inside the
    * menu's own React tree, so they can use the menu parts.
    */
   settingsItems: ReactNode;

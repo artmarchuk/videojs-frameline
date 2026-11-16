@@ -3,14 +3,14 @@
 // Two columns: the default palette, and the palette under `prefers-contrast: more` (MORE and PAGE_MORE below), whose
 // minimums are higher where the step 9 brief asks for it: secondary text 7:1, lines 3:1, idle handles 4.5:1.
 const BASE = {
-  s0: '#0E0E10', s1: '#1E1E20', s2: '#2C2C2F', s3: '#3A3A3E', on: '#46464B', line: '#333336', track: '#85858C',
-  text: '#F2F2F4', dim: '#9A9AA0', dimRaised: '#B2B2B8', accent: '#5B9DFF', accentInk: '#0B1220', range: '#4D7BC1', ink: '#1C1C1E',
-  tickMinor: '#55555B', tickMid: '#77777E', tickMajor: '#8E8E95', buffer: '#4A4A50', white: '#FFFFFF',
-  handleIdle: '#77777E', rulerLabel: '#B8B8C0',
+  s0: '#0F0F0F', s1: '#1E1E1E', s2: '#2C2C2C', s3: '#3A3A3A', on: '#474747', line: '#333333', track: '#888888',
+  text: '#F2F2F2', dim: '#9C9C9C', dimRaised: '#B4B4B4', accent: '#5B9DFF', accentInk: '#0B1220', range: '#4D7BC1', ink: '#1C1C1C',
+  tickMinor: '#565656', tickMid: '#787878', tickMajor: '#8F8F8F', buffer: '#4A4A4A', white: '#FFFFFF',
+  handleIdle: '#787878', rulerLabel: '#B8B8B8',
 };
 const MORE = {
-  ...BASE, line: '#7A7A81', dim: '#CBCBD1', dimRaised: '#D8D8DD', tickMinor: '#8C8C93', tickMid: '#A6A6AD', tickMajor: '#BCBCC3',
-  buffer: '#6E6E75', handleIdle: '#B6B6BD', rulerLabel: '#D2D2D8',
+  ...BASE, line: '#7B7B7B', dim: '#CCCCCC', dimRaised: '#D9D9D9', tickMinor: '#8D8D8D', tickMid: '#A7A7A7', tickMajor: '#BDBDBD',
+  buffer: '#6F6F6F', handleIdle: '#B7B7B7', rulerLabel: '#D3D3D3',
 };
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };

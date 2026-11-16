@@ -2,6 +2,9 @@
  * The compact ruler timeline (Studio). Loaded with the Studio module, never by the Viewer tier. Tokens only.
  * About 46px tall: a 22px ruler (ticks, labels, marker pins), a 2px gap, a 16px track (with the In/Out band), and
  * the buffered range as a 2px line under it. The playhead and the range handles reach a little past the track.
+ * The track is recessed, and the band, the handles and the pins are solid things on it (the --fl-bevel tokens).
+ * Nothing that shows time animates: positions follow the media and the pointer exactly. The only transitions are
+ * the band's fade when a range appears or is cleared, and colours and shadows.
  * Bubbles float above the dock, over the bottom edge of the picture. Time runs left to right on every page: the
  * component sets dir="ltr".
  */
@@ -131,6 +134,8 @@
     color: var(--fl-text-dim);
     pointer-events: auto;
     transform: translateX(-50%);
+    /* The flag's shadow. On the target, not on the flag: a clip-path would cut a shadow off its own element. */
+    filter: drop-shadow(var(--fl-pin-shadow));
   }
 
   .pro-skin .pro-tl-pin::after {
@@ -141,6 +146,7 @@
     width: 8px;
     height: 10px;
     background-color: currentColor;
+    background-image: var(--fl-solid-image);
     clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%);
     transform: translateX(-50%);
     transition: background-color var(--fl-duration) var(--fl-ease);
@@ -205,6 +211,14 @@
     border-radius: var(--media-spacing);
   }
 
+  /*
+   * With range handles the track's ends are square: a handle, set or idle, meets the track (and a band that reaches
+   * that end) along a straight edge, and the handle's own outer corners round the end off.
+   */
+  .pro-skin .pro-timeline[data-handles] .pro-tl-chapters {
+    border-radius: 0;
+  }
+
   /* Chapter boundaries are 2px gaps: each chapter is clipped 1px short of its neighbours. */
   .pro-skin .pro-tl-chapter {
     --tl-gap-start: 1px;
@@ -230,17 +244,41 @@
     position: absolute;
     inset: 0;
     background-color: var(--fl-surface-2);
+    box-shadow: var(--fl-track-shadow); /* recessed; the band is drawn over it */
   }
 
+  /*
+   * The band appears with a short fade, growing from its centre line, and goes the same way, faster. Only opacity,
+   * transform and visibility move; its start and end are never in a transition. A cleared band keeps its last place
+   * while it fades (the component leaves the two variables as they were).
+   */
   .pro-skin .pro-tl-band,
   .pro-skin .pro-tl-band-played {
     position: absolute;
     inset-block: 0;
+    background-image: var(--fl-solid-image);
+    box-shadow: var(--fl-solid-shadow);
+    transition:
+      opacity var(--fl-duration-quick) var(--fl-ease),
+      transform var(--fl-duration-quick) var(--fl-ease),
+      visibility 0s;
   }
 
   .pro-skin .pro-timeline[data-range="none"] .pro-tl-band,
   .pro-skin .pro-timeline[data-range="none"] .pro-tl-band-played {
-    display: none;
+    visibility: hidden;
+    opacity: 0;
+    transform: scaleY(0.4);
+    transition:
+      opacity var(--fl-duration-exit) var(--fl-ease),
+      transform var(--fl-duration-exit) var(--fl-ease),
+      visibility 0s linear var(--fl-duration-exit);
+  }
+
+  /* While a handle is dragged the band follows it with no transition at all. */
+  .pro-skin .pro-tl:has(.pro-tl-handle[data-dragging]) .pro-tl-band,
+  .pro-skin .pro-tl:has(.pro-tl-handle[data-dragging]) .pro-tl-band-played {
+    transition: none;
   }
 
   .pro-skin .pro-tl-band {
@@ -291,7 +329,8 @@
     /* One thin dark outline around the whole shape (head and line together), not around each part. 1px; 2px under prefers-contrast: more. */
     --tl-edge: var(--fl-playhead-edge-width, 1px);
     filter: drop-shadow(var(--tl-edge) 0 0 var(--fl-playhead-edge)) drop-shadow(calc(-1 * var(--tl-edge)) 0 0 var(--fl-playhead-edge))
-      drop-shadow(0 var(--tl-edge) 0 var(--fl-playhead-edge)) drop-shadow(0 calc(-1 * var(--tl-edge)) 0 var(--fl-playhead-edge));
+      drop-shadow(0 var(--tl-edge) 0 var(--fl-playhead-edge)) drop-shadow(0 calc(-1 * var(--tl-edge)) 0 var(--fl-playhead-edge))
+      drop-shadow(var(--fl-playhead-shadow));
   }
 
   .pro-skin .pro-tl[data-dragging] .pro-tl-playhead {
@@ -340,7 +379,7 @@
   .pro-skin .pro-tl-handle:focus-visible:not([data-pointer])::after {
     outline: var(--fl-focus-width) solid var(--fl-accent);
     outline-offset: var(--fl-focus-offset);
-    box-shadow: 0 0 0 var(--fl-focus-offset) var(--fl-surface-0);
+    box-shadow: 0 0 0 var(--fl-focus-offset) var(--fl-surface-0), var(--fl-shade);
   }
 
   /* Where the pointer is: a hairline through the ruler and the track. */
@@ -394,7 +433,27 @@
     left: var(--tab-left, 0px);
     width: var(--tl-handle-width);
     background-color: currentColor;
-    transition: background-color var(--fl-duration) var(--fl-ease);
+    /* A solid tab: the band's gradient, a grip in its centre (two 1px lines, 8px tall), a short shadow under it. */
+    background-image: var(--fl-handle-image);
+    background-repeat: no-repeat;
+    background-position:
+      50% 50%,
+      calc(50% + 1px) 50%,
+      0 0;
+    background-size:
+      1px 8px,
+      1px 8px,
+      auto;
+    --fl-shade: var(--fl-handle-shadow);
+    box-shadow: var(--fl-shade);
+    transition:
+      background-color var(--fl-duration) var(--fl-ease),
+      box-shadow var(--fl-duration-quick) var(--fl-ease);
+  }
+
+  /* Picked up: the shadow grows. */
+  .pro-skin .pro-tl-handle[data-dragging]::after {
+    --fl-shade: var(--fl-handle-shadow-dragging);
   }
 
   .pro-skin .pro-tl-handle[data-handle="in"]::after {

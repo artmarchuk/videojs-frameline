@@ -62,3 +62,11 @@ export const BookmarkIcon = (props: IconProps) => (
     <path d="M7 4.5h10a.5.5 0 0 1 .5.5v14.5L12 15.75 6.5 19.5V5a.5.5 0 0 1 .5-.5z" />
   </Icon>
 );
+
+/** Link: two chain links, for "Copy link at timecode". */
+export const LinkIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M10.5 13.5a3.75 3.75 0 0 0 5.3 0l3-3a3.75 3.75 0 0 0-5.3-5.3l-1.25 1.25" />
+    <path d="M13.5 10.5a3.75 3.75 0 0 0-5.3 0l-3 3a3.75 3.75 0 0 0 5.3 5.3l1.25-1.25" />
+  </Icon>
+);

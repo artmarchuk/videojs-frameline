@@ -61,7 +61,6 @@ export function VideoControls({ renderThumbnail, toolbarStart, toolbarEnd, pro =
                   <ProSlot name="range" />
                 </div>
                 <div className={'pro-main-right'}>
-                  <ProSlot name="range-narrow" />
                   <ProSlot name="tools" />
                   {toolbarEnd}
                   <span className={'pro-main-divider'} aria-hidden="true" />

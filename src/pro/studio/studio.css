@@ -7,10 +7,11 @@
  *   < 1040px  the "of duration" text
  *   <  940px  the captions button (the C key and the settings menu remain)
  *   <  900px  the menu buttons' chevrons; the timecode field gets narrower
- *   <  800px  the count badges and the divider; tighter gaps
- *   narrow    (under 700px, or a touch device; set as data-dock-size by the module, because the order of the
- *             controls changes): timecode, step, Play, cut; then In, Out, Loop and Capture, Guides, Zoom, Settings, Fullscreen
- *             (under 410px In, Out, Loop take a row of their own)
+ *   <  820px  the count badges and the divider; tighter gaps
+ *   narrow    (under 740px, or a touch device; set as data-dock-size by the module, because the order of the
+ *             controls changes): timecode, step, Play, cut; then one row of equal cells: Markers, Loop, Capture,
+ *             Link, Guides, Zoom, Settings, Fullscreen (under 382px without Zoom; under 340px without Link, which
+ *             is then an item of the settings menu)
  * Picture-in-picture is in the settings menu at every width.
  */
 @layer components {
@@ -102,6 +103,18 @@
     }
   }
 
+  /* In the dock Play is a white key: lit from above, a shadow under it; pressed, it darkens and sinks. */
+  .pro-skin[data-layout="dock"][data-bar="pro"] .pro-bar .pro-transport > .media-play-button {
+    --fl-shade: var(--fl-play-shadow);
+    background-color: var(--fl-text);
+    background-image: var(--fl-play-image);
+  }
+
+  .pro-skin[data-layout="dock"][data-bar="pro"] .pro-bar .pro-transport > .media-play-button:active {
+    --fl-shade: var(--fl-press-shadow);
+    background-image: var(--fl-play-press-image);
+  }
+
   /* Mute with a short volume slider. */
   .pro-skin[data-bar="pro"] .media-volume-slider {
     width: calc(var(--media-spacing) * 14);
@@ -125,22 +138,13 @@
     align-items: center;
     border-radius: var(--fl-radius-group);
     background-color: var(--fl-surface-2);
+    /* The group is one raised object; its buttons are flat until pressed. Flat where --fl-bevel is 0. */
+    background-image: var(--fl-raise-image);
+    box-shadow: var(--fl-raise-shadow);
   }
 
   .pro-skin .pro-seg:empty {
     display: none;
-  }
-
-  /* Hairline dividers between the buttons of a divided control. */
-  .pro-skin .pro-seg-divided > .pro-tool + .pro-tool:not([data-pressed])::before {
-    content: "";
-    position: absolute;
-    left: -0.5px;
-    top: 50%;
-    width: 1px;
-    height: calc(var(--media-spacing) * 4.5);
-    background-color: var(--fl-divider);
-    transform: translateY(-50%);
   }
 
   .pro-skin .pro-tool-icon {
@@ -151,18 +155,6 @@
   .pro-skin .media-menu-icon > svg {
     width: 100%;
     height: 100%;
-  }
-
-  /* A button with a word on it: In, Out. */
-  .pro-skin .pro-tool-text {
-    display: flex;
-    justify-content: center;
-    width: auto;
-    min-width: var(--fl-control-size);
-    padding-inline: calc(var(--media-spacing) * 3);
-    font-size: var(--fl-text-md);
-    font-weight: 600;
-    white-space: nowrap;
   }
 
   /* Loop is a little wider than a plain button; Reset range a little narrower. */
@@ -182,6 +174,7 @@
   /* A menu button: icon, count badge, chevron. */
   .pro-skin .pro-tool-menu {
     display: flex;
+    justify-content: center;
     gap: calc(var(--media-spacing) * 1.5);
     width: auto;
     min-width: var(--fl-control-size);
@@ -252,6 +245,52 @@
 
   /* ---------- Timecode ---------- */
 
+  /*
+   * The timecode field and the link button as one segmented pair, `[ 00:00:14:20 | link ]`: the outer corners share
+   * the group radius, 2px between the two. The link copies exactly what the field shows.
+   */
+  .pro-skin .pro-timecode-pair {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 2px;
+    --tc-inner-radius: 2px;
+  }
+
+  .pro-skin .pro-timecode-pair[data-link] > .pro-timecode {
+    border-start-end-radius: var(--tc-inner-radius);
+    border-end-end-radius: var(--tc-inner-radius);
+  }
+
+  .pro-skin .pro-timecode-pair > .pro-tool-link {
+    width: calc(var(--fl-control-size) + var(--media-spacing) * 1.5); /* 40px at comfortable density */
+    border-radius: var(--tc-inner-radius) var(--fl-radius-group) var(--fl-radius-group) var(--tc-inner-radius);
+    background-color: var(--fl-surface-2);
+  }
+
+  /* A focus ring is drawn over the other half of the pair, not under it. */
+  .pro-skin .pro-timecode-pair > :focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* The link icon and the check that takes its place for a moment after a copy: a short cross-fade. */
+  .pro-skin .pro-tool-link .pro-link-icon,
+  .pro-skin .pro-tool-link .pro-link-check {
+    transition:
+      opacity var(--fl-duration-quick) var(--fl-ease),
+      translate var(--fl-duration-quick) var(--fl-ease);
+  }
+
+  .pro-skin .pro-tool-link .pro-link-check,
+  .pro-skin .pro-tool-link[data-copied] .pro-link-icon {
+    opacity: 0;
+  }
+
+  .pro-skin .pro-tool-link[data-copied] .pro-link-check {
+    opacity: 1;
+  }
+
   .pro-skin .pro-timecode {
     display: flex;
     flex-shrink: 0;
@@ -270,19 +309,22 @@
     line-height: 1;
     outline: none;
     white-space: nowrap;
+    /* A recessed well: shaded inside its top edge, a rim of light below. Flat where --fl-bevel is 0. */
+    --fl-shade: var(--fl-well-shadow);
+    box-shadow: var(--fl-shade);
     transition: box-shadow var(--fl-duration) var(--fl-ease);
   }
 
   @media (hover: hover) {
     .pro-skin .pro-timecode:hover {
-      box-shadow: inset 0 0 0 1px var(--fl-surface-3);
+      box-shadow: inset 0 0 0 1px var(--fl-surface-3), var(--fl-shade);
     }
   }
 
   .pro-skin .pro-timecode:focus-visible {
     outline: var(--fl-focus-width) solid var(--fl-accent);
     outline-offset: var(--fl-focus-offset);
-    box-shadow: var(--fl-focus-halo);
+    box-shadow: var(--fl-focus-halo), var(--fl-shade);
   }
 
   .pro-skin .pro-timecode-approx {
@@ -314,6 +356,7 @@
     border-radius: calc(var(--media-spacing) * 2.5);
     background-color: var(--fl-surface-3);
     box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel))),
       0 10px 30px rgb(0 0 0 / 0.55),
       0 0 0 1px rgb(255 255 255 / 0.06);
     border: 0;
@@ -461,7 +504,7 @@
     opacity: 0.5;
   }
 
-  @container media-root (width < 700px) {
+  @container media-root (width < 740px) {
     .pro-skin .media-menu-popup.pro-guides-popup,
     .pro-skin .media-menu-popup.pro-guides-popup[data-columns="1"] {
       width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
@@ -509,7 +552,7 @@
     }
   }
 
-  @container media-root (width < 800px) {
+  @container media-root (width < 820px) {
     .pro-skin .pro-tool-menu .pro-badge,
     .pro-skin .pro-main-divider {
       display: none;
@@ -553,27 +596,27 @@
     min-width: 0;
   }
 
+  /*
+   * Row two is a grid of equal cells, one per control, each control centred in its cell: Markers, Loop, Capture,
+   * Link, Guides, Zoom, Settings, Fullscreen. A cell is at least one 44px target wide, so eight cells need a 382px
+   * player (15px padding each side); below that the row folds, see the end of this block.
+   */
   .pro-skin[data-dock-size="narrow"] .pro-main-right {
+    display: grid;
     grid-column: 1 / -1;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    row-gap: calc(var(--media-spacing) * 2.5);
+    grid-auto-columns: minmax(var(--fl-control-size), 1fr);
+    grid-auto-flow: column;
+    justify-content: normal;
+    justify-items: center;
+    gap: 0;
   }
 
   .pro-skin[data-dock-size="narrow"] .pro-playback {
     display: contents;
   }
 
-  .pro-skin[data-dock-size="narrow"] .pro-range {
-    margin-inline-end: auto;
-  }
-
-  .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool:not(.pro-tool-text) {
+  .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool {
     width: calc(var(--media-spacing) * 10);
-  }
-
-  .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool[data-pro-tool="loop"] {
-    width: var(--fl-control-size);
   }
 
   .pro-skin[data-dock-size="narrow"] .pro-transport > .media-play-button {
@@ -585,7 +628,7 @@
     font-size: calc(var(--media-spacing) * 3.5);
   }
 
-  .pro-skin[data-dock-size="narrow"] .pro-tool-menu {
+  .pro-skin[data-dock-size="narrow"] .pro-main-right .pro-tool {
     width: var(--fl-control-size);
     padding-inline: 0;
   }
@@ -614,21 +657,25 @@
       justify-content: flex-end;
       gap: calc(var(--media-spacing) * 1.5);
     }
-
   }
 
-  /*
-   * Under 410px the second row cannot hold In, Out, Loop and five 44px buttons (Capture, Guides, Zoom, Settings,
-   * Fullscreen; it needs about 405px): In, Out, Loop take a row of their own and the five buttons the next.
-   */
-  @container media-root (width < 410px) {
-    .pro-skin[data-dock-size="narrow"] .pro-range {
-      flex: 1 0 100%;
+  /* Under 382px eight 44px cells do not fit: the Zoom button goes. `Z`, `Shift+Z` and the host's handle still zoom. */
+  @container media-root (width < 382px) {
+    .pro-skin[data-dock-size="narrow"] .pro-tool-zoom {
+      display: none;
     }
+  }
 
-    .pro-skin[data-dock-size="narrow"] .pro-range .pro-seg,
-    .pro-skin[data-dock-size="narrow"] .pro-range .pro-seg .pro-tool {
-      flex: 1;
+  /* Under 340px seven do not fit either: the link button goes, and its action is an item of the settings menu. */
+  @container media-root (width < 340px) {
+    .pro-skin[data-dock-size="narrow"] .pro-main-right .pro-tool-link {
+      display: none;
+    }
+  }
+
+  @container media-root (width >= 340px) {
+    .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-menu-item-link {
+      display: none;
     }
   }
 

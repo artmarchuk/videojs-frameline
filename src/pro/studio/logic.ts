@@ -12,12 +12,12 @@ import { formatTimecode, framesFromSeconds, parseTimecode, resolveFrameRate, typ
 export const SEEK_OFFSET = 0.5;
 
 /** Below this player width the dock uses its narrow arrangement. */
-export const DOCK_NARROW_BELOW = 700;
+export const DOCK_NARROW_BELOW = 740;
 
 /**
- * The dock's narrow arrangement: a player under 700 px wide (the one-row arrangement needs about 690 px even after
- * it has shed what it can), or any touch device (which has no keyboard for `I` and
- * `O`, so it gets In and Out buttons). A width that is not measured yet counts as wide.
+ * The dock's narrow arrangement: a player under 740 px wide (the one-row arrangement needs about 736 px even after
+ * it has shed what it can), or any touch device, where every target is 44 px and one row has no room for them. A
+ * width that is not measured yet counts as wide.
  */
 export function isNarrowDock(width: number, coarsePointer = false): boolean {
   if (coarsePointer) return true;

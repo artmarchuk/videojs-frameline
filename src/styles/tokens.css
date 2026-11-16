@@ -9,30 +9,31 @@
 @layer base.theme {
   .media-skin[data-theme="pro"] {
     /*
-     * Colour. Dark only: Video.js v10 video skins are dark-only. Calm graphite surfaces and one soft blue accent.
+     * Colour. Dark only: Video.js v10 video skins are dark-only. True neutral surfaces (R = G = B), so the surround
+     * adds no cast to the picture, and one soft blue accent. The dock is macOS's dark window grey.
      * The accent is reserved: progress and the played part of the range, the In/Out handles, the focus ring and a
      * selected marker. Toggled-on states use --fl-on, never the accent. Never put white text on the accent (2.7:1).
      */
-    --fl-surface-0: #0e0e10; /* behind the picture; the recessed timecode field; scrim colour */
-    --fl-surface-1: #1e1e20; /* the dock, menus, dialogs */
-    --fl-surface-2: #2c2c2f; /* control fill, segmented controls, the neutral track */
-    --fl-surface-3: #3a3a3e; /* hover, tooltips, small badges */
-    --fl-on: #46464b; /* a toggle that is on */
-    --fl-line: #333336; /* hairlines, dividers */
-    --fl-track: #85858c; /* unfilled slider track over footage (Viewer overlay): 3:1 on the scrim over a white frame */
-    --fl-text: #f2f2f4; /* primary text and icons; the playhead */
-    --fl-text-dim: #9a9aa0; /* secondary text on surface-0 to surface-2 */
-    --fl-text-dim-raised: #b2b2b8; /* secondary text on surface-3: tooltips, hovered controls (4.5:1 there) */
+    --fl-surface-0: #0f0f0f; /* behind the picture; the recessed timecode field; scrim colour */
+    --fl-surface-1: #1e1e1e; /* the dock, menus, dialogs */
+    --fl-surface-2: #2c2c2c; /* control fill, segmented controls, the neutral track */
+    --fl-surface-3: #3a3a3a; /* hover, tooltips, small badges */
+    --fl-on: #474747; /* a toggle that is on */
+    --fl-line: #333333; /* hairlines, dividers */
+    --fl-track: #888888; /* unfilled slider track over footage (Viewer overlay): 3:1 on the scrim over a white frame */
+    --fl-text: #f2f2f2; /* primary text and icons; the playhead */
+    --fl-text-dim: #9c9c9c; /* secondary text on surface-0 to surface-2 */
+    --fl-text-dim-raised: #b4b4b4; /* secondary text on surface-3: tooltips, hovered controls (4.5:1 there) */
     --fl-accent: var(--media-accent-color, #5b9dff);
     --fl-accent-ink: var(--media-accent-text-color, #0b1220); /* text and icons placed on the accent */
     --fl-range: #4d7bc1; /* the not-yet-played part of the range band */
-    --fl-ink: #1c1c1e; /* text and icons on a --fl-text fill: Play, the playhead bubble */
-    --fl-tick-minor: #55555b; /* ruler ticks, short to tall */
-    --fl-tick-mid: #77777e;
-    --fl-tick-major: #8e8e95;
-    --fl-buffer: #4a4a50; /* buffered range under the timeline track */
-    --fl-handle-idle: #77777e; /* a range handle whose point is not set */
-    --fl-ruler-label: #b8b8c0; /* ruler labels are blended (difference) with the dock: the result there is --fl-text-dim */
+    --fl-ink: #1c1c1c; /* text and icons on a --fl-text fill: Play, the playhead bubble */
+    --fl-tick-minor: #565656; /* ruler ticks, short to tall */
+    --fl-tick-mid: #787878;
+    --fl-tick-major: #8f8f8f;
+    --fl-buffer: #4a4a4a; /* buffered range under the timeline track */
+    --fl-handle-idle: #787878; /* a range handle whose point is not set */
+    --fl-ruler-label: #b8b8b8; /* ruler labels are blended (difference) with the dock: the result there is close to --fl-text-dim */
     --fl-divider: rgb(255 255 255 / 0.1); /* dividers inside a control fill */
     --fl-frame-line: var(--media-border-color, var(--fl-line)); /* hairline around the player, see --fl-frame-border */
 
@@ -70,7 +71,48 @@
     --fl-radius: 6px;
     --fl-radius-group: 8px;
     --fl-radius-sm: 3px;
-    --fl-shadow-popup: 0 4px 14px rgb(0 0 0 / 0.45);
+    --fl-shadow-popup: inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel))), 0 4px 14px rgb(0 0 0 / 0.45);
+
+    /*
+     * Tactile controls: controls read as slightly raised, toggles that are on as pressed in, and the timeline's
+     * range, handles and pins as solid things on a recessed track. Every highlight and shade is scaled by --fl-bevel
+     * (0 = flat), so one value tunes the whole treatment or switches it off. Only in the dock, never over the
+     * picture. The gradients are tokens so that forced colours and more-contrast can switch them all to `none`.
+     */
+    --fl-bevel: 1;
+    --fl-hi: rgb(255 255 255 / calc(0.07 * var(--fl-bevel)));
+    --fl-lo: rgb(0 0 0 / calc(0.35 * var(--fl-bevel)));
+    /* A control at rest: lit from above, a hairline of light on its top edge, a short shadow under it. */
+    --fl-raise-image: linear-gradient(to bottom, rgb(255 255 255 / calc(0.05 * var(--fl-bevel))), transparent 60%);
+    --fl-raise-shadow: inset 0 1px 0 var(--fl-hi), 0 1px 1px var(--fl-lo);
+    /* Pressed, or on: shaded from above, and a rim of light below. */
+    --fl-press-image: linear-gradient(to bottom, rgb(0 0 0 / calc(0.18 * var(--fl-bevel))), transparent 55%);
+    --fl-press-shadow: inset 0 1px 2px rgb(0 0 0 / calc(0.5 * var(--fl-bevel))), 0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
+    /* Play, the white key. */
+    --fl-play-image: linear-gradient(to bottom, #fafafa, #e2e2e2);
+    --fl-play-shadow: inset 0 -1px 0 rgb(0 0 0 / calc(0.12 * var(--fl-bevel))), 0 1px 2px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
+    --fl-play-press-image: linear-gradient(to bottom, #e6e6e6, #d6d6d6);
+    /* A recessed well: the timecode field, the timeline track. */
+    --fl-well-shadow: inset 0 1px 2px rgb(0 0 0 / calc(0.6 * var(--fl-bevel))), 0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
+    --fl-track-shadow: inset 0 1px 1px rgb(0 0 0 / calc(0.45 * var(--fl-bevel)));
+    /* A solid thing on the track: the range band, the handles, the marker pins. */
+    --fl-solid-image: linear-gradient(
+      to bottom,
+      rgb(255 255 255 / calc(0.16 * var(--fl-bevel))),
+      rgb(255 255 255 / 0) 50%,
+      rgb(0 0 0 / calc(0.12 * var(--fl-bevel)))
+    );
+    --fl-solid-shadow: inset 0 1px 0 rgb(255 255 255 / calc(0.22 * var(--fl-bevel)));
+    /* A handle's grip: a dark line 1px wide and 8px tall in its centre, a light one beside it, over the solid gradient. */
+    --fl-handle-image:
+      linear-gradient(rgb(0 0 0 / calc(0.35 * var(--fl-bevel))), rgb(0 0 0 / calc(0.35 * var(--fl-bevel)))),
+      linear-gradient(rgb(255 255 255 / calc(0.2 * var(--fl-bevel))), rgb(255 255 255 / calc(0.2 * var(--fl-bevel)))),
+      var(--fl-solid-image);
+    --fl-handle-shadow: 0 1px 1px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
+    --fl-handle-shadow-dragging: 0 2px 3px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
+    --fl-pin-shadow: 0 1px 1px rgb(0 0 0 / calc(0.6 * var(--fl-bevel)));
+    --fl-playhead-shadow: 0 1px 2px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
+    --fl-dock-edge: inset 0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
     /* Set --fl-frame-border: 1 to draw a 1px hairline and a 10px radius around the player. Default: none. */
     --fl-frame-radius: var(--media-border-radius, calc(var(--fl-frame-border, 0) * 10px));
 
@@ -87,7 +129,10 @@
     --fl-playhead-height: calc(var(--media-spacing) * 4); /* 16px */
 
     /* Motion: short and functional. */
-    --fl-duration: 120ms;
+    --fl-duration-press: 60ms; /* entering a pressed or on state */
+    --fl-duration-exit: 70ms; /* things that go away: a cleared range band, a closing menu */
+    --fl-duration-quick: 90ms; /* the range band appearing; leaving a pressed state */
+    --fl-duration: 120ms; /* hovers, menus */
     --fl-duration-fade: 200ms; /* control-bar fade */
     --fl-ease: cubic-bezier(0.2, 0, 0, 1);
     --media-spinner-animation: pro-spin 0.9s linear infinite;
@@ -133,9 +178,12 @@
     }
   }
 
-  /* Reduced motion: no transitions, no control-bar fade, no spinner rotation. */
+  /* Reduced motion: every duration is zero, so no transitions, no control-bar fade; no spinner rotation. */
   @media (prefers-reduced-motion: reduce) {
     .media-skin[data-theme="pro"] {
+      --fl-duration-press: 0ms;
+      --fl-duration-exit: 0ms;
+      --fl-duration-quick: 0ms;
       --fl-duration: 0ms;
       --fl-duration-fade: 0ms;
       --media-spinner-animation: none;
@@ -149,20 +197,46 @@
    */
   @media (prefers-contrast: more) {
     .media-skin[data-theme="pro"] {
-      --fl-line: #7a7a81;
+      --fl-line: #7b7b7b;
       --fl-divider: rgb(255 255 255 / 0.38);
-      --fl-text-dim: #cbcbd1;
-      --fl-text-dim-raised: #d8d8dd;
-      --fl-tick-minor: #8c8c93;
-      --fl-tick-mid: #a6a6ad;
-      --fl-tick-major: #bcbcc3;
-      --fl-buffer: #6e6e75;
-      --fl-handle-idle: #b6b6bd;
-      --fl-ruler-label: #d2d2d8;
+      --fl-text-dim: #cccccc;
+      --fl-text-dim-raised: #d9d9d9;
+      --fl-tick-minor: #8d8d8d;
+      --fl-tick-mid: #a7a7a7;
+      --fl-tick-major: #bdbdbd;
+      --fl-buffer: #6f6f6f;
+      --fl-handle-idle: #b7b7b7;
+      --fl-ruler-label: #d3d3d3;
       --fl-scrim-alpha: 96%;
       --fl-focus-width: 3px;
       --fl-playhead-edge-width: 2px;
       --fl-guide-weight: 1.5;
+    }
+  }
+
+  /*
+   * Flat where the controls sit over the picture (the overlay layout), under more contrast and in forced colours:
+   * no bevel, and no gradient on any element.
+   */
+  .media-skin[data-theme="pro"]:not([data-layout="dock"]) {
+    --fl-bevel: 0;
+    --fl-raise-image: none;
+    --fl-press-image: none;
+    --fl-play-image: none;
+    --fl-play-press-image: none;
+    --fl-solid-image: none;
+    --fl-handle-image: none;
+  }
+
+  @media (prefers-contrast: more), (forced-colors: active) {
+    .media-skin[data-theme="pro"] {
+      --fl-bevel: 0;
+      --fl-raise-image: none;
+      --fl-press-image: none;
+      --fl-play-image: none;
+      --fl-play-press-image: none;
+      --fl-solid-image: none;
+      --fl-handle-image: none;
     }
   }
 

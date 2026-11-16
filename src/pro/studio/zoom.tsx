@@ -278,7 +278,7 @@ export function ZoomMenu({ actions, note }: { actions: ZoomActions; note: string
           data-pressed={level === 'fit' ? undefined : ''}
           data-pro-menu="zoom"
         >
-          {name}
+          <span className={'pro-tool-label'}>{name}</span>
         </Menu.Trigger>
       </ButtonTooltip>
       <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-menu-popup', 'pro-zoom-popup')}>

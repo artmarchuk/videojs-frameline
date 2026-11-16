@@ -16,8 +16,6 @@ export const studioStrings = {
   switchToTimecode: 'Switch to timecode',
   approximateClock: 'Approximate: this browser cannot report the exact frame on screen',
 
-  setIn: 'Set In point at the playhead',
-  setOut: 'Set Out point at the playhead',
   inSet: (timecode: string) => `In point set at ${timecode}`,
   outSet: (timecode: string) => `Out point set at ${timecode}`,
   inCleared: 'In point cleared',
@@ -46,6 +44,7 @@ export const studioStrings = {
   copyFailed: 'Could not copy. Check the clipboard permission.',
   copyLink: 'Copy link at timecode',
   linkCopied: 'Link copied',
+  linkCopiedAt: (timecode: string) => `Link copied, ${timecode}`,
 
   seek: 'Seek',
   inPoint: 'In point',
@@ -88,8 +87,6 @@ export const studioStrings = {
   zoomSet: (name: string) => `Zoom ${name === 'Fit' ? 'fit' : name}`,
   zoomNote: 'Drag the picture or press Shift+Alt and an arrow to move around. Grabbed frames are always the whole picture.',
   showing: (height: number) => `showing ${height}p`,
-  in: 'In',
-  out: 'Out',
   range: 'Range',
   of: (total: string) => `of ${total}`,
 
@@ -102,6 +99,8 @@ export const studioStrings = {
     loop: 'Loop the range, or the whole video',
     cuts: 'Previous, next cut',
     grab: 'Grab frame',
+    copyImage: 'Copy frame image',
+    link: 'Copy link at timecode',
     cutsMarkers: 'Previous, next cut (chapters, or markers); every marker is in the Markers menu',
     handles: 'On an In or Out handle: move it one frame',
     handlesJump: 'On a handle: move it 10 frames',

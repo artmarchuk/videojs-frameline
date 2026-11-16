@@ -77,6 +77,7 @@
     border-top: 1px solid var(--fl-line);
     background-color: var(--fl-surface-1);
     background-image: none;
+    box-shadow: var(--fl-dock-edge); /* a hairline of light under the top edge */
   }
 
   .pro-skin[data-layout="dock"] .pro-bar .media-time-slider::before {
@@ -151,6 +152,9 @@
     color: var(--fl-text);
     cursor: pointer;
     outline: none;
+    /* The button's own shadow. Rules set this variable, not box-shadow, so the focus ring can be added to it. */
+    --fl-shade: 0 0 0 0 transparent;
+    box-shadow: var(--fl-shade);
     transition:
       background-color var(--fl-duration) var(--fl-ease),
       color var(--fl-duration) var(--fl-ease);
@@ -194,7 +198,44 @@
   .pro-skin .media-dialog-popup:focus-visible {
     outline: var(--fl-focus-width) solid var(--fl-accent);
     outline-offset: var(--fl-focus-offset);
-    box-shadow: var(--fl-focus-halo);
+    box-shadow: var(--fl-focus-halo), var(--fl-shade, 0 0 0 0 transparent);
+  }
+
+  /*
+   * ---------- Tactile controls: the dock only, never over the picture ----------
+   * A control at rest reads as slightly raised; one that is on, has its menu open, or is being pressed reads as
+   * pressed in. Everything comes from the --fl-bevel tokens (tokens.css), which are flat in the overlay layout, under
+   * more contrast and in forced colours. Buttons inside a segmented group stay flat at rest: the group is the raised
+   * object. Motion: into a pressed state over --fl-duration-press, out of it over --fl-duration-quick (shadow and
+   * icon; the fill colour shares the hover's --fl-duration, because one rule can give a property one duration).
+   */
+  .pro-skin[data-layout="dock"] .pro-bar :not(.pro-seg) > .media-button {
+    --fl-shade: var(--fl-raise-shadow);
+    background-image: var(--fl-raise-image);
+  }
+
+  .pro-skin[data-layout="dock"] .pro-bar .media-button {
+    transition:
+      background-color var(--fl-duration) var(--fl-ease),
+      color var(--fl-duration) var(--fl-ease),
+      box-shadow var(--fl-duration-quick) var(--fl-ease);
+  }
+
+  /* Low specificity (:where), so a control can add its own transitions to its contents (the link button's icons). */
+  .pro-skin[data-layout="dock"] :where(.pro-bar .media-button) > * {
+    transition: translate var(--fl-duration-quick) var(--fl-ease);
+  }
+
+  .pro-skin[data-layout="dock"] .pro-bar .media-button:is([aria-pressed="true"], [aria-expanded="true"], [data-pressed], [data-active], :active:not([aria-disabled="true"])) {
+    --fl-shade: var(--fl-press-shadow);
+    background-color: var(--fl-on);
+    background-image: var(--fl-press-image);
+    transition-duration: var(--fl-duration-press);
+  }
+
+  .pro-skin[data-layout="dock"] .pro-bar .media-button:active:not([aria-disabled="true"]) > * {
+    translate: 0 0.5px;
+    transition-duration: var(--fl-duration-press);
   }
 
   /* Forced colours (Windows High Contrast): boundaries from ButtonText, selected and checked states from Highlight. */
@@ -910,7 +951,25 @@
     overscroll-behavior: none;
     transition:
       opacity var(--fl-duration) var(--fl-ease),
+      transform var(--fl-duration) var(--fl-ease),
       height var(--fl-duration) var(--fl-ease);
+  }
+
+  /*
+   * A menu opens with a fade and a 2px move towards its place (Video.js sets data-starting-style for the first
+   * frame, data-ending-style while it closes), and closes with a shorter fade. The move is a `transform`: Video.js
+   * positions the popup with the `translate` property, which must stay out of every rule and transition here.
+   */
+  .pro-skin .media-menu-popup[data-starting-style] {
+    transform: translateY(2px);
+  }
+
+  .pro-skin .media-menu-popup[data-side="bottom"][data-starting-style] {
+    transform: translateY(-2px);
+  }
+
+  .pro-skin .media-menu-popup[data-ending-style] {
+    transition-duration: var(--fl-duration-exit);
   }
 
   .pro-skin .media-menu-content {

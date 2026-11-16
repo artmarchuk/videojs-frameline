@@ -69,7 +69,11 @@ export interface StudioController {
   toggleLoop(): void;
   grabFrame(): void;
   copyFrameImage(): void;
-  copyLink(): void;
+  /**
+   * Copies a link to the current frame and announces it with the timecode. Resolves to whether the clipboard took
+   * it. `quiet`: no on-screen message for a success (the link button shows a check instead); a failure always shows.
+   */
+  copyLink(options?: { quiet?: boolean }): Promise<boolean>;
   /** The frame the user is on: the one just asked for while that seek is fresh, otherwise the clock's. */
   currentFrame(): number;
   /** Seeks to the frame that contains `time`, with the same half-frame offset as stepping. */
@@ -509,15 +513,16 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
       });
     },
 
-    copyLink() {
+    copyLink({ quiet = false } = {}) {
       const { fps, startFrames, dropFrame, announce, onCopyLink } = opts();
       const frame = currentFrame();
       const value = formatLinkPosition(frame, fps, { startFrames, dropFrame });
       const { origin, pathname, search, hash } = window.location;
       const url = `${origin}${pathname}${search}${withLinkPosition(hash, value)}`;
-      void copyText(url).then((ok) => {
-        announce(ok ? t.linkCopied : t.copyFailed, { toast: true });
+      return copyText(url).then((ok) => {
+        announce(ok ? t.linkCopiedAt(timecode(frame)) : t.copyFailed, { toast: !ok || !quiet });
         if (ok) onCopyLink?.({ url, frame, time: secondsFromFrames(frame, fps) });
+        return ok;
       });
     },
   };

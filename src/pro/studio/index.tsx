@@ -2,12 +2,12 @@
 
 import './studio.css';
 import { Menu, selectPlayback, selectQuality, useHotkey, useMedia, usePlayer } from '@videojs/react';
-import { useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useState, type ReactElement, type ReactNode, type Ref, type RefObject } from 'react';
+import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/resolve-class-name';
 
-import { ChevronIcon, CloseIcon } from '../../video/icons';
+import { CheckIcon, ChevronIcon, CloseIcon } from '../../video/icons';
 import { useProSlot, useProThumbnailRenderer, useSetProSettingsItems } from '../../video/pro-slots';
 import { Button } from '../../video/shared/button';
 import { useShortcutsDialog, type ShortcutRow } from '../../video/shared/shortcuts-dialog';
@@ -19,7 +19,7 @@ import type { Marker } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import { AnnouncerProvider, useAnnounce } from './announcer';
 import { useStudioController, type CopyLinkInfo, type FrameGrabInfo, type StudioController } from './controller';
-import { BookmarkIcon, GrabFrameIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
+import { BookmarkIcon, GrabFrameIcon, LinkIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
 import { isNarrowDock } from './logic';
 import { studioStrings as t } from './strings';
 import { Timeline, type TimelineProps } from './timeline';
@@ -47,8 +47,8 @@ export interface StudioLayerProps {
 }
 
 /**
- * The Studio tier: the compact ruler timeline with the range handles, frame-by-frame transport, the timecode, and
- * the Markers, Capture and Guides menus. Loaded lazily, only when a Studio feature is on. The controls are portalled
+ * The Studio tier: the compact ruler timeline with the range handles, frame-by-frame transport, the timecode with
+ * its link button, and the Markers, Capture, Guides and Zoom menus. Loaded lazily, only when a Studio feature is on. The controls are portalled
  * into the control bar's slots, so they sit in the bar's layout and focus order.
  */
 export default function StudioLayer(props: StudioLayerProps) {
@@ -61,8 +61,9 @@ export default function StudioLayer(props: StudioLayerProps) {
 
 /**
  * Whether the dock is in its narrow arrangement (a narrow player, or a touch device). CSS container queries do the
- * rest of the responsive work; this exists because the narrow arrangement changes the order of the controls and
- * adds In and Out buttons, and the DOM order has to change with it so the focus order matches what is on screen.
+ * rest of the responsive work; this exists because the narrow arrangement changes the order of the controls (and
+ * moves the link button into the second row), and the DOM order has to change with it so the focus order matches
+ * what is on screen.
  * Also written to the container as `data-dock-size` for the styles; the attribute is removed with this module.
  */
 function useNarrowDock(anchor: RefObject<HTMLElement | null>): boolean {
@@ -108,6 +109,31 @@ function useMarkerDeselect(video: HTMLVideoElement | null, fps: number) {
       if (frame !== snapFrame(selectedMarker.time, duration, fps)) store.deselectMarker();
     });
   }, [store, video, fps]);
+}
+
+/** How long the link button shows its check after a copy. */
+const LINK_COPIED_MS = 1200;
+
+/**
+ * Copy link at timecode, shared by the link button, `S` and the settings item of the smallest dock. `copied` is true
+ * for a moment after the clipboard took the link; a refused clipboard leaves it false. While the link button is on
+ * screen its check is the visible confirmation; where the button is folded away, the message shows as a toast.
+ */
+function useCopyLink(controller: StudioController, anchor: RefObject<HTMLElement | null>): { copied: boolean; copy: () => void } {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef(0);
+  const copy = useCallback(() => {
+    const button = anchor.current?.closest('.media-container')?.querySelector('.pro-tool-link');
+    const shown = Boolean(button && button.getClientRects().length > 0);
+    void controller.copyLink({ quiet: shown }).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setCopied(false), LINK_COPIED_MS);
+    });
+  }, [controller, anchor]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return { copied, copy };
 }
 
 function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor, onCopyLink, onFrameGrab, apiRef }: StudioLayerProps) {
@@ -166,20 +192,31 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const transportStart = useProSlot('transport-start');
   const transportEnd = useProSlot('transport-end');
   const rangeSlot = useProSlot('range');
-  const rangeNarrow = useProSlot('range-narrow');
   const tools = useProSlot('tools');
 
   const hasCuts = cuts.length > 0;
-  const range = features.inOut || features.loop;
-  const capture = features.grabFrame || features.copyTimecodeLink;
+  const link = useCopyLink(controller, anchor);
+  const copyLink = link.copy;
+  const linkButton = features.copyTimecodeLink && <LinkButton copied={link.copied} onCopy={copyLink} />;
 
-  // On the narrow dock the Markers menu has no room in the row: the markers move into the settings menu.
+  // Under 340px the narrow row has no cell for the link button: the action is an item of the settings menu there
+  // (shown by the styles at that width only). It is rendered inside the settings menu's own tree.
   const setSettingsItems = useSetProSettingsItems();
   useEffect(() => {
-    if (!narrow || listed.length === 0) return;
-    setSettingsItems(<MarkersSubmenu markers={listed} chapters={listedChapters} controller={controller} fps={fps} />);
+    if (!narrow || !features.copyTimecodeLink) return;
+    setSettingsItems(
+      <Menu.Item className={'media-menu-item pro-menu-item-dock-narrow pro-menu-item-link'} onSelect={copyLink}>
+        <span className={'media-menu-icon pro-tool-icon'}>
+          <LinkIcon />
+        </span>
+        <span>{t.copyLink}</span>
+        <span className={'media-menu-hint'}>
+          <kbd className={'pro-kbd'}>S</kbd>
+        </span>
+      </Menu.Item>
+    );
     return () => setSettingsItems(null);
-  }, [narrow, listed, listedChapters, controller, fps, setSettingsItems]);
+  }, [narrow, features.copyTimecodeLink, copyLink, setSettingsItems]);
 
   const previousCut = features.shotNav && (
     <ToolButton label={t.previousCut} shortcut="[" icon={<PreviousCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('previous')} />
@@ -192,7 +229,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
   return (
     <>
-      <StudioHotkeys controller={controller} features={features} paused={paused} guidesActions={guides ? guidesActions : null} />
+      <StudioHotkeys controller={controller} features={features} paused={paused} guidesActions={guides ? guidesActions : null} copyLink={copyLink} />
       {allowed.zoom && <ZoomHotkeys zoom={zoom} actions={zoomActions} />}
       <HelpRows features={features} guides={guides} zoom={allowed.zoom} />
       {guides && <Guides rect={picture.rect} layer={picture.layer} />}
@@ -203,7 +240,9 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
           timeline
         )}
 
-      {time && features.timecode && createPortal(<TimecodeField controller={controller} fps={fps} dropFrame={dropFrame} />, time)}
+      {/* Wide: the link button is joined to the timecode field, because it copies what the field shows. */}
+      {time && features.timecode && createPortal(<TimecodeField controller={controller} fps={fps} dropFrame={dropFrame} link={narrow ? null : linkButton} />, time)}
+      {time && !features.timecode && !narrow && linkButton && createPortal(linkButton, time)}
 
       {/* Wide: cut and step either side of Play. Narrow: step, Play, cut, so the two step buttons sit together. */}
       {transportStart &&
@@ -241,17 +280,21 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
           transportEnd
         )}
 
-      {/* Wide: Loop and Reset range after the transport. Narrow and touch: In, Out and Loop, because there is no keyboard. */}
-      {!narrow && rangeSlot && range && createPortal(<RangeControls controller={controller} features={features} />, rangeSlot)}
-      {narrow && rangeNarrow && range && createPortal(<RangeControls controller={controller} features={features} narrow />, rangeNarrow)}
+      {/* Wide: Loop and Reset range after the transport. */}
+      {!narrow && rangeSlot && (features.inOut || features.loop) && createPortal(<RangeControls controller={controller} features={features} />, rangeSlot)}
 
+      {/*
+        Wide: Markers, Capture, Guides, Zoom. Narrow and touch, one row of equal cells with the playback buttons
+        that follow: Markers, Loop, Capture, Link, Guides, Zoom (then Settings, Fullscreen). The range is set with
+        the handles there; `I` and `O` still work from a keyboard.
+      */}
       {tools &&
         createPortal(
           <>
-            {!narrow && (listed.length > 0 || listedChapters.length > 0) && (
-              <MarkersMenu markers={listed} chapters={listedChapters} controller={controller} fps={fps} />
-            )}
-            {capture && <CaptureMenu controller={controller} features={features} />}
+            {(listed.length > 0 || listedChapters.length > 0) && <MarkersMenu markers={listed} chapters={listedChapters} controller={controller} fps={fps} />}
+            {narrow && features.loop && <LoopButton controller={controller} />}
+            {features.grabFrame && <CaptureMenu controller={controller} />}
+            {narrow && linkButton}
             {guides && <GuidesMenu allowed={allowed} actions={guidesActions} />}
             {allowed.zoom && <ZoomMenu actions={zoomActions} note={renditionNote} />}
           </>,
@@ -279,23 +322,19 @@ function useRenditionNote(): string | null {
 const NO_CHAPTERS: readonly Chapter[] = [];
 
 /** A segmented control: buttons that share one fill. Renders nothing when it has no buttons. */
-function Segmented({ name, divided = false, children }: { name: string; divided?: boolean; children: ReactNode }) {
+function Segmented({ name, children }: { name: string; children: ReactNode }) {
   return (
-    <div className={cn('pro-seg', divided && 'pro-seg-divided')} data-pro-seg={name}>
+    <div className={'pro-seg'} data-pro-seg={name}>
       {children}
     </div>
   );
 }
 
-/**
- * A dock button with an accessible name and a tooltip that shows its shortcut, or why it is disabled. With `text` it
- * shows that word in place of an icon; the accessible name stays the full label.
- */
+/** A dock button with an accessible name and a tooltip that shows its shortcut, or why it is disabled. */
 function ToolButton({
   label,
   shortcut,
   icon,
-  text,
   onClick,
   pressed,
   disabled = false,
@@ -305,8 +344,7 @@ function ToolButton({
 }: {
   label: string;
   shortcut?: string;
-  icon?: ReactElement;
-  text?: string;
+  icon: ReactElement;
   onClick?: () => void;
   pressed?: boolean;
   disabled?: boolean;
@@ -325,7 +363,7 @@ function ToolButton({
     <ButtonTooltip label={tip}>
       <Button
         type="button"
-        className={cn('pro-tool', text && 'pro-tool-text', className)}
+        className={cn('pro-tool', className)}
         aria-label={disabled && disabledReason ? `${label}. ${disabledReason}` : label}
         aria-keyshortcuts={shortcut}
         aria-pressed={pressed}
@@ -334,8 +372,7 @@ function ToolButton({
         data-pro-tool={name}
         onClick={disabled ? undefined : onClick}
       >
-        {icon && <span className={'media-button-icon pro-tool-icon'}>{icon}</span>}
-        {text}
+        <span className={'media-button-icon pro-tool-icon'}>{icon}</span>
       </Button>
     </ButtonTooltip>
   );
@@ -345,8 +382,9 @@ function ToolButton({
  * The timecode: the full timecode of the current frame in a recessed field, and the duration in dim text beside it.
  * Pressing the field switches between timecode and seconds. It re-renders when the frame number changes and at no
  * other time. It is not a live region: the value is read on focus, and steps and seeks are announced separately.
+ * With `link`, the field and the link button are one segmented pair: `[ 00:00:14:20 | link ]`.
  */
-function TimecodeField({ controller, fps, dropFrame }: { controller: StudioController; fps: number; dropFrame: boolean }) {
+function TimecodeField({ controller, fps, dropFrame, link }: { controller: StudioController; fps: number; dropFrame: boolean; link: ReactNode }) {
   const store = useProStoreApi();
   const frame = useProStore((state) => state.frame);
   const display = useProStore((state) => state.timeDisplay);
@@ -369,19 +407,22 @@ function TimecodeField({ controller, fps, dropFrame }: { controller: StudioContr
 
   return (
     <>
-      <ButtonTooltip label={tip} align="start">
-        {/* The name is the visible value plus the toggle's purpose, so the label matches what is shown (WCAG 2.5.3). */}
-        <button type="button" className={'pro-timecode'} aria-labelledby={`${valueId} ${labelId}`} aria-pressed={seconds} onClick={() => store.toggleTimeDisplay()}>
-          <span id={valueId} className={'pro-timecode-values'} data-pro-timecode>
-            {approximate && <span className={'pro-timecode-approx'}>≈</span>}
-            {current}
-            <span className={'pro-visually-hidden'}> {t.of(total)}</span>
-          </span>
-          <span id={labelId} className={'pro-visually-hidden'}>
-            {t.timeInSeconds}
-          </span>
-        </button>
-      </ButtonTooltip>
+      <div className={'pro-timecode-pair'} data-link={link ? '' : undefined}>
+        <ButtonTooltip label={tip} align="start">
+          {/* The name is the visible value plus the toggle's purpose, so the label matches what is shown (WCAG 2.5.3). */}
+          <button type="button" className={'pro-timecode'} aria-labelledby={`${valueId} ${labelId}`} aria-pressed={seconds} onClick={() => store.toggleTimeDisplay()}>
+            <span id={valueId} className={'pro-timecode-values'} data-pro-timecode>
+              {approximate && <span className={'pro-timecode-approx'}>≈</span>}
+              {current}
+              <span className={'pro-visually-hidden'}> {t.of(total)}</span>
+            </span>
+            <span id={labelId} className={'pro-visually-hidden'}>
+              {t.timeInSeconds}
+            </span>
+          </button>
+        </ButtonTooltip>
+        {link}
+      </div>
       {duration > 0 && (
         <span className={'pro-timecode-total'} aria-hidden="true">
           {t.of(total)}
@@ -392,27 +433,41 @@ function TimecodeField({ controller, fps, dropFrame }: { controller: StudioContr
 }
 
 /**
- * Loop and the range buttons. Wide: a Loop toggle and, only while a range is set, a small Reset range button. Narrow
- * and touch: a segmented In, Out, Loop control, because there is no keyboard for `I` and `O`; the buttons set the
- * point at the playhead. Loop loops the range when one is set, otherwise the whole video.
+ * The link button: copies a link to the frame the timecode field shows. After a copy its icon is a check for a
+ * moment and its tooltip says so; the announcement (with the timecode) comes from the controller.
  */
-function RangeControls({ controller, features, narrow = false }: { controller: StudioController; features: Readonly<FeatureFlags>; narrow?: boolean }) {
+function LinkButton({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
+  const tip = copied ? (
+    <span>{t.linkCopied}</span>
+  ) : (
+    <>
+      <span>{t.copyLink}</span>
+      <kbd className={'pro-kbd'}>S</kbd>
+    </>
+  );
+  return (
+    <ButtonTooltip label={tip}>
+      <Button type="button" className={'pro-tool pro-tool-link'} aria-label={t.copyLink} aria-keyshortcuts="S" data-copied={copied ? '' : undefined} data-pro-tool="link" onClick={onCopy}>
+        <span className={'media-button-icon pro-tool-icon pro-link-icon'}>
+          <LinkIcon />
+        </span>
+        <span className={'media-button-icon pro-tool-icon pro-link-check'}>
+          <CheckIcon />
+        </span>
+      </Button>
+    </ButtonTooltip>
+  );
+}
+
+/** Loop: the range when one is set, otherwise the whole video. */
+function LoopButton({ controller }: { controller: StudioController }) {
   const looping = useProStore((state) => state.loopMode !== 'off');
+  return <ToolButton name="loop" label={t.loop} shortcut="R" icon={<LoopIcon />} pressed={looping} onClick={controller.toggleLoop} />;
+}
+
+/** Wide dock: the Loop toggle and, only while a range is set, a small Reset range button. */
+function RangeControls({ controller, features }: { controller: StudioController; features: Readonly<FeatureFlags> }) {
   const hasRange = useProStore((state) => state.inPoint !== null || state.outPoint !== null);
-
-  const loop = features.loop && <ToolButton name="loop" label={t.loop} shortcut="R" icon={<LoopIcon />} pressed={looping} onClick={controller.toggleLoop} />;
-
-  if (narrow) {
-    return (
-      <div className={'pro-range'} role="group" aria-label={t.range}>
-        <Segmented name="range" divided>
-          {features.inOut && <ToolButton label={t.setIn} text={t.in} onClick={controller.setIn} />}
-          {features.inOut && <ToolButton label={t.setOut} text={t.out} onClick={controller.setOut} />}
-          {loop}
-        </Segmented>
-      </div>
-    );
-  }
 
   const reset = (event: { currentTarget: HTMLElement }) => {
     // The button goes away with the range: hand focus to its neighbour, not to the page.
@@ -423,7 +478,7 @@ function RangeControls({ controller, features, narrow = false }: { controller: S
 
   return (
     <div className={'pro-range'} role="group" aria-label={t.range}>
-      {loop}
+      {features.loop && <LoopButton controller={controller} />}
       {features.inOut && hasRange && (
         <ButtonTooltip label={<span>{t.resetRange}</span>}>
           <Button type="button" className={'pro-tool pro-tool-reset'} aria-label={t.resetRange} onClick={reset}>
@@ -531,35 +586,6 @@ function MarkersMenu(props: MarkerListProps) {
   );
 }
 
-/**
- * The same list as a page of the settings menu, for the narrow dock. It is rendered inside the settings menu's own
- * tree (see `useSetProSettingsItems`), so it takes everything it needs as props.
- */
-function MarkersSubmenu(props: MarkerListProps) {
-  const title = props.markers.length > 0 ? t.markers : t.chapters;
-  return (
-    <Menu.Root>
-      <Menu.Trigger className={'media-menu-item'}>
-        <span className={'media-menu-icon pro-tool-icon'}>
-          <BookmarkIcon />
-        </span>
-        <span>{title}</span>
-        <span className={'media-menu-hint'}>
-          <span className={'media-menu-hint-label'}>{props.markers.length || props.chapters.length}</span>
-          <ChevronIcon className={'media-menu-icon media-menu-forward-chevron'} />
-        </span>
-      </Menu.Trigger>
-      <Menu.Content className={'media-menu-content'}>
-        <Menu.Item className={'media-menu-item media-menu-back-item'}>
-          <ChevronIcon className={'media-menu-icon media-menu-back-chevron'} />
-          <span>{title}</span>
-        </Menu.Item>
-        <MarkerItems {...props} />
-      </Menu.Content>
-    </Menu.Root>
-  );
-}
-
 function MenuAction({ label, shortcut, hint, disabled = false, onSelect }: { label: string; shortcut?: string; hint?: string; disabled?: boolean; onSelect: () => void }) {
   return (
     <Menu.Item className={'media-menu-item'} disabled={disabled} aria-label={disabled && hint ? `${label}. ${hint}` : undefined} onSelect={onSelect}>
@@ -574,17 +600,14 @@ function MenuAction({ label, shortcut, hint, disabled = false, onSelect }: { lab
   );
 }
 
-/** The Capture menu: grab or copy the frame, or copy a link at the timecode. */
-function CaptureMenu({ controller, features }: { controller: StudioController; features: Readonly<FeatureFlags> }) {
+/** The Capture menu: the image actions. Save the frame as a file, or copy it. */
+function CaptureMenu({ controller }: { controller: StudioController }) {
   // Firefox before 127 has no `ClipboardItem`: the item stays, disabled, and says so instead of failing on activation.
   const canCopyImage = typeof ClipboardItem !== 'undefined' && typeof navigator.clipboard?.write === 'function';
-  const link = features.copyTimecodeLink;
   return (
     <ToolMenu name="capture" label={t.capture} icon={<GrabFrameIcon />} word={t.capture}>
-      {features.grabFrame && <MenuAction label={t.grab} shortcut="G" onSelect={controller.grabFrame} />}
-      {features.grabFrame && <MenuAction label={t.copyImage} disabled={!canCopyImage} hint={canCopyImage ? undefined : t.copyImageHint} onSelect={controller.copyFrameImage} />}
-      {features.grabFrame && link && <Menu.Separator className={'pro-menu-separator'} />}
-      {features.copyTimecodeLink && <MenuAction label={t.copyLink} onSelect={controller.copyLink} />}
+      <MenuAction label={t.grab} shortcut="G" onSelect={controller.grabFrame} />
+      <MenuAction label={t.copyImage} shortcut="Shift+G" disabled={!canCopyImage} hint={canCopyImage ? undefined : t.copyImageHint} onSelect={controller.copyFrameImage} />
     </ToolMenu>
   );
 }
@@ -599,11 +622,13 @@ function StudioHotkeys({
   features,
   paused,
   guidesActions,
+  copyLink,
 }: {
   controller: StudioController;
   features: Readonly<FeatureFlags>;
   paused: boolean;
   guidesActions: GuidesActions | null;
+  copyLink: () => void;
 }) {
   const noStep = !features.frameStep;
   const noInOut = !features.inOut;
@@ -622,7 +647,10 @@ function StudioHotkeys({
   useHotkey({ keys: 'r', action: 'toggleLoop', repeatable: false, disabled: !features.loop, onActivate: controller.toggleLoop });
   useHotkey({ keys: '[', action: 'previousCut', repeatable: false, disabled: noCuts, onActivate: () => controller.goToCut('previous') });
   useHotkey({ keys: ']', action: 'nextCut', repeatable: false, disabled: noCuts, onActivate: () => controller.goToCut('next') });
+  // The G family: `G` saves the frame, `Shift+G` copies it. `S` ("share") copies the link at the timecode.
   useHotkey({ keys: 'g', action: 'grabFrame', repeatable: false, disabled: !features.grabFrame, onActivate: controller.grabFrame });
+  useHotkey({ keys: 'Shift+g', action: 'copyFrameImage', repeatable: false, disabled: !features.grabFrame, onActivate: controller.copyFrameImage });
+  useHotkey({ keys: 's', action: 'copyLink', repeatable: false, disabled: !features.copyTimecodeLink, onActivate: copyLink });
   // Shift alone with V; the hotkey layer ignores keys typed into text fields and matches modifiers exactly.
   useHotkey({ keys: 'Shift+v', action: 'toggleGuides', repeatable: false, disabled: !guidesActions, onActivate: () => guidesActions?.toggleHidden() });
 
@@ -694,13 +722,17 @@ function HelpRows({ features, guides, zoom }: { features: Readonly<FeatureFlags>
       list.push({ keys: ['←', '→'], label: t.help.stepPaused });
       list.push({ keys: ['Shift', '←', '→'], label: t.help.jump });
     }
+    if (features.copyTimecodeLink) list.push({ keys: ['S'], label: t.help.link });
     if (features.inOut) {
       list.push({ keys: ['I', 'O'], label: t.help.setInOut });
       list.push({ keys: ['Shift', 'I', 'O'], label: t.help.clearInOut });
     }
     if (features.loop) list.push({ keys: ['R'], label: t.help.loop });
     if (features.shotNav) list.push({ keys: ['[', ']'], label: features.markers ? t.help.cutsMarkers : t.help.cuts });
-    if (features.grabFrame) list.push({ keys: ['G'], label: t.help.grab });
+    if (features.grabFrame) {
+      list.push({ keys: ['G'], label: t.help.grab });
+      list.push({ keys: ['Shift', 'G'], label: t.help.copyImage });
+    }
     if (features.inOut) {
       list.push({ keys: ['←', '→'], label: t.help.handles });
       list.push({ keys: ['Shift', '←', '→'], label: t.help.handlesJump });
