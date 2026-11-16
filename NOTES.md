@@ -680,6 +680,9 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Backlog
 
+- The narrow dock on a player under 294 px: six 44 px cells do not fit (6 px into the padding at 288 px). Options: less side padding there, or one more fold. See "Dock polish".
+- Row one of the narrow dock is 2 to 4 px too long at a player 350 to 353 px wide.
+- The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
 - Give `FramelineSkin` a title for grabbed file names (`<title>_<timecode>.png`).
 - Stop the Out frame flashing at the loop point (jump one frame earlier) if it bothers in use.
@@ -1112,3 +1115,79 @@ Added to the existing token block: ButtonText borders on buttons, the time toggl
 - `prefers-contrast: more` and `forced-colors` were emulated in Chromium only.
 - Firefox 121 to 126 (no `ClipboardItem`): the disabled Copy item was reasoned from the feature test, not run in those versions.
 - Each step 9 commit was built from a working tree that passed typecheck, tests, build, contrast and the gate as a whole; the intermediate commits were not checked out and rebuilt one by one.
+
+## Dock polish: share link, narrow dock, neutral palette, tactile controls, motion (16 Nov 2026)
+
+Requirements: `specs/dock-polish.md`. Checked in Playwright 1.65 (`playwright-core` from the repo): the installed Google Chrome headless, Playwright's Firefox 159 and WebKit (Safari 27 build), against the local production build and then the public URL. Screenshots: `design/screenshots/dock-polish/`, each opened and looked at. On the monitor page the window is wider than the player (16 px margins when narrow, 24 px when wide), and the page caps the player at 1280 px; **every width below is the player's own width**, which is what the container queries read.
+
+### What was checked before binding the keys
+- **`S` and `Shift+G` are free.** Searched every `useHotkey` and `<Hotkey>` in `src/` (the full list: `Space`, `K`, `M`, `F`, `C`, arrows, `J`, `L`, `0`–`9`, `Home`, `End`, `<`, `>`, `Shift+?`, `Shift+/`, `,`, `.`, `Shift+←/→`, `I`, `O`, `Shift+I`, `Shift+O`, `R`, `[`, `]`, `G`, `Shift+V`, `Z`, `Shift+Z`, `Shift+Alt+arrows`). The installed `@videojs/react` 10.4.0 has no hotkey map of its own that applies to a custom skin: keys exist only where a skin declares them, and its packaged skins' map (`dist/dev/internal/skins/shared/.../playback-hotkeys.js`: `Space`, `K`, `M`, arrows, `L`, `J`, `0-9`, `Home`, `End`, `>`, `<`) has neither key. Patterns match modifiers exactly (step 7), so `G` and `Shift+G` do not collide.
+- **`Menu.Trigger`** sets `aria-expanded="true"` while its menu is open (`@videojs/core` `core/ui/menu/core.js`, `getTriggerAttrs`), and no open attribute of its own; the pressed look selects on that.
+- **`Menu.Popup` exposes open and close state:** `data-open`, `data-side`, `data-align`, and `data-starting-style` / `data-ending-style` from `TransitionDataAttrs` (`core/ui/menu/data.js`; `docs/reference/components/menu.md`). Seen in the DOM: `data-starting-style` for the first frame of opening, `data-ending-style` for about 80 ms while closing. So menus got the open and close motion.
+- **Video.js positions a popup with the `translate` property** (inline `translate: clamp(…)`, `dom/ui/popover/positioning.js`). The spec's `translate: 0 2px → 0` would have been overridden by that inline style, and `translate` in the popup's transition would have animated every reposition. The 2 px move is a `transform` instead, which Video.js leaves alone.
+- **A tooltip closes when its trigger is clicked** (observed; not documented). After a click on the link button the "Link copied" label is therefore seen only if the pointer comes back within the 1.2 s; after `Enter` on the focused button the tooltip stays and reads "Link copied".
+- Video.js buttons set no `aria-pressed` (searched `core/ui`); only our own tool buttons do.
+
+### The link button
+- `[ 00:00:14:20 | link ]`: 2 px gap, the group radius (8 px) on the outer corners and 2 px on the inner ones, the link 40 px wide and as tall as the field (34 px at comfortable density; `--fl-control-size` + 6 px, so 34 px at compact). `S`, the button and the smallest dock's settings item share one action (`useCopyLink`).
+- After a copy: the check for 1200 ms (a 90 ms cross-fade), the tooltip label "Link copied", and the announcement "Link copied, 00:00:14:20". **The toast is no longer shown where the link button is on screen** (the check is the visible confirmation); it still shows where the button is folded away (under 340 px), with the same text. A refused clipboard keeps the old message and toast, and shows no check.
+- With `timecode: false` and the link on, the link button stands alone in the left column.
+- Capture holds Grab frame (`G`) and Copy frame image (`Shift+G`), and is not rendered with `grabFrame: false`. The narrow-only markers page of the settings menu and the In and Out buttons are gone, with their strings (`in`, `out`, `setIn`, `setOut`), the `pro-tool-text` and `pro-seg-divided` styles and the `range-narrow` slot.
+
+### The narrow dock
+- Row two is `display: grid; grid-auto-flow: column; grid-auto-columns: minmax(44px, 1fr)`, each control centred in its cell, in source order: Markers, Loop, Capture, Link, Guides, Zoom, Settings, Fullscreen. `grid-auto-columns` is used, not `repeat(N, …)`, because N changes with the flags and the folds. The cause of the old crowding was twofold: the menu buttons laid their icon out from the start of a 44 px button once the badge and chevron were hidden, and the "Fit" button was 52 px wide. Menu buttons centre their contents now, and every button of the row is 44 x 44.
+- Measured (player width: cells, step between centres): 430: 8, 50 px. 390: 8, 45 px. 360: 7 (no Zoom), 47 px. 320: 6 (no Zoom, no Link; "Copy link at timecode" in Settings), 48 px. No overflow, no wrap, two rows.
+- **Under 294 px the six cells no longer fit** (264 px of cells, 30 px of padding). At 288 px, which is what a 320 px *window* gives on the monitor page, the row runs 6 px into the right padding (`narrow-288-*.png`); under 280 px Fullscreen passes the player's edge. Nothing was folded for it: the spec's fold rules stop at 340 px and say not to invent another. The author decides (Backlog).
+- **The narrow switch moved from 700 to 740 px**, and the badges-and-divider step from 800 to 820 px. The link button adds 42 px to the left column; with a range set, Reset range ran into the Markers button from 700 to 735 px (28 px of overlap at 700), and at exactly 800 px the gap between the columns was 6 px instead of 16. Same remedy as step 7b used for the Zoom button. After it, a sweep from 1500 px down in 4 px steps finds no overlap and no gap under the grid's own in the wide arrangement. The other steps (1100, 1040, 940, 900) did not need to move.
+- Found, not changed (row one "stays as it is"): at a player 350 to 353 px wide row one is 2 to 4 px too long, just above the 350 px rule that drops the cut buttons. The live build before this work does the same.
+
+### Palette
+Every surface token is a true grey at about the old lightness, as in the spec's table; no value had to be nudged. Under `prefers-contrast: more`, same rule: `--fl-line` `#7b7b7b`, `--fl-text-dim` `#cccccc`, `--fl-text-dim-raised` `#d9d9d9`, ticks `#8d8d8d` / `#a7a7a7` / `#bdbdbd`, `--fl-buffer` `#6f6f6f`, `--fl-handle-idle` `#b7b7b7`, `--fl-ruler-label` `#d3d3d3`. `node scripts/contrast.mjs`: every row passes in both columns (lowest that matter: Viewer fill against its track 3.17:1, idle handle against the track 3.16:1, played band against the unplayed 3.27:1, dim text on a control 5.09:1). The blended ruler label on the dock is `#9a9a9a`, two steps from `--fl-text-dim` (`#9c9c9c`), 5.92:1.
+Also made neutral, outside the table: the caption cue's literal colours in `base.css` (`#f2f2f2` on `rgb(15 15 15 / .85)`), the guide labels' backdrop (`rgb(15 15 15 / .72)`) and the tick fallbacks in the timeline script. **Not changed: the configurator page's own palette** (`page.css`), which still has the old blue-cast greys (`#151517`, `#1e1e20`); the spec covers `tokens.css`.
+
+### Tactile controls
+- `--fl-bevel` (1; 0 is flat), `--fl-hi`, `--fl-lo`, and one token per treatment (`--fl-raise-image/-shadow`, `--fl-press-image/-shadow`, `--fl-play-image/-shadow/-press-image`, `--fl-well-shadow`, `--fl-track-shadow`, `--fl-solid-image/-shadow`, `--fl-handle-image/-shadow/-shadow-dragging`, `--fl-pin-shadow`, `--fl-playhead-shadow`, `--fl-dock-edge`). The gradients are tokens so that one rule can set them all to `none`.
+- **Flat in three cases, by one rule each:** the overlay layout (`:not([data-layout="dock"])`: nothing tactile over the picture, so the Viewer overlay is unchanged apart from the palette), `prefers-contrast: more` and `forced-colors: active`. Checked by script in each: `--fl-bevel` is 0 and no element or pseudo-element of the skin has a gradient.
+- **Standalone buttons have no fill** (they never had one), so at rest they carry only the 5% top light, the 1 px highlight and the 1 px shadow; a segmented group is one raised object and its buttons are flat until pressed.
+- **Focus rings.** Buttons, the timecode field and the handles set their own shadow in a variable (`--fl-shade`) and one rule draws `box-shadow: var(--fl-shade)`; the focus rule draws `var(--fl-focus-halo), var(--fl-shade)`. Tabbed through all 21 stops of the wide dock with a range set: each has the 2 px accent outline, and its halo plus its own shadow (screenshots `focus-01` to `focus-21`).
+- Pressed applies to `aria-pressed="true"`, `aria-expanded="true"`, `data-pressed` (Loop, Zoom above Fit), `data-active` (captions on) and `:active`, but not `:active` on an `aria-disabled` button.
+- The marker pin's shadow is a `drop-shadow` filter on the pin's target, because the flag is cut out with `clip-path`, which would cut a `box-shadow` off. The playhead's shadow is a fifth `drop-shadow` after its outline, so it follows the head and the line as one shape.
+- The grip on a handle is two background layers (1 x 8 px each) over the gradient.
+
+### Motion
+- Tokens `--fl-duration-press` 60 ms, `--fl-duration-quick` 90 ms, and one more than the spec lists, **`--fl-duration-exit` 70 ms**, so that the two 70 ms closes (band, menu) also go to 0 under reduced motion. All 0 ms there (read from the computed style; `reduced-motion.js` passes on Studio, the Viewer and the page).
+- Computed: the playhead, the handles, the timecode digits, the ruler and the picture wrapper have no transition. The band has `opacity, transform, visibility` only; sampled per frame it goes 0 → 1 and `scaleY(.4)` → 1 in about 90 ms after `I`, and back in about 70 ms after `Shift+I`, then `visibility: hidden`. While a handle is dragged the band's transition is `none`. A cleared band keeps its last start and end while it fades (the component leaves the two variables in place).
+- **One duration differs from the spec.** Leaving a pressed state: the shadow and the icon take 90 ms, but the fill colour takes 120 ms, because `background-color` on the base rule also carries the hover, which the spec keeps at 120 ms, and a rule gives a property one duration. Entering is 60 ms for all three.
+- Menus: opacity and a 2 px `transform` over 120 ms on opening, 70 ms on closing (above).
+
+### Fix: the band's ends
+The source was the track's own radius: `.pro-tl-chapters` clips its content to a 4 px radius, so a band that reached an end of the track (only In or only Out set) was cut round there, next to the straight edge of the idle handle, and the empty track showed the same notch. With handles the track's ends are square now (`data-handles` on the timeline; without the `inOut` flag the track keeps its radius). Measured with a range set: In tab right edge 438.375 = band left 438.375; Out tab left 878.89 = band right 878.91. Before and after at 8x: `before-400-band-at-idle-in.png`, `before-400-track-end-at-idle-out.png`, `x400-only-in-band-end.png`, `x400-range-band-start.png`, `x400-range-band-end.png`.
+
+### Checks
+- `scripts/browser-checks/dock-polish.js` (new), wide and at players of 430, 390, 360, 320 and 668 px: the pair's geometry, `S` (clipboard text `…#t=00:00:14:00`, check on and off, announcement, no toast), a refused clipboard, `Shift+G` (clipboard holds `image/png`), the Capture menu's two items, the help rows, the narrow row's order, sizes, equal steps and fit, no In or Out buttons, `I` `O` `Z` from the keyboard, the settings menu with and without the link item, the Markers menu. All pass.
+- Flags on the configurator: `?copyTimecodeLink=0` (no link button, field radius 8 px all round, `S` does nothing, no `S` row in the help), `?grabFrame=0` (no Capture button, no `G` rows), `?timecode=0` (link button alone).
+- The existing checks on the final build: `viewer-gate` (1440 and 320, both pages; **no pro chunk requested**), `configurator`, `guides-menu-focus`, `handle-focus-ring`, `fullscreen-focus`, `zoom` at 1x and 2x, `two-players`, `reduced-motion` (three pages), `axe-audit` (seven states, one of them the narrow touch dock; no violations) pass. Unit tests 217, typecheck, build pass.
+- Firefox and WebKit: the wide dock with a range and the narrow dock render as in Chrome (`firefox-*.png`, `webkit-*.png`); no overlap, one row and two rows.
+
+### Bundle sizes (raw / gzip -9)
+| Chunk | Step 9 | Now |
+| --- | --- | --- |
+| Viewer path JS (`demo-video-*.js`) | 953,211 / 280,118 B | 953,175 / 280,113 B |
+| Skin CSS (`demo-video-*.css`) | 33,941 / 6,094 B | 37,696 / 6,676 B (the bevel tokens and the dock's button rules; the Viewer loads them and uses none in its overlay) |
+| Pro runtime | 12,761 / 5,039 B | 12,788 / 5,044 B |
+| Studio JS | 58,614 / 18,635 B | 60,246 / 19,115 B |
+| Studio CSS | 24,214 / 4,357 B | 26,589 / 4,757 B |
+| The page's JS / CSS | 7,479 / 3,452 B, 8,137 / 2,472 B | 7,539 / 3,479 B, 8,137 / 2,472 B |
+
+### Public URL (https://frameline.artmarchuk.me, after the deploy)
+`/`, `/preview.html`, `/workbench.html` and `/og.png` answer 200. In Chrome: `dock-polish.js` (wide and five narrow widths), `viewer-gate` (three runs, **no pro chunk requested**), `configurator`, `guides-menu-focus`, `handle-focus-ring`, `zoom` at 1x and 2x, `reduced-motion` (three pages) and `axe-audit` (seven states) pass. `dock-polish.js` also passes in Playwright's Firefox and WebKit there, without the clipboard read-back (those contexts grant no clipboard permission). Compact density looked at on the live site (`compact-1440-range.png`): the link button is 34 x 28 px beside a 28 px field.
+
+### Unverified (dock polish)
+- **`range-playback.js` is intermittent.** On this build it passed 11 of 16 runs locally; on the build that was live before this work it passed 3 of 4. The usual failure is the step "play from outside the range": 800 ms after play the head is at about 12.4 s where 10 to 12 is expected. The range engine (`controller.ts`) was not touched here, and the check's waits are fixed, so this reads as a timing-sensitive check, possibly a real race between a host seek and the engine's own loop seek. Not investigated further.
+- **A real pointer and a real finger:** how the press feels, the half-pixel icon move at 1x (seen at 2x and 8x only), the narrow row on a phone (touch was emulated), dragging a handle with its larger shadow.
+- **The floor versions** (Chrome 111, Firefox 121, Safari 16.4): `:is()`, `:where()`, `:has()`, the `translate` property, `calc()` inside `rgb()` alpha and `grid-auto-columns: minmax()` are inside the floor on paper; only current builds were run. Safari itself and iOS were not run (Playwright's WebKit was).
+- **`prefers-contrast: more` and `forced-colors`** were emulated in Chromium only; Windows High Contrast itself was not run.
+- **The clipboard in Firefox and Safari:** that `S` writes the link and `Shift+G` the image was read back in Chrome only.
+- **A screen reader:** "Link copied, 00:00:14:20" was read from the live region's text, not heard.
+- **Real fullscreen** with the restyled dock (headless Chrome refuses fullscreen).
+- **A player under 294 px** in the narrow layout: known to overflow by 6 px at 288 px (above).

@@ -166,6 +166,8 @@ These are added to the YouTube map in the Studio tier. Each works only while its
 | `[` `]` | Previous cut, next cut (chapters, or `markers` when there are no chapters) |
 | `←` `→` on an In or Out handle | Move the handle one frame; `Shift` ten; `Home` `End` to its limits; `Delete` unsets it |
 | `G` | Grab the current frame as a PNG |
+| `Shift+G` | Copy the current frame to the clipboard as an image |
+| `S` | Copy a link to the current frame ("share") |
 | `Shift+V` | Hide every guide, or show them again |
 | `Z` | Zoom: the next level (Fit, 100%, 150%, 200%, 400%, and Fit again) |
 | `Shift+Z` | Zoom: the previous level |
@@ -194,18 +196,18 @@ The Studio dock has two rows.
 
 1. **Timeline:** the ruler, the track with the range band and its two handles, the marker pins.
 2. **Main row**, in three columns, as on an editor's monitor:
-   - **Left:** the **timecode** of the current frame (press it to switch to seconds) and the duration beside it.
+   - **Left:** the **timecode** of the current frame (press it to switch to seconds), joined to a **link** button that copies a link to that frame (`S`), and the duration beside them.
    - **Centre:** **transport** (previous cut, step back, Play, step forward, next cut), then **Loop** and, only while a range is set, a small **Reset range** button.
    - **Right:** the **Markers**, **Capture** and **Guides** menus and the **Zoom** button, then **playback**: captions, settings, mute with a short volume slider, fullscreen. Picture-in-picture is in the settings menu.
 
 The menus open upward and are real menus: arrow keys, Enter, Escape, and focus returns to the button.
 
 - **Markers** lists the host's markers with their timecodes, and the media's chapters under a second heading. Choosing one seeks to it.
-- **Capture:** Grab frame (downloads a PNG, `G`), Copy frame image, Copy link at timecode.
+- **Capture:** the image actions. Grab frame (downloads a PNG, `G`) and Copy frame image (`Shift+G`). The button is not shown with `grabFrame: false`.
 - **Guides:** guides, crop masks and platform zones. See "The Guides menu".
 - **Zoom:** a text button that shows the level ("Fit", "150%") and opens the list of levels. See "Zoom".
 
-The row follows the player's own width. It is one row down to 700 px, shedding in this order: the volume slider (under 1100 px), the duration text (1040), the captions button (940; `C` and the settings menu remain), the menu chevrons (900), the count badges (800). **Under 700 px, and on any touch device**, it is two rows: the timecode, step back, step forward, Play, previous cut, next cut; then a segmented **In, Out, Loop** control and Capture, Guides, Zoom, Settings, Fullscreen. In and Out appear as buttons there because touch has no keyboard: they set the point at the playhead. Mute and the markers are then in the settings menu. Under 410 px In, Out, Loop take a row of their own (three rows), and under 350 px the cut buttons step aside (`[` `]` and the markers list still work).
+The row follows the player's own width. It is one row down to 740 px, shedding in this order: the volume slider (under 1100 px), the duration text (1040), the captions button (940; `C` and the settings menu remain), the menu chevrons (900), the count badges (820). **Under 740 px, and on any touch device**, it is two rows. Row one: the timecode, step back, step forward, Play, previous cut, next cut (under 350 px the cut buttons step aside; `[` `]` and the Markers menu still work). Row two is one row of equal cells, each a 44 px target: **Markers, Loop, Capture, Link, Guides, Zoom, Settings, Fullscreen**. There are no In and Out buttons there: the range is set with the handles on the timeline, and `I` and `O` still work from a keyboard. Mute is in the settings menu. Eight cells need a 382 px player, so the row folds: under 382 px the Zoom button is not shown (`Z`, `Shift+Z` and `apiRef.setZoom` still zoom), and under 340 px the Link button is not shown and "Copy link at timecode" is an item of the settings menu. Six cells need a 294 px player; on a narrower one the row runs into the dock's side padding.
 
 ### The timeline
 
@@ -224,7 +226,7 @@ The range lives on the timeline, like the work-area bar of an editor. **Two hand
 - **Drag** a handle to set the point. It snaps to frames, and magnetically to the playhead and to markers when it comes within 5 px of them. Drag it back to its end of the track, or **double-click** it, to unset the point.
 - **Keyboard:** each handle is a slider named "In point" or "Out point". Focused: `←` `→` move it one frame, `Shift+←` `Shift+→` ten, `Home` `End` go to its limits, `Delete` or `Backspace` unsets it.
 - **`I` and `O`** set In and Out at the current frame from anywhere in the player; `Shift+I` and `Shift+O` unset them.
-- **Touch and narrow players** also get In and Out buttons.
+- **Touch and narrow players** set the range with the handles, which are 44 px targets there.
 
 **Why both.** On most timelines a pixel covers more than one frame (60 s at 24 fps is 1440 frames across about 1250 px), so dragging is the coarse tool. For an exact frame, step to it and press `I` or `O`, or focus a handle and nudge it with the arrow keys.
 
@@ -317,7 +319,7 @@ Zoom changes how closely you look at the picture, never the picture itself. The 
 
 ### Links to a frame
 
-Copy link writes the position into the page URL's hash as `#t=HH:MM:SS:FF`, the timecode on screen, and keeps anything else the host app has in the hash. A page opened with such a hash seeks to that frame, paused. Plain seconds (`#t=12.5`) are also read.
+The link button beside the timecode (or `S`) copies the page URL with the position in its hash as `#t=HH:MM:SS:FF`, the timecode on screen, and keeps anything else the host app has in the hash. The button shows a check for a moment and the copy is announced with the timecode; `onCopyLink` reports it. `copyTimecodeLink: false` removes the button and the key. A page opened with such a hash seeks to that frame, paused. Plain seconds (`#t=12.5`) are also read.
 
 ### Grabbing frames
 
@@ -327,7 +329,11 @@ Grab frame (in the Capture menu, or `G`) saves the raw frame at the video's own 
 
 The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"`, `"150"`, `"200"` or `"400"` while zoomed. The picture's rectangle inside the stage is published as `--fl-picture-x`, `--fl-picture-y`, `--fl-picture-w` and `--fl-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--fl-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
-**The look:** calm graphite surfaces and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--fl-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter graphite (`--fl-on`), Play is a neutral filled button, and the playhead is white.
+**The look:** calm, truly neutral dark surfaces (R = G = B, so the surround adds no cast to the picture; the dock is macOS's dark window grey) and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--fl-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter grey (`--fl-on`), Play is a neutral filled button, and the playhead is white.
+
+**Tactile, in the dock only.** Controls read as slightly raised, toggles that are on (and a button whose menu is open) as pressed in, the timecode field and the track as recessed, and the range band, handles and pins as solid things on the track. It is all gradients and 1 px shadows scaled by one token, `--fl-bevel` (`1`; `0` is flat). Nothing of it is drawn over the picture: the overlay layout is flat, as are `prefers-contrast: more` and forced colours.
+
+**Motion.** Nothing that shows time animates: the playhead, the timecode, the ruler, the handles and the band's ends follow the media and the pointer exactly. What does move is short: a press (60 ms in, 90 ms out), the range band fading in when a range is set (90 ms) and out when it is cleared (70 ms), hovers and menus (120 ms; a menu closes in 70 ms). `prefers-reduced-motion` sets every duration to zero.
 
 ### Tokens
 
@@ -338,9 +344,10 @@ Its own tokens are `--fl-*`, all defined in `src/styles/tokens.css`. The ones a 
 | Token | Default | What it is |
 | --- | --- | --- |
 | `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent: played range, set handles, focus ring, selected marker |
-| `--fl-surface-0` … `--fl-surface-3` | `#0e0e10` … `#3a3a3e` | Graphite surfaces: behind the picture, the dock, control fill, hover |
-| `--fl-on` | `#46464b` | A toggle that is on |
-| `--fl-text`, `--fl-text-dim` | `#f2f2f4`, `#9a9aa0` | Text and secondary text |
+| `--fl-surface-0` … `--fl-surface-3` | `#0f0f0f`, `#1e1e1e`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture, the dock, control fill, hover |
+| `--fl-on` | `#474747` | A toggle that is on |
+| `--fl-text`, `--fl-text-dim` | `#f2f2f2`, `#9c9c9c` | Text and secondary text |
+| `--fl-bevel` | `1` | Strength of the tactile treatment in the dock; `0` is flat |
 | `--fl-stage-ratio` | `16 / 9` | The picture's stage in the dock layout |
 | `--fl-frame-border` | `0` | `1` draws a hairline and a 10 px radius around the player |
 
