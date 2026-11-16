@@ -503,9 +503,52 @@
     opacity: 0;
   }
 
+  /* Forced colours (Windows High Contrast): the system replaces fills, so every part gets a system colour or a border. */
   @media (forced-colors: active) {
     .pro-skin .pro-tl-track {
       border: 1px solid CanvasText;
+    }
+
+    /* The range band keeps a fill, in Highlight, so it stays distinguishable from the track. */
+    .pro-skin .pro-tl-band,
+    .pro-skin .pro-tl-band-played {
+      forced-color-adjust: none;
+      background-color: Highlight;
+    }
+
+    .pro-skin .pro-tl-band-played {
+      border-bottom: 2px solid HighlightText;
+    }
+
+    .pro-skin .pro-tl-handle {
+      forced-color-adjust: none;
+      color: CanvasText;
+      border: 1px solid Canvas;
+    }
+
+    .pro-skin .pro-tl-handle[data-set] {
+      color: Highlight;
+    }
+
+    .pro-skin .pro-tl-playhead {
+      --fl-playhead-edge: Canvas;
+    }
+
+    .pro-skin .pro-tl-playhead::before,
+    .pro-skin .pro-tl-playhead::after {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+    }
+
+    .pro-skin .pro-tl-pin::after,
+    .pro-skin .pro-tl-span {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+      outline: 1px solid Canvas;
+    }
+
+    .pro-skin .pro-tl-pin[data-selected]::after {
+      background-color: Highlight;
     }
   }
 }

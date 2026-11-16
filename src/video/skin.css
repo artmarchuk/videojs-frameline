@@ -197,9 +197,40 @@
     box-shadow: var(--fl-focus-halo);
   }
 
+  /* Forced colours (Windows High Contrast): boundaries from ButtonText, selected and checked states from Highlight. */
   @media (forced-colors: active) {
-    .pro-skin .media-button {
+    .pro-skin .media-button,
+    .pro-skin .media-time-toggle,
+    .pro-skin .pro-timecode {
       border: 1px solid ButtonText;
+    }
+
+    .pro-skin .media-button[aria-pressed="true"],
+    .pro-skin .media-button[data-pressed] {
+      forced-color-adjust: none;
+      color: HighlightText;
+      background-color: Highlight;
+      border-color: ButtonText;
+    }
+
+    .pro-skin .media-menu-item {
+      border: 1px solid transparent;
+    }
+
+    .pro-skin .media-menu-item[data-highlighted],
+    .pro-skin .media-menu-item:focus-visible {
+      border-color: Highlight;
+    }
+
+    .pro-skin .media-menu-item[aria-checked="true"],
+    .pro-skin .media-menu-item[data-checked] {
+      forced-color-adjust: none;
+      color: HighlightText;
+      background-color: Highlight;
+    }
+
+    .pro-skin .media-menu-item[aria-checked="true"][data-highlighted] {
+      border-color: HighlightText;
     }
   }
 
@@ -708,6 +739,7 @@
 
   .pro-skin .media-volume-slider {
     position: relative;
+    z-index: 1; /* the thumb overhangs the slider at full volume; it paints over the next button, not under it */
     display: flex;
     align-items: center;
     width: calc(var(--media-spacing) * 16);
@@ -739,7 +771,6 @@
   .pro-skin:not([data-bar="pro"]) .pro-volume:focus-within .media-volume-slider,
   .pro-skin:not([data-bar="pro"]) .media-volume-slider[data-dragging] {
     width: calc(var(--media-spacing) * 16);
-    z-index: 1; /* the thumb overhangs the slider at full volume; it paints over the next button, not under it */
     margin-right: calc(var(--media-spacing) * 2);
     overflow: visible;
     opacity: 1;
