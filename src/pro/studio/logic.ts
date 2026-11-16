@@ -2,7 +2,7 @@
  * Studio transport logic. Pure: no React, no DOM. Everything the Studio controls decide is decided here, so it can be
  * tested without a browser.
  */
-import type { LoopMode, Marker } from '../store';
+import type { Marker } from '../store';
 import { formatTimecode, framesFromSeconds, parseTimecode, resolveFrameRate, type TimecodeOptions } from '../timecode';
 
 /**
@@ -110,32 +110,48 @@ export function effectiveRange(range: Range, duration: number): { start: number;
   return { start: range.in ?? 0, end };
 }
 
-export type LoopDecision = 'continue' | 'jumpToIn';
+export type PlaybackDecision = 'continue' | 'jumpToIn' | 'stopAtOut';
 
-export interface LoopInput {
+export interface PlaybackInput {
   mediaTime: number;
   range: Range;
   duration: number;
   fps: number;
-  /** `'range'`: loop the range. `'whole'`: the whole video loops when it ends, which the `ended` event handles. */
-  loopMode: LoopMode;
-  /** Playback is just starting: with loop on, a playhead outside the range jumps to In first. */
+  /** Loop on: at Out, playback goes back to In. Off: it pauses on the Out frame. */
+  loop: boolean;
+  /** Playback is just starting: from outside the range, or from the Out frame, it starts at In. */
   starting?: boolean;
 }
 
-/**
- * What playback should do at `mediaTime`. Out is treated as reached half a frame early, because the clock reports the
- * frame that is already on screen; expect a one-frame overshoot now and then, loops are not exact.
- */
-export function loopDecision(input: LoopInput): LoopDecision {
-  if (input.loopMode !== 'range') return 'continue';
+/** Out counts as reached half a frame early, because the clock reports the frame that is already on screen. */
+function halfFrame(fps: number): number {
+  return SEEK_OFFSET / resolveFrameRate(fps).exact;
+}
 
+/** Whether `mediaTime` is outside the range: before In, or at or past Out (half a frame early). */
+export function outsideRange(mediaTime: number, range: Range, duration: number, fps: number): boolean {
+  const effective = effectiveRange(range, duration);
+  if (!effective) return false;
+  const half = halfFrame(fps);
+  return mediaTime < effective.start - half || (effective.end !== null && mediaTime >= effective.end - half);
+}
+
+/**
+ * What playback does at `mediaTime` while a range is set. Starting from outside the range, or from the Out frame, it
+ * starts at In. While playing: at Out it goes back to In with loop on and pauses on the Out frame with loop off;
+ * before In (the range was just set or moved past the playhead) it goes to In. Expect a one-frame overshoot at the
+ * loop point now and then: loops are not exact.
+ */
+export function playbackDecision(input: PlaybackInput): PlaybackDecision {
   const range = effectiveRange(input.range, input.duration);
   if (!range) return 'continue';
 
-  const half = SEEK_OFFSET / resolveFrameRate(input.fps).exact;
-  if (range.end !== null && input.mediaTime >= range.end - half) return 'jumpToIn';
-  if (input.starting && input.mediaTime < range.start - half) return 'jumpToIn';
+  const half = halfFrame(input.fps);
+  const atOut = range.end !== null && input.mediaTime >= range.end - half;
+  const beforeIn = input.mediaTime < range.start - half;
+  if (input.starting) return atOut || beforeIn ? 'jumpToIn' : 'continue';
+  if (atOut) return input.loop ? 'jumpToIn' : 'stopAtOut';
+  if (beforeIn) return 'jumpToIn';
   return 'continue';
 }
 

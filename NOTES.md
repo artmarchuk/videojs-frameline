@@ -676,6 +676,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - Step 2: icons are our own drawings (no base set), in `src/video/icons/`.
 - Step 2: the skin's own strings are in `src/video/strings.ts` (English only). Video.js control labels come from Video.js i18n and do follow the locale.
 - Only `@videojs/*` packages are pinned exactly. The other dependencies keep the scaffold's caret ranges, locked by the lockfile.
+- **A set range confines playback (Studio).** Loop is on from the start where the host allows it (`createProStore({ loop })`). Playback starting from outside the range or from the Out frame starts at In; at Out it goes back to In, or pauses on the Out frame with Loop off; a range set or moved past a playing head sends it to In; a seek by the user or the host to outside the range while playing pauses there. The engine tells its own seeks from everyone else's with two flags around `seeking`/`seeked` (`controller.ts`), so a user seek is never pulled back to In. The pure decision is `playbackDecision` in `studio/logic.ts`; `scripts/browser-checks/range-playback.js` exercises it in Chromium, Firefox and WebKit. Out is still reached half a frame early, and the Out frame still shows for an instant at the loop point (Backlog).
 
 ## Backlog
 

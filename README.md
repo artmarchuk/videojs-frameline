@@ -127,7 +127,7 @@ frameline.current?.setGuides({ guides: ['title-safe'], crop: null, zones: null }
 | `seek(time)` | Seeks to the frame that contains `time` (seconds) |
 | `step(frames)` | Steps that many frames from the current one; negative steps back. Pauses first. Needs `frameStep` |
 | `setRange({ in, out })` | Sets In and Out in seconds; `null` leaves that side open. Needs `inOut` |
-| `setLoop(on)` | Loop on or off. Needs `loop` |
+| `setLoop(on)` | Loop on or off; it is on from the start. Needs `loop` |
 | `setGuides({ guides?, crop?, zones? })` | Sets what is drawn. `guides` is the full list of checkbox guides to have on; fields left out are not changed |
 | `setZoom(level)` | `'fit'`, `'100'`, `'150'`, `'200'` or `'400'`. Needs `zoom` |
 | `pan(direction)` | Moves the zoomed view a tenth of what is visible: `'left'`, `'right'`, `'up'`, `'down'` |
@@ -162,7 +162,7 @@ These are added to the YouTube map in the Studio tier. Each works only while its
 | `Shift+←` `Shift+→` | Jump 10 frames |
 | `I` `O` | Set In, set Out at the current frame |
 | `Shift+I` `Shift+O` | Unset In, unset Out |
-| `R` | Loop on or off: the range when one is set, otherwise the whole video |
+| `R` | Loop off or on. It is on from the start: the range loops when one is set, otherwise the whole video |
 | `[` `]` | Previous cut, next cut (chapters, or `markers` when there are no chapters) |
 | `←` `→` on an In or Out handle | Move the handle one frame; `Shift` ten; `Home` `End` to its limits; `Delete` unsets it |
 | `G` | Grab the current frame as a PNG |
@@ -228,7 +228,18 @@ The range lives on the timeline, like the work-area bar of an editor. **Two hand
 
 **Why both.** On most timelines a pixel covers more than one frame (60 s at 24 fps is 1440 frames across about 1250 px), so dragging is the coarse tool. For an exact frame, step to it and press `I` or `O`, or focus a handle and nudge it with the arrow keys.
 
-`onInOutChange` fires when a drag is released, not while it moves, with `{ in, out }` in seconds; a point that is not set is `null`. In is always before Out: a handle dragged past the other swaps the two, and both points cannot sit on one frame. **Loop** (`R`) loops the range when one is set and the whole video otherwise.
+`onInOutChange` fires when a drag is released, not while it moves, with `{ in, out }` in seconds; a point that is not set is `null`. In is always before Out: a handle dragged past the other swaps the two, and both points cannot sit on one frame.
+
+**A set range confines playback.** A range is set when In, Out or both are set: only In runs to the end, only Out from the start.
+
+- **Loop** (`R`) is on from the start. With a range it loops the range; without one, the whole video. `R`, the button and `setLoop` switch it off and on.
+- **At Out**, playback goes back to In with Loop on, and pauses on the Out frame with Loop off. Out counts as reached half a frame early, so expect the Out frame to show for an instant at the loop point.
+- **Starting playback** in any way (Space, `K`, Play, a click on the picture, `apiRef`, the media element's own `play()`) from outside the range, or from the Out frame, starts at In.
+- **Setting or moving the range** past a playing head (`I`, `O`, a handle, `setRange`) sends playback to In; setting Out at the playhead counts as reaching Out.
+- **A seek to outside the range while playing** (the ruler, a frame step, a cut, `Home`, `End`, `0`–`9`, the arrow seeks) goes there and pauses; the next play starts at In. Seeks inside the range keep playing.
+- **Clearing the range** (`Shift+I`, `Shift+O`, Reset range, `Delete` on a handle) frees playback again; Loop stays as it was.
+
+Hosts with `loop: false` get the same behaviour with Loop off: playback pauses on the Out frame. The Viewer tier has no range.
 
 ### Markers
 

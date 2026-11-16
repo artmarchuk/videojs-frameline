@@ -9,7 +9,8 @@ import {
   grabFileName,
   isNarrowDock,
   lastFrameOf,
-  loopDecision,
+  outsideRange,
+  playbackDecision,
   parseLinkPosition,
   readLinkPosition,
   seekTimeForFrame,
@@ -138,35 +139,54 @@ describe('range', () => {
   });
 });
 
-describe('loop decision', () => {
-  const base = { range: { in: 4, out: 9 }, duration: 60, fps: 24 };
+describe('playback decision for a range', () => {
+  const base = { range: { in: 4, out: 9 }, duration: 60, fps: 24, loop: true };
 
-  it('does nothing with loop off', () => {
-    expect(loopDecision({ ...base, mediaTime: 9.5, loopMode: 'off' })).toBe('continue');
-    expect(loopDecision({ ...base, range: { in: null, out: null }, mediaTime: 5, loopMode: 'range' })).toBe('continue');
+  it('does nothing without a range', () => {
+    expect(playbackDecision({ ...base, range: { in: null, out: null }, mediaTime: 59.99 })).toBe('continue');
+    expect(playbackDecision({ ...base, range: { in: null, out: null }, mediaTime: 1, starting: true })).toBe('continue');
   });
 
-  it('jumps to In half a frame before Out', () => {
-    expect(loopDecision({ ...base, mediaTime: 8.9, loopMode: 'range' })).toBe('continue');
-    expect(loopDecision({ ...base, mediaTime: 9 - 0.4 / 24, loopMode: 'range' })).toBe('jumpToIn');
-    expect(loopDecision({ ...base, mediaTime: 9 - 1 / 24, loopMode: 'range' })).toBe('continue');
-    expect(loopDecision({ ...base, mediaTime: 30, loopMode: 'range' })).toBe('jumpToIn');
+  it('goes back to In half a frame before Out with loop on', () => {
+    expect(playbackDecision({ ...base, mediaTime: 8.9 })).toBe('continue');
+    expect(playbackDecision({ ...base, mediaTime: 9 - 0.4 / 24 })).toBe('jumpToIn');
+    expect(playbackDecision({ ...base, mediaTime: 9 - 1 / 24 })).toBe('continue');
+    expect(playbackDecision({ ...base, mediaTime: 30 })).toBe('jumpToIn');
   });
 
-  it('jumps to In when playback starts before the range, but not mid-playback', () => {
-    expect(loopDecision({ ...base, mediaTime: 1, loopMode: 'range', starting: true })).toBe('jumpToIn');
-    expect(loopDecision({ ...base, mediaTime: 1, loopMode: 'range' })).toBe('continue');
-    expect(loopDecision({ ...base, mediaTime: 5, loopMode: 'range', starting: true })).toBe('continue');
+  it('stops on the Out frame with loop off', () => {
+    expect(playbackDecision({ ...base, loop: false, mediaTime: 8.9 })).toBe('continue');
+    expect(playbackDecision({ ...base, loop: false, mediaTime: 9 - 0.4 / 24 })).toBe('stopAtOut');
+    expect(playbackDecision({ ...base, loop: false, mediaTime: 30 })).toBe('stopAtOut');
   });
 
-  it('loops In to the end and the start to Out', () => {
-    expect(loopDecision({ ...base, range: { in: 4, out: null }, mediaTime: 59.99, loopMode: 'range' })).toBe('jumpToIn');
-    expect(loopDecision({ ...base, range: { in: null, out: 9 }, mediaTime: 9, loopMode: 'range' })).toBe('jumpToIn');
+  it('goes to In when the range is set or moved past a playing head', () => {
+    expect(playbackDecision({ ...base, mediaTime: 1 })).toBe('jumpToIn');
+    expect(playbackDecision({ ...base, loop: false, mediaTime: 1 })).toBe('jumpToIn');
+    expect(playbackDecision({ ...base, mediaTime: 4 - 0.4 / 24 })).toBe('continue');
   });
 
-  it('leaves a whole-video loop to the ended event', () => {
-    expect(loopDecision({ ...base, range: { in: null, out: null }, mediaTime: 59.99, loopMode: 'whole' })).toBe('continue');
-    expect(loopDecision({ ...base, mediaTime: 9, loopMode: 'whole' })).toBe('continue');
+  it('starts at In from outside the range or from the Out frame, with loop on or off', () => {
+    for (const loop of [true, false]) {
+      expect(playbackDecision({ ...base, loop, mediaTime: 1, starting: true })).toBe('jumpToIn');
+      expect(playbackDecision({ ...base, loop, mediaTime: 9, starting: true })).toBe('jumpToIn');
+      expect(playbackDecision({ ...base, loop, mediaTime: 12, starting: true })).toBe('jumpToIn');
+      expect(playbackDecision({ ...base, loop, mediaTime: 5, starting: true })).toBe('continue');
+    }
+  });
+
+  it('treats In to the end and the start to Out as ranges', () => {
+    expect(playbackDecision({ ...base, range: { in: 4, out: null }, mediaTime: 59.99 })).toBe('jumpToIn');
+    expect(playbackDecision({ ...base, range: { in: null, out: 9 }, mediaTime: 9 })).toBe('jumpToIn');
+    expect(playbackDecision({ ...base, range: { in: null, out: 9 }, loop: false, mediaTime: 9 })).toBe('stopAtOut');
+  });
+
+  it('knows what is outside the range', () => {
+    expect(outsideRange(1, base.range, 60, 24)).toBe(true);
+    expect(outsideRange(5, base.range, 60, 24)).toBe(false);
+    expect(outsideRange(9 - 0.4 / 24, base.range, 60, 24)).toBe(true);
+    expect(outsideRange(9 - 1 / 24, base.range, 60, 24)).toBe(false);
+    expect(outsideRange(1, { in: null, out: null }, 60, 24)).toBe(false);
   });
 });
 

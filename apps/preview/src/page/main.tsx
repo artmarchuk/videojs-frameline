@@ -193,10 +193,10 @@ const TASKS: Record<string, Task> = {
       handle.setZoom('fit');
       handle.setRange({ in: start, out: end });
       handle.seek(start);
-      if (!config.flags.loop) return 'Marked a range on the timeline. Drag its handles to change it.';
+      if (!config.flags.loop) return 'Marked a range on the timeline. Drag its handles to change it; playback stays inside it and stops at Out.';
       handle.setLoop(true);
       void media.play().catch(() => undefined);
-      return 'Marked a range, switched Loop on and started playing. Press K or Space to stop.';
+      return 'Marked a range and started playing it; it loops. Press K or Space to stop, R to switch Loop off.';
     },
   },
   zones: {

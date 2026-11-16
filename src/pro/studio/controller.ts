@@ -11,7 +11,8 @@ import {
   grabFileName,
   JUMP_FRAMES,
   lastFrameOf,
-  loopDecision,
+  outsideRange,
+  playbackDecision,
   parseLinkPosition,
   readLinkPosition,
   seekTimeForFrame,
@@ -161,53 +162,89 @@ export function useStudioController(options: StudioOptions): StudioController {
     return () => video.removeEventListener('seeked', onSeeked);
   }, [video, fps]);
 
-  // Loop engine. It listens to the store, not to React state, so nothing re-renders per frame.
+  // Range engine: a set range confines playback. It listens to the store, not to React state, so nothing re-renders
+  // per frame. Its own seeks are told apart from everyone else's (the user's and the host's): a seek to outside the
+  // range while playing pauses there instead of being pulled back to In.
   useEffect(() => {
     if (!video) return;
+    let ownSeek = false;
+    let otherSeek = false;
 
-    const decide = (mediaTime: number, starting = false) => {
+    const seekOwn = (time: number) => {
+      ownSeek = true;
+      video.currentTime = seekTimeForFrame(framesFromSeconds(time, fps), fps);
+    };
+    const current = (mediaTime: number, starting = false) => {
       const state = store.getState();
-      const input = {
+      return {
         mediaTime,
         range: { in: state.inPoint, out: state.outPoint },
         duration: state.duration || video.duration || 0,
         fps,
-        loopMode: state.loopMode,
+        loop: state.loopMode !== 'off',
         starting,
       };
-      if (loopDecision(input) === 'continue') return;
+    };
+    const apply = (mediaTime: number, starting = false) => {
+      const input = current(mediaTime, starting);
+      const decision = playbackDecision(input);
+      if (decision === 'continue') return;
       const range = effectiveRange(input.range, input.duration);
-      if (!range || video.seeking) return;
-      video.currentTime = seekTimeForFrame(framesFromSeconds(range.start, fps), fps);
+      if (!range) return;
+      if (decision === 'jumpToIn') {
+        seekOwn(range.start);
+      } else {
+        video.pause();
+        if (range.end !== null) seekOwn(range.end);
+      }
     };
 
-    let lastTime = store.getState().mediaTime;
+    // Every frame while playing, and whenever the range changes under a playing head.
+    let last = store.getState();
     const unsubscribe = store.subscribe(() => {
-      const { mediaTime } = store.getState();
-      if (mediaTime === lastTime) return;
-      lastTime = mediaTime;
-      if (!video.paused) decide(mediaTime);
+      const state = store.getState();
+      const moved = state.mediaTime !== last.mediaTime || state.inPoint !== last.inPoint || state.outPoint !== last.outPoint;
+      last = state;
+      if (!moved || video.paused || video.seeking || otherSeek) return;
+      apply(state.mediaTime);
     });
 
+    // Playback starting in any way: from outside the range, or from the Out frame, it starts at In.
     const onPlay = () => {
       target.current = null;
-      decide(video.currentTime, true);
+      apply(video.currentTime, true);
     };
-    // The whole video loops here; so does a range that runs to the very end of the media, where the clock stops
-    // before the loop point is seen.
+    const onSeeking = () => {
+      if (!ownSeek) otherSeek = true;
+    };
+    // A seek by the user or the host to outside the range, while playing, goes there and pauses.
+    const onSeeked = () => {
+      const own = ownSeek;
+      const other = otherSeek;
+      ownSeek = otherSeek = false;
+      if (own || !other || video.paused) return;
+      const state = store.getState();
+      if (outsideRange(video.currentTime, { in: state.inPoint, out: state.outPoint }, state.duration || video.duration || 0, fps)) video.pause();
+    };
+    // With loop on, the whole video loops here; so does a range that runs to the very end of the media, where the
+    // clock stops before the loop point is seen.
     const onEnded = () => {
       const state = store.getState();
       if (state.loopMode === 'off') return;
       const range = effectiveRange({ in: state.inPoint, out: state.outPoint }, video.duration || 0);
-      video.currentTime = seekTimeForFrame(framesFromSeconds(range?.start ?? 0, fps), fps);
+      seekOwn(range?.start ?? 0);
       void video.play().catch(() => {});
     };
 
     video.addEventListener('play', onPlay);
+    video.addEventListener('seeking', onSeeking);
+    video.addEventListener('seeked', onSeeked);
     video.addEventListener('ended', onEnded);
     return () => {
       unsubscribe();
       video.removeEventListener('play', onPlay);
+      video.removeEventListener('seeking', onSeeking);
+      video.removeEventListener('seeked', onSeeked);
       video.removeEventListener('ended', onEnded);
     };
   }, [video, fps, store]);

@@ -8,8 +8,9 @@
  *   at the start (0) or Out at the end (the duration) is the same as not setting it, so it is stored as `null`.
  * - In is always before out. Setting one past the other **swaps** them, so the mark the user just made is kept.
  *   Setting a point exactly onto the other is rejected (a zero-length range has no use).
- * - Loop is on or off. While on, `loopMode` says what loops: `'range'` when a point is set, `'whole'` otherwise;
- *   the store keeps it in step as points are set and cleared.
+ * - Loop is on or off, and on from the start where the host allows it (the `loop` option). While on, `loopMode` says
+ *   what loops: `'range'` when a point is set, `'whole'` otherwise; the store keeps it in step as points are set and
+ *   cleared. A set range confines playback whether loop is on or off; that engine lives in the Studio controller.
  * - Only guides, crops and zones the host allowed can be switched on (the rules are in `view.ts`).
  * - Zoom starts at Fit and goes back to Fit when the host stops allowing it.
  */
@@ -135,13 +136,15 @@ export interface ProStoreOptions {
   /** The view to start with, for example the remembered one. It is checked against `allowedView`. */
   view?: ViewState;
   timeDisplay?: TimeDisplay;
+  /** Loop on from the start (the host allows the loop feature). Off: it stays off until switched on. */
+  loop?: boolean;
 }
 
 export function createProStore(options: ProStoreOptions = {}): ProStore {
   let state: ProState = {
     inPoint: null,
     outPoint: null,
-    loopMode: 'off',
+    loopMode: options.loop ? 'whole' : 'off',
     timeDisplay: options.timeDisplay ?? 'timecode',
     view: sanitizeView(options.view ?? EMPTY_VIEW, options.allowedView ?? NOTHING_ALLOWED),
     zoom: 'fit',

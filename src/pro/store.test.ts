@@ -58,6 +58,12 @@ describe('pro store', () => {
     expect(store.getState()).toMatchObject({ inPoint: 10, outPoint: null });
   });
 
+  it('starts with loop on where the host allows it, and off otherwise', () => {
+    expect(createProStore({ loop: true }).getState().loopMode).toBe('whole');
+    expect(createProStore({ loop: false }).getState().loopMode).toBe('off');
+    expect(createProStore().getState().loopMode).toBe('off');
+  });
+
   it('loops the range while a point is set and the whole video otherwise', () => {
     const store = createProStore();
     store.setLoop();

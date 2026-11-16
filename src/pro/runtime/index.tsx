@@ -84,7 +84,7 @@ export default function ProRuntime({
   const [store] = useState(() => {
     const allowed = allowedView(features);
     const remembered = readRemembered(key, allowed);
-    return createProStore({ allowedView: allowed, view: remembered.view, timeDisplay: remembered.timeDisplay ?? 'timecode' });
+    return createProStore({ allowedView: allowed, view: remembered.view, timeDisplay: remembered.timeDisplay ?? 'timecode', loop: features.loop });
   });
   const anchor = useRef<HTMLSpanElement>(null);
   const video = useVideoElement(anchor);
