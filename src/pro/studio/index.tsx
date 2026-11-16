@@ -353,6 +353,7 @@ function TimecodeField({ controller, fps, dropFrame }: { controller: StudioContr
   const duration = useProStore((state) => state.duration);
   const approximate = useProStore((state) => state.clockPrecision === 'approximate');
   const valueId = useId();
+  const labelId = useId();
   const seconds = display === 'seconds';
 
   const current = seconds ? secondsFromFrames(frame, fps).toFixed(3) : controller.timecode(frame);
@@ -369,11 +370,15 @@ function TimecodeField({ controller, fps, dropFrame }: { controller: StudioContr
   return (
     <>
       <ButtonTooltip label={tip} align="start">
-        <button type="button" className={'pro-timecode'} aria-label={t.timeInSeconds} aria-pressed={seconds} aria-describedby={valueId} onClick={() => store.toggleTimeDisplay()}>
+        {/* The name is the visible value plus the toggle's purpose, so the label matches what is shown (WCAG 2.5.3). */}
+        <button type="button" className={'pro-timecode'} aria-labelledby={`${valueId} ${labelId}`} aria-pressed={seconds} onClick={() => store.toggleTimeDisplay()}>
           <span id={valueId} className={'pro-timecode-values'} data-pro-timecode>
             {approximate && <span className={'pro-timecode-approx'}>≈</span>}
             {current}
             <span className={'pro-visually-hidden'}> {t.of(total)}</span>
+          </span>
+          <span id={labelId} className={'pro-visually-hidden'}>
+            {t.timeInSeconds}
           </span>
         </button>
       </ButtonTooltip>

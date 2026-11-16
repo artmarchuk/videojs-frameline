@@ -739,6 +739,7 @@
   .pro-skin:not([data-bar="pro"]) .pro-volume:focus-within .media-volume-slider,
   .pro-skin:not([data-bar="pro"]) .media-volume-slider[data-dragging] {
     width: calc(var(--media-spacing) * 16);
+    z-index: 1; /* the thumb overhangs the slider at full volume; it paints over the next button, not under it */
     margin-right: calc(var(--media-spacing) * 2);
     overflow: visible;
     opacity: 1;
