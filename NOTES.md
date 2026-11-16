@@ -681,7 +681,6 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 ## Backlog
 
 - Row one of the narrow dock is 2 to 4 px too long at a player 350 to 353 px wide.
-- After a click on the ruler, `Space` does not play: focus is on the Seek slider and the hotkeys leave `Space` to it (`K` works). Decide whether the slider should pass `Space` on to play and pause.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -1240,3 +1239,33 @@ Every start that played began on the In frame (22 of 22). **The seven `Space` ru
 **Is it the check's own writes?** Not only: with the check's seek to 40 s made by a click on the ruler instead of a `currentTime` write, it still failed once in 15 runs (12.58 s). With direct writes: 17 of 21 passes over this follow-up (and 11 of 16, 3 of 4 before). So step 3 of the brief does not hold, and step 2 was not reached: no person-style run hit it, but 22 runs at a rate of roughly 1 in 5 to 1 in 15 do not rule it out.
 
 **Left as it is.** Options for the author, none taken: (a) let the engine re-assert In when a seek it did not make lands forward of In within a short time of its own start-at-In seek (risk: fighting hls.js if the hole is real, and overriding a fast user click); (b) look at hls.js's hole-skipping settings on the media source (`maxBufferHole` and the stall watchdog), which belong to the host's `MuxVideo` configuration, not the skin; (c) accept it, since the head still plays inside the range.
+
+## Dock polish, last fixes: menu notes on top, Space on the sliders (16 Nov 2026)
+
+Requirements: `specs/dock-polish-3.md`. Same method as before (Playwright, the installed Chrome headless, plus Firefox and WebKit for the keys). Screenshots: `design/screenshots/dock-polish-3/`, each opened and looked at.
+
+### Notes go to the top of a menu
+- Two menus have a note: Zoom ("Drag the picture or press Shift+Alt…") and Guides (the platform-zones note). Capture and Markers have none. Each note is now the first thing in its popup, with a `Menu.Separator` below it; the options keep their order (Fit first). The Guides footer (hide all, bring back) and the rendition note on the chosen zoom level stay where they were.
+- One place for both directions: the note is first in the DOM, so a menu that opens downwards (overlay layout near the top edge) also shows it on top.
+- Text and element unchanged (a `p`). Accessibility tree, Chrome: `menu` → `paragraph` → `separator` → `group "Zoom"` → `Fit`…; the same in Guides. **Added:** the menu (`Menu.Content`, which carries `role="menu"`, not the popup) is `aria-describedby` the note, so a screen reader hears it when the menu opens: arrow keys in a menu go only to items, so a note in the reading order alone is easy to miss. The accessible description reads the note text in both menus.
+- **Video.js measures each child of a menu at `width: max-content; max-width: none`** (`dom/ui/menu/popup.js`, `measureContent`), which overrides a child's own width. As a direct child the Zoom note was measured as one line and the menu grew from 244 to 615 px. The note and its separator are wrapped in `.pro-menu-head`, so the wrapper is what gets measured and the note keeps its width: 244 px again. The Guides note takes the popup's width (less the content padding) from a new `--fl-guides-width`, the same value that sets the popup's width.
+- **The Guides menu's height cap went from 480 to 512 px** (`--media-spacing` × 128), for this menu only, and still never more than the room above the button. With the note on top its content needed 504 px, and at 480 the footer scrolled out of view (measured at 1100 to 1920 px windows: 24 px over). With 512 nothing scrolls on those windows; a shorter player scrolls the menu as before.
+- The zones note now sits above the whole Guides menu, where it can read as being about every guide, not only Platform zones. The spec asked for one rule and the same text, so I kept both; the author may prefer it at the top of the Platform zones column.
+
+### Space on the sliders
+- **What the Video.js hotkeys do:** the coordinator (`@videojs/core` `dom/hotkey/coordinator.js`) returns early on `isInteractiveActivation` (`@videojs/utils` `dom/interactive.js`): `Space` or `Enter` on `button, a[href], [role="slider"], [role="button"]` is never matched to a hotkey. The Hotkey reference says the same ("Space or Enter still activates focused buttons, links, and sliders normally"). There is no prop or option to change it for one element, and the slider itself (`dom/ui/slider/slider.js`) does nothing with `Space`.
+- **The fix uses the existing binding:** `passSpaceToPlayer` (`src/video/shared/slider-space.ts`) takes a plain `Space` (no modifier) on the Studio seek slider, a range handle or the Viewer's seek bar, stops it there and dispatches the same key on the player container, where the hotkeys listen. The `Space` → `togglePaused` `<Hotkey>` then handles it with its own rules (held-key repeats ignored, disabled state, input feedback). It does not play or pause anything itself, and no second play/pause handler was added. If the hotkey handles the key the page does not scroll. Arrows, `Home`, `End`, `Page Up`, `Page Down` on the sliders and the handles are unchanged; `K` is unchanged; `Space` on a button still presses the button.
+- Checked with the real pointer and keys, 10 times each, in Chrome, Firefox and WebKit (local production build): click the ruler (focus on "Seek"), `Space` plays, `Space` pauses: 10 of 10; with the In or Out handle focused: 10 of 10; the Viewer, click the seek bar, `Space` twice: 10 of 10. Also checked: `→` on the slider still steps a frame while paused, `→` on the In handle still moves it, `K` still plays and pauses, the page never scrolled. (WebKit's first run timed out in the script's own setup seek before any `Space`; the rerun passed.)
+- `viewer-gate.js` now presses `Space` twice with focus on the seek bar; `dock-polish.js` (wide) clicks the ruler and presses `Space` twice, then does the same with the In handle focused.
+
+### Checks
+Typecheck, 217 unit tests, build, the contrast script, and the browser checks in Chrome: `viewer-gate` (three runs), `configurator`, `guides-menu-focus`, `handle-focus-ring`, `fullscreen-focus`, `range-playback`, `zoom` (1x, 2x), `two-players`, `reduced-motion` (three pages), `axe-audit` (seven states, Guides and Zoom menus open among them), `dock-polish` (wide and nine narrow widths); `viewer-gate`, `dock-polish` and `range-playback` also in Firefox and WebKit. All pass.
+
+### Public URL (https://frameline.artmarchuk.me, after the deploy)
+The `Space` runs (ruler, handles, Viewer: 10 of 10 each), the menu sizes (Zoom 244 px wide, Guides 504 px tall with nothing scrolling, 1100 to 1920 px windows), `viewer-gate`, `configurator`, `range-playback`, `axe-audit` (seven states) and `dock-polish` (wide and nine narrow widths) pass in Chrome.
+
+### Unverified (last fixes)
+- The note announced as the menu's description was read from Chrome's accessibility tree, not heard with VoiceOver or NVDA.
+- `Space` was not tried on a real iPad or Android keyboard.
+- The Guides menu's taller cap was checked on desktop windows only; on a short player the menu scrolls, as before.
+

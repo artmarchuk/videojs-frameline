@@ -17,6 +17,7 @@ import {
 
 import { useProStore, useProStoreApi } from '../../context';
 import { warnOnce } from '../../dev';
+import { passSpaceToPlayer } from '../../../video/shared/slider-space';
 import type { Marker } from '../../store';
 import { secondsFromFrames } from '../../timecode';
 import { useAnnounce } from '../announcer';
@@ -140,6 +141,8 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
    */
   const onThumbKey = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>, stock?: (event: ReactKeyboardEvent<HTMLDivElement>) => void) => {
+      // `Space` plays and pauses, as everywhere in the player (the hotkeys alone leave it to a focused slider).
+      if (passSpaceToPlayer(event)) return;
       const forward = event.key === 'ArrowRight' || event.key === 'ArrowUp';
       const back = event.key === 'ArrowLeft' || event.key === 'ArrowDown';
       // Shift+Alt + an arrow pans the zoomed picture: it is left for the player's hotkeys, and the slider does not move.
@@ -429,6 +432,7 @@ function RangeHandle({
     if (!node) return;
     const onKeyDown = (event: KeyboardEvent) => {
       delete node.dataset.pointer;
+      if (passSpaceToPlayer(event)) return;
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       const now = latest.current;
       const state = store.getState();

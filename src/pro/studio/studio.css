@@ -420,11 +420,20 @@
 
   /* Two columns on a wide player; one scrolling column on a narrow one. */
   .pro-skin .media-menu-popup.pro-guides-popup {
-    width: min(calc(var(--media-spacing) * 140), var(--media-menu-available-width, 100cqw));
+    --fl-guides-width: min(calc(var(--media-spacing) * 140), var(--media-menu-available-width, 100cqw));
+    width: var(--fl-guides-width);
+    /* Room for the zones note on top as well as every option and the footer, where the player is tall enough. */
+    max-height: min(var(--media-menu-available-height, 100cqh), calc(var(--media-spacing) * 128));
   }
 
   .pro-skin .media-menu-popup.pro-guides-popup[data-columns="1"] {
-    width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
+    --fl-guides-width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
+  }
+
+  /* The zones note spans the menu (less the content's padding), at the width it is shown and measured at. */
+  .pro-skin .pro-guides-popup .pro-menu-note {
+    box-sizing: border-box;
+    width: calc(var(--fl-guides-width) - var(--media-spacing) * 3);
   }
 
   .pro-skin .pro-guides-columns {
@@ -480,9 +489,23 @@
     color: var(--fl-text);
   }
 
+  /*
+   * An explanatory note sits at the top of its menu, above the first option, with a separator below it, so the pointer
+   * never crosses it between the button and the options. The head wraps the two because Video.js measures each child
+   * of a menu at max-content width (overriding its own width), which would size the menu to the note on one line; the
+   * note inside keeps the width its menu gives it.
+   */
+  .pro-skin .pro-menu-head {
+    flex: none;
+  }
+
+  .pro-skin .pro-menu-head .pro-menu-separator {
+    margin-block-end: var(--media-spacing);
+  }
+
   .pro-skin .pro-menu-note {
-    margin: var(--media-spacing) 0 0;
-    padding: var(--media-spacing) calc(var(--media-spacing) * 2.5) calc(var(--media-spacing) * 1.5);
+    margin: 0;
+    padding: calc(var(--media-spacing) * 1.5) calc(var(--media-spacing) * 2.5) 0;
     color: var(--fl-text-dim-raised);
     font-size: var(--fl-text-xs);
     line-height: 1.4;
@@ -497,7 +520,7 @@
   @container media-root (width < 740px) {
     .pro-skin .media-menu-popup.pro-guides-popup,
     .pro-skin .media-menu-popup.pro-guides-popup[data-columns="1"] {
-      width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
+      --fl-guides-width: min(calc(var(--media-spacing) * 72), var(--media-menu-available-width, 100cqw));
     }
 
     .pro-skin .pro-guides-columns {

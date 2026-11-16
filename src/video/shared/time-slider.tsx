@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 
 import { Slider as SliderPrimitive, TimeSlider as TimeSliderPrimitive } from '@videojs/react';
+import { passSpaceToPlayer } from './slider-space';
 
 export interface ThumbnailSlot {
   /** Draws the storyboard frame in the slider preview in place of the one the skin renders. */
@@ -25,7 +26,8 @@ export function TimeSlider({ renderThumbnail }: ThumbnailSlot = {}) {
           </div>
         )}
       ></TimeSliderPrimitive.Chapters>
-      <TimeSliderPrimitive.Thumb className={'media-time-slider-thumb'} />
+      {/* `Space` plays and pauses here too; the hotkeys alone leave it to a focused slider. */}
+      <TimeSliderPrimitive.Thumb className={'media-time-slider-thumb'} onKeyDown={passSpaceToPlayer} />
 
       <TimeSliderPrimitive.Preview className={'media-time-slider-preview'}>
         <SliderPrimitive.Thumbnail.Root className={'media-slider-thumbnail'}>

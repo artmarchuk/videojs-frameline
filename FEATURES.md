@@ -41,7 +41,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 
 | Feature | Tier | How to try |
 | --- | --- | --- |
-| Play and pause | Viewer | `Space` or `K`; click the picture |
+| Play and pause | Viewer | `Space` or `K`, also with focus on the seek bar; click the picture |
 | Seek bar with a time bubble, chapters shown as gaps, storyboard thumbnail when the media has one | Viewer | Hover the bar |
 | Seek 5 s and 10 s, to a tenth, to the start or end | Viewer | `←` `→`, `J` `L`, `0`–`9`, `Home` `End` |
 | Current time and duration | Viewer | In the bar |
@@ -118,6 +118,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | 100% is one pixel of the source (the best rendition the stream offers) per device pixel; it does not change when the playing rendition does | Studio | Zoom to 100% and change Quality |
 | Single pixels drawn as squares from 200% up | Studio | Zoom to 400% |
 | Pan by dragging, or from the keyboard; it stops at the picture's edges | Studio | Drag the picture; `Shift+Alt` + arrows |
+| How to pan, as a note at the top of the Zoom menu, above the levels (the pointer never crosses it) | Studio | Open the Zoom menu |
 | A note when a lower rendition than the best one is playing ("showing 720p") | Studio | Zoom menu, on the chosen level |
 | While zoomed on automatic quality, the player-size cap on the rendition is lifted | Studio | `/preview.html?cap=1`, then `Z` |
 | Guides zoom with the picture; their lines and labels keep their size | Studio | Zoom with title safe on |

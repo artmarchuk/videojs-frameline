@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { Menu } from '@videojs/react';
-import { useCallback, useMemo, type MouseEvent } from 'react';
+import { useCallback, useId, useMemo, type MouseEvent } from 'react';
 
 import { cn } from '@/lib/resolve-class-name';
 
@@ -107,7 +107,6 @@ function Section({ section, actions }: { section: ViewMenuSection; actions: Guid
           {zones && item.id !== 'none' && <span className={'pro-menu-sub'}>{t.approximate}</span>}
         </Menu.RadioItem>
       ))}
-      {zones && <p className={'pro-menu-note'}>{t.zonesNote}</p>}
     </Menu.RadioGroup>
   );
 }
@@ -139,6 +138,10 @@ export function GuidesMenu({ allowed, actions }: { allowed: AllowedView; actions
   const left = sections.filter((section) => section.column === 'left');
   const right = sections.filter((section) => section.column === 'right');
   const anything = view.guides.length > 0 || view.crop !== null;
+  // The zones note goes at the top of the menu, above the first option, so the pointer never crosses it on the way
+  // from the button to an option (the menu opens above the button). Same place when a menu opens downwards.
+  const zonesNote = sections.some((section) => section.id === 'zones');
+  const noteId = useId();
 
   // Stays open like the other items of this menu.
   const onFooterClick = useCallback(
@@ -168,8 +171,20 @@ export function GuidesMenu({ allowed, actions }: { allowed: AllowedView; actions
           <ChevronIcon className={'pro-chevron-down'} />
         </Menu.Trigger>
       </ButtonTooltip>
-      <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-menu-popup', 'pro-guides-popup')} data-columns={left.length > 0 && right.length > 0 ? 2 : 1}>
-        <Menu.Content className={'media-menu-content'}>
+      <Menu.Popup
+        keepMounted
+        className={cn('media-popup', 'media-menu-popup', 'pro-menu-popup', 'pro-guides-popup')}
+        data-columns={left.length > 0 && right.length > 0 ? 2 : 1}
+      >
+        <Menu.Content className={'media-menu-content'} aria-describedby={zonesNote ? noteId : undefined}>
+          {zonesNote && (
+            <div className={'pro-menu-head'}>
+              <p id={noteId} className={'pro-menu-note'}>
+                {t.zonesNote}
+              </p>
+              <Menu.Separator className={'pro-menu-separator'} />
+            </div>
+          )}
           <div className={'pro-guides-columns'} role="none">
             {left.length > 0 && (
               <div className={'pro-guides-column'} role="none">

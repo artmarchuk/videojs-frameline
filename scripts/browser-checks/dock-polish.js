@@ -3,7 +3,8 @@
 // (1440x900) and narrow (a touch context, or a window that makes the player under 740px; for example 422x800, 392x800
 // and 352x800, where the player is 390, 360 and 320px wide). In Chromium, create the context with the
 // `clipboard-read` and `clipboard-write` permissions so the copied link and image can be read back.
-// Wide: the timecode field and the link button are one pair (2px apart, same height); `S` copies `#t=<timecode>`,
+// Wide: `Space` plays and pauses after a click on the ruler and with a range handle focused. The timecode field and
+// the link button are one pair (2px apart, same height); `S` copies `#t=<timecode>`,
 // shows the check for about 1.2s and announces "Link copied, <timecode>"; a refused clipboard shows no check;
 // `Shift+G` copies a PNG; the Capture menu holds the two image actions; the help dialog lists both keys.
 // Narrow: one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link, Guides, Zoom, Settings,
@@ -57,6 +58,15 @@ if (!out.narrow) {
   out.help = await page.evaluate(() => [...document.querySelectorAll('.pro-shortcuts-row')].map((r) => `${[...r.querySelectorAll('kbd')].map((k) => k.textContent).join('+')}: ${r.querySelector('dd').textContent}`).filter((r) => /^(S|G|Shift\+G):/.test(r)));
   checks.help = out.help.join(' | ') === 'S: Copy link at timecode | G: Grab frame | Shift+G: Copy frame image';
   await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+  // Space after a click on the ruler (focus on the seek slider) plays and pauses; also with a range handle focused.
+  const paused = () => page.evaluate(() => document.querySelector('video').paused);
+  const spaceTwice = async () => { await page.keyboard.press('Space'); await page.waitForTimeout(500); const played = !(await paused()); await page.keyboard.press('Space'); await page.waitForTimeout(400); return played && (await paused()); };
+  const ruler = await page.locator('.pro-tl').boundingBox();
+  await page.mouse.click(ruler.x + ruler.width * 0.4, ruler.y + 30); await page.waitForTimeout(300);
+  out.spaceFocus = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+  checks.spaceOnRuler = out.spaceFocus === 'Seek' && (await spaceTwice());
+  await page.focus('.pro-tl-handle[data-handle="in"]');
+  checks.spaceOnHandle = await spaceTwice();
   // A refused clipboard: the error message, and no check. Last, because it breaks the clipboard for this page.
   await page.evaluate(() => { navigator.clipboard.writeText = () => Promise.reject(new Error('refused')); document.execCommand = () => false; });
   await focusPlayer(); await page.keyboard.press('s'); await page.waitForTimeout(250);

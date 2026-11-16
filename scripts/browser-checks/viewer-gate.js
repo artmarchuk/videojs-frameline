@@ -1,6 +1,6 @@
 // Browser check: the Viewer gate (step 2, re-run every step; written down in step 9). Body of an async function;
 // `page` on /preview.html?tier=viewer or /?tier=viewer, at 1440x900 and at 320 wide. Keyboard only: tab order,
-// the YouTube key map, the free pro keys do nothing, the help dialog, 24px targets, no horizontal overflow, and
+// the YouTube key map (Space also with focus on the seek bar), the free pro keys do nothing, the help dialog, 24px targets, no horizontal overflow, and
 // no pro chunk (runtime, studio, debug) requested. Returns the observed values; `out.pass` is the verdict.
 const out = {};
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
@@ -36,6 +36,12 @@ out.home = (await press('Home')).t < 1;
 out.m = (await press('m')).muted === true; await press('m');
 const volBefore = (await V()).volume; out.down = (await press('ArrowDown')).volume < volBefore;
 out.c = (await press('c', 600)).captions === true; await press('c');
+// Space plays and pauses with focus on the seek bar too (the hotkeys alone leave Space to a focused slider).
+await page.focus('.media-time-slider [role="slider"]');
+const seekPlay = (await press('Space', 600)).paused === false;
+out.spaceOnSeek = seekPlay && (await press('Space')).paused === true;
+// Back to the Play button: on the seek bar, Shift+←/→ are the slider's own keys.
+await page.focus('.media-control-bar .media-play-button, .media-controls .media-play-button, .media-play-button:not(.pro-center-play)');
 // Free pro keys do nothing in the Viewer.
 const before = await V();
 for (const k of ['i', 'o', ',', '.', '[', ']', 'r', 'g', 'z', 'Shift+ArrowLeft', 'Shift+ArrowRight', 'Shift+z', 'Shift+v']) await page.keyboard.press(k);
@@ -59,6 +65,6 @@ out.smallTargets = await page.evaluate(() => {
 });
 out.overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
 out.proChunks = await page.evaluate(() => performance.getEntriesByType('resource').map((e) => e.name.split('/').pop()).filter((n) => /^(runtime|studio|debug)-/.test(n)));
-out.pass = out.k && out.space && out.right5 && out.left5 && out.l10 && out.j10 && out.five && out.home && out.m && out.down && out.c && out.freeKeys
+out.pass = out.k && out.space && out.spaceOnSeek && out.right5 && out.left5 && out.l10 && out.j10 && out.five && out.home && out.m && out.down && out.c && out.freeKeys
   && out.helpRows >= 10 && out.helpFocusIn && out.helpClosed && out.smallTargets.length === 0 && !out.overflow && out.proChunks.length === 0;
 return out;

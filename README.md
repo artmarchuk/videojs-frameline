@@ -151,7 +151,7 @@ A host can turn any single feature on over Viewer or off over Studio, for exampl
 
 ### Keyboard shortcuts
 
-Both tiers keep the YouTube map: `Space` or `K` play and pause, `←` `→` seek 5 s, `J` `L` seek 10 s, `↑` `↓` volume, `M` mute, `C` captions, `F` fullscreen, `0`–`9` seek to a tenth, `Home` `End`, `<` `>` speed. `Shift+?` opens the help dialog, which lists the keys that are live in the current configuration.
+Both tiers keep the YouTube map: `Space` or `K` play and pause (`Space` also with focus on a seek bar or a range handle), `←` `→` seek 5 s, `J` `L` seek 10 s, `↑` `↓` volume, `M` mute, `C` captions, `F` fullscreen, `0`–`9` seek to a tenth, `Home` `End`, `<` `>` speed. `Shift+?` opens the help dialog, which lists the keys that are live in the current configuration.
 
 These are added to the YouTube map in the Studio tier. Each works only while its feature is on, and `Shift+?` lists what is live.
 

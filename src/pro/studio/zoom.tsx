@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { Menu } from '@videojs/react';
-import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useId, useMemo, useRef, type RefObject } from 'react';
 
 import { cn } from '@/lib/resolve-class-name';
 
@@ -259,6 +259,7 @@ export function useZoomActions(note: string | null): ZoomActions {
 export function ZoomMenu({ actions, note }: { actions: ZoomActions; note: string | null }) {
   const level = useProStore((state) => state.zoom);
   const name = t.zoomNames[level] ?? level;
+  const noteId = useId();
 
   return (
     <Menu.Root side="top" align="end">
@@ -282,7 +283,15 @@ export function ZoomMenu({ actions, note }: { actions: ZoomActions; note: string
         </Menu.Trigger>
       </ButtonTooltip>
       <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup', 'pro-menu-popup', 'pro-zoom-popup')}>
-        <Menu.Content className={'media-menu-content'}>
+        <Menu.Content className={'media-menu-content'} aria-describedby={noteId}>
+          {/* The note goes above the options, so the pointer never crosses it on the way from the button (the menu
+              opens above it). Same place when a menu opens downwards. */}
+          <div className={'pro-menu-head'}>
+            <p id={noteId} className={'pro-menu-note'}>
+              {t.zoomNote}
+            </p>
+            <Menu.Separator className={'pro-menu-separator'} />
+          </div>
           <Menu.RadioGroup className={'pro-menu-group'} aria-label={t.zoom} value={level} onValueChange={(value) => actions.set(value as ZoomLevel)}>
             {ZOOM_LEVELS.map((value) => (
               <Menu.RadioItem key={value} className={'media-menu-item'} value={value} data-zoom-item={value}>
@@ -293,7 +302,6 @@ export function ZoomMenu({ actions, note }: { actions: ZoomActions; note: string
                 {value === level && value !== 'fit' && note && <span className={'pro-menu-sub'}>{note}</span>}
               </Menu.RadioItem>
             ))}
-            <p className={'pro-menu-note'}>{t.zoomNote}</p>
           </Menu.RadioGroup>
         </Menu.Content>
       </Menu.Popup>
