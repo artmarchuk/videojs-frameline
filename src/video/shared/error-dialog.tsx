@@ -8,24 +8,32 @@ import { Button } from './button';
 
 /**
  * Shown when the media reports an error: a plain message, a retry action and a dismiss action.
- * Retry clears the error and asks the media to load its source again. Video.js leaves recovery to the skin.
+ * Retry asks the media to load its source again and keeps the dialog until that load gets somewhere. Video.js leaves
+ * recovery to the skin.
  */
+/** Events that mean the retried load got somewhere: the dialog closes on the first of them. */
+const LOADED_EVENTS = ['loadedmetadata', 'canplay', 'playing'] as const;
+
 export function ErrorDialog() {
   const media = useMedia();
   const error = usePlayer(selectError);
 
   function retry() {
-    error?.dismissError();
-    // Assigning the source again starts a fresh load, which also lets the engine report a new error if it fails again.
-    const target = media as { src?: string; load?: () => void } | null;
-    if (!target) return;
-    const src = target.src;
-    if (typeof src === 'string' && src) {
-      target.src = '';
-      target.src = src;
-    } else if (typeof target.load === 'function') {
-      target.load();
+    // `load()` starts a fresh load of the current source through the engine when there is one (an HLS stream's `src`
+    // is a blob URL by then, so assigning it again would do nothing). The dialog stays on screen until the media has
+    // loaded: the engine keeps its error object across the reload, so a second failure would not report as a new error,
+    // and the dialog would otherwise vanish on a source that is still broken. A dismiss by hand still works meanwhile.
+    const target = media as (EventTarget & { load?: () => void }) | null;
+    if (!target || typeof target.load !== 'function') {
+      error?.dismissError();
+      return;
     }
+    const loaded = () => {
+      for (const type of LOADED_EVENTS) target.removeEventListener(type, loaded);
+      error?.dismissError();
+    };
+    for (const type of LOADED_EVENTS) target.addEventListener(type, loaded);
+    target.load();
   }
 
   return (
