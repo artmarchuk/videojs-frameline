@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 
 import { useProStoreApi } from './context';
 import type { FrameClockPrecision, FrameClockSource } from './store';
-import { framesFromSeconds, nearestFrame } from './timecode';
+import { framesFromSeconds, presentedFrame } from './timecode';
 
 export interface FrameClockReading {
   frame: number;
@@ -71,8 +71,8 @@ export function startFrameClock(
       if (stopped) return;
       window.clearTimeout(settle);
       settle = 0;
-      // `mediaTime` is the presentation time of the frame on screen, so the nearest frame start is the frame.
-      onReading({ frame: nearestFrame(metadata.mediaTime, fps), mediaTime: metadata.mediaTime });
+      // `mediaTime` is the presentation time of the frame on screen: its start in Chrome, the seek time in Firefox.
+      onReading({ frame: presentedFrame(metadata.mediaTime, fps), mediaTime: metadata.mediaTime });
       // The API fires once per registration, so register again for the next frame.
       handle = video.requestVideoFrameCallback(onFrame);
     };

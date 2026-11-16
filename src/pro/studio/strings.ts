@@ -42,6 +42,7 @@ export const studioStrings = {
   noFrame: 'There is no frame to grab yet',
   captureBlocked: "This video's host does not allow frame capture.",
   copyImageUnsupported: 'This browser cannot copy images. Use Grab frame instead.',
+  copyImageHint: 'Not in this browser',
   copyFailed: 'Could not copy. Check the clipboard permission.',
   copyLink: 'Copy link at timecode',
   linkCopied: 'Link copied',

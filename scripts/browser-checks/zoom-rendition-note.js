@@ -35,7 +35,9 @@ await page.evaluate(() => document.querySelector('video').pause());
 await page.waitForTimeout(1500);
 await page.focus('.pro-skin'); await page.keyboard.press('z');
 await page.waitForFunction(() => document.querySelector('.pro-skin').dataset.zoom === '100', null, { timeout: 10000 }).catch(() => {});
-await page.waitForTimeout(300);
+// The note follows Video.js's activeVideoRendition, which can trail videoHeight by a moment in Firefox.
+for (let i = 0; i < 16 && (await item()) !== '100%'; i++) await page.waitForTimeout(500);
+out.settledAfterMs = await page.evaluate(() => 0);
 out.quality = await page.evaluate(() => [...document.querySelectorAll('[role=menuitemradio]')].filter((e) => /^(Auto|\d+p)/.test(e.textContent.trim())).map((e) => e.textContent.trim() + (e.getAttribute('aria-checked') === 'true' ? '*' : '')));
 out.best = { zoom: await page.evaluate(() => document.querySelector('.pro-skin').dataset.zoom ?? 'fit'), videoHeight: await height(), said: await said(), item: await item() };
 out.bestOk = out.best.videoHeight === best && out.best.said === 'Zoom 100%' && out.best.item === '100%';

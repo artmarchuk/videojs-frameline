@@ -6,8 +6,10 @@ import {
   nearestFrame,
   parseTimecode,
   resolveFrameRate,
+  presentedFrame,
   secondsFromFrames,
 } from './timecode';
+import { seekTimeForFrame } from './studio/logic';
 
 const NTSC = 30000 / 1001;
 
@@ -161,5 +163,18 @@ describe('frames and seconds', () => {
     expect(formatTimecode(Number.NaN, 24)).toBe('00:00:00:00');
     expect(framesFromSeconds(-1, 24)).toBe(0);
     expect(secondsFromFrames(-10, 24)).toBe(0);
+  });
+});
+
+describe('presentedFrame', () => {
+  it("takes Chrome's frame start, including one that is a hair early", () => {
+    expect(presentedFrame(1 / 30, 30)).toBe(1);
+    expect(presentedFrame(1 / 30 - 1e-6, 30)).toBe(1);
+    expect(presentedFrame(10 / 24, 24)).toBe(10);
+  });
+  it("takes Firefox's seek time in the middle of a frame as that frame, not the next", () => {
+    expect(presentedFrame(0.05, 30)).toBe(1); // seekTimeForFrame(1, 30)
+    expect(presentedFrame(seekTimeForFrame(10, 24), 24)).toBe(10);
+    expect(presentedFrame(2 / 30 - 0.3 / 30, 30)).toBe(1);
   });
 });

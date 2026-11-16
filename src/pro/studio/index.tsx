@@ -560,26 +560,29 @@ function MarkersSubmenu(props: MarkerListProps) {
   );
 }
 
-function MenuAction({ label, shortcut, onSelect }: { label: string; shortcut?: string; onSelect: () => void }) {
+function MenuAction({ label, shortcut, hint, disabled = false, onSelect }: { label: string; shortcut?: string; hint?: string; disabled?: boolean; onSelect: () => void }) {
   return (
-    <Menu.Item className={'media-menu-item'} onSelect={onSelect}>
+    <Menu.Item className={'media-menu-item'} disabled={disabled} aria-label={disabled && hint ? `${label}. ${hint}` : undefined} onSelect={onSelect}>
       <span>{label}</span>
-      {shortcut && (
+      {shortcut && !hint && (
         <span className={'media-menu-hint'}>
           <kbd className={'pro-kbd'}>{shortcut}</kbd>
         </span>
       )}
+      {hint && <span className={'media-menu-hint'}>{hint}</span>}
     </Menu.Item>
   );
 }
 
 /** The Capture menu: grab or copy the frame, or copy a link at the timecode. */
 function CaptureMenu({ controller, features }: { controller: StudioController; features: Readonly<FeatureFlags> }) {
+  // Firefox before 127 has no `ClipboardItem`: the item stays, disabled, and says so instead of failing on activation.
+  const canCopyImage = typeof ClipboardItem !== 'undefined' && typeof navigator.clipboard?.write === 'function';
   const link = features.copyTimecodeLink;
   return (
     <ToolMenu name="capture" label={t.capture} icon={<GrabFrameIcon />} word={t.capture}>
       {features.grabFrame && <MenuAction label={t.grab} shortcut="G" onSelect={controller.grabFrame} />}
-      {features.grabFrame && <MenuAction label={t.copyImage} onSelect={controller.copyFrameImage} />}
+      {features.grabFrame && <MenuAction label={t.copyImage} disabled={!canCopyImage} hint={canCopyImage ? undefined : t.copyImageHint} onSelect={controller.copyFrameImage} />}
       {features.grabFrame && link && <Menu.Separator className={'pro-menu-separator'} />}
       {features.copyTimecodeLink && <MenuAction label={t.copyLink} onSelect={controller.copyLink} />}
     </ToolMenu>

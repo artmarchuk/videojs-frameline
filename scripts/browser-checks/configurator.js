@@ -29,6 +29,9 @@ const state = () => page.evaluate(() => {
 const check = (name) => page.locator(`#config input[name="${name}"]`);
 const radio = (name, value) => page.locator(`#config input[name="${name}"][value="${value}"]`);
 const showMe = async (task) => { await page.locator(`[data-task="${task}"] button`).click(); };
+// WebKit (Safari) does not move focus to a button on a pointer click, so "focus stays on the button" is asserted only where a click focuses.
+await page.click('#log-clear'); out.clickFocuses = await page.evaluate(() => document.activeElement?.id === 'log-clear');
+const kept = (focus, label) => (out.clickFocuses ? focus === label : true);
 
 // Opens on Studio; the snippet names the tier and the source's frame rate.
 const start = await state();
@@ -71,12 +74,12 @@ await showMe('step'); await page.waitForTimeout(1600);
 const stepped = await state();
 const fps = Number(/fps=\{([\d.]+)\}/.exec(stepped.snippet)[1]);
 out.step = { time: stepped.time, frames: +(stepped.time * fps).toFixed(2), paused: stepped.paused, focus: stepped.focus, said: stepped.said };
-out.stepOk = stepped.paused && Math.floor(stepped.time * fps + 0.01) === 3 && stepped.focus === 'Show me: step to the exact frame';
+out.stepOk = stepped.paused && Math.floor(stepped.time * fps + 0.01) === 3 && kept(stepped.focus, 'Show me: step to the exact frame');
 
 await showMe('range'); await page.waitForTimeout(1500);
 const ranged = await state();
 out.range = { log: ranged.log[0], playing: !ranged.paused, loop: await page.locator('#player [aria-label^="Loop"]').first().getAttribute('aria-pressed'), focus: ranged.focus };
-out.rangeOk = /onInOutChange \| in \d+\.\d{3} · out \d+\.\d{3}/.test(ranged.log[0] ?? '') && !ranged.paused && out.range.loop === 'true' && ranged.focus === 'Show me: set a range and loop it';
+out.rangeOk = /onInOutChange \| in \d+\.\d{3} · out \d+\.\d{3}/.test(ranged.log[0] ?? '') && !ranged.paused && out.range.loop === 'true' && kept(ranged.focus, 'Show me: set a range and loop it');
 await page.evaluate(() => document.querySelector('#player video').pause());
 
 await showMe('zones'); await page.waitForTimeout(500);
@@ -90,7 +93,7 @@ out.safeOk = safe.titleSafe && safe.crop === null && safe.zones === null && /onG
 await showMe('zoom'); await page.waitForTimeout(1800);
 const zoomed = await state();
 out.zoom = { zoom: zoomed.zoom, transform: zoomed.transform, log: zoomed.log[0] };
-out.zoomOk = zoomed.zoom === '200' && /translate\(/.test(zoomed.transform) && /onZoomChange \| 200%/.test(zoomed.log[0] ?? '') && zoomed.focus === 'Show me: zoom to 200% and pan';
+out.zoomOk = zoomed.zoom === '200' && /translate\(/.test(zoomed.transform) && /onZoomChange \| 200%/.test(zoomed.log[0] ?? '') && kept(zoomed.focus, 'Show me: zoom to 200% and pan');
 
 await showMe('grab'); await page.waitForTimeout(1500);
 const grab = await state();

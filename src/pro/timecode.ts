@@ -64,6 +64,17 @@ export function nearestFrame(seconds: number, fps: number): number {
   return Math.round(clampCount(seconds) * exact);
 }
 
+/**
+ * The frame that a presented-frame timestamp belongs to. Chrome's `requestVideoFrameCallback` reports the frame's
+ * start time; Firefox reports the time that was seeked to, which can be the middle of the frame (the skin seeks to
+ * half a frame in). So a timestamp up to a quarter frame early still counts as that frame, and anything later inside
+ * the frame is that frame. Rounding to the nearest start would move Firefox's reading to the next frame.
+ */
+export function presentedFrame(seconds: number, fps: number): number {
+  const { exact } = resolveFrameRate(fps);
+  return Math.floor(clampCount(seconds) * exact + 0.25);
+}
+
 /** The start time of a frame, in seconds. */
 export function secondsFromFrames(frames: number, fps: number): number {
   const { exact } = resolveFrameRate(fps);
