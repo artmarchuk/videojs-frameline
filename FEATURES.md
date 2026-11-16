@@ -99,7 +99,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Hide every guide and bring the same set back | Studio | `Shift+V`; the menu's footer |
 | Guides are drawn on the picture only, white with a dark edge, and follow it at any size | Studio | Resize the window with guides on |
 | A badge on the Guides button counts what is on | Studio | Switch two guides on |
-| The Guides menu, with its own button (it was "View" before) | Studio | The frame icon |
+| The Guides menu has its own button | Studio | The frame icon |
 
 ## Studio: zoom
 
