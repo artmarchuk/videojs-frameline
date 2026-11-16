@@ -1033,3 +1033,81 @@ The author creates the GitHub repository and pushes by hand. The tag `step-8-con
 - **`apiRef` with a host that re-creates the ref**, and its calls before the video has metadata (the page guards for that itself).
 - **A real download** from "Grab a frame": the check stubs the link's click and reads the file name.
 - Everything listed under steps 7 and 7b that needs Firefox, Safari, a real pointer or real fullscreen still stands.
+
+## Step 9: Hardening and audit (16 Nov 2026)
+
+No new features and no layout changes. Everything ran in Playwright 1.65 from a scratch folder outside the repository: Chromium as the installed Google Chrome (headless, `HeadlessChrome/157`), Playwright's Firefox (`159.0`, a Nightly build) and Playwright's WebKit (`Safari/605.1.15`, a Safari 27 build), on macOS, against the local production build on port 4173 and then the public URL. WebKit in Playwright is close to Safari but not the same build, and Safari 16.4 cannot be emulated.
+
+### 9.0: confirmed
+The rename to [Scope] and [Backlog] was done before this step (737fb69, 585f0af). A search of README, FEATURES, the overview, `CLAUDE.md` and the page for `[Contest]`, `[Later]`, `PRO`, `Share`, `Review` and `View` found one leftover, the "(it was "View" before)" aside in FEATURES, now gone. "Review transport" in the overview's step list is a step name and stays. The old step files are history.
+
+### 9.5: axe
+`@axe-core/playwright` (with its peer `playwright-core`) is a dev dependency; `scripts/browser-checks/axe-audit.js` scans a page with the WCAG 2.0/2.1/2.2 A and AA tags plus best practices, after opening the Guides menu, the Zoom menu or the help dialog when asked. Six states: the configurator page in both themes, Studio with the Guides menu open, with the Zoom menu open, with the help dialog open, and the Viewer.
+
+| | Critical | Serious | Moderate | Minor |
+| --- | --- | --- | --- | --- |
+| Before, page (either theme) and Studio (Guides or Zoom open) | 0 | 2 | 0 | 0 |
+| Before, Viewer | 0 | 1 | 0 | 0 |
+| Before, Studio with the help dialog open | 0 | 0 | 0 | 0 |
+| After, every state | 0 | 0 | 0 | 0 |
+
+The three findings, all fixed: `label-content-name-mismatch` on the timecode button (visible `00:00:30:00`, name "Time in seconds"), now named by its value plus "Time in seconds" through `aria-labelledby`; the same rule on the Viewer's duration toggle (Video.js's own label "Show remaining time, 1 minute, 51 seconds duration." does not contain the visible `1:51`), now labelled through `Time.Value`'s `label` prop as "1:51 duration. Show remaining time." (`@videojs/utils` 10.4.0 became a direct dependency for `formatTime`); and `target-size` on the dock's volume thumb, which at full volume overhangs the slider by 12px and was covered 2px by the fullscreen button; the slider now has `z-index: 1`. No moderate or minor findings. The help-dialog state reports nothing because axe does not scan what is inert behind a modal dialog. The challenge's own audit prompt is not in the repository or in `specs/`, so it was not run.
+
+### 9.4: Firefox and WebKit
+Every check, in all three engines (also recorded in the README's table):
+
+| Check | Chromium | Firefox | WebKit |
+| --- | --- | --- | --- |
+| Viewer gate (`viewer-gate.js`, 1440 and 320, `/preview.html` and `/`): tab order, keys, free keys, help dialog, targets, overflow, no pro chunk | Pass | Pass; the `<video>` element itself is two tab stops before the seek bar (Firefox makes media elements focusable) | Pass |
+| `configurator.js` | Pass | Fixed: three steps landed on frame 5 (see the frame clock) | Pass except Copy (headless WebKit refuses clipboard writes) and "focus stays on the button", which WebKit does not do on a pointer click; the check now asserts it only where a click focuses |
+| `fullscreen-focus.js` | Pass | Pass | Pass |
+| `guides-menu-focus.js` | Pass | Pass | Pass |
+| `handle-focus-ring.js` | Pass | Pass | Pass |
+| `zoom.js` at 1x and 2x | Pass | Pass | 1x pass; 2x fails only `grabSame`: two grabs of the same paused frame differ in a few pixel values (sums 1338436116 and 1333837263 at 3840x2160); the files are the right size, without guides |
+| `zoom-rendition-cap.js` | Pass | Pass | Pass |
+| `zoom-rendition-note.js` | Pass | Fails `bestOk`: after a manual switch to 2160p, `videoHeight` is 2160 but Video.js's `activeVideoRendition` still says 720p eight seconds later, so the note still says "showing 720p". The note follows Video.js; not fixed | Pass |
+| `error-retry.js` | Fixed | Fixed | Fixed |
+| `reduced-motion.js`, `axe-audit.js`, `two-players.js` | Pass | Not run | Not run |
+
+- **Frame clock.** All three engines have `requestVideoFrameCallback`. Chrome's `mediaTime` is the frame's start; **Firefox reports the seek time** (the skin seeks half a frame in), so `nearestFrame` rounded frame 1 to frame 2 and three steps landed on frame 5. `presentedFrame` in `timecode.ts` floors with a quarter-frame tolerance; after the fix ten `.` presses from 0 land on `00:00:00:10` in all three engines (probe at 30 fps; before the fix Firefox gave `00:00:00:16`).
+- **Zoom.** `image-rendering: pixelated` computes on the video in all three; guides counter-scale (the `zoom.js` guide and label checks pass).
+- **Grab frame.** Works in all three. Firefox 159 has `ClipboardItem`; Firefox 121 to 126 (inside the floor) do not, so "Copy frame image" is now disabled with the hint "Not in this browser" when `ClipboardItem` or `navigator.clipboard.write` is missing, instead of toasting on activation.
+- **Rendition.** Playwright's WebKit played the Mux stream through hls.js, like Chrome (the Quality menu lists eight renditions and the cap lift works), so native-HLS behaviour (an empty quality list, no note, no cap lift) was **not** exercised; the code paths behind the note return `null` without a rendition list.
+- **Menus and focus order.** `guides-menu-focus.js` gives the same order in all three; the gate's tab order is the same apart from Firefox's video stops.
+
+### 9.1: `prefers-contrast: more`
+Token overrides in `tokens.css` (same layout): `--fl-text-dim` `#cbcbd1` and `--fl-text-dim-raised` `#d8d8dd` (7:1 and more on their surfaces), `--fl-line` `#7a7a81` and `--fl-divider` white at 0.38 (3:1 on surface-2), ticks and buffer lighter, `--fl-handle-idle` `#b6b6bd` (4.5:1 against the track), the ruler label `#d2d2d8`, the scrim at 96%, a 3px focus ring, a 2px playhead edge (`--fl-playhead-edge-width`, read by the playhead's drop-shadow filter) and guide lines at 1.5x (`--fl-guide-weight`; the dark edge stays 1px each side). The track colour is left alone: a lighter track would drop the Viewer's progress fill below 3:1 against it. The page: dim text `#3f3f46` / `#d2d2d8`, hairlines `#86868d` / `#7f7f86`, control edges `#5d5d64` / `#a4a4ab`, a 3px focus ring. `scripts/contrast.mjs` prints a second column with the raised minimums (7 for dim text, 3 for lines, dividers and the menu separator, 4.5 for idle handles); 84 rows, all pass in both columns. Screenshots: `contrast-more-studio.png`, `contrast-more-viewer.png`.
+
+### 9.2: `forced-colors`
+Added to the existing token block: ButtonText borders on buttons, the time toggle and the timecode field; Highlight with HighlightText on pressed buttons and checked menu items, a Highlight border on the highlighted item; on the timeline a Highlight fill for the range band (kept with `forced-color-adjust: none`, a HighlightText line under the played part) against the bordered track, CanvasText with a Canvas edge for the playhead, handles, pins and spans, Highlight for set handles and the selected pin. Icons already used `currentColor`, guides already used CanvasText over Canvas, and the focus ring is an outline. Emulated with `forcedColors: 'active'` in Chromium; `forced-colors-studio.png` (range, Guides menu open, title safe on) and `forced-colors-viewer.png`. The video picture is unaffected.
+
+### 9.3: reduced motion
+`scripts/browser-checks/reduced-motion.js` under `reducedMotion: 'reduce'` lists every element with a transition or animation duration, or smooth scrolling, in five states: idle, the Guides menu open, a toast on screen (`G`), the volume slide-out open, Settings open. Studio, the Viewer and the page: nothing. Checked and covered: the controls fade and every skin transition (`--fl-duration` and `--fl-duration-fade` are 0ms), menus opening (the same tokens), the volume slide-out, the toasts, the spinner (`--media-spinner-animation: none`), the page's button transition (inside a `no-preference` query) and its `scrollIntoView` (instant under the preference). Nothing needed fixing.
+
+### 9.6: carry-overs
+- **Error dialog.** Retry assigned `media.src` to itself, which is a blob URL once hls.js has attached: nothing reloaded and the dialog closed for good. It now calls `load()`, which re-requests the manifest (seen in the resource timeline). The engine keeps its error object across the reload, so the second failure fires `error` with the same object and the store sees no new error; the dialog therefore stays open until `loadedmetadata`, `canplay` or `playing`, then closes. `error-retry.js` passes in all three engines, both tiers. A source that recovers on retry was not tested (the broken URL stays broken).
+- **Two players.** `two-players.html` and its check (above). Each player's announcer, store, hotkeys and `persist` key are its own; React ids are unique because both players render in one root.
+- **Language.** README says the skin's strings are English only.
+- **Real fullscreen.** Code paths as in step 6d; in the hand-test list.
+
+### Bundle sizes (raw / gzip -9)
+| Chunk | Step 8 | Step 9 |
+| --- | --- | --- |
+| Viewer path JS (`demo-video-*.js`) | 952,862 / 279,981 B | 953,211 / 280,118 B |
+| Skin CSS (`demo-video-*.css`) | 32,907 / 5,872 B | 33,941 / 6,094 B |
+| Pro runtime | 12,761 / 5,036 B | 12,761 / 5,039 B |
+| Studio JS | 58,245 / 18,523 B | 58,614 / 18,635 B |
+| Studio CSS | 23,357 / 4,226 B | 24,214 / 4,357 B |
+| The page's JS / CSS | 7,479 / 3,452 B, 7,794 / 2,408 B | 7,479 / 3,452 B, 8,137 / 2,472 B |
+| Monitor page JS / CSS | 15,614 / 5,961 B, 2,926 / 1,138 B | 15,614 / 5,962 B, 2,926 / 1,138 B |
+
+### Screenshots
+`design/screenshots/step-9/` (2x, each opened and looked at): `contrast-more-studio`, `contrast-more-viewer`, `forced-colors-studio`, `forced-colors-viewer`, `firefox-studio`, `webkit-studio`.
+
+### Unverified (step 9)
+- Safari itself, iOS Safari, Windows High Contrast on Windows, a screen reader, a real pointer and real fullscreen: the hand-test list in the step 9 report.
+- Native HLS playback in Safari (Playwright's WebKit used hls.js): the rendition note and the cap lift there.
+- Retry on a source that recovers: the dialog should close on `loadedmetadata`; only the still-broken case was run.
+- `prefers-contrast: more` and `forced-colors` were emulated in Chromium only.
+- Firefox 121 to 126 (no `ClipboardItem`): the disabled Copy item was reasoned from the feature test, not run in those versions.
+- Each step 9 commit was built from a working tree that passed typecheck, tests, build, contrast and the gate as a whole; the intermediate commits were not checked out and rebuilt one by one.

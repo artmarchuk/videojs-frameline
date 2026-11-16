@@ -339,7 +339,29 @@ The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectan
 
 The floor the code is written for: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4.
 
-**Tested so far: Google Chrome on macOS only** (desktop, and phone sizes with touch emulation), by scripted checks and screenshots. Firefox, Safari, iOS and real touch devices have not been run yet; that is the next step's work. `NOTES.md` lists what is unverified.
+Checked with scripted browser checks (the Viewer gate, every script in `scripts/browser-checks/`, the configurator page checks and an axe audit) in Playwright's three engines on macOS. WebKit in Playwright is close to Safari but not the same build, and Safari 16.4 cannot be emulated. iOS Safari and real touch devices were not run.
+
+| | Chrome 157 (headless) | Firefox 159 (Playwright) | WebKit (Playwright, Safari 27 build) |
+| --- | --- | --- | --- |
+| Viewer gate, menus, focus order, help dialog | Pass | Pass. Firefox also puts the `<video>` element itself in the tab order, two stops before the seek bar | Pass |
+| Frame clock | `requestVideoFrameCallback` | `requestVideoFrameCallback`; it reports the seek time rather than the frame's start, which the clock allows for. Ten steps land on frame 10 | `requestVideoFrameCallback`; ten steps land on frame 10 |
+| Zoom: `image-rendering: pixelated` on video, guides counter-scale | Pass | Pass | Pass |
+| Grab frame | Pass | Pass. "Copy frame image" is disabled with a hint where `ClipboardItem` is missing (Firefox before 127) | Pass. Two grabs of the same paused frame can differ in a few pixel values |
+| Rendition note while zoomed | Pass | After a manual switch to the best rendition, Video.js can keep reporting the previous one, so the note can lag | Pass. Playwright's WebKit plays the Mux stream through hls.js, as Chrome does; Safari proper may use native HLS, where the quality list and the note may stay empty |
+| Error dialog: Retry on a broken source | Pass | Pass | Pass |
+| A pointer click on a button | Focuses it | Focuses it | Does not focus it (Safari's convention); keyboard focus is unaffected |
+
+Accessibility, in short:
+
+- Keyboard: every control, the YouTube key map in both tiers; `Shift+?` lists the keys that are live.
+- Names and roles: tooltips match accessible names; menus are real menus; the timeline and the handles are sliders read as timecode; one live region announces actions.
+- Contrast: text 4.5:1, controls and focus 3:1, checked by `node scripts/contrast.mjs`. Under `prefers-contrast: more`, secondary text reaches 7:1, lines 3:1, and the focus ring is 3 px.
+- `forced-colors` (Windows High Contrast): system colours, bordered buttons and menu items, Highlight for checked states and the range band.
+- `prefers-reduced-motion`: no transitions or animations in the skin or on the page.
+- Targets at least 24 px, 44 px on touch.
+- axe-core (`@axe-core/playwright`): zero violations on the page in both themes, in Studio with the Guides menu, the Zoom menu and the help dialog open, and in the Viewer.
+
+**Language:** the skin's own strings (Studio controls, tooltips, announcements, the help dialog) are English only. Video.js's own components follow the player's locale.
 
 ### Frame accuracy
 

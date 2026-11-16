@@ -140,7 +140,10 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | The timeline is a slider read as timecode; the handles are sliders too | Studio | A screen reader on the timeline |
 | Guides are `aria-hidden` and ignore the pointer; switching them is announced | Studio | Switch a guide with a screen reader |
 | Contrast checked by a script: text 4.5:1, controls and focus 3:1, page palette in light and dark | Both | `node scripts/contrast.mjs` |
-| Reduced motion respected; forced-colours fallbacks | Both | System setting |
+| Reduced motion: no transitions or animations in the skin or on the page | Both | System setting; `scripts/browser-checks/reduced-motion.js` |
+| More contrast (`prefers-contrast: more`): secondary text 7:1, lines 3:1, idle handles 4.5:1, a 3 px focus ring, a 2 px playhead edge, heavier guide lines, a denser Viewer scrim; the layout does not change | Both | System setting; the "more" column of `node scripts/contrast.mjs` |
+| Forced colours (Windows High Contrast): bordered buttons and menu items, Highlight for checked states and the range band, playhead, handles, markers and guides in system colours | Both | Windows High Contrast, or Playwright `forcedColors: 'active'` |
+| axe audit with zero violations: the page in both themes, Studio with the Guides menu, the Zoom menu and the help dialog open, the Viewer | Both | `scripts/browser-checks/axe-audit.js` |
 | The configurator page: landmarks, heading order, real radio groups and checkboxes, works at 320 px | Both | The site root |
 
 ## Performance
@@ -152,6 +155,19 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | The skin does not re-render per frame: the frame clock writes to a small store, and only the timecode field subscribes to the frame | Studio | `/preview.html?debug` shows the render count |
 | Frame time from `requestVideoFrameCallback` where the browser has it | Studio | `/preview.html?debug` shows the clock source |
 | Plain CSS, no webfont, our own icons | Both | The source |
+
+## Browser support
+
+Floor: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4. Checked in Playwright's Chromium (Google Chrome), Firefox and WebKit on macOS; WebKit is close to Safari but not the same build, and Safari 16.4 cannot be emulated. The README has the full table.
+
+| Check | Chrome | Firefox | WebKit |
+| --- | --- | --- | --- |
+| Viewer gate, menus, focus order, help dialog | Pass | Pass (the `<video>` element is also a tab stop in Firefox) | Pass |
+| Frame clock source, and the frame after ten steps | `requestVideoFrameCallback`, frame 10 | `requestVideoFrameCallback`, frame 10 | `requestVideoFrameCallback`, frame 10 |
+| Zoom: pixelated rendering, guides counter-scale | Pass | Pass | Pass |
+| Grab frame; Copy frame image | Pass | Pass; Copy is disabled with a hint where the browser cannot write images to the clipboard | Pass |
+| Rendition note while zoomed | Pass | Can lag a manual quality switch | Pass through hls.js; native HLS in Safari proper is unverified |
+| Error dialog Retry on a broken source | Pass | Pass | Pass |
 
 ## Out of scope
 
