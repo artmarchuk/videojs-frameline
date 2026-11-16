@@ -30,6 +30,8 @@ export default defineConfig({
         index: path('./apps/preview/index.html'),
         preview: path('./apps/preview/preview.html'),
         workbench: path('./apps/preview/workbench.html'),
+        // A test page with two players, not linked from the site (step 9.6).
+        two: path('./apps/preview/two-players.html'),
       },
     },
   },

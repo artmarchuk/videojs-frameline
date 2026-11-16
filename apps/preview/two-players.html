@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>Frameline: two players</title>
+    <style>
+      body { margin: 0; padding: 24px; background: #151517; color: #f2f2f4; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+      h1 { margin: 0 0 4px; font-size: 16px; }
+      p { margin: 0 0 16px; color: #a3a3aa; }
+      .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 24px; }
+      .two > section > h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <h1>Two players on one page</h1>
+    <p>A test page, not linked from the site. Each player has its own state, its own range, zoom and guides (remembered under its own key), and hotkeys go only to the player that has focus.</p>
+    <main id="root" class="two"></main>
+    <script type="module" src="/src/two/main.tsx"></script>
+  </body>
+</html>
