@@ -681,6 +681,8 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 ## Backlog
 
 - Row one of the narrow dock is 2 to 4 px too long at a player 350 to 353 px wide.
+- After a click on the ruler, `Space` does not play: focus is on the Seek slider and the hotkeys leave `Space` to it (`K` works). Decide whether the slider should pass `Space` on to play and pause.
+- hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
 - Give `FramelineSkin` a title for grabbed file names (`<title>_<timecode>.png`).
@@ -1222,3 +1224,19 @@ Typecheck, 217 unit tests, build, the contrast script (both columns), and the br
 - The look of the flat toolbar and of the pressed edge under more contrast on a real display and with a real pointer.
 - The slowed frame strips rely on Chrome's DevTools animation rate; the timing figures come from the per-frame samples at normal speed.
 - Only Chromium was run for this follow-up, apart from what "Dock polish" covered.
+
+### Section 6: the intermittent "play from outside the range" (time-boxed, 16:28 to 16:52; stopped, engine unchanged)
+**By hand, 29 runs** (Playwright with the real pointer and keys on the local build; a 10–14 s range by `I` `O`, Loop on; click the ruler at 40 s, wait, then play; every other run first plays from 13.4 s, waits for the loop back to In and stops there). Start time = where playback actually began (the last `seeked` before playing):
+
+| Run | How | Start |
+| --- | --- | --- |
+| 1–20 | picture click, `Space`, Play button in turn; * = right after a loop | 1 picture 10.017 · 2 Space* did not play · 3 button 10.017 · 4 picture* 10.017 · 5 Space did not play · 6 button* 10.017 · 7 picture 10.019 · 8 Space* did not play · 9 button 10.018 · 10 picture* 10.017 · 11 Space did not play · 12 button* 10.017 · 13 picture 10.017 · 14 Space* did not play · 15 button 10.017 · 16 picture* 10.017 · 17 Space did not play · 18 button* 10.017 · 19 picture 10.017 · 20 Space* did not play |
+| 21–29 | the same with `K` for `Space` | all nine 10.017 or 10.018 |
+
+Every start that played began on the In frame (22 of 22). **The seven `Space` runs did nothing:** after a click on the ruler, focus is on the Seek slider, and the player's hotkeys leave `Space` to an interactive element (Video.js `isInteractiveActivation`, step 6c), so `Space` does not play from there. `K` does. That is a separate finding (Backlog).
+
+**What the check catches.** With every `currentTime` write, play and pause logged, a failing run reads: play at 40.017 s → the range engine's own seek to 10.017 s (In) → 300 ms later **hls.js** writes 12.067 s (`_trySkipBufferHole`, its stall recovery, called from its gap-controller `poll`) → the frame snap moves it to 12.083 s → playback continues there. The range engine treats that as somebody else's seek that lands inside the range, so it lets it play (the step 9 rule: a seek to inside the range while playing keeps playing). So it is **not** a race between the engine's loop seek and the host's seek; the start at In happens, and the streaming engine then skips forward over what it takes for a hole in its buffer.
+
+**Is it the check's own writes?** Not only: with the check's seek to 40 s made by a click on the ruler instead of a `currentTime` write, it still failed once in 15 runs (12.58 s). With direct writes: 17 of 21 passes over this follow-up (and 11 of 16, 3 of 4 before). So step 3 of the brief does not hold, and step 2 was not reached: no person-style run hit it, but 22 runs at a rate of roughly 1 in 5 to 1 in 15 do not rule it out.
+
+**Left as it is.** Options for the author, none taken: (a) let the engine re-assert In when a seek it did not make lands forward of In within a short time of its own start-at-In seek (risk: fighting hls.js if the hole is real, and overriding a fast user click); (b) look at hls.js's hole-skipping settings on the media source (`maxBufferHole` and the stall watchdog), which belong to the host's `MuxVideo` configuration, not the skin; (c) accept it, since the head still plays inside the range.
