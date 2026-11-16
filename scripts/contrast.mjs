@@ -1,21 +1,28 @@
 // Computes the WCAG contrast ratios recorded in NOTES.md. Run: node scripts/contrast.mjs
 // Values mirror src/styles/tokens.css, and for the configurator page apps/preview/src/page/page.css.
-const T = {
+// Two columns: the default palette, and the palette under `prefers-contrast: more` (MORE and PAGE_MORE below), whose
+// minimums are higher where the step 9 brief asks for it: secondary text 7:1, lines 3:1, idle handles 4.5:1.
+const BASE = {
   s0: '#0E0E10', s1: '#1E1E20', s2: '#2C2C2F', s3: '#3A3A3E', on: '#46464B', line: '#333336', track: '#85858C',
   text: '#F2F2F4', dim: '#9A9AA0', dimRaised: '#B2B2B8', accent: '#5B9DFF', accentInk: '#0B1220', range: '#4D7BC1', ink: '#1C1C1E',
   tickMinor: '#55555B', tickMid: '#77777E', tickMajor: '#8E8E95', buffer: '#4A4A50', white: '#FFFFFF',
   handleIdle: '#77777E', rulerLabel: '#B8B8C0',
+};
+const MORE = {
+  ...BASE, line: '#7A7A81', dim: '#CBCBD1', dimRaised: '#D8D8DD', tickMinor: '#8C8C93', tickMid: '#A6A6AD', tickMajor: '#BCBCC3',
+  buffer: '#6E6E75', handleIdle: '#B6B6BD', rulerLabel: '#D2D2D8',
 };
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
 const L = (c) => { const [r, g, b] = c.map(lin); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [x, y] = [L(a), L(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 const over = (fg, a, bg) => fg.map((c, i) => c * a + bg[i] * (1 - a));
-const SCRIM = 0.88; // --fl-scrim-alpha: opacity of surface-0 behind the overlay control bar
-const scrimWhite = over(rgb(T.s0), SCRIM, rgb(T.white));
-const c = (name) => rgb(T[name]);
 // Ruler labels use `mix-blend-mode: difference`: the colour on screen is |label - backdrop| per channel.
 const diff = (a, b) => a.map((v, i) => Math.abs(v - b[i]));
+// Each row: [name, foreground, background, minimum, minimum under prefers-contrast: more (defaults to the first)].
+const buildRows = (T, SCRIM, PAGE) => {
+const scrimWhite = over(rgb(T.s0), SCRIM, rgb(T.white)); // --fl-scrim-alpha: opacity of surface-0 behind the overlay control bar
+const c = (name) => rgb(T[name]);
 const rows = [
   // Text
   ['text on surface-0 (timecode field)', c('text'), c('s0'), 4.5],
@@ -23,11 +30,11 @@ const rows = [
   ['text on surface-2 (controls)', c('text'), c('s2'), 4.5],
   ['text on surface-3 (hover, tooltips, badges)', c('text'), c('s3'), 4.5],
   ['text on --fl-on (a toggle that is on)', c('text'), c('on'), 4.5],
-  ['text-dim on surface-1 (the "of duration" text)', c('dim'), c('s1'), 4.5],
-  ['ruler label, blended, on the dock (surface-1)', diff(c('rulerLabel'), c('s1')), c('s1'), 4.5],
+  ['text-dim on surface-1 (the "of duration" text)', c('dim'), c('s1'), 4.5, 7],
+  ['ruler label, blended, on the dock (surface-1)', diff(c('rulerLabel'), c('s1')), c('s1'), 4.5, 7],
   ['ruler label, blended, where the white playhead head passes under it', diff(c('rulerLabel'), c('text')), c('text'), 4.5],
-  ['text-dim on surface-2 (controls)', c('dim'), c('s2'), 4.5],
-  ['text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time)', c('dimRaised'), c('s3'), 4.5],
+  ['text-dim on surface-2 (controls)', c('dim'), c('s2'), 4.5, 7],
+  ['text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time)', c('dimRaised'), c('s3'), 4.5, 7],
   ['text-dim on surface-3: NOT USED for text (see text-dim-raised)', c('dim'), c('s3'), 0],
   ['ink on text fill (Play)', c('ink'), c('text'), 4.5],
   ['text on a highlighted menu item (--fl-on) in a Studio menu', c('text'), c('on'), 4.5],
@@ -35,7 +42,7 @@ const rows = [
   ['white text on accent: NEVER USED, shown as a warning', c('white'), c('accent'), 0],
   // Overlay (Viewer tier) over footage
   [`text on scrim (${SCRIM}) over white frame`, c('text'), scrimWhite, 4.5],
-  [`text-dim on scrim (${SCRIM}) over white frame`, c('dim'), scrimWhite, 4.5],
+  [`text-dim on scrim (${SCRIM}) over white frame`, c('dim'), scrimWhite, 4.5, 7],
   ['Viewer progress fill (text) on scrim over white frame', c('text'), scrimWhite, 3],
   ['Viewer progress fill (text) against the unfilled track (--fl-track)', c('text'), c('track'), 3],
   ['slider track (--fl-track) on surface-0', c('track'), c('s0'), 3],
@@ -59,7 +66,7 @@ const rows = [
   ['active handle (accent) against the neutral track', c('accent'), c('s2'), 3],
   ['active handle (accent) against the unplayed band, decorative: the handle also has a shape and stands proud of the track', c('accent'), c('range'), 0],
   ['idle handle (--fl-handle-idle) against the dock (surface-1)', c('handleIdle'), c('s1'), 3],
-  ['idle handle (--fl-handle-idle) against the neutral track (surface-2)', c('handleIdle'), c('s2'), 3],
+  ['idle handle (--fl-handle-idle) against the neutral track (surface-2)', c('handleIdle'), c('s2'), 3, 4.5],
   ['hover hairline (text at 45%) over the neutral track', over(c('text'), 0.45, c('s2')), c('s2'), 3],
   ['hover hairline (text at 45%) over the dock', over(c('text'), 0.45, c('s1')), c('s1'), 3],
   ['markers (text-dim) on the dock', c('dim'), c('s1'), 3],
@@ -68,28 +75,25 @@ const rows = [
   ['mid ticks on the dock, decorative', c('tickMid'), c('s1'), 0],
   ['minor ticks on the dock, decorative', c('tickMinor'), c('s1'), 0],
   ['neutral track (surface-2) on the dock, decorative: the playhead and fill carry the value', c('s2'), c('s1'), 0],
-  ['buffered line on the dock, decorative', c('buffer'), c('s1'), 0],
-  ['hairline (line) on surface-1, decorative', c('line'), c('s1'), 0],
+  ['buffered line on the dock, decorative', c('buffer'), c('s1'), 0, 3],
+  ['hairline (line) on surface-1, decorative; a line under more contrast', c('line'), c('s1'), 0, 3],
+  ['hairline (line) on surface-2, decorative; a line under more contrast', c('line'), c('s2'), 0, 3],
+  ['divider inside a control fill (white at the divider alpha on surface-2), decorative; a line under more contrast', over(c('white'), T.dividerAlpha, c('s2')), c('s2'), 0, 3],
+  ['menu separator (line) on surface-1, decorative; a line under more contrast', c('line'), c('s1'), 0, 3],
   // Controls
   ['Play fill (text) against the dock', c('text'), c('s1'), 3],
   ['toggle on (--fl-on) against control fill (surface-2): too low alone, so "on" also draws a bar in the text colour', c('on'), c('s2'), 0],
   ['Loop on (--fl-on) against the dock: too low alone, same bar', c('on'), c('s1'), 0],
   ['toggle-on bar (text) against --fl-on', c('text'), c('on'), 3],
 ];
-// The configurator page (apps/preview/src/page/page.css), in its light and its dark theme. The player stays dark in
-// both; the page takes the accent only for links and focus rings, a darker shade of it on the light theme.
-const PAGE = {
-  light: { bg: '#F3F3F1', surface: '#FFFFFF', sunken: '#EAEAE7', text: '#1B1B1D', dim: '#5A5A61', line: '#D8D8D4', control: '#85858C', fill: '#1B1B1D', ink: '#FFFFFF', link: '#1D5FD1', focus: '#1D5FD1' },
-  dark: { bg: '#151517', surface: '#1E1E20', sunken: '#0E0E10', text: '#F2F2F4', dim: '#A3A3AA', line: '#333336', control: '#7D7D84', fill: '#F2F2F4', ink: '#1C1C1E', link: '#5B9DFF', focus: '#5B9DFF' },
-};
 for (const [theme, p] of Object.entries(PAGE)) {
   const k = (name) => rgb(p[name]);
   rows.push(
     [`page, ${theme}: text on the page`, k('text'), k('bg'), 4.5],
     [`page, ${theme}: text on a panel`, k('text'), k('surface'), 4.5],
     [`page, ${theme}: text on the code block and a hovered button`, k('text'), k('sunken'), 4.5],
-    [`page, ${theme}: dim text on the page (subtitle, byline)`, k('dim'), k('bg'), 4.5],
-    [`page, ${theme}: dim text on a panel (leads, hints, flag names, log)`, k('dim'), k('surface'), 4.5],
+    [`page, ${theme}: dim text on the page (subtitle, byline)`, k('dim'), k('bg'), 4.5, 7],
+    [`page, ${theme}: dim text on a panel (leads, hints, flag names, log)`, k('dim'), k('surface'), 4.5, 7],
     [`page, ${theme}: link on the page`, k('link'), k('bg'), 4.5],
     [`page, ${theme}: link on a panel`, k('link'), k('surface'), 4.5],
     [`page, ${theme}: chosen segment, its text on its fill`, k('ink'), k('fill'), 4.5],
@@ -98,12 +102,32 @@ for (const [theme, p] of Object.entries(PAGE)) {
     [`page, ${theme}: focus ring on the page`, k('focus'), k('bg'), 3],
     [`page, ${theme}: focus ring on a panel`, k('focus'), k('surface'), 3],
     [`page, ${theme}: the player's dock (surface-1) against the page, decorative: the player has a hairline`, c('s1'), k('bg'), 0],
-    [`page, ${theme}: panel hairline, decorative`, k('line'), k('surface'), 0],
+    [`page, ${theme}: panel hairline, decorative; a line under more contrast`, k('line'), k('surface'), 0, 3],
   );
 }
+return rows;
+};
+
+// The configurator page (apps/preview/src/page/page.css), in its light and its dark theme. The player stays dark in
+// both; the page takes the accent only for links and focus rings, a darker shade of it on the light theme.
+const PAGE_BASE = {
+  light: { bg: '#F3F3F1', surface: '#FFFFFF', sunken: '#EAEAE7', text: '#1B1B1D', dim: '#5A5A61', line: '#D8D8D4', control: '#85858C', fill: '#1B1B1D', ink: '#FFFFFF', link: '#1D5FD1', focus: '#1D5FD1' },
+  dark: { bg: '#151517', surface: '#1E1E20', sunken: '#0E0E10', text: '#F2F2F4', dim: '#A3A3AA', line: '#333336', control: '#7D7D84', fill: '#F2F2F4', ink: '#1C1C1E', link: '#5B9DFF', focus: '#5B9DFF' },
+};
+const PAGE_MORE = {
+  light: { ...PAGE_BASE.light, dim: '#3F3F46', line: '#86868D', control: '#5D5D64' },
+  dark: { ...PAGE_BASE.dark, dim: '#D2D2D8', line: '#7F7F86', control: '#A4A4AB' },
+};
+
+const base = buildRows({ ...BASE, dividerAlpha: 0.1 }, 0.88, PAGE_BASE);
+const more = buildRows({ ...MORE, dividerAlpha: 0.38 }, 0.96, PAGE_MORE);
 let fail = 0;
-for (const [name, a, b, min] of rows) {
-  const r = ratio(a, b); const ok = r >= min; if (!ok) fail++;
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${r.toFixed(2)}:1  (min ${min || '-'})  ${name}`);
+console.log('default | prefers-contrast: more');
+for (let i = 0; i < base.length; i++) {
+  const [name, a, b, min, minMore = min] = base[i];
+  const [, a2, b2] = more[i];
+  const r = ratio(a, b); const r2 = ratio(a2, b2);
+  const ok = r >= min; const ok2 = r2 >= minMore; if (!ok || !ok2) fail++;
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${r.toFixed(2).padStart(6)}:1 (min ${String(min || '-').padStart(3)}) | ${ok2 ? 'PASS' : 'FAIL'} ${r2.toFixed(2).padStart(6)}:1 (min ${String(minMore || '-').padStart(3)})  ${name}`);
 }
 process.exit(fail ? 1 : 0);

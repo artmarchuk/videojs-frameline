@@ -21,12 +21,13 @@
   .pro-skin .pro-guide-line {
     stroke: rgb(255 255 255 / 0.75);
     /* The overlay is scaled with the picture while zoomed; the lines keep their width on screen. */
-    stroke-width: calc(1px / var(--fl-zoom-scale, 1));
+    stroke-width: calc(1px * var(--fl-guide-weight, 1) / var(--fl-zoom-scale, 1));
   }
 
   .pro-skin .pro-guide-under {
     stroke: rgb(0 0 0 / 0.5);
-    stroke-width: calc(3px / var(--fl-zoom-scale, 1));
+    /* The dark edge stays 1px each side of the line, whatever the line's weight. */
+    stroke-width: calc((1px * var(--fl-guide-weight, 1) + 2px) / var(--fl-zoom-scale, 1));
   }
 
   .pro-skin .pro-guide-dashed {

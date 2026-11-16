@@ -634,6 +634,31 @@ kbd {
   }
 }
 
+/* More contrast: dim text 7:1, hairlines and control edges 3:1, a 3px focus ring. Same layout. Checked by scripts/contrast.mjs. */
+@media (prefers-contrast: more) {
+  :root {
+    --page-dim: #3f3f46;
+    --page-line: #86868d;
+    --page-control: #5d5d64;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page-dim: #d2d2d8;
+      --page-line: #7f7f86;
+      --page-control: #a4a4ab;
+    }
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  .check input:focus-visible,
+  .segmented input:focus-visible + span,
+  .panel:focus-visible {
+    outline-width: 3px;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .button,
   .segmented span {

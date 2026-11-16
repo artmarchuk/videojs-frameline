@@ -142,6 +142,30 @@
     }
   }
 
+  /*
+   * More contrast (prefers-contrast: more): the same layout, stronger colours. Secondary text reaches 7:1, lines and
+   * dividers 3:1, idle handles 4.5:1 against the track; the focus ring is 3px, the playhead's dark edge 2px, guide
+   * lines 1.5x, and the Viewer scrim denser. The ratios are the "more" column of scripts/contrast.mjs.
+   */
+  @media (prefers-contrast: more) {
+    .media-skin[data-theme="pro"] {
+      --fl-line: #7a7a81;
+      --fl-divider: rgb(255 255 255 / 0.38);
+      --fl-text-dim: #cbcbd1;
+      --fl-text-dim-raised: #d8d8dd;
+      --fl-tick-minor: #8c8c93;
+      --fl-tick-mid: #a6a6ad;
+      --fl-tick-major: #bcbcc3;
+      --fl-buffer: #6e6e75;
+      --fl-handle-idle: #b6b6bd;
+      --fl-ruler-label: #d2d2d8;
+      --fl-scrim-alpha: 96%;
+      --fl-focus-width: 3px;
+      --fl-playhead-edge-width: 2px;
+      --fl-guide-weight: 1.5;
+    }
+  }
+
   @media (forced-colors: active) {
     .media-skin[data-theme="pro"] {
       --fl-surface-0: Canvas;
