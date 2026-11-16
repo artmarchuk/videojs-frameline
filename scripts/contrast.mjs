@@ -82,9 +82,10 @@ const rows = [
   ['menu separator (line) on surface-1, decorative; a line under more contrast', c('line'), c('s1'), 0, 3],
   // Controls
   ['Play fill (text) against the dock', c('text'), c('s1'), 3],
-  ['toggle on (--fl-on) against control fill (surface-2): too low alone, so "on" also draws a bar in the text colour', c('on'), c('s2'), 0],
-  ['Loop on (--fl-on) against the dock: too low alone, same bar', c('on'), c('s1'), 0],
-  ['toggle-on bar (text) against --fl-on', c('text'), c('on'), 3],
+  ['toggle on (--fl-on) against control fill (surface-2), decorative by default: the pressed bevel and aria-pressed carry it', c('on'), c('s2'), 0],
+  ['Loop on (--fl-on) against the dock, decorative by default: the pressed bevel carries it', c('on'), c('s1'), 0],
+  ['pressed edge (text) against the dock; drawn under more contrast only', c('text'), c('s1'), 0, 3],
+  ['pressed edge (text) against --fl-on; drawn under more contrast only', c('text'), c('on'), 0, 3],
 ];
 for (const [theme, p] of Object.entries(PAGE)) {
   const k = (name) => rgb(p[name]);

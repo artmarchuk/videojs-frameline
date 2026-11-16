@@ -206,22 +206,12 @@
     transform: rotate(90deg);
   }
 
-  /* "On": a lighter graphite fill, plus aria-pressed. The accent is reserved for the timeline. */
+  /*
+   * "On": the pressed treatment (skin.css), plus aria-pressed. The accent is reserved for the timeline. Under more
+   * contrast the pressed state draws an edge in the text colour (tokens.css); in forced colours it is Highlight.
+   */
   .pro-skin .pro-tool[data-pressed] {
     background-color: var(--fl-on);
-  }
-
-  /* The fill alone is only 1.5:1 against the control, so "on" also draws a short bar in the text colour. */
-  .pro-skin .pro-tool[data-pressed]::after {
-    content: "";
-    position: absolute;
-    bottom: calc(var(--media-spacing) * 0.75);
-    left: 50%;
-    width: calc(var(--media-spacing) * 3);
-    height: 2px;
-    border-radius: 1px;
-    background-color: var(--fl-text);
-    transform: translateX(-50%);
   }
 
   .pro-skin .pro-badge {
@@ -663,6 +653,25 @@
   @container media-root (width < 382px) {
     .pro-skin[data-dock-size="narrow"] .pro-tool-zoom {
       display: none;
+    }
+  }
+
+  /* Under a 300px player the side padding goes from 15px to 12px: six 44px cells fit down to 288px. */
+  @container media-root (width < 300px) {
+    .pro-skin[data-dock-size="narrow"][data-layout="dock"][data-bar="pro"] .pro-bar {
+      padding-inline: 12px;
+    }
+  }
+
+  /* Under 288px the cells may be 40px wide (44px tall): six fit down to 264px. */
+  @container media-root (width < 288px) {
+    .pro-skin[data-dock-size="narrow"] .pro-main-right {
+      grid-auto-columns: minmax(40px, 1fr);
+    }
+
+    .pro-skin[data-dock-size="narrow"] .pro-main-right .media-button {
+      width: 40px;
+      min-width: 40px;
     }
   }
 

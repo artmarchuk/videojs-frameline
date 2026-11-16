@@ -13,8 +13,10 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | System typeface, tabular numerals for every changing number | Both | Watch the timecode while playing |
 | Frame numbers are best effort, and the skin says so | Studio | The timecode field's tooltip where the browser has no frame callback |
 | A neutral surround: every surface is a true grey (R = G = B), so the player adds no colour cast next to the picture | Both | `src/styles/tokens.css` |
-| Tactile controls, in the dock only: controls read as raised, toggles that are on as pressed in, the range, handles and pins as solid things on a recessed track; one token (`--fl-bevel`) scales or removes it, and nothing of it is drawn over the picture | Studio | Press and hold a dock button; set a range; `--fl-bevel: 0` |
-| Nothing that shows time animates (playhead, timecode, ruler, handles, the band's ends); only presses, hovers, menus and the range band's appearance move, in 60 to 120 ms | Both | Set a range with `I` `O`, clear it with `Shift+I` `Shift+O` |
+| Raised keys for the instrument, a flat toolbar for the rest: the transport groups, Play, Loop and the link button read as physical keys; Markers, Capture, Guides, Zoom, Reset range, Captions, Settings, Mute and Fullscreen are flat until hovered (a flat fill) or pressed. Both press in the same way when on, open or held | Studio | Hover Guides, then hold Loop |
+| Tactile controls, in the dock only: toggles that are on read as pressed in, the range, handles and pins as solid things on a recessed track; one token (`--fl-bevel`) scales or removes it, and nothing of it is drawn over the picture. Under more contrast a pressed control draws an edge in the text colour, in forced colours a Highlight fill | Studio | Press and hold a dock button; set a range; `--fl-bevel: 0` |
+| Nothing that shows time animates (playhead, timecode, ruler, handles, the band's ends); only presses, hovers, menus and the range band's appearance move | Both | Set a range with `I` `O`, clear it with `Shift+I` `Shift+O` |
+| A range arrives and leaves visibly: the band fades and grows from its centre line in 160 ms, and goes in 120 ms; a handle turns from idle to set in the same 160 ms. It plays however the range is made: `I`, `O`, dragging a handle, `apiRef.setRange` | Studio | Drag an idle handle; press Reset range |
 
 ## Tiers and configuration
 
@@ -128,7 +130,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | The Viewer bar becomes two rows under 640 px | Viewer | Narrow the window |
 | The Studio row sheds controls in a set order from 1100 px down, and becomes a narrow dock under 740 px | Studio | Narrow the window |
 | Narrow and touch dock, row two: one row of equal cells, each a 44 px target, in the order Markers, Loop, Capture, Link, Guides, Zoom, Settings, Fullscreen | Studio | Open the page on a phone |
-| The narrow row folds: under 382 px the Zoom button is not shown (`Z`, `Shift+Z` and `apiRef.setZoom` still zoom); under 340 px the Link button is not shown and "Copy link at timecode" is an item of the settings menu | Studio | A 360 px and a 320 px wide player |
+| The narrow row folds: under 382 px the Zoom button is not shown (`Z`, `Shift+Z` and `apiRef.setZoom` still zoom); under 340 px the Link button is not shown and "Copy link at timecode" is an item of the settings menu; under 300 px the side padding is 12 px, and under 288 px the cells are 40 px wide, so the row fits down to a 264 px player | Studio | A 360, 320 and 264 px wide player |
 | Markers have their own button on the narrow dock, with the same menu as on the wide one | Studio | The bookmark button on a phone |
 | No In and Out buttons on the narrow dock: the range is set with the handles on the timeline; `I`, `O`, `Shift+I` and `Shift+O` still work from a keyboard | Studio | Drag a handle on a phone |
 | 44 px targets on touch | Both | A phone |

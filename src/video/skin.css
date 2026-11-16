@@ -203,15 +203,24 @@
 
   /*
    * ---------- Tactile controls: the dock only, never over the picture ----------
-   * A control at rest reads as slightly raised; one that is on, has its menu open, or is being pressed reads as
-   * pressed in. Everything comes from the --fl-bevel tokens (tokens.css), which are flat in the overlay layout, under
-   * more contrast and in forced colours. Buttons inside a segmented group stay flat at rest: the group is the raised
-   * object. Motion: into a pressed state over --fl-duration-press, out of it over --fl-duration-quick (shadow and
-   * icon; the fill colour shares the hover's --fl-duration, because one rule can give a property one duration).
+   * Two kinds of control. The keys you press while checking timing are raised: the transport groups (the group is
+   * the raised object, its buttons are flat inside it), Play (studio.css), Loop, and the link button joined to the
+   * timecode field. Everything else is a flat toolbar button: no fill, no bevel at rest, a flat fill on hover. Both
+   * kinds read as pressed in when they are on, have their menu open, or are being pressed. Everything comes from the
+   * --fl-bevel tokens (tokens.css), which are flat in the overlay layout, under more contrast and in forced colours.
+   * Motion: into a pressed state over --fl-duration-press, out of it over --fl-duration-quick (shadow and icon; the
+   * fill colour shares the hover's --fl-duration, because one rule can give a property one duration).
    */
-  .pro-skin[data-layout="dock"] .pro-bar :not(.pro-seg) > .media-button {
+  .pro-skin[data-layout="dock"] .pro-bar :is([data-pro-tool="loop"], .pro-timecode-pair > .pro-tool-link) {
     --fl-shade: var(--fl-raise-shadow);
     background-image: var(--fl-raise-image);
+  }
+
+  /* A flat toolbar button on hover: a flat fill, no bevel. :where keeps it below the pressed rule that follows. */
+  @media (hover: hover) {
+    .pro-skin[data-layout="dock"] .pro-bar .media-button:where(:not(.pro-seg > *, [data-pro-tool="loop"], .pro-timecode-pair > *, .media-play-button)):hover {
+      background-color: var(--fl-surface-2);
+    }
   }
 
   .pro-skin[data-layout="dock"] .pro-bar .media-button {

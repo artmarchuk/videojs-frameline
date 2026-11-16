@@ -131,7 +131,9 @@
     /* Motion: short and functional. */
     --fl-duration-press: 60ms; /* entering a pressed or on state */
     --fl-duration-exit: 70ms; /* things that go away: a cleared range band, a closing menu */
-    --fl-duration-quick: 90ms; /* the range band appearing; leaving a pressed state */
+    --fl-duration-quick: 90ms; /* leaving a pressed state; the link button's check */
+    --fl-duration-range-in: 160ms; /* a range appearing: the band, and a handle turning from idle to set (and back) */
+    --fl-duration-range-out: 120ms; /* a range going away */
     --fl-duration: 120ms; /* hovers, menus */
     --fl-duration-fade: 200ms; /* control-bar fade */
     --fl-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -184,6 +186,8 @@
       --fl-duration-press: 0ms;
       --fl-duration-exit: 0ms;
       --fl-duration-quick: 0ms;
+      --fl-duration-range-in: 0ms;
+      --fl-duration-range-out: 0ms;
       --fl-duration: 0ms;
       --fl-duration-fade: 0ms;
       --media-spinner-animation: none;
@@ -211,6 +215,16 @@
       --fl-focus-width: 3px;
       --fl-playhead-edge-width: 2px;
       --fl-guide-weight: 1.5;
+    }
+  }
+
+  /*
+   * More contrast has no bevel, and the "on" fill alone is under 3:1 against the dock, so a pressed or on control
+   * (Loop on, an open menu, Zoom above Fit) draws a 1px edge in the text colour instead of the inner shadow.
+   */
+  @media (prefers-contrast: more) {
+    .media-skin[data-theme="pro"] {
+      --fl-press-shadow: inset 0 0 0 1px var(--fl-text);
     }
   }
 

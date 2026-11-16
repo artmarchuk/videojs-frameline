@@ -4,7 +4,8 @@
  * the buffered range as a 2px line under it. The playhead and the range handles reach a little past the track.
  * The track is recessed, and the band, the handles and the pins are solid things on it (the --fl-bevel tokens).
  * Nothing that shows time animates: positions follow the media and the pointer exactly. The only transitions are
- * the band's fade when a range appears or is cleared, and colours and shadows.
+ * the band's fade when a range appears or is cleared (also when the first point is set by a drag), and colours and
+ * shadows.
  * Bubbles float above the dock, over the bottom edge of the picture. Time runs left to right on every page: the
  * component sets dir="ltr".
  */
@@ -248,9 +249,10 @@
   }
 
   /*
-   * The band appears with a short fade, growing from its centre line, and goes the same way, faster. Only opacity,
-   * transform and visibility move; its start and end are never in a transition. A cleared band keeps its last place
-   * while it fades (the component leaves the two variables as they were).
+   * The band appears with a fade, growing from its centre line (--fl-duration-range-in), and goes the same way,
+   * faster (--fl-duration-range-out). Only opacity, transform and visibility move; its start and end are never in a
+   * transition, so a drag stays 1:1 with no rule of its own. A cleared band keeps its last place while it fades (the
+   * component leaves the two variables as they were).
    */
   .pro-skin .pro-tl-band,
   .pro-skin .pro-tl-band-played {
@@ -259,8 +261,8 @@
     background-image: var(--fl-solid-image);
     box-shadow: var(--fl-solid-shadow);
     transition:
-      opacity var(--fl-duration-quick) var(--fl-ease),
-      transform var(--fl-duration-quick) var(--fl-ease),
+      opacity var(--fl-duration-range-in) var(--fl-ease),
+      transform var(--fl-duration-range-in) var(--fl-ease),
       visibility 0s;
   }
 
@@ -270,15 +272,9 @@
     opacity: 0;
     transform: scaleY(0.4);
     transition:
-      opacity var(--fl-duration-exit) var(--fl-ease),
-      transform var(--fl-duration-exit) var(--fl-ease),
-      visibility 0s linear var(--fl-duration-exit);
-  }
-
-  /* While a handle is dragged the band follows it with no transition at all. */
-  .pro-skin .pro-tl:has(.pro-tl-handle[data-dragging]) .pro-tl-band,
-  .pro-skin .pro-tl:has(.pro-tl-handle[data-dragging]) .pro-tl-band-played {
-    transition: none;
+      opacity var(--fl-duration-range-out) var(--fl-ease),
+      transform var(--fl-duration-range-out) var(--fl-ease),
+      visibility 0s linear var(--fl-duration-range-out);
   }
 
   .pro-skin .pro-tl-band {
@@ -419,6 +415,8 @@
     cursor: ew-resize;
     outline: none;
     touch-action: none;
+    /* The tab is drawn in currentColor: idle to set and back is a transition of this colour, with the band. */
+    transition: color var(--fl-duration-range-in) var(--fl-ease);
   }
 
   .pro-skin .pro-tl-handle[data-set],
@@ -446,9 +444,8 @@
       auto;
     --fl-shade: var(--fl-handle-shadow);
     box-shadow: var(--fl-shade);
-    transition:
-      background-color var(--fl-duration) var(--fl-ease),
-      box-shadow var(--fl-duration-quick) var(--fl-ease);
+    /* The shadow grows when the handle is picked up, over the same time as the handle's colour. */
+    transition: box-shadow var(--fl-duration-range-in) var(--fl-ease);
   }
 
   /* Picked up: the shadow grows. */

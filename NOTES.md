@@ -680,7 +680,6 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Backlog
 
-- The narrow dock on a player under 294 px: six 44 px cells do not fit (6 px into the padding at 288 px). Options: less side padding there, or one more fold. See "Dock polish".
 - Row one of the narrow dock is 2 to 4 px too long at a player 350 to 353 px wide.
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -1191,3 +1190,35 @@ The source was the track's own radius: `.pro-tl-chapters` clips its content to a
 - **A screen reader:** "Link copied, 00:00:14:20" was read from the live region's text, not heard.
 - **Real fullscreen** with the restyled dock (headless Chrome refuses fullscreen).
 - **A player under 294 px** in the narrow layout: known to overflow by 6 px at 288 px (above).
+
+## Dock polish, follow-up (16 Nov 2026)
+
+Requirements: `specs/dock-polish-2.md`. Same method as "Dock polish" (Playwright, the installed Chrome headless; widths are the player's own). Screenshots: `design/screenshots/dock-polish-2/`, each opened and looked at.
+
+### Raised keys and a flat toolbar
+- Raised (unchanged treatment): the transport groups (`.pro-seg`; its buttons stay flat inside it), Play, Loop, and the link button when it is joined to the timecode field. One rule in `skin.css` selects Loop and `.pro-timecode-pair > .pro-tool-link`; Play keeps its own rule in `studio.css`.
+- Flat at rest: every other dock button, read from the computed style at 1280 px: transparent fill, no gradient, no shadow (Markers, Capture, Guides, Zoom, Reset range, Captions, Settings, Mute, Fullscreen). Hover: a flat `--fl-surface-2` fill over `--fl-duration`. Pressed, open or on: the keys' pressed treatment (an open Guides menu and Zoom at 200% computed `--fl-on`, the darker top and the inner shadow). On the narrow row the link button is flat (it is not joined to the field there) and Loop is raised.
+- The hover rule wraps its exclusions in `:where()`, so its specificity equals the pressed rule's and the pressed rule, written after it, wins on a hovered open menu.
+- Sizes and positions did not change (the layout sweep of "Dock polish" still applies; one row at 1280, 1100 and 820 px with a range set, no overlap).
+
+### The bar under Loop
+Removed (`.pro-tool[data-pressed]::after`). It was **not** the forced-colours cue: there a pressed button already takes a `Highlight` fill with `HighlightText` (`skin.css`), and that is unchanged; Loop on and off differ by that fill (screenshots `forced-colors-loop-on/off`). **One thing differs from the spec: under `prefers-contrast: more`** the bar was the only cue, because the bevel is off there and `--fl-on` against the dock is 1.77:1. Removing it alone would have left Loop on and off nearly identical, so under more contrast `--fl-press-shadow` is a 1 px inset edge in `--fl-text` (14.9:1 against the dock, 8.3:1 against `--fl-on`; two new rows in `scripts/contrast.mjs`). It applies to every pressed or open control there, not only Loop. In the default palette the cue is the pressed bevel alone, as the spec asks; its fill against the dock stays at 1.77:1, and the contrast script now marks that row decorative.
+
+### Range motion
+- `--fl-duration-range-in` 160 ms and `--fl-duration-range-out` 120 ms, both 0 under reduced motion (read back: `0s`, and with reduced motion the band is at opacity 1 on the first frame). The drag rule that switched the band's transitions off is gone; while dragging, the band's left edge equals the handle's anchor after each pointer move (offset 0 px three times), so the drag stays 1:1.
+- **The handle's colour change did not animate before** (also in "Dock polish"): the tab is drawn in `currentColor`, which computes to the keyword, so a transition on its `background-color` never moves. The transition is on the handle's `color` now, over `--fl-duration-range-in`; the drag shadow uses the same duration.
+- Sampled every animation frame (opacity, scaleY, the In handle's colour): `I`, `O`, dragging an idle handle and `apiRef.setRange` (the configurator's "Show me") each go from opacity 0 / scaleY 0.4 to 1 / 1 in about 160 ms, the handle reaching the accent at the same time; clearing by `Shift+I` then `Shift+O` and by Reset range goes back in about 120 ms, then `visibility: hidden`. `Shift+I` alone leaves a range (Out only), so the band stays until `Shift+O`. Frame strips, 40 ms of the transition per row (the page's animations slowed to a tenth through the DevTools protocol): `motion-in-key`, `motion-out-key`, `motion-drag-in`, `motion-api-setrange`, `motion-clear-shift-i-then-shift-o`, `motion-clear-reset`.
+
+### Narrow players under 294 px
+Under a 300 px player the side padding is 12 px; under 288 px the row's cells and buttons are 40 px wide (44 px tall; the menu buttons' `min-width` had to follow). Measured: 300 (15 px padding, 44 px cells), 288 (12 px, 44), 280 and 264 (12 px, 40): no overflow, no overlap, every button inside the player, two rows. Row one fits at all four.
+
+### "Link copied" and the image copy are announced
+Logged with a `MutationObserver` on every `role="status"` region, and read from Playwright's ARIA snapshot: `S` with the link button on screen announces "Link copied, 00:00:14:20" in the Studio region (`aria-live="polite"`) and shows no toast; the Settings item on a 320 px player and `S` there announce the same text and show it as a toast. `Shift+G` announces "Frame copied" (the skin's string since step 4; the spec calls it "Frame image copied", and the text was not changed) and shows it as a toast. Nothing was missing, nothing restored.
+
+### Checks
+Typecheck, 217 unit tests, build, the contrast script (both columns), and the browser checks: `viewer-gate`, `configurator`, `guides-menu-focus`, `handle-focus-ring`, `fullscreen-focus`, `zoom` (1x, 2x), `two-players`, `reduced-motion` (three pages), `axe-audit` (seven states), and `dock-polish.js` wide and at players of 430, 390, 360, 320, 300, 288, 280, 264 and 668 px. `dock-polish.js` now expects 40 px cells under 288 px and checks that every button is inside the player.
+
+### Unverified (follow-up)
+- The look of the flat toolbar and of the pressed edge under more contrast on a real display and with a real pointer.
+- The slowed frame strips rely on Chrome's DevTools animation rate; the timing figures come from the per-frame samples at normal speed.
+- Only Chromium was run for this follow-up, apart from what "Dock polish" covered.

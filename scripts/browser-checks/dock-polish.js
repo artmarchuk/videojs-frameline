@@ -8,7 +8,8 @@
 // `Shift+G` copies a PNG; the Capture menu holds the two image actions; the help dialog lists both keys.
 // Narrow: one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link, Guides, Zoom, Settings,
 // Fullscreen; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
-// is an item of the settings menu; `I`, `O` and `Z` still work.
+// is an item of the settings menu; under 300px the side padding is 12px and under 288px the cells are 40px wide,
+// so six fit down to a 264px player; `I`, `O` and `Z` still work.
 const out = {};
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForSelector('.pro-tl'); await page.waitForTimeout(800);
@@ -71,13 +72,15 @@ if (!out.narrow) {
       sizes: [...new Set(buttons.map((e) => { const r = e.getBoundingClientRect(); return `${r.width}x${r.height}`; }))],
       steps: [...new Set(centres.slice(1).map((c, i) => Math.round(c - centres[i])))],
       over: row.scrollWidth - row.clientWidth,
+      inside: [...document.querySelectorAll('.pro-main-row button')].filter((e) => e.getClientRects().length).every((e) => { const r = e.getBoundingClientRect(), s = document.querySelector('.pro-skin').getBoundingClientRect(); return r.left >= s.left && r.right <= s.right; }),
     };
   });
   const expected = ['Markers', 'Loop', 'Capture', ...(out.player >= 340 ? ['Copy link at timecode'] : []), 'Guides', ...(out.player >= 382 ? ['Zoom'] : []), 'Settings', 'Enter fullscreen'];
   checks.order = out.row.order.join() === expected.join();
-  checks.targets = out.row.sizes.join() === '44x44';
-  checks.equalCells = out.row.steps.length === 1 && out.row.steps[0] >= 44;
-  checks.fits = out.row.over === 0; // six cells need a 294px player
+  const cell = out.player < 288 ? 40 : 44;
+  checks.targets = out.row.sizes.join() === `${cell}x44`;
+  checks.equalCells = out.row.steps.length === 1 && out.row.steps[0] >= cell;
+  checks.fits = out.row.over === 0 && out.row.inside;
   checks.noInOutButtons = (await page.evaluate(() => [...document.querySelectorAll('.pro-skin button')].filter((e) => /^Set (In|Out)/.test(e.getAttribute('aria-label') ?? '')).length)) === 0;
   // I and O from a keyboard; Z where the Zoom button is folded away.
   await focusPlayer();
