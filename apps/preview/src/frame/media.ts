@@ -56,10 +56,9 @@ export interface StagedState {
  * The reel's staged state: a range across almost the whole reel, set on cuts as an editor would, so a first visit can
  * still watch it all, with the handles in view. In 00:00:02:18 (frame 66): the first frame after the leader, where the
  * chapter "Courier greenscreen comp" starts (2.750 s). Out 00:00:50:16 (frame 1216): the last frame before "Titles"
- * (50.708 s, frame 1217). Playhead 00:00:04:12 (frame 108): the marker "Comp: green spill on the coat edge" (4.5 s),
- * so its pin sits under the playhead.
+ * (50.708 s, frame 1217). Playhead 00:00:03:02 (frame 74), in the Courier section.
  */
-const REEL_STAGED: StagedState = { in: 66, out: 1216, playhead: 108, guides: ['title-safe'] };
+const REEL_STAGED: StagedState = { in: 66, out: 1216, playhead: 74, guides: ['title-safe'] };
 const REEL_FPS = 24;
 
 export const SOURCES = {

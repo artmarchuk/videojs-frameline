@@ -2023,3 +2023,5 @@ Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel pre
 - The shots not opened before B.8 were opened: the hovered tile, the focused tile, the timeline with both handles set, and the two Viewer pairs. Nothing wrong found. In the downscaled both-handles pair the grip line looks stronger on Theme B; at pixel level the handles are identical.
 - typecheck, tests (219), build, contrast, `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352): pass.
 - Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo).
+- 18 Nov 2026: the staged playhead is 00:00:03:02 (frame 74), inside the range 00:00:02:18 to 00:00:50:16; it was 00:00:04:12 on the green-spill marker. The poster follows it. `origin/main` had Theme B merged and deployed meanwhile (that was the 01:34 production deployment); local `main` merged it, then went to production with this change.
+
