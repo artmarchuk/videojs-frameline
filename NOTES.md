@@ -1503,6 +1503,8 @@ The Studio chunk grew by about 4 kB gzip: each of our four icons carries three d
 | Round three, Loop added, not rounded | 77,294 / 26,780 B |
 | Round three, rounded (this commit) | 72,732 / 24,485 B |
 
+Preview deployment (behind Vercel's login, not opened; checks ran on the local build of the same commit): https://videojs-frameline-3t1n2ptff-artmarchuk.vercel.app. Production was not deployed.
+
 Rounding saves 4,562 / 2,295 B. Against round two the chunk is 1,510 / 744 B larger, because Loop now carries three drawings where Phosphor's `repeat` was one path. The Viewer chunk is not affected: the drawings are only in the Studio chunk, the Viewer path JS is 957,351 B raw as in round two (281,724 B gzip, 3 B off round two's 281,721).
 
 ### Unverified (icon trial)
