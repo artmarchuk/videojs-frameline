@@ -1458,7 +1458,7 @@ All three new names exist in 2.1.1 and are one `<path>` on the 256 grid. `frame-
 - `rectangle-dashed` is a solid tile with the dashed frame cut out; beside Fullscreen's four triangles it is clearly different (`closeup-guides-to-fullscreen-polish.png`).
 - Checks: typecheck, 219 unit tests, build; `dock-polish` (1440 mouse; 724 × 375 and 422 touch), `phone-transport` (422 touch, 1440 mouse), `viewer-gate` (1440), `configurator`: pass. Forced colours and more contrast: close-ups `*-polish-closeup.png`, icons follow the text colour.
 - Bundle sizes (raw / gzip -9): Studio JS 61,801 / 19,744 B (first trial 61,740 / 19,818); Viewer path JS unchanged at 957,472 / 281,752 B.
-- Preview deployment after the polish: see the line below.
+- Preview deployment after the polish (behind Vercel's login): https://videojs-frameline-5s4hf9jem-artmarchuk.vercel.app. Production was not deployed.
 
 ### Unverified (icon trial)
 - **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
