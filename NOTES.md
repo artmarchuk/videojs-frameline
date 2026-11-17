@@ -1763,7 +1763,7 @@ After the fixes the two pages differ in 0 properties, in both colour modes. The 
 
 ## Theme B: the keybed, lit "on" states, readable idle handles (18 Nov 2026, branch `theme-b`, not merged)
 
-Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no markup, no behaviour. Screenshots, all on the site root and each paired with `main`: `design/screenshots/theme-b/` (`main-*`, `b-*`, `pair-*`, and `b-report.json` / `main-report.json` with the computed styles).
+Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no markup, no behaviour. Preview: https://videojs-frameline-1q93pt97s-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login; production is unchanged). Screenshots, all on the site root and each paired with `main`: `design/screenshots/theme-b/` (`main-*`, `b-*`, `pair-*`, and `b-report.json` / `main-report.json` with the computed styles).
 
 ### B.2 The keybed
 - `.pro-transport` in the dock is the housing: `gap: 1px`, `--fl-seam` (`#050505`) as its fill, `--fl-radius-group` (8px), `--fl-raise-shadow`. No `overflow: hidden`.
@@ -1806,6 +1806,7 @@ Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no
 - Compact density and forced colours: see B.3.
 
 ### Unverified (Theme B)
+- The preview URL in a browser: it answers 302 to the Vercel login. The deployment reports READY and holds the build the screenshots were taken from.
 - Firefox and Safari; a real display; real touch devices.
 - The captions light (no captions on the demo), a disabled tile, and a transport with a feature turned off.
 - The fade of the light in motion: only its end states were captured.
