@@ -1592,3 +1592,35 @@ Both come from `video.duration`; nothing was changed. On load the duration is th
 ### Unverified (round two)
 - Firefox, Safari and a real phone were not run. `svh` is inside the browser floor on paper (Chrome 108, Firefox 101, Safari 15.4).
 - Before the script runs, the stage's shape falls back to 16:9, so between the width limits the player can be up to about 9 px narrower for a moment on load. Not seen in a capture; not measured as a shift.
+
+## Landing page visuals, round three: a headline scale, clean crops, no black rows (17 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-3.md`. Nothing under `src/` changed. The hero opens on 00:00:03:18 with the range 00:00:03:02 to 00:00:07:10 (changed before this round, in `media.ts`).
+
+### Decisions: the headline scale
+- Rule: no hero value is larger on a narrower screen. `:root` (Desktop, 760 to 1199 px) has H1 44, hero top 24, text gap 12, hero gap 24; Wide (from 1200) overrides only the H1 (56); Phone (under 760) has H1 32, top 16, text gap 8, gap 20. The header comment in `tokens.css` names the three modes and the Figma collections.
+- `--layout-hero-top` is now all the space above the H1 at every width: the hero's own top padding (16 px; 8 on Phone; 0 in Wide) and Phone's own text gap (14) and zero top padding are gone from `landing.css`, so the tokens alone set the hero.
+- H1 lines: 2 at 390, 1 at 760, 900, 1100 and 1200. Wide is as in round two: picture top 319.8 at 1200, 1440 and 1920.
+
+### Decisions: the monitor page covers the black rows
+- `preview.html` now shapes the player as the landing does, from `media.ts`: the stage takes the picture's shape (1920 / 1072) while the ratio option is its default 16:9, and the video covers it.
+- Only while the video's box has the picture's shape (within 0.3 %): on a short window the monitor makes the stage shorter and letterboxes the picture, and covering it there would crop the picture. There it stays `contain`. A ResizeObserver on the video decides; it follows the video when the tier switch mounts a new one.
+- With `cover`, the zoom check's model (the picture is the video element's box) does not hold on the reel: a full pan stops at the file's edge, rows included, so at 200% the element's top is 9 px inside the stage and its bottom 6.69 px. The check passes in full on `&media=cosmicDawn`; its header says so. The same is true of the landing page since round one: zoomed in and panned to the top or bottom edge, the reel's rows show. Skin behaviour, not changed.
+
+### Decisions: screenshots
+- The range shot reads the staged state from `media.ts` (Node strips the types and imports it), so it follows the hero.
+- No control cut by a crop's side edge. `clearOfControls` moves a region left or right, never resizes it, to the nearest position where no button (the timecode field and menu buttons with their chevrons among them), In or Out handle, or volume slider comes within 4 px of a side edge, and the shot's own condition still holds; `assertNoControlCut` fails the shot otherwise. An edge on the player's own edge cuts nothing.
+- Moving alone could not clear the edges at the old player widths: the dock's middle and right groups are placed from the player's right edge, so the edge always fell on the same control. Each dock shot now has a player width that puts a gap under the edge: range 1196 (right edge between Reset range and Markers; with a range set, the dock has Reset range and Guides reads "1 guide on"), frame-step and markers 1250 (between Next cut and Loop), zoom 1040 (left edge between Copy link and Previous cut, right edge between Zoom and Settings; the region moved 125 px left).
+- Guides on an 800 px player, not 760: the 760 player's picture (424 px) was shorter than the region (437.5 px) and showed the surround as thin dark strips.
+- `grab-file` is the PNG the skin saves, rows included: about 2 px of near-black at the top and bottom of the picture in the 1120 × 700 image, against the surround's #0f0f0f. `grab-screen` beside it has none.
+
+### Checks (headless Chrome, local production build)
+- Typecheck, 219 tests, build. `configurator.js` passes; axe: 0 violations at 1440 and 390. Monitor checks: `range-playback`, `dock-polish`, `viewer-gate`, `guides-menu-focus`, `zoom-rendition-note`, `reduced-motion` (both pages) pass; `zoom.js` passes on `&media=cosmicDawn` (see above).
+- Pure-black rows in the nine images: none, except the burned-in timecode's own box in the zoom shot.
+
+### Open: layout shift on load (not caused by this round, not fixed)
+- Studio's dock arrives after the page has laid out: the player first has a 34 px bar, which grows to the dock (181, 167 or 117 px, by the skin's arrangement from the player's width and pointer). Configure and the section under it move down. CLS: 0.112 at 390, 0.122 at 760, 0.049 at 900, 0.001 to 0.014 from 1100. The live site: 0.111 at 390, 0.053 at 760; the shorter hero brings more of what moves into the first screen.
+- A page-only fix: reserve the player's final height (stage plus dock) until the Studio handle arrives. It needs the narrow docks' heights (167 and 181 px, and their touch-pointer heights, not measured) as tokens, and those are not in Figma.
+
+### Unverified (round three)
+- Firefox, Safari and a real phone were not run. The dock heights under a touch pointer were not measured.

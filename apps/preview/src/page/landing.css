@@ -385,7 +385,7 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: var(--layout-hero-gap);
-  padding-top: var(--space-16);
+  /* No top padding of its own: --layout-hero-top on the positioning block is all the space above the H1. */
   padding-bottom: var(--layout-hero-bottom);
 }
 
@@ -429,15 +429,10 @@ kbd {
  * it fits, the dock. Width = the height left for the picture × the picture's shape, never under --size-player-min
  * and never over the wrap. The height left is the screen less what is above the player, the dock, and a margin.
  * What is above: the header, the positioning block (its padding, the H1, the descriptor and the two lines, one line
- * each at this width, with their line heights from the text styles), the gap, the tier bar and its gap. The hero has
- * no top padding of its own here: --layout-hero-top is all the space above the H1. The tier bar and Configure are in
- * the same block, so they keep the player's width.
+ * each at this width, with their line heights from the text styles), the gap, the tier bar and its gap. The tier bar
+ * and Configure are in the same block, so they keep the player's width.
  */
 @media (width >= 1200px) {
-  .hero {
-    padding-top: 0;
-  }
-
   .stage {
     --hero-above: calc(
       var(--size-header) + var(--layout-hero-top) + var(--size-h1) * 1.08 + var(--layout-hero-text-gap) +
@@ -1089,15 +1084,6 @@ video-player {
   .nav {
     gap: var(--space-14);
     font: var(--type-small);
-  }
-
-  .hero {
-    padding-top: var(--space-8);
-  }
-
-  .positioning {
-    gap: var(--space-14);
-    padding-top: 0;
   }
 
   .tier-hint,

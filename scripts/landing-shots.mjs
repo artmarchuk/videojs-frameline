@@ -21,6 +21,9 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import sharp from 'sharp';
 
+// The source both pages play, and the hero's staged state, from the one file that names them. Node strips the types.
+import { MEDIA } from '../apps/preview/src/frame/media.ts';
+
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
 const only = process.argv[3];
 const outDir = fileURLToPath(new URL('../apps/preview/public/shots/', import.meta.url));
@@ -32,10 +35,17 @@ const REGION = { width: 700, height: 437.5 };
 const EXPORT = { width: 1120, height: 700 };
 const SCALE = 2;
 
-/** The reel moments the shots use, as the timecodes a frame link carries. */
+const FPS = MEDIA.fps;
+/** A frame number of the source as the timecode a frame link carries. */
+const toTimecode = (frame) =>
+  [Math.floor(frame / (FPS * 3600)), Math.floor(frame / (FPS * 60)) % 60, Math.floor(frame / FPS) % 60, frame % FPS].map((part) => String(part).padStart(2, '0')).join(':');
+if (!MEDIA.staged) throw new Error('The source in media.ts has no staged state for the range shot');
+/** The hero's staged state (`media.ts`): the range shot shows it. */
+const STAGED = { in: toTimecode(MEDIA.staged.in), out: toTimecode(MEDIA.staged.out), playhead: toTimecode(MEDIA.staged.playhead) };
+
+/** The reel moments the other shots use, as the timecodes a frame link carries. */
 const AT = {
-  staged: '00:00:06:00', // Courier greenscreen comp; the hero's staged frame
-  rangeIn: '00:00:04:12',
+  burnIn: '00:00:06:00', // the frame the burned-in timecode's box was measured on; the zoom shot's frame
   beforeFlash: '00:00:27:14', // one frame before the marker `flash`
   flash: '00:00:27:15',
   snowPeak: '00:00:49:12', // Snow peak: the summit sits by the upper right crossing of the thirds
@@ -43,7 +53,6 @@ const AT = {
 /** The burned-in timecode's box in the reel's 1920 × 1080 frame, measured on the frame 00:00:06:00. */
 const BURN_IN = { x: 192, y: 108, width: 245, height: 58 };
 const SOURCE = { width: 1920, height: 1080 };
-const FPS = 24;
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const report = [];
@@ -163,6 +172,64 @@ function assertInside(region, inner, what) {
     throw new Error(`${what} does not fit the region: ${JSON.stringify(inner)} in ${JSON.stringify(region)}`);
 }
 
+/**
+ * The dock's controls: buttons (the timecode field and the menu buttons with their chevrons among them), the In and
+ * Out handles and the volume slider. Not the ruler, the track or the picture: those may run off a region's edge.
+ */
+const controls = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('.pro-skin button, .pro-skin [data-handle], .pro-skin .media-volume-slider')]
+      .filter((element) => !element.closest('.pro-tl-track, [popover], .media-menu-popup'))
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { name: element.getAttribute('aria-label') || element.className.split(' ')[0], x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      })
+      .filter((rect) => rect.width > 0 && rect.height > 0)
+  );
+
+/** A control closer than this to a region's side edge counts as cut: it would look cut in the image. */
+const EDGE_CLEAR = 4;
+
+/** The controls in `list` that a side edge of `region` cuts. An edge on the player's own edge (`within`) cuts nothing. */
+function cutBy(region, list, within) {
+  const edges = [region.x, region.x + region.width].filter((edge) => edge > within.x + 0.5 && edge < within.x + within.width - 0.5);
+  return list.filter(
+    (control) =>
+      control.y < region.y + region.height &&
+      control.y + control.height > region.y &&
+      edges.some((edge) => control.x - EDGE_CLEAR < edge && control.x + control.width + EDGE_CLEAR > edge)
+  );
+}
+
+/**
+ * Moves `region` left or right, never resizing it, to the nearest position where no control is cut by its side
+ * edges, inside `within` and where `keeps(candidate)` holds (the shot's own condition).
+ */
+async function clearOfControls(page, region, within, keeps = () => true) {
+  const list = await controls(page);
+  for (let shift = 0; shift <= within.width; shift++) {
+    for (const x of shift ? [region.x - shift, region.x + shift] : [region.x]) {
+      const candidate = { ...region, x };
+      if (x < within.x - 0.5 || x + region.width > within.x + within.width + 0.5) continue;
+      if (!cutBy(candidate, list, within).length && keeps(candidate)) {
+        if (shift) notes.push(`  region moved ${x < region.x ? 'left' : 'right'} by ${shift} px to clear the controls`);
+        return candidate;
+      }
+    }
+  }
+  if (process.env.DEBUG_REGION) console.log(JSON.stringify({ region, within, list: list.filter((c) => c.y > region.y).map((c) => [c.name, Math.round(c.x), Math.round(c.width)]) }));
+  throw new Error(`No position of the region cuts no control: ${cutBy(region, list, within).map((control) => control.name).join(', ')}`);
+}
+
+/** The check every dock shot ends with: it fails if a control's box crosses the region's left or right edge. */
+async function assertNoControlCut(page, region, player) {
+  const cut = cutBy(region, await controls(page), player);
+  if (cut.length) throw new Error(`The region's edge cuts ${cut.map((control) => control.name).join(', ')}`);
+}
+
+const fits = (region, inner, pad = 6) =>
+  inner.x >= region.x + pad && inner.y >= region.y + pad && inner.x + inner.width <= region.x + region.width - pad && inner.y + inner.height <= region.y + region.height - pad;
+
 /** Clips `region` out of the page, inside `within` only, and returns it on the surround colour, at capture scale. */
 async function clip(page, region, within) {
   const left = Math.max(region.x, within.x);
@@ -225,16 +292,17 @@ async function guidesOn(page, labels, expected) {
 
 const SHOTS = {
   /**
-   * 1. The staged range: both handles, the band, the playhead inside it, Loop on. An 1100 px player, not 1280: at
-   * 1280 a 700 px region that holds the In handle and the Loop button cuts the timecode field in two.
+   * 1. The hero's staged state, read from `media.ts`: both handles, the band, the playhead inside it, Loop on. The
+   * region starts at the player's left edge, for the timecode field. The dock's middle and right groups move with the
+   * player's width; on a 1196 px player the region's right edge falls between Reset range and Markers.
    */
   async range() {
-    const page = await monitor({ width: 1100, at: AT.rangeIn });
+    const page = await monitor({ width: 1196, at: STAGED.in });
     await page.focus('.pro-skin');
     await key(page, 'i');
-    await walk(page, AT.rangeIn, '00:00:10:02');
+    await walk(page, STAGED.in, STAGED.out);
     await key(page, 'o');
-    await walk(page, '00:00:10:02', AT.staged);
+    await walk(page, STAGED.out, STAGED.playhead);
     // Title safe, as on the staged hero.
     await page.click('[data-pro-menu="guides"]');
     await page.waitForTimeout(400);
@@ -248,26 +316,35 @@ const SHOTS = {
       out: document.querySelector('[data-handle="out"]').getAttribute('aria-valuetext'),
       loop: document.querySelector('.pro-range button').getAttribute('aria-pressed'),
     }));
-    if (state.in !== AT.rangeIn || state.out !== '00:00:10:02' || state.loop !== 'true') throw new Error(`The range shot is not in its state: ${JSON.stringify(state)}`);
-    notes.push(`range: In ${state.in}, Out ${state.out}, playhead ${await timecode(page)}, Loop on`);
+    const playhead = await timecode(page);
+    if (state.in !== STAGED.in || state.out !== STAGED.out || playhead !== STAGED.playhead || state.loop !== 'true')
+      throw new Error(`The range shot is not in the hero's state: ${JSON.stringify({ ...state, playhead })}, wanted ${JSON.stringify(STAGED)}`);
+    notes.push(`range: In ${state.in}, Out ${state.out}, playhead ${playhead}, Loop on`);
 
     const player = await playerBox(page);
-    const region = regionAt(player, { x: 'start', y: 'end' });
-    assertInside({ ...region, x: region.x - 6, y: region.y, height: region.height + 6 }, await box(page, '.pro-timecode-pair'), 'The timecode field');
-    assertInside(region, await box(page, '.pro-range'), 'The Loop button');
-    assertInside({ ...region, x: region.x - 6 }, await box(page, '[data-handle="in"]'), 'The In handle');
+    const field = await box(page, '.pro-timecode-pair');
+    const loop = await box(page, '.pro-range');
+    const handle = await box(page, '[data-handle="in"]');
+    const region = await clearOfControls(page, regionAt(player, { x: 'start', y: 'end' }), player, (at) =>
+      fits({ ...at, height: at.height + 6 }, field) && fits(at, loop) && fits(at, handle)
+    );
+    assertInside({ ...region, height: region.height + 6 }, field, 'The timecode field');
+    assertInside(region, loop, 'The Loop button');
+    assertInside(region, handle, 'The In handle');
+    await assertNoControlCut(page, region, player);
     await save('range', await clip(page, region, player), EXPORT);
     await page.context().close();
   },
 
   /**
-   * 2. The burned-in timecode and the dock's timecode field in one region. At Fit on a 1280 px player they are 755 px
+   * 2. The burned-in timecode and the dock's timecode field in one region. At Fit on a wide player they are far
    * apart, so the window is short (the monitor letterboxes the stage) and the picture is at 150%, on its top left corner.
+   * A 1250 px player: the region's right edge falls between Next cut and Loop.
    */
   async 'frame-step'() {
     // The shortest window the monitor page still fits the player into (under 560 px it lets the page scroll): the
     // player is 498 px tall, and the region is its lower 437.5 px.
-    const page = await monitor({ width: 1280, at: AT.beforeFlash, viewport: { width: 1500, height: 560 } });
+    const page = await monitor({ width: 1250, at: AT.beforeFlash, viewport: { width: 1500, height: 560 } });
     if ((await box(page, '.pro-skin')).height > 500) throw new Error('The monitor page did not fit the player into the short window');
     await bestRendition(page);
     await page.focus('.pro-skin');
@@ -292,19 +369,24 @@ const SHOTS = {
     notes.push(`frame-step: the timecode field reads ${state.field}; compare it with the burned-in timecode in the image`);
 
     const player = await playerBox(page);
-    const region = regionAt(player, { x: 'start', y: 'end' });
-    assertInside({ ...region, x: region.x - 6, height: region.height + 6 }, await box(page, '.pro-timecode-pair'), 'The timecode field');
+    const field = await box(page, '.pro-timecode-pair');
+    const region = await clearOfControls(page, regionAt(player, { x: 'start', y: 'end' }), player, (at) => fits({ ...at, height: at.height + 6 }, field));
+    assertInside({ ...region, height: region.height + 6 }, field, 'The timecode field');
+    await assertNoControlCut(page, region, player);
     await save('frame-step', await clip(page, region, player), EXPORT);
     await page.context().close();
   },
 
-  /** 3. The ruler's marker pins, the pin of `hold` hovered, and the link button beside the timecode. */
+  /**
+   * 3. The ruler's marker pins, the pin of `hold` hovered, and the link button beside the timecode. A 1250 px player,
+   * as in frame-step: the region's right edge falls between Next cut and Loop.
+   */
   async markers() {
     const markers = await (await fetch(`${base}/demo/reel/markers.json`)).json();
     const hold = markers.find((marker) => marker.id === 'hold');
     if (!hold) throw new Error('The markers file has no marker `hold`');
     const at = `00:00:${String(Math.floor(hold.time)).padStart(2, '0')}:${String(Math.round((hold.time % 1) * FPS)).padStart(2, '0')}`;
-    const page = await monitor({ width: 1280, at });
+    const page = await monitor({ width: 1250, at });
     await bestRendition(page);
     await settle(page);
 
@@ -318,18 +400,21 @@ const SHOTS = {
     await settle(page, { keepPointer: true });
 
     const player = await playerBox(page);
-    const region = regionAt(player, { x: 'start', y: 'end' });
-    assertInside({ ...region, x: region.x - 6, height: region.height + 6 }, await box(page, '.pro-tool-link'), 'The link button');
+    const link = await box(page, '.pro-tool-link');
+    const region = await clearOfControls(page, regionAt(player, { x: 'start', y: 'end' }), player, (at) => fits({ ...at, height: at.height + 6 }, link));
+    assertInside({ ...region, height: region.height + 6 }, link, 'The link button');
+    await assertNoControlCut(page, region, player);
     await save('markers', await clip(page, region, player), EXPORT);
     await page.context().close();
   },
 
   /**
-   * 4. The 2.39:1 crop and the rule of thirds on the Snow peak, on a 760 px player. A different moment and guide set
-   * from the frame grab's row.
+   * 4. The 2.39:1 crop and the rule of thirds on the Snow peak. A different moment and guide set from the frame grab's
+   * row. An 800 px player: its picture (447 px) is taller than the region (437.5 px), so no surround shows above or
+   * below it.
    */
   async guides() {
-    const page = await monitor({ width: 760, at: AT.snowPeak, viewport: { width: 1100, height: 1000 } });
+    const page = await monitor({ width: 800, at: AT.snowPeak, viewport: { width: 1100, height: 1000 } });
     await bestRendition(page);
     await guidesOn(page, ['2.39:1', 'Rule of thirds'], ['2-39', 'thirds']);
     await page.focus('.pro-skin');
@@ -391,25 +476,28 @@ const SHOTS = {
   },
 
   /**
-   * 5. 400% on the burned-in timecode of the staged frame, the Zoom button reading 400%. A 560 × 350 region exported
+   * 5. 400% on the burned-in timecode of 00:00:06:00, the Zoom button reading 400%. A 560 × 350 region exported
    * one to one, not 700 px scaled to 80%: a source pixel is four device pixels here, and scaling would turn exact
    * squares into uneven ones.
    *
    * The timecode is in the picture's top left corner and the Zoom button in the dock's right half, and a pan stops
-   * at the picture's edge. So the player is sized to bring them together: with the picture panned to its top left
-   * corner, the timecode's centre is a fixed distance from the stage's corner (two CSS px per source pixel), and the
-   * player's width and the window's height put the middle of the region's picture area on that point.
+   * at the picture's edge. With the picture panned to its top left corner, the timecode is a fixed distance from the
+   * stage's corner (two CSS px per source pixel), 490 px of the region's 560, so the region's left edge has under
+   * 60 px to fall in. Every dock control from Previous cut on is placed from the player's right edge. On a 1040 px
+   * player the region that holds the timecode has its left edge between Copy link and Previous cut and its right edge
+   * between Zoom and Settings, so it cuts no control; `clearOfControls` finds it. The window's height puts the middle
+   * of the region's picture area on the timecode's centre.
    */
   async zoom() {
     const size = { width: EXPORT.width / SCALE, height: EXPORT.height / SCALE };
     const perPixel = 4 / SCALE; // CSS px per source pixel at 400%
-    const centre = { x: (BURN_IN.x + BURN_IN.width / 2) * perPixel, y: (BURN_IN.y + BURN_IN.height / 2) * perPixel };
+    const centre = { y: (BURN_IN.y + BURN_IN.height / 2) * perPixel };
     const DOCK = 117; // the one-row dock; checked below
     const BARS = 62; // the monitor page's own bars above and below the player
     const pictureArea = size.height - DOCK; // the part of the region above the dock
-    const width = Math.round(centre.x + size.width / 2);
+    const width = 1040;
     const stageHeight = Math.round(centre.y + pictureArea / 2);
-    const page = await monitor({ width, at: AT.staged, viewport: { width: 1500, height: stageHeight + DOCK + BARS } });
+    const page = await monitor({ width, at: AT.burnIn, viewport: { width: 1500, height: stageHeight + DOCK + BARS } });
     const best = await bestRendition(page);
     await page.focus('.pro-skin');
     await key(page, 'z', 4); // 100%, 150%, 200%, 400%
@@ -431,18 +519,27 @@ const SHOTS = {
       throw new Error(`The zoom shot is not in its state, or a lower rendition is playing: ${JSON.stringify(state)}`);
 
     const player = await playerBox(page);
-    const region = regionAt(player, { x: 'end', y: 'end' }, size);
-    // Where the burned-in timecode is on screen: the frame's box, scaled, from the frame's top left corner.
+    // Where the burned-in timecode is on screen: the frame's box, scaled, from the frame's top left corner. The window
+    // is short, so the monitor letterboxes the stage and the video is drawn with `contain`.
     const stage = await box(page, '.pro-stage');
     const frame = await page.evaluate((source) => {
-      const video = document.querySelector('video').getBoundingClientRect();
-      const scale = Math.min(video.width / source.width, video.height / source.height);
-      return { x: video.x + (video.width - source.width * scale) / 2, y: video.y + (video.height - source.height * scale) / 2, scale };
+      const video = document.querySelector('video');
+      const rect = video.getBoundingClientRect();
+      const fit = getComputedStyle(video).objectFit === 'cover' ? Math.max : Math.min;
+      const scale = fit(rect.width / source.width, rect.height / source.height);
+      return { x: rect.x + (rect.width - source.width * scale) / 2, y: rect.y + (rect.height - source.height * scale) / 2, scale };
     }, SOURCE);
     if (Math.abs(frame.scale - perPixel) > 0.01) throw new Error(`A source pixel is ${frame.scale} CSS px, not ${perPixel}`);
     const burnIn = { x: frame.x + BURN_IN.x * frame.scale, y: frame.y + BURN_IN.y * frame.scale, width: BURN_IN.width * frame.scale, height: BURN_IN.height * frame.scale };
-    assertInside({ ...region, height: stage.y + stage.height - region.y }, burnIn, 'The burned-in timecode');
-    assertInside({ ...region, height: region.height + 6 }, await box(page, '[data-pro-menu="zoom"]'), 'The Zoom button');
+    const zoomButton = await box(page, '[data-pro-menu="zoom"]');
+    const pictureOf = (at) => ({ ...at, height: stage.y + stage.height - at.y });
+    if (process.env.DEBUG_REGION) console.log(JSON.stringify({ burnIn, zoomButton }));
+    const region = await clearOfControls(page, regionAt(player, { x: 'end', y: 'end' }, size), player, (at) =>
+      fits(pictureOf(at), burnIn) && fits({ ...at, height: at.height + 6 }, zoomButton)
+    );
+    assertInside(pictureOf(region), burnIn, 'The burned-in timecode');
+    assertInside({ ...region, height: region.height + 6 }, zoomButton, 'The Zoom button');
+    await assertNoControlCut(page, region, player);
     notes.push(`zoom: ${state.button}, ${state.height}p playing, image-rendering ${state.rendering}, a ${width} px player with a ${Math.round(stage.height)} px stage, on ${await timecode(page)}`);
     await save('zoom', await clip(page, region, player));
     await page.context().close();

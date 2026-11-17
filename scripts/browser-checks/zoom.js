@@ -1,6 +1,8 @@
 // Browser check (step 7 and 7b, zoom). Body of an async function; `page` is a Playwright page on
 // http://localhost:4173/preview.html?tier=studio (npm run build; npx vite preview) or the public URL, 1440x900.
-// Run it at device scale factor 1 and 2: 100% is a different scale on each.
+// Run it at device scale factor 1 and 2: 100% is a different scale on each. Add `&media=cosmicDawn`: on the reel the
+// monitor covers the file's black rows (`picture` in media.ts), so the picture is larger than the video element's box
+// and (2) and the pan-edge checks, which compare the two, do not apply.
 // Checks: (1) a frame grabbed at 200% with a pan is the same image as one grabbed at Fit; (2) the guides overlay's box
 // is transformed with the picture at 200%; (3) a 10 px drag on the zoomed picture pans and does not change the paused
 // state, while a click still does; (4) Shift+Alt+arrows stop at the picture's edges; plus the Z and Shift+Z cycle over
