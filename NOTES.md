@@ -1811,3 +1811,17 @@ Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no
 - The captions light (no captions on the demo), a disabled tile, and a transport with a feature turned off.
 - The fade of the light in motion: only its end states were captured.
 - Windows High Contrast itself: forced colours were emulated in Chrome.
+
+### B.8 Follow-up after review (18 Nov 2026)
+
+Screenshots: `design/screenshots/theme-b8/` (`b-*` is `theme-b` before B.8, `b8-*` after, `pair-*` both; site root, 2x).
+
+- **Menu edge:** `--fl-menu-edge` is the solid `#424242` (1.78:1 against the dock; B.5's white at 10% came out as `#2e2e2e`). `--fl-line` under more contrast, as before. On the narrow dock the edge is now a visible lighter line all round the menu, where before it could hardly be told from the dock; the shadow still does part of the work.
+- **A flat toolbar button that is on has no fill.** Zoom above Fit, captions, and Loop as a cell of the compact dock's second row: no fill and no press shade, only the light and the icon or label at `--fl-text`. Hover gives the toolbar's `surface-2` hover fill. With its menu open, or while held, the button takes the pressed fill and shade as before. Loop as a key (row one) is unchanged: `surface-2`, press shade, light. This supersedes "B.3: a toolbar button that is on has a `surface-2` fill" above.
+- **More contrast:** a flat button that is on keeps the 1px edge in the text colour (`--fl-on-flat-shadow`), with no fill. The spec does not say; the edge was B.3's rule and a 4px dot alone seemed too little there.
+- **Forced colours:** unchanged, the `Highlight` fill with a `HighlightText` dot. The first build of this step lost the fill on Zoom (white label on white); the forced-colours rule now outweighs the new rule. Seen in `pair-forced-loop-and-zoom-on.png`.
+- **Check changed:** `dock-polish.js`, `loopOn` on the compact dock: it asserted a fill on Loop while looping; it now asserts no fill there (and still a fill where Loop is a key). `loopLight` covers the state.
+- Contrast: the menu-edge row is `#424242` (1.78 / 4.24); the two light rows are relabelled (on `surface-2`: Loop as a key; on the dock: a flat button that is on). 81 rows pass in both columns.
+- The shots not opened before B.8 were opened: the hovered tile, the focused tile, the timeline with both handles set, and the two Viewer pairs. Nothing wrong found. In the downscaled both-handles pair the grip line looks stronger on Theme B; at pixel level the handles are identical.
+- typecheck, tests (219), build, contrast, `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352): pass.
+- Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo).

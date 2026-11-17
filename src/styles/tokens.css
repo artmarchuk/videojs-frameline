@@ -14,7 +14,7 @@
      * groove (surface-0) sit clearly below it, the keys (surface-2) stand above it.
      * The accent is a signal, not a fill: set In/Out handles, a selected marker and the focus ring. The range band
      * is one neutral band (--fl-range); the playhead shows the position. In the dock a mode that is on (Loop, Zoom above
-     * Fit, captions) stays pressed in and shows a small light in the accent (--fl-led). --fl-on is the "on" fill of the
+     * Fit, captions) shows a small light in the accent (--fl-led); a key (Loop) also stays pressed in. --fl-on is the "on" fill of the
      * overlay layout only, where the controls sit flat over the picture. Never put white text on the accent (2.7:1).
      */
     --fl-surface-0: #0c0c0c; /* behind the picture; the recessed timecode field; the timeline groove; scrim colour */
@@ -42,7 +42,8 @@
     --fl-led-glow: 0 0 4px color-mix(in srgb, var(--fl-led) 60%, transparent);
     --fl-led-inset: var(--media-spacing); /* the light's distance from the bottom edge of its control */
     --fl-led-lift: 0px; /* how far the icon moves up while the light is on: only where the control is too short for both */
-    --fl-menu-edge: rgb(255 255 255 / 0.1); /* the border of a menu in the dock layout, where it can sit over the dock's own colour */
+    --fl-menu-edge: #424242; /* the border of a menu in the dock layout, where it can sit over the dock's own colour: 1.78:1 there */
+    --fl-on-flat-shadow: 0 0 0 0 transparent; /* a flat toolbar button that is on has no fill and no shade; an edge under more contrast */
     --fl-ruler-label: #b8b8b8; /* ruler labels are blended (difference) with the dock: the result there is close to --fl-text-dim */
     --fl-divider: rgb(255 255 255 / 0.1); /* dividers inside a control fill */
     --fl-frame-line: var(--media-border-color, var(--fl-line)); /* hairline around the player, see --fl-frame-border */
@@ -231,6 +232,7 @@
       --fl-line: #7b7b7b;
       --fl-seam: #7b7b7b;
       --fl-menu-edge: var(--fl-line);
+      --fl-on-flat-shadow: inset 0 0 0 1px var(--fl-text);
       --fl-divider: rgb(255 255 255 / 0.38);
       --fl-text-dim: #cccccc;
       --fl-legend: var(--fl-text);

@@ -213,9 +213,11 @@
    *   the digits and the link; the link takes a surface-1 fill on hover.
    * - Toolbar: everything else, including Loop as a cell of the compact dock's second row. Flat, no fill at rest,
    *   a flat fill on hover.
-   * Every kind reads as pressed in when it is on, has its menu open, or is being pressed; the pressed fill is
-   * surface-2, never lighter than a key at rest. A mode that is on (Loop, Zoom above Fit, captions) also shows a
-   * light, a 4px dot in --fl-led under the icon; an open menu and a held key show none. Everything comes from the
+   * Pressed in (a surface-2 fill, never lighter than a key at rest, and the press shade): a key that is on, any
+   * control whose menu is open, any control while it is held. A mode that is on (Loop, Zoom above Fit, captions)
+   * shows a light, a 4px dot in --fl-led under the icon; an open menu and a held key show none. A flat toolbar
+   * button that is on (Zoom, captions, Loop on the compact dock) has no fill, because it has none at rest: the
+   * light and the icon or label at full --fl-text carry it. Everything comes from the
    * --fl-bevel tokens (tokens.css), which are flat in the overlay layout, under more contrast and in forced colours.
    * Motion: into a pressed state over --fl-duration-press, out of it over --fl-duration-quick (shadow and icon; the
    * fill colour shares the hover's --fl-duration, because one rule can give a property one duration).
@@ -331,6 +333,22 @@
   }
 
   /*
+   * A flat toolbar button that is on, with its menu closed and not held: no fill and no shade (an edge in the text
+   * colour under more contrast, --fl-on-flat-shadow). Same weight as the pressed rule above, and after it. Hover
+   * gives it the toolbar's hover fill back.
+   */
+  .pro-skin[data-layout="dock"] .pro-bar .media-button:is([aria-pressed="true"], [data-pressed], [data-active]):not(.pro-seg > *, .pro-main-centre [data-pro-tool="loop"], .media-play-button, [aria-expanded="true"], :active) {
+    --fl-shade: var(--fl-on-flat-shadow);
+    background-color: transparent;
+  }
+
+  @media (hover: hover) {
+    .pro-skin[data-layout="dock"] .pro-bar .media-button:is([aria-pressed="true"], [data-pressed], [data-active]):not(.pro-seg > *, .pro-main-centre [data-pro-tool="loop"], .media-play-button, [aria-expanded="true"], :active):hover {
+      background-color: var(--fl-surface-2);
+    }
+  }
+
+  /*
    * The light. A mode that is on (Loop, Zoom above Fit, captions) shows a 4px dot under its icon; a menu that is
    * open and a key that is held do not. The dot is always there and fades: in over --fl-duration-press, out over
    * --fl-duration-quick. Decorative: the state is aria-pressed (or the changed icon and label), the pressed shape
@@ -405,10 +423,10 @@
 
     /*
      * The dock's pressed rule would put the Canvas fill (surface-2) and the legend rules CanvasText on a control that
-     * is on; it stays Highlight with a HighlightText legend. The class is doubled to outweigh the pressed rule,
-     * whose :is() list carries the weight of `:active:not(...)`.
+     * is on; it stays Highlight with a HighlightText legend. The class is repeated to outweigh the pressed rule
+     * and the "flat toolbar button that is on" rule, whose :is() and :not() lists carry extra weight.
      */
-    .pro-skin[data-layout="dock"] .pro-bar .media-button.media-button:is([aria-pressed="true"], [data-pressed]) {
+    .pro-skin[data-layout="dock"] .pro-bar .media-button.media-button.media-button:is([aria-pressed="true"], [data-pressed]) {
       background-color: Highlight;
       color: HighlightText;
     }

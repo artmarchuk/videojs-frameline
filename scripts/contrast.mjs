@@ -7,7 +7,7 @@ const BASE = {
   text: '#F2F2F2', dim: '#9C9C9C', dimRaised: '#B4B4B4', legend: '#D0D0D0', accent: '#5B9DFF', accentInk: '#0B1220',
   range: '#606060', ink: '#1C1C1C',
   tickMinor: '#565656', tickMid: '#787878', tickMajor: '#8F8F8F', buffer: '#4A4A4A', white: '#FFFFFF',
-  handleIdle: '#A0A0A0', rulerLabel: '#B8B8B8',
+  handleIdle: '#A0A0A0', menuEdge: '#424242', rulerLabel: '#B8B8B8',
 };
 const MORE = {
   ...BASE, line: '#7B7B7B', seam: '#7B7B7B', dim: '#CCCCCC', dimRaised: '#D9D9D9', legend: '#F2F2F2', tickMinor: '#8D8D8D', tickMid: '#A7A7A7', tickMajor: '#BDBDBD',
@@ -88,12 +88,12 @@ const rows = [
   ['divider inside a control fill (white at the divider alpha on surface-2), decorative; a line under more contrast', over(c('white'), T.dividerAlpha, c('s2')), c('s2'), 0, 3],
   ['menu separator (line) on surface-1, decorative; a line under more contrast', c('line'), c('s1'), 0, 3],
   ['Studio menu separator and Guides column line (white at the divider alpha on surface-1), decorative; a line under more contrast', over(c('white'), T.dividerAlpha, c('s1')), c('s1'), 0, 3],
-  ['menu edge in the dock layout (--fl-menu-edge: white at 10% on surface-1; --fl-line under more contrast) against the dock, decorative: the popup shadow also separates it; a line under more contrast', T.menuEdge ? c('menuEdge') : over(c('white'), 0.1, c('s1')), c('s1'), 0, 3],
+  ['menu edge in the dock layout (--fl-menu-edge #424242; --fl-line under more contrast) against the dock, decorative: the popup shadow also separates it; a line under more contrast', c('menuEdge'), c('s1'), 0, 3],
   // Controls
   ['Play fill (text) against the dock', c('text'), c('s1'), 3],
-  ['the light (--fl-led, the accent) on a pressed fill (surface-2): Loop, Zoom above Fit, captions', c('accent'), c('s2'), 3],
-  ['the light (--fl-led) against the dock (surface-1), where its glow reaches', c('accent'), c('s1'), 3],
-  ['pressed or on fill (surface-2) against the dock, decorative: the pressed shade, the light and aria-pressed carry it', c('s2'), c('s1'), 0],
+  ['the light (--fl-led, the accent) on a pressed fill (surface-2): Loop as a key', c('accent'), c('s2'), 3],
+  ['the light (--fl-led) against the dock (surface-1): a flat toolbar button that is on (Zoom above Fit, captions) has no fill', c('accent'), c('s1'), 3],
+  ['pressed fill (surface-2: a key that is on, an open menu, a held control) against the dock, decorative: the shade, the light and aria-pressed carry it', c('s2'), c('s1'), 0],
   ['keybed seam (--fl-seam) between two tiles (surface-2), decorative; a line under more contrast', c('seam'), c('s2'), 0, 3],
   ['keybed seam (--fl-seam) against Play (text fill), decorative', c('seam'), c('text'), 0],
   ['pressed edge (text) against the dock; drawn under more contrast only', c('text'), c('s1'), 0, 3],

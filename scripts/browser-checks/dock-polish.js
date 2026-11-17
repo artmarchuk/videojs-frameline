@@ -13,7 +13,7 @@
 // dock is 167px tall there (8px above and below, 6px between the rows).
 // Every width: the transport is one housing with its keys butted together (gaps of 1px at most, no clipping).
 // Narrow under 500px (`compact`): one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link,
-// Guides, Zoom, More, Fullscreen, Loop flat at rest, and pressed with its light on while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
+// Guides, Zoom, More, Fullscreen, Loop flat at rest, and with no fill and its light on while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
 // is an item of the More menu; under 300px the side padding is 12px and under 288px the cells are 40px wide,
 // so six fit down to a 264px player; `I`, `O` and `Z` still work.
 const out = {};
@@ -139,7 +139,8 @@ if (!out.narrow) {
   };
   out.loopOn = await loopLook(true); out.loopOff = await loopLook(false);
   const clear = (colour) => /rgba\(.*, 0\)$/.test(colour) || colour === 'transparent';
-  checks.loopOn = out.loopOn.pressed === 'true' && !clear(out.loopOn.fill);
+  // On: a key (row one, from 500px) keeps its fill; a flat cell (compact) has none, the light carries it.
+  checks.loopOn = out.loopOn.pressed === 'true' && (keys ? !clear(out.loopOn.fill) : clear(out.loopOn.fill));
   checks.loopOff = out.loopOff.pressed === 'false' && (keys ? !clear(out.loopOff.fill) : clear(out.loopOff.fill));
   // Loop is a mode: on, it shows the light (the ::after dot); off, the dot is there but clear.
   checks.loopLight = out.loopOn.light === '1' && out.loopOff.light === '0';
