@@ -405,10 +405,10 @@ render();
 
 // A file with black bars around its picture: the stage takes the picture's shape and the video covers it, so the
 // bars fall outside the stage. Set before the player mounts, so the placeholder already has the final height.
+// The ratio goes on the block around the player, because the page also sizes that block's width with it.
 if (MEDIA.picture) {
-  const holder = $('#player');
-  holder.style.setProperty('--fl-stage-ratio', `${MEDIA.picture.width} / ${MEDIA.picture.height}`);
-  holder.style.setProperty('--media-object-fit', 'cover');
+  $('.stage').style.setProperty('--fl-stage-ratio', `${MEDIA.picture.width} / ${MEDIA.picture.height}`);
+  $('#player').style.setProperty('--media-object-fit', 'cover');
 }
 
 createRoot($('#player')).render(

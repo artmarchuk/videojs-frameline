@@ -392,8 +392,8 @@ kbd {
 .positioning {
   display: flex;
   flex-direction: column;
-  gap: var(--space-20);
-  padding-top: var(--layout-hero-gap);
+  gap: var(--layout-hero-text-gap);
+  padding-top: var(--layout-hero-top);
   text-align: center;
 }
 
@@ -422,6 +422,35 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
+}
+
+/*
+ * From 1200 px the player's width follows the screen's height, so the first screen holds the whole picture and, where
+ * it fits, the dock. Width = the height left for the picture × the picture's shape, never under --size-player-min
+ * and never over the wrap. The height left is the screen less what is above the player, the dock, and a margin.
+ * What is above: the header, the positioning block (its padding, the H1, the descriptor and the two lines, one line
+ * each at this width, with their line heights from the text styles), the gap, the tier bar and its gap. The hero has
+ * no top padding of its own here: --layout-hero-top is all the space above the H1. The tier bar and Configure are in
+ * the same block, so they keep the player's width.
+ */
+@media (width >= 1200px) {
+  .hero {
+    padding-top: 0;
+  }
+
+  .stage {
+    --hero-above: calc(
+      var(--size-header) + var(--layout-hero-top) + var(--size-h1) * 1.08 + var(--layout-hero-text-gap) +
+        var(--size-claim) * 1.25 + var(--layout-hero-text-gap) + var(--size-lead) * 1.4 * 2 + var(--layout-hero-gap) +
+        var(--size-target) + var(--space-8)
+    );
+    align-self: center;
+    width: clamp(
+      var(--size-player-min),
+      calc((100svh - var(--hero-above) - var(--size-dock) - var(--space-16)) * var(--fl-stage-ratio, 16 / 9)),
+      100%
+    );
+  }
 }
 
 .player-column {

@@ -7,7 +7,8 @@
  * Values are Figma's. Letter spacing is a percentage in Figma and the same fraction of an em here.
  *
  * Modes. Colours have a Light and a Dark mode in Figma; the page ships Dark only, so `:root` holds the Dark values.
- * Sizes and layout have a Desktop and a Phone mode; Phone is the media query at the end of this file.
+ * Sizes and layout have a Desktop and a Phone mode; Phone is the media query at the end of this file. A third
+ * mode, Wide (from 1200 px), holds the compact hero: the few variables whose value differs from Desktop.
  */
 :root {
   color-scheme: dark;
@@ -87,12 +88,16 @@
   --size-header: 64px;
   --size-key-column: 120px;
   --size-figure: 560px;
+  --size-player-min: 1100px; /* the narrowest hero player in Wide: the dock keeps its full one-row layout */
+  --size-dock: 117px; /* the Studio dock's height on one row, measured in the browser; the hero sizes the player with it */
   --size-target: 44px;
   --size-key: 30px;
 
   /* ---------- Layout (Desktop) ---------- */
   --layout-gutter: 24px;
   --layout-hero-gap: 48px;
+  --layout-hero-top: 48px;
+  --layout-hero-text-gap: 20px;
   --layout-hero-bottom: 56px;
   --layout-section-top: 40px;
   --layout-section-bottom: 72px;
@@ -126,6 +131,16 @@
   --type-timecode: 400 var(--size-timecode) / 1 var(--family-ui);
   --type-timecode-tracking: 0.01em;
   --type-code: 400 var(--size-code) / 1.65 var(--family-mono);
+}
+
+/* ---------- Wide mode: the compact hero, so the first screen holds the picture and as much of the dock as fits ---------- */
+@media (width >= 1200px) {
+  :root {
+    --size-h1: 56px;
+    --layout-hero-gap: 24px;
+    --layout-hero-top: 24px;
+    --layout-hero-text-gap: 12px;
+  }
 }
 
 /* ---------- Phone mode: the variables whose Phone value differs from Desktop ---------- */
