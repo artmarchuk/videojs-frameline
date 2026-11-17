@@ -101,3 +101,13 @@ Screenshots at 2x on the site root, each paired with `main`:
 8. Viewer tier: must match `main`.
 
 Report: the preview URL, the pairs, the final values, the contrast output, what you added to markup, the `--fl-on` decision, anything that still looks like separate chips or a lighter "on" key, and what you could not verify. Describe what the screenshots show; do not call the result tactile or polished.
+
+## B.8 Follow-up after review
+
+Same branch, same rules.
+
+1. **Menu edge.** B.5's value was wrong: white at 10% over the menu's own `#171717` is `#2e2e2e`, darker than before. Use a solid colour instead: `--fl-menu-edge: #424242` (1.78:1 against the dock, decorative). Keep `--fl-line` under more contrast. Check the narrow-dock crop again and say whether the edge now separates the menu from the dock.
+2. **Toolbar buttons that are on.** B.3 contradicted itself: a toolbar button has no fill at rest, so the `surface-2` "latched" fill makes Zoom lighter when on. For toolbar buttons (Zoom, Captions, anything without a key fill), "on" is **no fill**: the light plus the icon or label at full `--fl-text`. Keys (Loop) keep the pressed treatment on `surface-2`. An open menu keeps its pressed fill (momentary, as today). Update the comment block in `skin.css` and the dock-polish check if it asserts the old fill.
+3. **Screenshots you did not open.** Open and look at: the hovered and focused housing crops from the last build, `5-timeline-both-set`, and the Viewer pair. Report anything wrong in them.
+
+New pairs at 2x on the site root, against the current `theme-b` shots: Zoom at 200% (comfortable and compact), Loop on next to Zoom on, and the narrow-dock menu edge. Push, preview deploy, no merge.
