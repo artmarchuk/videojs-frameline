@@ -1952,3 +1952,8 @@ Spec: `specs/landing-visuals-5.md`. Page code only: nothing under `src/` changed
 - The hint left the Tier fieldset and is a line of its own under the row of switches, across the panel (8 px under the switches); the Tier fieldset keeps it as its description. The Layout switch's left edge in Studio and in Viewer: 411 and 411 px at 1440, 33 and 33 px at 390 (stacked there).
 - Screenshots: `design/screenshots/landing-visuals-5/staged-1440.png`, `staged-390.png` (the hero with the wide range), `configure-hint-viewer-1440.png`, `configure-hint-viewer-390.png`.
 
+### Merged and deployed (18 Nov 2026)
+- `landing-visuals` merged into `main` (merge `ab5371f`) on top of Theme A, A.1 and A.2. Conflicts: `landing.css` keeps main's reset scoped out of the player (`:not(:where(.media-skin *))`) and adds `figure` to it; `NOTES.md` keeps both branches' sections. On the merged build: typecheck, 219 tests, build, `configurator.js` and axe (0 violations at 1440 and 390) pass.
+- Deployed to production: https://frameline.artmarchuk.me (deployment https://videojs-frameline-m9q4oesyy-artmarchuk.vercel.app). The live page serves the new descriptor and the re-shot `og.png`.
+- The nine feature screenshots and `og.png` were shot before Theme A: the range band in them is blue, the live player's is neutral grey.
+
