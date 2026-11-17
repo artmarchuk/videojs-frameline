@@ -35,7 +35,9 @@ await pause(); await seek(11); await play(); await page.waitForTimeout(500); awa
 out.outAtPlayhead = await V();
 await pause(); await seek(14); await page.keyboard.press('o'); await page.waitForTimeout(200); // Out back to 14
 // A seek by key: `1` (10%) lands inside the range and keeps playing; `9` (90%) lands outside and pauses there.
-await seek(11); await play(); await page.waitForTimeout(400); await page.keyboard.press('1'); await page.waitForTimeout(800); out.seekInside = await V();
+// The digit key whose jump (digit × 10% of the duration) lands inside the 10 to 14 s range: 1 on a 111 s source, 2 on 56 s.
+const digit = String(Math.min(9, Math.max(1, Math.round(120 / (await page.evaluate(() => document.querySelector('video').duration))))));
+await seek(11); await play(); await page.waitForTimeout(400); await page.keyboard.press(digit); await page.waitForTimeout(800); out.seekInside = await V();
 await page.keyboard.press('9'); await page.waitForTimeout(1000); out.seekOutside = await V();
 // Loop off: playback stops on the Out frame; the next play starts at In.
 await pause(); await page.keyboard.press('r'); await page.waitForTimeout(200); out.loopOff = (await V()).loop === 'false';

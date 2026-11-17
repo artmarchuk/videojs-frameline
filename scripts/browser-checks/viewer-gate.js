@@ -35,7 +35,10 @@ out.five = Math.abs((await press('5')).t - start.d / 2) < 1.2;
 out.home = (await press('Home')).t < 1;
 out.m = (await press('m')).muted === true; await press('m');
 const volBefore = (await V()).volume; out.down = (await press('ArrowDown')).volume < volBefore;
-out.c = (await press('c', 600)).captions === true; await press('c');
+// `C` needs a captions track; a source without one (the reel) reports 'no captions track' and does not fail the gate.
+out.c = (await page.evaluate(() => [...document.querySelector('video').textTracks].some((t) => t.kind === 'captions' || t.kind === 'subtitles')))
+  ? (await press('c', 600)).captions === true : 'no captions track';
+if (out.c === true) await press('c');
 // Space plays and pauses with focus on the seek bar too (the hotkeys alone leave Space to a focused slider).
 await page.focus('.media-time-slider [role="slider"]');
 const seekPlay = (await press('Space', 600)).paused === false;
@@ -65,6 +68,6 @@ out.smallTargets = await page.evaluate(() => {
 });
 out.overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
 out.proChunks = await page.evaluate(() => performance.getEntriesByType('resource').map((e) => e.name.split('/').pop()).filter((n) => /^(runtime|studio|debug)-/.test(n)));
-out.pass = out.k && out.space && out.spaceOnSeek && out.right5 && out.left5 && out.l10 && out.j10 && out.five && out.home && out.m && out.down && out.c && out.freeKeys
+out.pass = out.k && out.space && out.spaceOnSeek && out.right5 && out.left5 && out.l10 && out.j10 && out.five && out.home && out.m && out.down && out.c !== false && out.freeKeys
   && out.helpRows >= 10 && out.helpFocusIn && out.helpClosed && out.smallTargets.length === 0 && !out.overflow && out.proChunks.length === 0;
 return out;

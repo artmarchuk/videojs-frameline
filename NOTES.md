@@ -1269,3 +1269,42 @@ The `Space` runs (ruler, handles, Viewer: 10 of 10 each), the menu sizes (Zoom 2
 - `Space` was not tried on a real iPad or Android keyboard.
 - The Guides menu's taller cap was checked on desktop windows only; on a short player the menu scrolls, as before.
 
+
+## Landing page redesign (16 and 17 Nov 2026, branch `landing-redesign`, merged and deployed 17 Nov)
+
+The site root is rebuilt from the Figma file "Frameline", page "Landing", frame "Landing / Desktop / Dark" (node 59:379), with "Landing / Phone" for the narrow layout. `page.css` is gone; `tokens.css` and `landing.css` replace it.
+
+### Decisions
+- **Tokens mirror Figma.** `tokens.css` holds every variable the frames use: `space/24` is `--space-24`, an ungrouped colour keeps its name (`--text`), a text style `Landing/H1` is `--type-h1` (a `font` shorthand) plus `--type-h1-tracking`. `landing.css` takes every colour, size, space and radius from them. Values with no variable in Figma are written as numbers where they are used: the segmented track's 3 px padding and 9 px radius, a checkbox's 16 px box and 4 px radius, the Cue row's 52 px and 76 px, the definition term's 110 px, the host column's 513 px, the refusal's 22/26 px padding, the ruler's 28 px.
+- **Dark only.** `:root` holds Figma's Dark values. A light theme later is one block of colour values in `tokens.css`.
+- **Phone mode** is `width < 760px` (Figma has frames at 1440 and 390 only; the breakpoint is ours). Between it and 1040 px the wide rows stack; that range has no Figma frame.
+- **The player mock is the real player.** The mock's own colour variables are in `tokens.css` for parity and unused by the page.
+- **SVGs are the Figma exports** (`src/page/assets/`), drawn as CSS masks so their colour is a token.
+- **Fonts** come from Google Fonts (Google Sans Flex 400 and 800, JetBrains Mono 400), with system fallbacks.
+- **Not in Figma, added:** focus ring (`--link`), a button hover, disabled states, the event log's empty line, the "switch on … in Configure" line in a Feature row, the Viewer and overlay wording of the line beside the tier switch, and three colour values under `prefers-contrast: more`.
+- **Configure is collapsed under the player** (asked for after the first build; not in Figma). A button, "Configure the player", sits centred 12 px under the player and opens the whole section in place, so on a phone the controls and the picture stay one short scroll apart. It is a disclosure: an `h2` holding a button with `aria-expanded` and `aria-controls`, the body `hidden` while closed. Under it a line sums up the state ("Studio · Dock · 11 of 11 features on"). It is closed on every load, also when the query string sets a configuration. The skip link moves focus to the button. The button is ours, not Figma's: dimmed at rest so it does not compete with the player (no fill, `--dim` text, a `--key-edge` edge with a faint `--dim` light running round it every 6 s), full strength on hover and while open (`--surface` fill, `--text`, a plain `--control` edge). Lead-size type, a sliders icon drawn inline, a chevron. The light is a conic gradient turned by an `@property` angle; it stands still without `@property` (Firefox before 128) and under reduced motion. The resting edge is below 3:1 against the page; the label identifies the button (7.4:1). The body opens and closes with a 280 ms height and opacity transition (`grid-template-rows` 0fr to 1fr), none under reduced motion; closed, it is `visibility: hidden`. The section's ruler divider, large heading and lead line were dropped with the move.
+- **"Show me"**: five Feature rows (`data-task`) and three Cue rows (`data-cue`) run the same tasks. Guides shows 9:16 with the TikTok zones, or Title safe when platform zones are off. Zoom goes to 100%, as the copy says, not 200%.
+- **Copy changed from the design:** "The page around it follows your system." is left out of the third refusal, because the page is dark only.
+- Hero H1 is "A monitor, not just a player."; the Video.js descriptor moved to the line under it.
+- **Demo source is the reel** (17 Nov 2026): Mux playback ID `9Y7a3hqNCi4u02fmBFbaK5qWoS6A5cPce7P1mA00JA02tY`, 56.08 s, 1920×1080, 24 fps (ffprobe on the 1080p rendition: 24/1). `ACTIVE_SOURCE` is `reel`. The placeholder captions file is no longer loaded, so the reel has no captions. `chapters.vtt` holds the author's 13 sections, converted from `HH:MM:SS:FF` at 24 fps (frame FF is FF/24 s, rounded to the millisecond: at most 0.33 ms off, inside the skin's 0.4 ms frame tolerance); each cue ends where the next begins, the frame after the inclusive end frame. `markers.json` holds 14 simulated editor, director, VFX, sound and colour notes, written against frames looked at in the stream, with three range notes and three notes inside one second (37:05, 37:12, 37:20) for the pin cluster. Poster: the Mux thumbnail at 3 s. Checked: five frame steps from 10:00 show 00:00:10:05 in the skin and in the burned-in timecode.
+- The event log keeps its line format (`onInOutChange in 9.250 · out 13.250`), not the object notation of the design's sample lines.
+
+### Checks (headless Google Chrome via Playwright, local production build)
+- `scripts/browser-checks/configurator.js`, updated for the page: all pass, the new tier switch over the player and a Cue row included.
+- `scripts/browser-checks/axe-audit.js` on the page at 1440 and 390: zero violations.
+- `node scripts/contrast.mjs`: all pass. Typecheck, build and the 217 unit tests pass.
+- Looked at beside the Figma frames at 1440 and 390; section heights are within 13 px of the desktop frame.
+
+### Final checks before submission (17 Nov 2026, local production build)
+- Typecheck, 217 unit tests, build, `scripts/contrast.mjs`: pass.
+- Chrome: `configurator`, `axe-audit` (`/` at 1440 and 390, `/preview.html` Studio and Viewer: zero violations), `viewer-gate` (three runs), `dock-polish`, `error-retry`, `fullscreen-focus`, `guides-menu-focus` (observational: order, wrap, Space and Escape as expected), `handle-focus-ring`, `range-playback`, `reduced-motion` (two pages), `two-players`, `zoom` (1x, 2x), `zoom-rendition-cap`, `zoom-rendition-note`: all pass on the reel, and the zoom checks and `viewer-gate` on `?media=cosmicDawn` too.
+- Firefox and WebKit: `viewer-gate` (three runs), `dock-polish`, `range-playback`, `configurator`, `axe-audit` (four states): pass, except WebKit's clipboard step (below).
+- **Checks made source-agnostic for the 56 s, 1080p reel** (they assumed the 111 s, 4K test stream): `range-playback` picks the digit key that lands inside its range; `viewer-gate` skips `C` when the source has no captions track; `zoom` asks the guides at 200% to grow past 1.2 × Fit, not 1.5 × (exactly 1.5 for a 1080p source at device scale 2); `zoom-rendition-cap` forces the lowest rendition on offer, not 360p, and no longer needs the clock to have moved forward (a short source loops).
+- `og.png` regenerated from the reel: the Driver section (10:03 to 17:02) marked, at 13:00, title safe and thirds on.
+
+### Unverified (landing page)
+- Firefox and Safari were not run on the new page. `appearance: none` checkboxes with a masked `::before`, and CSS masks, are the parts to look at.
+- The page copy's claims come from the design and were not re-checked here: "zero violations in six states" counted the page in two themes, and there is one now.
+- The page at 320 px and the tablet range were not looked at closely.
+- **The reel has no captions.** The step 2 gate asks for the captions toggle "on a source with captions"; the demo source now has none, so `C` and the captions button have nothing to show on the site. `?media=cosmicDawn` plays a source with captions. The reel was played in headless Chrome, Firefox and WebKit through the checks below; not in a headed Safari or on a phone.
+- **WebKit, `configurator.js`:** `copied` is false because headless WebKit gives the check no clipboard read; Chrome and Firefox pass it. **One frame is missing at the 10 s segment join:** stepping from 10:02, Chrome shows the frame burned 10:04 at the 10:03 position (the skin's timecode reads 10:03 there), and a seek to 10:03 shows the picture and the skin both at 10:04. In the stream, frame timestamps run about 57 ms behind the burned-in timecode in that segment, and the first segment holds 119 frames, not 120. A Mux encode or MSE segment-join effect, not the chapter data; other segment joins (every 5 s) were not checked one by one. Next/previous cut lands on the right frame at the other 11 sections.

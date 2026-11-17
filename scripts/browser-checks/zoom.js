@@ -80,7 +80,7 @@ out.scaleOk = same(at100.video.width * ratio, sourceWidth) && same(at150.video.w
 out.pixelated = at200.rendering === 'pixelated' && at400.rendering === 'pixelated' && at100.rendering !== 'pixelated' && at150.rendering !== 'pixelated';
 
 // (2) the guides' box transforms with the picture, and the picture rectangle still describes the unzoomed picture
-out.guidesFollow = same(at200.guide.left, at200.video.left) && same(at200.guide.top, at200.video.top) && same(at200.guide.width, at200.video.width) && same(at200.guide.height, at200.video.height) && at200.guide.width > fit.guide.width * 1.5;
+out.guidesFollow = same(at200.guide.left, at200.video.left) && same(at200.guide.top, at200.video.top) && same(at200.guide.width, at200.video.width) && same(at200.guide.height, at200.video.height) && at200.guide.width > fit.guide.width * 1.2; // 200% is 1.5 × Fit for a 1080p source at device scale 2, 3 × for 4K
 out.rectUnchanged = at200.variables === fit.variables;
 await page.setViewportSize({ width: 1300, height: 900 }); await page.waitForTimeout(500);
 const resized = await state();

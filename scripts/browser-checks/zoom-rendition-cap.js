@@ -14,7 +14,7 @@ await page.evaluate(() => {
 // The media handle Video.js gives the skin is not on the DOM; read the cap through what it changes: the engine's
 // ceiling shows as the rendition that Auto reaches while playing.
 const state = () => page.evaluate(() => { const v = document.querySelector('video'); return { transform: document.querySelector('.pro-picture')?.style.transform ?? '', height: v.videoHeight, time: +v.currentTime.toFixed(1), paused: v.paused, zoom: document.querySelector('.pro-skin').dataset.zoom ?? 'fit', auto: [...document.querySelectorAll('[role=menuitemradio]')].find((e) => /^Auto/.test(e.textContent.trim()))?.textContent.trim() ?? null }; });
-const settle = async (test, ms = 45000) => { await page.waitForFunction(test, null, { timeout: ms }).catch(() => {}); };
+const settle = async (test, ms = 45000, arg = null) => { await page.waitForFunction(test, arg, { timeout: ms }).catch(() => {}); };
 
 await page.evaluate(() => { const v = document.querySelector('video'); v.muted = true; return v.play(); });
 await page.waitForTimeout(6000);
@@ -36,16 +36,19 @@ const pick = async (label) => {
   await page.locator('.media-menu-popup:not(.pro-menu-popup) [role^=menuitem]', { hasText: 'Quality' }).first().click(); await page.waitForTimeout(400);
   const radios = page.locator('[role=menuitemradio]:visible');
   const texts = (await radios.allTextContents()).map((text) => text.trim());
-  const index = texts.findIndex((text) => text.startsWith(label));
+  // `lowest`: the smallest rendition on offer (360p on the test stream, 270p on the reel).
+  const heights = texts.map((text) => Number(/^(\d+)p/.exec(text)?.[1]) || Infinity);
+  const index = label === 'lowest' ? heights.indexOf(Math.min(...heights)) : texts.findIndex((text) => text.startsWith(label));
   if (index >= 0) await radios.nth(index).click(); else await page.keyboard.press('Escape');
   await page.waitForTimeout(300); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
   return texts[index] ?? null;
 };
-out.picked = await pick('360p');
-await settle(() => document.querySelector('video').videoHeight === 360, 60000);
+out.picked = await pick('lowest');
+const lowest = Number(/^(\d+)p/.exec(out.picked ?? '')?.[1]);
+await settle((h) => document.querySelector('video').videoHeight === h, 60000, lowest);
 await page.waitForTimeout(500);
 out.forced = await state();
-out.sameTransformForced = out.forced.height === 360 && out.forced.transform === out.zoomed.transform;
+out.sameTransformForced = out.forced.height === lowest && out.forced.transform === out.zoomed.transform;
 await pick('Auto');
 await page.focus('.pro-skin');
 
@@ -55,6 +58,7 @@ out.backAtFit = await state();
 out.capRestored = out.backAtFit.height <= out.fit.height;
 out.events = await page.evaluate(() => window.__events);
 out.noReload = !out.events.some((event) => /^(loadstart|emptied)/.test(event));
-out.keptPlaying = out.backAtFit.time > out.fit.time && !out.backAtFit.paused;
+// Still playing. The time is not compared: a short source (the 56 s reel) has looped back by now.
+out.keptPlaying = !out.backAtFit.paused;
 out.pass = out.liftedAboveCap && out.sameTransformAfterSwitch && out.sameTransformForced && out.capRestored && out.noReload && out.keptPlaying;
 return out;
