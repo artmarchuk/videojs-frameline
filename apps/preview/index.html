@@ -60,11 +60,7 @@
       <div class="wrap hero">
         <div class="positioning">
           <h1>A monitor, not just a&nbsp;player.</h1>
-          <p class="descriptor">A Video.js skin for the tools people make video with.</p>
-          <div class="two-lines">
-            <p>Viewer is for watching.</p>
-            <p>Studio is for checking timing and framing.</p>
-          </div>
+          <p class="descriptor">A Video.js skin for checking timing and framing, in the tools people make video with.</p>
         </div>
 
         <div class="stage">
@@ -77,36 +73,28 @@
 
           <section id="configure" class="configure" aria-labelledby="configure-title">
             <div class="configure-bar">
-              <div class="tier-try">
-                <fieldset class="segmented">
-                  <legend class="visually-hidden">Tier</legend>
-                  <div class="segmented-track"><label><input type="radio" name="hero-tier" value="viewer" /><span>Viewer</span></label><label><input type="radio" name="hero-tier" value="studio" /><span>Studio</span></label></div>
-                </fieldset>
-                <p id="tier-hint" class="tier-hint"></p>
-              </div>
-              <div class="configure-open">
-                <h2 id="configure-title">
-                  <button type="button" id="configure-toggle" class="configure-toggle" aria-expanded="false" aria-controls="configure-body" aria-describedby="configure-summary">
-                    <svg class="configure-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false">
-                      <path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1" />
-                      <circle cx="15" cy="6.5" r="2" />
-                      <circle cx="9" cy="12" r="2" />
-                      <circle cx="17" cy="17.5" r="2" />
-                    </svg>
-                    Configure the player<span class="chevron" aria-hidden="true"></span>
-                  </button>
-                </h2>
-                <p id="configure-summary" class="configure-summary"></p>
-              </div>
+              <p id="configure-summary" class="configure-summary"></p>
+              <h2 id="configure-title">
+                <button type="button" id="configure-toggle" class="configure-toggle" aria-expanded="false" aria-controls="configure-body" aria-describedby="configure-summary">
+                  <svg class="configure-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false">
+                    <path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1" />
+                    <circle cx="15" cy="6.5" r="2" />
+                    <circle cx="9" cy="12" r="2" />
+                    <circle cx="17" cy="17.5" r="2" />
+                  </svg>
+                  Configure the player<span class="chevron" aria-hidden="true"></span>
+                </button>
+              </h2>
             </div>
             <div id="configure-body" class="configure-body">
               <div class="configure-inner">
                 <div class="panels">
                   <form id="config" class="panel" autocomplete="off">
                     <div class="switches">
-                      <fieldset class="segmented">
+                      <fieldset class="segmented" aria-describedby="tier-hint">
                         <legend class="label">Tier</legend>
                         <div class="segmented-track"><label><input type="radio" name="tier" value="viewer" /><span>Viewer</span></label><label><input type="radio" name="tier" value="studio" /><span>Studio</span></label></div>
+                        <p id="tier-hint" class="tier-hint"></p>
                       </fieldset>
                       <fieldset class="segmented">
                         <legend class="label">Layout</legend>

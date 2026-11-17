@@ -1674,3 +1674,24 @@ Spec: `specs/landing-visuals-4.md`. Page code only: nothing under `src/` changed
 - Safari itself and a real phone: the scroll compensation was run in Playwright's WebKit, not Safari. The touch dock height was measured with Chrome's touch emulation, not a device.
 - The rim and shadow were tuned on screenshots; not looked at on a real display at 1×.
 
+## Landing page visuals, round five: a Studio-first hero, Configure as a quiet row (18 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-5.md`. Page code only: nothing under `src/` changed, and the screenshots were not re-shot.
+
+### Decisions
+- Hero copy: the descriptor reads "A Video.js skin for checking timing and framing, in the tools people make video with."; the two tier lines and their styles are gone. Spacing tokens: hero top 24 / 40 / 40, text gap 12 / 16 / 16, hero gap 24 / 32 / 32 (Phone / Desktop / Wide). The Wide player-width formula subtracts the H1 and the descriptor only.
+- Player top and dock bottom: 1920 × 1080: 236.2 and 1064 (the player is 1273 px wide, was 1216); 1440 × 900: 236.2 and 967.4 (player at its 1100 px minimum).
+- Descriptor lines: 2 at 390, 1 at 760, 1100 and 1440. At Claim Small's 19 px it took three lines at 390, so on Phone it is set in Lead (16 px there): an existing text style, but not what Figma's Phone frame names, if it names one.
+- The hero's tier switch and hint are gone; the tier is chosen in Configure. The hint is the line under Configure's Tier switch and that fieldset's description (`aria-describedby`). It makes the Tier group wider, so Layout sits further right in the panel.
+- `holdInPlace` now serves the Tier and the Layout radios (Studio's overlay has no dock either). Radio positions before and after, mouse and keyboard, in Chrome: 1440: 0 px for both; 390: 0 px for Tier, 0.2 px for Layout.
+- The Configure row: the summary on the left (dim, `--type-small`, still the button's description), the button on the right: outlined, 1 px `--control`, no fill, `--radius-control`, text colour, `--type-button`, 44 px. Hover fills it with `--surface`; open and closed look the same apart from the chevron. The turning light on its edge (the `@property` angle and its animation) is gone. Under 760 px: the summary, then the button at full width.
+- The player's corner: the page no longer sets `--media-border-radius`, so the skin shows its own 10 px frame corner; `--radius-player` is 10 px (Figma `radius/player`), and the page's box, the rim and the shadow follow it. `--media-border-color: transparent` stays.
+
+### Checks (headless Chrome, local production build)
+- Layout shift on first load: 0.002 at 390, 0.003 at 760, 0.004 at 1100, 0.002 at 1440.
+- Typecheck, 219 tests, build. `configurator.js` passes (the hero switch is gone, the hint follows the tier, the reserve check holds); axe: 0 violations at 1440 and 390; heading order H1, H2 Player, H2 Configure the player, H3 Code, H3 Event log, H2 Try it in the player; `reduced-motion` passes.
+- Screenshots: `design/screenshots/landing-visuals-5/` (the hero at 1920 × 1080, 1440 × 900, 1100, 760 and 390; the Configure row closed and open at 1440 and 390; the player's top and bottom corners at 1440).
+
+### Unverified (round five)
+- Firefox, Safari and a real phone were not run this round; `holdInPlace` was checked in all three engines in round four.
+

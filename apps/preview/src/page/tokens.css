@@ -71,7 +71,7 @@
   --radius-small: 3px;
   --radius-key: 6px;
   --radius-control: 8px;
-  --radius-player: 8px;
+  --radius-player: 10px; /* the skin's own frame corner (`--fl-frame-border: 1`) */
   --radius-panel: 10px;
 
   /* ---------- Size (Desktop) ---------- */
@@ -101,9 +101,9 @@
 
   /* ---------- Layout (Desktop) ---------- */
   --layout-gutter: 24px;
-  --layout-hero-gap: 24px;
-  --layout-hero-top: 24px; /* all the space between the header and the H1 */
-  --layout-hero-text-gap: 12px;
+  --layout-hero-gap: 32px;
+  --layout-hero-top: 40px; /* all the space between the header and the H1 */
+  --layout-hero-text-gap: 16px;
   --layout-hero-bottom: 56px;
   --layout-section-top: 40px;
   --layout-section-bottom: 72px;
@@ -159,8 +159,9 @@
     --size-timecode: 15px;
     --size-header: 56px;
     --layout-gutter: 16px;
-    --layout-hero-gap: 20px;
-    --layout-hero-top: 16px;
+    --layout-hero-gap: 24px;
+    --layout-hero-top: 24px;
+    --layout-hero-text-gap: 12px;
     --layout-hero-bottom: 40px;
     --layout-section-top: 28px;
     --layout-section-bottom: 48px;

@@ -1,6 +1,6 @@
 /**
  * The landing page's script. The page itself is plain HTML (apps/preview/index.html) and CSS (landing.css, with its
- * tokens in tokens.css); this mounts the player into it and wires the tier switch under the player, the form, the
+ * tokens in tokens.css); this mounts the player into it and wires Configure (the form), the
  * query string, the code snippet, the event log and the "Show me" buttons. Everything that drives the player goes through the skin's public props and its `apiRef` handle.
  */
 import { VideoPlayer } from '@videojs/react/video';
@@ -31,10 +31,9 @@ const snippetElement = $('#snippet');
 const configureToggle = $<HTMLButtonElement>('#configure-toggle');
 const configure = $('#configure');
 const configureSummary = $('#configure-summary');
-const heroTier = [...document.querySelectorAll<HTMLInputElement>('input[name="hero-tier"]')];
 const tierHint = $('#tier-hint');
 
-/** The line beside the tier switch under the player: where the controls are in this tier and layout. */
+/** The line under Configure's Tier switch: where the controls are in this tier and layout. */
 function hint(current: PageConfig): string {
   const name = current.tier === 'studio' ? 'Studio' : 'Viewer';
   return current.layout === 'dock'
@@ -55,7 +54,6 @@ function render() {
   }
   // Platform zones are drawn inside the guides layer: without guides the flag has nothing to switch.
   form.querySelector<HTMLInputElement>('input[name="platformZones"]')!.disabled = !config.flags.guides;
-  for (const input of heroTier) input.checked = input.value === config.tier;
   tierHint.textContent = hint(config);
   // The room for the dock, kept until the Studio code draws it (landing.css). Viewer and the overlay have no dock.
   $('#player').toggleAttribute('data-reserve', config.tier === 'studio' && config.layout === 'dock');
@@ -86,7 +84,7 @@ $('.skip').addEventListener('click', (event) => {
   configureToggle.focus();
 });
 
-/* ---------- Tier changes keep the control in place ---------- */
+/* ---------- Tier and layout changes keep the control in place ---------- */
 
 /** A tier change that ends this soon after the last change of the player's size is taken as settled. */
 const HOLD_QUIET_MS = 800;
@@ -95,8 +93,9 @@ const HOLD_WAIT_MS = 6000;
 let releaseHold: (() => void) | null = null;
 
 /**
- * Runs a tier change and keeps `control` (the radio the visitor used) where it was on screen. Viewer has no dock,
- * so the player's height changes and everything under it moves; once it has, the page scrolls by the difference,
+ * Runs a tier or layout change and keeps `control` (the radio the visitor used) where it was on screen. Viewer and
+ * the overlay have no dock, so the player's height changes and Configure under it moves; once it has, the page
+ * scrolls by the difference,
  * instantly. It only compensates: it never scrolls to reveal anything, and at the top of the page, where it cannot
  * scroll far enough, the control moves. Where the browser's scroll anchoring has already kept the control in place
  * the difference is zero and this does nothing. It stops when the size has been quiet for a moment, or when the
@@ -127,17 +126,13 @@ function holdInPlace(control: HTMLElement, change: () => void) {
   releaseHold = release;
 }
 
-const setTier = (control: HTMLElement, tier: string) =>
-  holdInPlace(control, () => setConfig(tierConfig(tier === 'viewer' ? 'viewer' : 'studio')));
-
 form.addEventListener('change', (event) => {
   const input = event.target as HTMLInputElement;
-  if (input.name === 'tier') setTier(input, input.value);
-  else if (input.name === 'layout') setConfig({ ...config, layout: input.value === 'overlay' ? 'overlay' : 'dock' });
+  if (input.name === 'tier') holdInPlace(input, () => setConfig(tierConfig(input.value === 'viewer' ? 'viewer' : 'studio')));
+  else if (input.name === 'layout') holdInPlace(input, () => setConfig({ ...config, layout: input.value === 'overlay' ? 'overlay' : 'dock' }));
   else if ((FLAG_NAMES as readonly string[]).includes(input.name)) setConfig({ ...config, flags: { ...config.flags, [input.name]: input.checked } });
 });
 form.addEventListener('submit', (event) => event.preventDefault());
-for (const input of heroTier) input.addEventListener('change', () => setTier(input, input.value));
 
 /* ---------- Code: copy ---------- */
 

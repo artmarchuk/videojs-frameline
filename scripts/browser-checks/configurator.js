@@ -70,12 +70,13 @@ const viewerPlus = await state();
 out.viewerPlus = { snippet: viewerPlus.snippet, query: viewerPlus.query, timecode: await page.locator('#player [class*="timecode"]').count() > 0 };
 out.viewerPlusOk = viewerPlus.snippet.includes('features={{ timecode: true }}') && viewerPlus.query === '?tier=viewer&timecode=1' && out.viewerPlus.timecode;
 
-// The tier switch under the player is the same switch as the form's, and the line beside it follows.
-await page.locator('input[name="hero-tier"][value="studio"]').check({ force: true }); await page.waitForTimeout(600);
-const heroStudio = await state();
-out.heroTier = { tier: heroStudio.tier, form: await radio('tier', 'studio').isChecked(), hint: await page.textContent('#tier-hint') };
+// The tier is chosen only in Configure, and the line under its Tier switch follows it.
+out.noHeroSwitch = await page.locator('input[name="hero-tier"]').count() === 0;
+await radio('tier', 'studio').check({ force: true }); await page.waitForTimeout(600);
+out.tierHint = { studio: await page.textContent('#tier-hint') };
 await radio('tier', 'viewer').check({ force: true }); await page.waitForTimeout(400);
-out.heroTierOk = out.heroTier.tier === 'studio' && out.heroTier.form && /^Studio: .*dock below/.test(out.heroTier.hint) && await page.locator('input[name="hero-tier"][value="viewer"]').isChecked() && /^Viewer: /.test(await page.textContent('#tier-hint'));
+out.tierHint.viewer = await page.textContent('#tier-hint');
+out.heroTierOk = out.noHeroSwitch && /^Studio: .*dock below/.test(out.tierHint.studio) && /^Viewer: /.test(out.tierHint.viewer);
 
 // Layout.
 await radio('tier', 'studio').check({ force: true }); await radio('layout', 'overlay').check({ force: true }); await page.waitForTimeout(600);

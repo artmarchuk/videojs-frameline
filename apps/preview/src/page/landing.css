@@ -403,22 +403,15 @@ kbd {
   text-wrap: balance;
 }
 
-/* The Video.js descriptor under the H1: one text style above the two lines, in full text colour. */
+/* The line under the H1: what Studio does, and for whom, in full text colour. */
 .descriptor {
   font: var(--type-claim-small);
   letter-spacing: var(--type-claim-small-tracking);
+  text-wrap: balance;
 }
 
-.two-lines {
-  font: var(--type-lead);
-}
-
-.two-lines p:first-child {
-  color: var(--dim);
-}
-
-/* The player and the row under it (the tier switch and Configure): one block, so the row keeps the player's width.
-   The gap leaves room for the player's shadow. */
+/* The player and the Configure row under it: one block, so the row keeps the player's width. The gap leaves room
+   for the player's shadow. */
 .stage {
   display: flex;
   flex-direction: column;
@@ -429,15 +422,15 @@ kbd {
  * From 1200 px the player's width follows the screen's height, so the first screen holds the whole picture and, where
  * it fits, the dock. Width = the height left for the picture × the picture's shape, never under --size-player-min
  * and never over the wrap. The height left is the screen less what is above the player, the dock, and a margin.
- * What is above: the header, the positioning block (its padding, the H1, the descriptor and the two lines, one line
- * each at this width, with their line heights from the text styles) and the gap. The tier switch and Configure are
- * in the row under the player, in the same block, so they keep the player's width.
+ * What is above: the header, the positioning block (its padding, the H1 and the descriptor, one line each at this
+ * width, with their line heights from the text styles) and the gap. Configure is in the row under the player, in the
+ * same block, so it keeps the player's width.
  */
 @media (width >= 1200px) {
   .stage {
     --hero-above: calc(
       var(--size-header) + var(--layout-hero-top) + var(--size-h1) * 1.08 + var(--layout-hero-text-gap) +
-        var(--size-claim) * 1.25 + var(--layout-hero-text-gap) + var(--size-lead) * 1.4 * 2 + var(--layout-hero-gap)
+        var(--size-claim) * 1.25 + var(--layout-hero-gap)
     );
     align-self: center;
     width: clamp(
@@ -539,14 +532,14 @@ kbd {
   background: var(--surface-0);
 }
 
-/* The skin's frame takes the page's radius, so the skin's corner, the rim and the shadow are one outline. Its own
-   hairline is drawn transparent: the rim below takes its place. Both through the skin's public tokens. */
+/* The skin's own frame: its 10 px corner, which the page's box follows (--radius-player), so the skin's corner, the
+   rim and the shadow are one outline. Its hairline is drawn transparent through the public token: the rim takes its
+   place. */
 .player .media-skin {
   --fl-frame-border: 1;
 }
 
 .player {
-  --media-border-radius: var(--radius-player);
   --media-border-color: transparent;
 }
 
@@ -644,104 +637,58 @@ video-player {
 /* ---------- Configure: collapsed under the player; its button opens the whole section ---------- */
 
 /*
- * The row under the player: the tier switch with its hint on the left, Configure on the right with the summary under
- * it. Under 760 px the row wraps: see the Phone section.
+ * The row under the player: the summary on the left, as a status line, and the Configure button on the right. Under
+ * 760 px they stack: see the Phone section.
  */
 .configure-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "tier toggle"
-    ". summary";
+  display: flex;
   align-items: center;
-  column-gap: var(--space-24);
-  row-gap: var(--space-8);
-}
-
-.configure-open {
-  display: contents;
+  justify-content: space-between;
+  gap: var(--space-12) var(--space-24);
 }
 
 .configure-bar h2 {
-  grid-area: toggle;
+  flex: none;
   font: inherit;
 }
 
-.tier-try {
-  display: flex;
-  grid-area: tier;
-  align-items: center;
-  gap: var(--space-16);
-  min-width: 0;
-}
-
-.tier-try .segmented {
-  flex: none;
-}
-
-.tier-hint {
+.configure-summary {
   min-width: 0;
   color: var(--dim);
   font: var(--type-small);
 }
 
-/*
- * The Configure button. Dimmed at rest, so it stays visible without competing with the player: no fill, dim text,
- * a dark edge with a faint light running round it while the section is closed. Hover and open bring it to full
- * strength. The light is a conic gradient in the border box, turned by an animated angle; without `@property`
- * (Firefox before 128) it stands still. Not in Figma.
- */
-@property --configure-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
+/* The Configure button: a page control, outlined, with no fill and no key look, so it never reads as part of the dock. */
 .configure-toggle {
-  --configure-angle: 0deg;
-  --configure-fill: var(--bg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-10);
-  min-height: 52px;
-  padding: 0 var(--space-24);
-  border: 1px solid transparent;
-  border-radius: var(--radius-panel);
-  background:
-    linear-gradient(var(--configure-fill), var(--configure-fill)) padding-box,
-    conic-gradient(from var(--configure-angle), var(--key-edge) 0turn, var(--key-edge) 0.62turn, var(--dim) 0.75turn, var(--key-edge) 0.88turn) border-box;
-  color: var(--dim);
+  width: 100%;
+  min-height: var(--size-target);
+  padding: 0 var(--space-16);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text);
   cursor: pointer;
-  font: var(--type-lead);
+  font: var(--type-button);
   white-space: nowrap;
 }
 
-.configure-toggle:hover,
-.configure-toggle[aria-expanded="true"] {
-  --configure-fill: var(--surface);
-  color: var(--text);
-}
-
-/* Open: the light stops and the edge is plain. */
-.configure-toggle[aria-expanded="true"] {
-  border-color: var(--control);
-  background: var(--configure-fill);
-}
-
-.configure-toggle[aria-expanded="true"]:hover {
-  --configure-fill: var(--key);
+.configure-toggle:hover {
+  background: var(--surface);
 }
 
 .configure-icon {
   flex: none;
 }
 
-.configure-summary {
-  grid-area: summary;
+/* The line under the Tier switch in Configure: where the controls are in this tier and layout. */
+.tier-hint {
+  padding-top: var(--space-8);
   color: var(--dim);
   font: var(--type-small);
-  text-align: right;
 }
 
 /*
@@ -1187,39 +1134,16 @@ video-player {
     display: none;
   }
 
-  /*
-   * The row under the player wraps: the switch and Configure share the first line when both fit at full size, else
-   * Configure goes to the next line (alone on a line, it starts at the left). The hint sits under the switch and
-   * takes no width of its own, so it never decides the wrap.
-   */
+  /* The descriptor in Lead (16 px here): at Claim Small's 19 px it takes three lines at 390 px, Lead two. */
+  .descriptor {
+    font: var(--type-lead);
+    letter-spacing: normal;
+  }
+
+  /* The Configure row stacks: the summary, then the button across the full width. */
   .configure-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-16);
-  }
-
-  .configure-open {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-8);
-  }
-
-  .tier-try {
-    flex: 1 1 auto;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--space-8);
-  }
-
-  .tier-try .segmented {
-    align-self: flex-start;
-  }
-
-  .tier-hint {
-    contain: inline-size;
   }
 
   .section-body {
@@ -1317,11 +1241,7 @@ video-player {
   }
 
   .configure-toggle {
-    transition: color 160ms ease;
-  }
-
-  .configure-toggle[aria-expanded="false"] {
-    animation: configure-edge 6s linear infinite;
+    transition: background-color 120ms ease;
   }
 
   .chevron {
@@ -1338,11 +1258,6 @@ video-player {
   }
 }
 
-@keyframes configure-edge {
-  to {
-    --configure-angle: 1turn;
-  }
-}
 
 @media (forced-colors: active) {
   .segmented input:checked + span,
