@@ -265,15 +265,15 @@
   /* ---------- Timecode ---------- */
 
   /*
-   * The timecode field and the link button as one segmented pair, `[ 00:00:14:20 | link ]`: the outer corners share
-   * the group radius, 2px between the two. The link copies exactly what the field shows.
+   * The timecode field and the link button as one display, `[ 00:00:14:20 | link ]`: one recessed well, a seam
+   * between the digits and the link, the outer corners at the group radius. The link copies what the field shows.
    */
   .pro-skin .pro-timecode-pair {
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 2px;
-    --tc-inner-radius: 2px;
+    gap: 0;
+    --tc-inner-radius: 0;
   }
 
   .pro-skin .pro-timecode-pair[data-link] > .pro-timecode {
@@ -284,7 +284,8 @@
   .pro-skin .pro-timecode-pair > .pro-tool-link {
     width: calc(var(--fl-control-size) + var(--media-spacing) * 1.5); /* 40px at comfortable density */
     border-radius: var(--tc-inner-radius) var(--fl-radius-group) var(--fl-radius-group) var(--tc-inner-radius);
-    background-color: var(--fl-surface-2);
+    border-inline-start: 1px solid var(--fl-seam);
+    background-color: var(--fl-surface-0);
   }
 
   /* A focus ring is drawn over the other half of the pair, not under it. */

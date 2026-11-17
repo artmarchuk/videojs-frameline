@@ -203,18 +203,40 @@
 
   /*
    * ---------- Tactile controls: the dock only, never over the picture ----------
-   * Two kinds of control. The keys you press while checking timing are raised: the transport groups (the group is
-   * the raised object, its buttons are flat inside it), Play (studio.css), Loop on row one (in the centre column;
-   * as a cell of the compact dock's second row it is a flat toggle), and the link button joined to the timecode
-   * field. Everything else is a flat toolbar button: no fill, no bevel at rest, a flat fill on hover. Both
-   * kinds read as pressed in when they are on, have their menu open, or are being pressed. Everything comes from the
+   * Three kinds of control, and every control is one of them:
+   * - Key: the transport groups (the group is the raised object, its buttons are flat inside it), Play (white,
+   *   studio.css) and Loop on row one (in the centre column). A surface-2 fill, the group radius, the raise shadow.
+   * - Display: the timecode field and the link button joined to it. One recessed well in surface-0, a seam between
+   *   the digits and the link; the link takes a surface-1 fill on hover.
+   * - Toolbar: everything else, including Loop as a cell of the compact dock's second row. Flat, no fill at rest,
+   *   a flat fill on hover.
+   * Every kind reads as pressed in when it is on, has its menu open, or is being pressed. Everything comes from the
    * --fl-bevel tokens (tokens.css), which are flat in the overlay layout, under more contrast and in forced colours.
    * Motion: into a pressed state over --fl-duration-press, out of it over --fl-duration-quick (shadow and icon; the
    * fill colour shares the hover's --fl-duration, because one rule can give a property one duration).
    */
-  .pro-skin[data-layout="dock"] .pro-bar :is(.pro-main-centre [data-pro-tool="loop"], .pro-timecode-pair > .pro-tool-link) {
+  /* Key: Loop on row one, filled and raised like a transport group. Its hover and pressed states follow. */
+  .pro-skin[data-layout="dock"] .pro-bar .pro-main-centre [data-pro-tool="loop"] {
     --fl-shade: var(--fl-raise-shadow);
+    border-radius: var(--fl-radius-group);
+    background-color: var(--fl-surface-2);
     background-image: var(--fl-raise-image);
+  }
+
+  /* Display: the link button is the trailing cell of the timecode's well; --fl-hi beside the seam (studio.css). */
+  .pro-skin[data-layout="dock"] .pro-bar .pro-timecode-pair > .pro-tool-link {
+    --fl-shade: inset 1px 0 0 var(--fl-hi), var(--fl-well-shadow);
+  }
+
+  /* Hover on a key and on the display's link. :where keeps both at the pressed rule's weight; it comes later and wins. */
+  @media (hover: hover) {
+    .pro-skin[data-layout="dock"] .pro-bar .pro-main-centre [data-pro-tool="loop"]:where(:hover) {
+      background-color: var(--fl-surface-3);
+    }
+
+    .pro-skin[data-layout="dock"] .pro-bar .pro-timecode-pair > .pro-tool-link:where(:hover) {
+      background-color: var(--fl-surface-1);
+    }
   }
 
   /* A flat toolbar button on hover: a flat fill, no bevel. :where keeps it below the pressed rule that follows. */
@@ -267,18 +289,6 @@
 
   .pro-skin[data-layout="dock"] .pro-bar .media-button:not(.media-play-button):where(:focus-visible, [aria-pressed="true"], [aria-expanded="true"], [data-pressed], [data-active], :active:not([aria-disabled="true"])) {
     color: var(--fl-text);
-  }
-
-  /*
-   * The printed edge under a legend: a filter on the icon element, never on the button, so the :active travel and the
-   * link button's cross-fade (both on the icon's own properties) are untouched. On Play the glyph is engraved.
-   */
-  .pro-skin[data-layout="dock"] .pro-bar .media-button:not(.media-play-button) > .media-button-icon {
-    filter: var(--fl-legend-shadow);
-  }
-
-  .pro-skin[data-layout="dock"] .pro-bar .media-play-button > .media-button-icon {
-    filter: var(--fl-legend-shadow-play);
   }
 
   /* Forced colours (Windows High Contrast): boundaries from ButtonText, selected and checked states from Highlight. */
@@ -968,14 +978,18 @@
   .pro-skin .media-tooltip-popup[data-open] {
     display: flex;
     align-items: center;
-    gap: calc(var(--media-spacing) * 1.5);
+    gap: calc(var(--media-spacing) * 2);
   }
 
-  /* Shortcuts are plain dim text after the name: no keycap chips. */
+  /*
+   * In tooltips and menus a shortcut is plain text in a quieter colour, as in a macOS menu: no fill, border or box,
+   * the label's font and size, regular weight. The shortcuts dialog draws its keys as flat caps (Dialogs, below).
+   */
   .pro-skin .media-tooltip-shortcut,
   .pro-skin .pro-kbd {
     color: var(--fl-text-dim);
     font: inherit;
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
   }
 
@@ -1301,11 +1315,35 @@
     border-bottom: 1px solid var(--fl-line);
   }
 
+  /* A row's caps wrap onto a second line rather than squeeze the label (the zoomed-picture row has six). */
   .pro-skin .pro-shortcuts-keys {
     display: flex;
+    flex-wrap: wrap;
     flex-shrink: 0;
+    justify-content: flex-end;
     gap: var(--media-spacing);
+    max-width: 55%;
+    padding-block: var(--media-spacing);
     order: 2;
+  }
+
+  /* In the dialog the keys are the content: flat caps, a surface-2 fill, no shadow. */
+  .pro-skin .pro-shortcuts .pro-kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: calc(var(--media-spacing) * 5);
+    padding: calc(var(--media-spacing) * 0.5) calc(var(--media-spacing) * 1.25);
+    border-radius: var(--fl-radius-sm);
+    background-color: var(--fl-surface-2);
+    color: var(--fl-text);
+    font-size: var(--fl-text-sm);
+    line-height: 1.3;
+  }
+
+  @media (forced-colors: active) {
+    .pro-skin .pro-shortcuts .pro-kbd {
+      border: 1px solid CanvasText;
+    }
   }
 
   .pro-skin .pro-shortcuts-label {

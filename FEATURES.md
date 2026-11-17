@@ -79,7 +79,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | In and Out handles, always present at the ends of the track | Studio | Drag a handle |
 | Set In and Out at the playhead; unset them | Studio | `I` `O`; `Shift+I` `Shift+O` |
 | Handles from the keyboard: one frame, ten frames, to the limits, unset | Studio | Focus a handle: `←` `→`, `Shift`, `Home` `End`, `Delete` |
-| Range band, neutral: light grey where it has played | Studio | Set a range and play |
+| Range band: one neutral grey band | Studio | Set a range and play |
 | A set range confines playback: play starts at In from outside the range or from the Out frame; at Out it goes back to In, or pauses on the Out frame with Loop off | Studio | Set a range, play; press `R` and play again |
 | A seek to outside the range while playing goes there and pauses; setting the range past a playing head sends it to In | Studio | Play inside a range, press `9`; then press `O` while playing |
 | Reset range | Studio | The × button after Loop, while a range is set |

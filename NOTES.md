@@ -680,7 +680,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Backlog
 
-- Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A (range `#6e6e6e` / `#c8c8c8`, dock `#171717`). Update Figma and the page together.
+- Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -1519,7 +1519,7 @@ The trial is merged into `main` (fast-forward, with the tooltip fix `9c87df3` th
 
 ## Theme A: edge lighting, a darker body, a neutral range (17 Nov 2026, branch `theme-industrial`, not merged, not in production)
 
-Requirements: `specs/theme-a-edge-lighting-and-neutral-range.md`. The first of three theme steps. **Tokens and a few CSS rules only**: `src/styles/tokens.css`, the dock's seam, press travel and legend rules in `skin.css`, the divider and two comments in `studio.css`, the track, the played band and the handle's grip layers in `timeline.css`. No markup, component, behaviour or layout change. Preview deployment (behind Vercel's login, as every preview of this project is): https://videojs-frameline-ademw07s0-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
+Requirements: `specs/theme-a-edge-lighting-and-neutral-range.md`. The first of three theme steps. **Tokens and a few CSS rules only**: `src/styles/tokens.css`, the dock's seam, press travel and legend rules in `skin.css`, the divider and two comments in `studio.css`, the track, the played band and the handle's grip layers in `timeline.css`. No markup, component, behaviour or layout change. Preview deployment (behind Vercel's login, as every preview of this project is): https://videojs-frameline-ademw07s0-artmarchuk.vercel.app. **Theme A.1 (below) supersedes parts of this section:** the played band, `--fl-range-played` and the printed edge (`--fl-legend-shadow*`) are gone. Production was not deployed, no tag, not merged.
 
 Screenshots: `design/screenshots/theme-a/`, headless Google Chrome via `playwright-core` at 2x (1x where named), each pair opened and looked at: `main-*` from a build of `main` (f42957d), `a-*` from this branch, `pair-*` the two together (main first); the full-player shots are JPEG, the crops PNG, magnified with pixelated scaling where the name says 1x. Demo media: the reel, player 1280 px wide (`#width=1280`).
 
@@ -1566,8 +1566,8 @@ The spec's starting values are the final values; none was changed after looking 
 ### A.5 Accent trial (screenshots only)
 `pair-09-accent.jpg`: the branch with the default blue and with `--media-accent-color: #ff6b3d` set on `html`, a range set, the marker at 12 s selected, the step-forward key focused. Nothing shipped; the default is unchanged.
 
-### A.6 Contrast (`node scripts/contrast.mjs`, every row passes in both columns)
-The script has the new `s0`, `s1`, `range`, `rangePlayed`, `legend` and `seam`; the rows that measured the accent as a band are now the pairs of the spec; the spec's numbers are reproduced (3.84, 3.05, 4.55, 1.49, 11.69, 7.18, 1.87, 4.43, 7.18 / 6.58 / 5.13 / 3.41, 6.53, 6.94; legends 11.62 / 9.05 / 7.37 / 6.02). The landing page rows are unchanged and left out of this table.
+### A.6 Contrast (`node scripts/contrast.mjs`, every row passes in both columns; the table is the A.1 state)
+Theme A added `s0`, `s1`, `legend` and `seam` and reproduced its spec's numbers (3.84, 3.05, 4.55, 1.49, 11.69, 7.18, 1.87, 4.43, 7.18 / 6.58 / 5.13 / 3.41, 6.53, 6.94; legends 11.62 / 9.05 / 7.37 / 6.02). A.1 removed `rangePlayed` and its three rows, set `range` to `#606060` and reproduces 3.11, 5.62 and 2.31, and added the link legend on `surface-0` and the dialog's key caps. The landing page rows are unchanged and left out of this table.
 
 | Pair | Default | `prefers-contrast: more` |
 | --- | --- | --- |
@@ -1580,11 +1580,13 @@ The script has the new `s0`, `s1`, `range`, `rangePlayed`, `legend` and `seam`; 
 | ruler label, blended, on the dock (surface-1) | 6.94 (min 4.5) | 9.44 (min 7) |
 | ruler label, blended, where the white playhead head passes under it | 10.16 (min 4.5) | 14.72 (min 4.5) |
 | text-dim on surface-2 (controls) | 5.09 (min 4.5) | 8.70 (min 7) |
-| text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time) | 5.49 (min 4.5) | 8.06 (min 7) |
-| text-dim on surface-3: NOT USED for text (see text-dim-raised) | 4.14 (min -) | 7.08 (min -) |
+| text-dim-raised on surface-3 (shortcut in a tooltip or a menu, marker tooltip time) | 5.49 (min 4.5) | 8.06 (min 7) |
+| text-dim on surface-3: NOT USED for text (see text-dim-raised); menus are surface-3 | 4.14 (min -) | 7.08 (min -) |
+| text on a key cap (surface-2) in the shortcuts dialog | 12.47 (min 4.5) | 12.47 (min 4.5) |
 | ink on text fill (Play) | 15.22 (min 4.5) | 15.22 (min 4.5) |
 | legend on surface-1 (a flat toolbar button at rest) | 11.62 (min 4.5) | 16.01 (min 4.5) |
-| legend on surface-2 (a transport key, the link button) | 9.05 (min 4.5) | 12.47 (min 4.5) |
+| legend on surface-0 (the link button in the timecode well) | 12.68 (min 4.5) | 17.47 (min 4.5) |
+| legend on surface-2 (a transport key, Loop) | 9.05 (min 4.5) | 12.47 (min 4.5) |
 | legend on surface-3 (a hovered flat button; the legend is full text there, shown for the rest colour) | 7.37 (min 4.5) | 10.16 (min 4.5) |
 | legend on --fl-on (a toggle that is on; the legend is full text there, shown for the rest colour) | 6.02 (min 4.5) | 8.30 (min 4.5) |
 | text on a highlighted menu item (--fl-on) in a Studio menu | 8.30 (min 4.5) | 8.30 (min 4.5) |
@@ -1602,16 +1604,12 @@ The script has the new `s0`, `s1`, `range`, `rangePlayed`, `legend` and `seam`; 
 | focus ring: accent on surface-2 | 5.13 (min 3) | 5.13 (min 3) |
 | focus ring: accent on --fl-on | 3.41 (min 3) | 3.41 (min 3) |
 | focus ring halo: surface-0 vs white frame | 19.56 (min 3) | 19.56 (min 3) |
-| playhead (text) over the unplayed band (--fl-range) | 4.55 (min 3) | 3.78 (min 3) |
-| playhead (text) over the played band (--fl-range-played): none, the dark outline carries it | 1.49 (min -) | 1.11 (min -) |
-| playhead outline (surface-0) over the played band (--fl-range-played) | 11.69 (min 3) | 15.67 (min 3) |
+| range band (--fl-range) on the track groove (surface-0) | 3.11 (min 3) | 4.62 (min 3) |
+| playhead (text) over the range band (--fl-range) | 5.62 (min 3) | 3.78 (min 3) |
 | playhead (text) over the track groove (surface-0) | 17.47 (min 3) | 17.47 (min 3) |
-| unplayed band (--fl-range) against the track groove (surface-0) | 3.84 (min 3) | 4.62 (min 3) |
-| played band (--fl-range-played) against the unplayed band | 3.05 (min 3) | 3.39 (min 3) |
-| played band (--fl-range-played) against the track groove (surface-0) | 11.69 (min 3) | 15.67 (min 3) |
 | set handle (accent) against the dock (surface-1) | 6.58 (min 3) | 6.58 (min 3) |
 | set handle (accent) against the track groove (surface-0) | 7.18 (min 3) | 7.18 (min 3) |
-| set handle (accent) against the unplayed band, decorative: the handle also has a shape and stands proud of the track | 1.87 (min -) | 1.55 (min -) |
+| set handle (accent) against the range band, decorative: the handle has a shape and sits on the track edge | 2.31 (min -) | 1.55 (min -) |
 | idle handle (--fl-handle-idle) against the dock (surface-1) | 4.06 (min 3) | 8.94 (min 3) |
 | idle handle (--fl-handle-idle) against the track groove (surface-0) | 4.43 (min 3) | 9.75 (min 4.5) |
 | hover hairline (text at 45%) over the track groove | 4.16 (min 3) | 4.16 (min 3) |
@@ -1649,5 +1647,62 @@ The script has the new `s0`, `s1`, `range`, `rangePlayed`, `legend` and `seam`; 
 - **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
 - **A real display and pointer:** the 1px legend shadow on a 1x screen (the link icon above), the 1px press travel, and how the darker body reads next to the picture.
 - Firefox and Safari were not run. `filter: drop-shadow()` on an inline SVG inside a button and the three-layer `box-shadow` lists are inside the browser floor on paper.
-- The browser-check scripts in `scripts/browser-checks/` were not run for this step (CSS-only change); a few of them read computed colours and may need their expected values updated.
+- The browser-check scripts in `scripts/browser-checks/` were not run for Theme A; they were run in A.1 (below).
 - `prefers-contrast: more` and forced colours were emulated in Chromium.
+
+## Theme A.1: review fixes (17 Nov 2026, branch `theme-industrial`, not merged, not in production)
+
+Requirements: `specs/theme-a1-review-fixes.md`. Styling only, plus the removal of the played band's element from the timeline component. Preview deployment (behind Vercel's login): https://videojs-frameline-ieffn7m3g-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
+
+Screenshots: `design/screenshots/theme-a1/`, headless Google Chrome at 2x: `a-*` from a build of the Theme A commit (ef15724), `a1-*` from this step, `pair-*` the two together (Theme A first or on the left). `a1-report.json` holds the computed styles read in the same run.
+
+### A1.1 One range band
+- `.pro-tl-band-played`, its rules (with the drag rule and the forced-colours `HighlightText` line), `--fl-range-played` and its "more" and forced-colours values, and its three rows in `scripts/contrast.mjs` are gone. `--fl-range` is `#606060`: 3.11:1 on the groove, playhead over it 5.62:1, set handle against it 2.31:1 (decorative).
+- Under `prefers-contrast: more` the band stays `#7b7b7b`: 4.62:1 on the groove, playhead over it 3.78:1. In forced colours it is `Highlight` against a `Canvas` track with a `CanvasText` border (`pair-07-forced-colors.jpg`).
+- `rangeBand()` in `timeline/logic.ts` still returns a `played` value (and two unit tests check it). Nothing renders it any more; the spec allowed only the element's removal, so the logic is left as it was.
+- README, FEATURES and the project overview no longer mention a played part. The help text never did.
+
+### A1.2 The groove's rim
+`--fl-track-shadow` is `inset 0 1px 1px rgb(0 0 0 / calc(0.45 * var(--fl-bevel))), 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel)))`. **The rim touches the buffer line:** the track ends at one pixel row and the buffer starts on the next, so the rim fills the 1px dark gap that separated them. In `pair-01-groove-buffer.png` (4x) the buffer line now reads as attached to the groove's lower edge rather than as a separate line under it. The buffer was not moved. Outside a range the groove is still close to the dock (1.09:1 by fill); the rim adds a faint lower edge in `pair-01-timeline-none.png`.
+
+### A1.3 The printed edge is gone
+`--fl-legend-shadow`, `--fl-legend-shadow-play`, the two `filter` rules and their three flat overrides are removed. `--fl-legend` stays.
+
+### A1.4 Shortcuts
+- **Tooltips and menus already drew shortcuts as plain text** (no fill, border or padding; step "dock polish" did that), so the boxed key the review describes was not in the code. What changed: an explicit regular weight, and the tooltip gap is `calc(var(--media-spacing) * 2)` (was 1.5). In menus the shortcut is already right-aligned in one column (`margin-inline-start: auto`) with at least 5 spacing units after the label (measured: 31.9 px after "Copy frame image", the longest).
+- **Menu colour differs from the spec on purpose:** Studio menus are `surface-3`, not `surface-1`, and `--fl-text-dim` there is 4.14:1, under 4.5. Menu shortcuts keep `--fl-text-dim-raised` (5.49:1). On a highlighted item they take the text colour, as before.
+- **The shortcuts dialog** now draws its keys as flat caps: `surface-2` fill, 3px radius, no shadow, text colour (12.47:1), a 1px `CanvasText` border in forced colours. With caps, the six-key row ("Shift Alt ← → ↑ ↓") overflowed its column, so a row's caps may wrap onto a second line (at most 55% of the row); no row overflows now (`pair-05-shortcuts.png`).
+
+### A1.5 Three kinds of control
+- **Key:** Loop on row one has a `surface-2` fill, the group radius (8px) and the raise shadow; on, it is pressed in (`--fl-on`, press shadow), unchanged. On the compact dock's second row it is still a flat toggle (no fill off, `--fl-on` on).
+- **Display:** the pair has no gap. The link button is `surface-0` with the well shadow plus `inset 1px 0 0 var(--fl-hi)`, a 1px `--fl-seam` start border, outer corners at the group radius, inner corners square. Hover: icon `--fl-legend` to `--fl-text` and a `surface-1` fill. **The hover fill is barely visible:** `surface-1` on `surface-0` is 1.09:1, so in `pair-03-timecode-link-hover.png` only the icon brightening shows. The focus ring draws over the digits (`pair-03-timecode-link-focus.png`); the copied check is unchanged.
+- **Toolbar:** everything else, unchanged.
+- The "Tactile controls" comment block in `skin.css` states the rule.
+
+### A1.6 Browser checks
+Run with `playwright-core` in Google Chrome against the local production build, at 1440x900 unless named. Default colours, then contexts with `contrast: 'more'` and with `forcedColors: 'active'`. No script in `scripts/browser-checks/` targets the two modes on its own, so the dock scripts were run inside them.
+
+| Script | Default | More contrast | Forced colours |
+| --- | --- | --- | --- |
+| `dock-polish.js`, wide | pass (after the update below) | pass | pass |
+| `dock-polish.js`, 724x375 touch (`keys` rows) | pass (after the update below) | pass | pass |
+| `dock-polish.js`, 422x800 touch (compact) | pass | not run | not run |
+| `phone-transport.js`, 390 touch and 1440 mouse | pass | not run | not run |
+| `range-playback.js` | failed once, passed on the next run; passes on `main` | not run | not run |
+| `handle-focus-ring.js` | pass | pass | pass |
+| `guides-menu-focus.js` | first item "Title safe", reading order, Escape returns to Guides | not run | not run |
+| `axe-audit.js`: none, Guides menu, help dialog | 0 violations | 0 violations | 6 and 8 serious `color-contrast` nodes |
+
+- **`dock-polish.js` failed first, on two checks that encode the old look:** the pair's 2px gap (now 0 by A1.5) and "Loop off has no fill on row one" (now a filled key). Both checks and the script's header comments were updated to the new rule; nothing else in the script changed.
+- **Forced-colour axe findings are not from this step:** the same counts and nodes appear on `main` (starting with the page's `h1`). axe reads the author colours while Chromium paints system colours, so it reports `#f2f2f4` on white.
+- `range-playback.js` failed on one run and passed on the next. It plays real media and is timing-sensitive. Its verdict is one combined condition, and which part failed on that run was not isolated.
+
+### A1 checks
+`npm run typecheck`, `npm test` (219), `npm run build`, `node scripts/contrast.mjs`: pass. Skin CSS (`demo-video-*.css`) 39,663 / 6,942 B raw / gzip (Theme A 39,264 / 6,904); Studio CSS 27,952 / 4,938 B (28,422 / 5,003).
+
+### Unverified (Theme A.1)
+- The preview URL was not opened (Vercel login); everything ran on the local build of the same tree.
+- Firefox and Safari, a real 1x display and a real pointer: how the groove's rim and the link's hover read on a real screen.
+- `prefers-contrast: more` and forced colours were emulated in Chromium. The compact dock, `phone-transport.js`, `range-playback.js` and `guides-menu-focus.js` were not run in those two modes.
+- The landing page still uses the old range blue (Backlog).
+

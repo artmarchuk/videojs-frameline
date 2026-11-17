@@ -5,13 +5,13 @@
 const BASE = {
   s0: '#0C0C0C', s1: '#171717', s2: '#2C2C2C', s3: '#3A3A3A', on: '#474747', line: '#333333', seam: '#050505', track: '#888888',
   text: '#F2F2F2', dim: '#9C9C9C', dimRaised: '#B4B4B4', legend: '#D0D0D0', accent: '#5B9DFF', accentInk: '#0B1220',
-  range: '#6E6E6E', rangePlayed: '#C8C8C8', ink: '#1C1C1C',
+  range: '#606060', ink: '#1C1C1C',
   tickMinor: '#565656', tickMid: '#787878', tickMajor: '#8F8F8F', buffer: '#4A4A4A', white: '#FFFFFF',
   handleIdle: '#787878', rulerLabel: '#B8B8B8',
 };
 const MORE = {
   ...BASE, line: '#7B7B7B', seam: '#7B7B7B', dim: '#CCCCCC', dimRaised: '#D9D9D9', legend: '#F2F2F2', tickMinor: '#8D8D8D', tickMid: '#A7A7A7', tickMajor: '#BDBDBD',
-  buffer: '#6F6F6F', handleIdle: '#B7B7B7', rulerLabel: '#D3D3D3', range: '#7B7B7B', rangePlayed: '#E6E6E6',
+  buffer: '#6F6F6F', handleIdle: '#B7B7B7', rulerLabel: '#D3D3D3', range: '#7B7B7B',
 };
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
@@ -35,12 +35,14 @@ const rows = [
   ['ruler label, blended, on the dock (surface-1)', diff(c('rulerLabel'), c('s1')), c('s1'), 4.5, 7],
   ['ruler label, blended, where the white playhead head passes under it', diff(c('rulerLabel'), c('text')), c('text'), 4.5],
   ['text-dim on surface-2 (controls)', c('dim'), c('s2'), 4.5, 7],
-  ['text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time)', c('dimRaised'), c('s3'), 4.5, 7],
-  ['text-dim on surface-3: NOT USED for text (see text-dim-raised)', c('dim'), c('s3'), 0],
+  ['text-dim-raised on surface-3 (shortcut in a tooltip or a menu, marker tooltip time)', c('dimRaised'), c('s3'), 4.5, 7],
+  ['text-dim on surface-3: NOT USED for text (see text-dim-raised); menus are surface-3', c('dim'), c('s3'), 0],
+  ['text on a key cap (surface-2) in the shortcuts dialog', c('text'), c('s2'), 4.5],
   ['ink on text fill (Play)', c('ink'), c('text'), 4.5],
   // Legends: the icon or word on a key at rest ("Fit" is text, so 4.5)
   ['legend on surface-1 (a flat toolbar button at rest)', c('legend'), c('s1'), 4.5],
-  ['legend on surface-2 (a transport key, the link button)', c('legend'), c('s2'), 4.5],
+  ['legend on surface-0 (the link button in the timecode well)', c('legend'), c('s0'), 4.5],
+  ['legend on surface-2 (a transport key, Loop)', c('legend'), c('s2'), 4.5],
   ['legend on surface-3 (a hovered flat button; the legend is full text there, shown for the rest colour)', c('legend'), c('s3'), 4.5],
   ['legend on --fl-on (a toggle that is on; the legend is full text there, shown for the rest colour)', c('legend'), c('on'), 4.5],
   ['text on a highlighted menu item (--fl-on) in a Studio menu', c('text'), c('on'), 4.5],
@@ -60,17 +62,13 @@ const rows = [
   ['focus ring: accent on surface-2', c('accent'), c('s2'), 3],
   ['focus ring: accent on --fl-on', c('accent'), c('on'), 3],
   ['focus ring halo: surface-0 vs white frame', c('s0'), c('white'), 3],
-  // Timeline: the track is a groove in surface-0; the band in it is neutral, light grey where it has played
-  ['playhead (text) over the unplayed band (--fl-range)', c('text'), c('range'), 3],
-  ['playhead (text) over the played band (--fl-range-played): none, the dark outline carries it', c('text'), c('rangePlayed'), 0],
-  ['playhead outline (surface-0) over the played band (--fl-range-played)', c('s0'), c('rangePlayed'), 3],
+  // Timeline: the track is a groove in surface-0; a range is one solid neutral band in it, the playhead shows the position
+  ['range band (--fl-range) on the track groove (surface-0)', c('range'), c('s0'), 3],
+  ['playhead (text) over the range band (--fl-range)', c('text'), c('range'), 3],
   ['playhead (text) over the track groove (surface-0)', c('text'), c('s0'), 3],
-  ['unplayed band (--fl-range) against the track groove (surface-0)', c('range'), c('s0'), 3],
-  ['played band (--fl-range-played) against the unplayed band', c('rangePlayed'), c('range'), 3],
-  ['played band (--fl-range-played) against the track groove (surface-0)', c('rangePlayed'), c('s0'), 3],
   ['set handle (accent) against the dock (surface-1)', c('accent'), c('s1'), 3],
   ['set handle (accent) against the track groove (surface-0)', c('accent'), c('s0'), 3],
-  ['set handle (accent) against the unplayed band, decorative: the handle also has a shape and stands proud of the track', c('accent'), c('range'), 0],
+  ['set handle (accent) against the range band, decorative: the handle has a shape and sits on the track edge', c('accent'), c('range'), 0],
   ['idle handle (--fl-handle-idle) against the dock (surface-1)', c('handleIdle'), c('s1'), 3],
   ['idle handle (--fl-handle-idle) against the track groove (surface-0)', c('handleIdle'), c('s0'), 3, 4.5],
   ['hover hairline (text at 45%) over the track groove', over(c('text'), 0.45, c('s0')), c('s0'), 3],

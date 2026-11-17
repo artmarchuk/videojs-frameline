@@ -13,7 +13,7 @@
      * adds no cast to the picture, and one soft blue accent. The dock is a dark matte body; the display and the track
      * groove (surface-0) sit clearly below it, the keys (surface-2) stand above it.
      * The accent is a signal, not a fill: set In/Out handles, a selected marker and the focus ring. The range band
-     * is neutral (--fl-range, --fl-range-played). Toggled-on states use --fl-on, never the accent. Never put white
+     * is one neutral band (--fl-range); the playhead shows the position. Toggled-on states use --fl-on, never the accent. Never put white
      * text on the accent (2.7:1).
      */
     --fl-surface-0: #0c0c0c; /* behind the picture; the recessed timecode field; the timeline groove; scrim colour */
@@ -30,8 +30,7 @@
     --fl-legend: #d0d0d0; /* icons and word labels printed on the dock's keys at rest; full --fl-text on hover, focus, pressed, on */
     --fl-accent: var(--media-accent-color, #5b9dff);
     --fl-accent-ink: var(--media-accent-text-color, #0b1220); /* text and icons placed on the accent */
-    --fl-range: #6e6e6e; /* the not-yet-played part of the range band: 3.84:1 on the groove */
-    --fl-range-played: #c8c8c8; /* the played part of the range band: 3.05:1 against the unplayed part */
+    --fl-range: #606060; /* the range band, one solid band: 3.11:1 on the groove */
     --fl-ink: #1c1c1c; /* text and icons on a --fl-text fill: Play, the playhead bubble */
     --fl-tick-minor: #565656; /* ruler ticks, short to tall */
     --fl-tick-mid: #787878;
@@ -111,8 +110,10 @@
       inset 0 1px 2px rgb(0 0 0 / calc(0.7 * var(--fl-bevel))),
       inset 0 0 0 1px rgb(0 0 0 / calc(0.4 * var(--fl-bevel))),
       0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
-    /* The timeline groove: shaded inside its top edge. */
-    --fl-track-shadow: inset 0 1px 1px rgb(0 0 0 / calc(0.45 * var(--fl-bevel)));
+    /* The timeline groove: shaded inside its top edge, a line of light under it (like the timecode well). */
+    --fl-track-shadow:
+      inset 0 1px 1px rgb(0 0 0 / calc(0.45 * var(--fl-bevel))),
+      0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel)));
     /* A solid thing in the groove: the range band, the handles, the marker pins. Flat face, lit top edge, dark bottom edge. */
     --fl-solid-image: none;
     --fl-solid-shadow: inset 0 1px 0 rgb(255 255 255 / calc(0.18 * var(--fl-bevel))), inset 0 -1px 0 rgb(0 0 0 / calc(0.2 * var(--fl-bevel)));
@@ -125,9 +126,6 @@
     --fl-pin-shadow: 0 1px 1px rgb(0 0 0 / calc(0.6 * var(--fl-bevel)));
     --fl-playhead-shadow: 0 1px 2px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
     --fl-dock-edge: inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel))); /* the light half of the seam under the picture */
-    /* Legends: the icon on a key is printed, with a dark edge under it; on Play's white face the glyph is engraved. */
-    --fl-legend-shadow: drop-shadow(0 1px 0 rgb(0 0 0 / calc(0.45 * var(--fl-bevel))));
-    --fl-legend-shadow-play: drop-shadow(0 1px 0 rgb(255 255 255 / calc(0.7 * var(--fl-bevel))));
     /* Set --fl-frame-border: 1 to draw a 1px hairline and a 10px radius around the player. Default: none. */
     --fl-frame-radius: var(--media-border-radius, calc(var(--fl-frame-border, 0) * 10px));
 
@@ -222,7 +220,6 @@
       --fl-text-dim: #cccccc;
       --fl-legend: var(--fl-text);
       --fl-range: #7b7b7b;
-      --fl-range-played: #e6e6e6;
       --fl-text-dim-raised: #d9d9d9;
       --fl-tick-minor: #8d8d8d;
       --fl-tick-mid: #a7a7a7;
@@ -259,8 +256,6 @@
     --fl-play-press-image: none;
     --fl-solid-image: none;
     --fl-handle-image: none;
-    --fl-legend-shadow: none;
-    --fl-legend-shadow-play: none;
   }
 
   @media (prefers-contrast: more), (forced-colors: active) {
@@ -272,8 +267,6 @@
       --fl-play-press-image: none;
       --fl-solid-image: none;
       --fl-handle-image: none;
-      --fl-legend-shadow: none;
-      --fl-legend-shadow-play: none;
     }
   }
 
@@ -285,7 +278,6 @@
       --fl-surface-3: Canvas;
       --fl-on: Highlight;
       --fl-range: Highlight;
-      --fl-range-played: Highlight;
       --fl-seam: CanvasText;
       --fl-legend: CanvasText;
       --fl-ink: Canvas;

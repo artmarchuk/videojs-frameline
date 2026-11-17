@@ -240,7 +240,7 @@
     --tl-gap-end: 0px;
   }
 
-  /* The track is a groove, darker than the dock. The band in it is neutral: light grey where it has played. */
+  /* The track is a groove, darker than the dock, with a line of light under it. The range is one neutral band in it. */
   .pro-skin .pro-tl-track {
     position: absolute;
     inset: 0;
@@ -254,8 +254,7 @@
    * transition, so a drag stays 1:1 with no rule of its own. A cleared band keeps its last place while it fades (the
    * component leaves the two variables as they were).
    */
-  .pro-skin .pro-tl-band,
-  .pro-skin .pro-tl-band-played {
+  .pro-skin .pro-tl-band {
     position: absolute;
     inset-block: 0;
     background-image: var(--fl-solid-image);
@@ -266,8 +265,7 @@
       visibility 0s;
   }
 
-  .pro-skin .pro-timeline[data-range="none"] .pro-tl-band,
-  .pro-skin .pro-timeline[data-range="none"] .pro-tl-band-played {
+  .pro-skin .pro-timeline[data-range="none"] .pro-tl-band {
     visibility: hidden;
     opacity: 0;
     transform: scaleY(0.4);
@@ -281,16 +279,6 @@
     left: var(--fl-band-start);
     right: calc(100% - var(--fl-band-end));
     background-color: var(--fl-range);
-  }
-
-  .pro-skin .pro-tl-band-played {
-    left: var(--fl-band-start);
-    right: max(calc(100% - var(--media-slider-fill, 0%)), calc(100% - var(--fl-band-end)));
-    background-color: var(--fl-range-played);
-  }
-
-  .pro-skin .pro-tl[data-dragging] .pro-tl-band-played {
-    right: max(calc(100% - var(--media-slider-pointer, 0%)), calc(100% - var(--fl-band-end)));
   }
 
   /* Buffered range: a quiet 2px line under the track. */
@@ -564,14 +552,9 @@
     }
 
     /* The range band keeps a fill, in Highlight, so it stays distinguishable from the track. */
-    .pro-skin .pro-tl-band,
-    .pro-skin .pro-tl-band-played {
+    .pro-skin .pro-tl-band {
       forced-color-adjust: none;
       background-color: Highlight;
-    }
-
-    .pro-skin .pro-tl-band-played {
-      border-bottom: 2px solid HighlightText;
     }
 
     .pro-skin .pro-tl-handle {

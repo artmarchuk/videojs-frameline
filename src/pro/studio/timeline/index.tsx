@@ -176,7 +176,6 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
             <div className={'pro-tl-chapter'} {...props}>
               <TimeSlider.Track className={'pro-tl-track'}>
                 <span className={'pro-tl-band'} />
-                <span className={'pro-tl-band-played'} />
               </TimeSlider.Track>
             </div>
           )}

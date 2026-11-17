@@ -4,11 +4,11 @@
 // and 352x800, where the player is 390, 360 and 320px wide). In Chromium, create the context with the
 // `clipboard-read` and `clipboard-write` permissions so the copied link and image can be read back.
 // Wide: `Space` plays and pauses after a click on the ruler and with a range handle focused. The timecode field and
-// the link button are one pair (2px apart, same height); `S` copies `#t=<timecode>`,
+// the link button are one display (one well, no gap, a 1px seam inside the link, same height); `S` copies `#t=<timecode>`,
 // shows the check for about 1.2s and announces "Link copied, <timecode>"; a refused clipboard shows no check;
 // `Shift+G` copies a PNG; the Capture menu holds the two image actions; the help dialog lists both keys.
 // Narrow, 500px and up (`data-dock-rows="keys"`; for example a touch context of 724x375, a 692px player): row one is
-// the timecode joined to the link button (2px apart, same height), the transport, and Loop as a raised key at the end
+// the timecode joined to the link button (no gap, same height), the transport, and Loop as a filled, raised key at the end
 // edge; row two is six flat 44px controls in equal cells: Markers, Capture, Guides, Zoom, More, Fullscreen. The
 // dock is 167px tall there (8px above and below, 6px between the rows).
 // Narrow under 500px (`compact`): one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link,
@@ -38,7 +38,7 @@ if (!out.narrow) {
     const f = document.querySelector('.pro-timecode').getBoundingClientRect(), l = document.querySelector('.pro-tool-link').getBoundingClientRect();
     return { gap: +(l.left - f.right).toFixed(2), sameHeight: f.height === l.height, name: document.querySelector('.pro-tool-link').getAttribute('aria-label') };
   });
-  checks.pair = out.pair.gap === 2 && out.pair.sameHeight && out.pair.name === 'Copy link at timecode';
+  checks.pair = out.pair.gap === 0 && out.pair.sameHeight && out.pair.name === 'Copy link at timecode';
   await page.keyboard.press('s'); await page.waitForTimeout(200);
   out.said = await said();
   checks.announced = out.said.includes(`Link copied, ${timecode}`);
@@ -122,23 +122,24 @@ if (!out.narrow) {
   checks.rowOneOrder = out.rowOne.order.join() === ['Timecode', ...(keys ? ['Copy link at timecode'] : []), ...transport, ...(keys ? ['Loop'] : [])].join();
   checks.rowOneFits = out.rowOne.leftToRight && out.rowOne.oneLine && out.rowOne.targets;
   if (keys) {
-    checks.pair = out.rowOne.linkInPair && out.rowOne.pairGap === 2 && out.rowOne.pairSameHeight;
+    checks.pair = out.rowOne.linkInPair && out.rowOne.pairGap === 0 && out.rowOne.pairSameHeight;
     checks.loopKey = out.rowOne.loopInRowOne && out.rowOne.loopAtEnd;
     checks.dockHeight = out.rowOne.dockHeight === 167;
     if (out.player >= 562) checks.transportCentred = Math.abs(out.rowOne.playOffCentre) <= 1;
   } else {
     checks.loopCell = !out.rowOne.loopInRowOne && !out.rowOne.linkInPair;
   }
-  // Loop off: a raised key on row one, flat as a cell of row two. Loop on: the pressed treatment in both places.
+  // Loop off: a key on row one (a surface-2 fill and the raise shadow), flat with no fill as a cell of row two.
+  // Loop on: the pressed treatment in both places.
   const loopLook = async (on) => {
     if (((await page.getAttribute('[data-pro-tool="loop"]', 'aria-pressed')) === 'true') !== on) { await page.focus('.pro-transport .media-play-button'); await page.keyboard.press('r'); }
     await page.waitForTimeout(400);
-    return page.evaluate(() => { const c = getComputedStyle(document.querySelector('[data-pro-tool="loop"]')); return { fill: c.backgroundColor, image: c.backgroundImage !== 'none', pressed: document.querySelector('[data-pro-tool="loop"]').getAttribute('aria-pressed') }; });
+    return page.evaluate(() => { const c = getComputedStyle(document.querySelector('[data-pro-tool="loop"]')); return { fill: c.backgroundColor, shadow: c.boxShadow, pressed: document.querySelector('[data-pro-tool="loop"]').getAttribute('aria-pressed') }; });
   };
   out.loopOn = await loopLook(true); out.loopOff = await loopLook(false);
   const clear = (colour) => /rgba\(.*, 0\)$/.test(colour) || colour === 'transparent';
   checks.loopOn = out.loopOn.pressed === 'true' && !clear(out.loopOn.fill);
-  checks.loopOff = out.loopOff.pressed === 'false' && clear(out.loopOff.fill) && out.loopOff.image === keys;
+  checks.loopOff = out.loopOff.pressed === 'false' && (keys ? !clear(out.loopOff.fill) : clear(out.loopOff.fill));
   checks.order = out.row.order.join() === expected.join();
   const cell = out.player < 288 ? 40 : 44;
   checks.targets = out.row.sizes.join() === `${cell}x44`;

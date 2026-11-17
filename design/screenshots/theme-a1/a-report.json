@@ -1,0 +1,108 @@
+{
+  "track": {
+    "background-color": "rgb(12, 12, 12)",
+    "box-shadow": "rgba(0, 0, 0, 0.45) 0px 1px 1px 0px inset"
+  },
+  "buffer": {
+    "trackBottom": 831,
+    "bufferTop": 832,
+    "bufferBottom": 834
+  },
+  "bandPlayedElement": true,
+  "loopOff": {
+    "background-color": "rgba(0, 0, 0, 0)",
+    "box-shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+    "border-radius": "6px",
+    "color": "rgb(208, 208, 208)"
+  },
+  "loopOn": {
+    "background-color": "rgb(71, 71, 71)",
+    "box-shadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset",
+    "color": "rgb(242, 242, 242)"
+  },
+  "link": {
+    "background-color": "rgb(44, 44, 44)",
+    "box-shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+    "border-left": "0px solid rgb(208, 208, 208)",
+    "border-radius": "2px 8px 8px 2px",
+    "color": "rgb(208, 208, 208)"
+  },
+  "pairGap": 2,
+  "linkHover": {
+    "background-color": "rgb(44, 44, 44)",
+    "color": "rgb(242, 242, 242)"
+  },
+  "focused": "Copy link at timecode",
+  "copied": true,
+  "tooltipShortcut": {
+    "color": "rgb(180, 180, 180)",
+    "background-color": "rgba(0, 0, 0, 0)",
+    "padding": "0px",
+    "border": "0px solid rgb(180, 180, 180)",
+    "font-weight": "400",
+    "font-size": "12px",
+    "box-shadow": "none"
+  },
+  "tooltipGap": {
+    "gap": "6px"
+  },
+  "menuShortcut": {
+    "color": "rgb(242, 242, 242)",
+    "background-color": "rgba(0, 0, 0, 0)",
+    "font-weight": "400"
+  },
+  "menuGap": [
+    {
+      "label": "Grab frame",
+      "gap": 110.1,
+      "kbdRight": 975
+    },
+    {
+      "label": "Copy frame image",
+      "gap": 31.9,
+      "kbdRight": 975
+    }
+  ],
+  "highlightHint": null,
+  "dialogKbd": {
+    "background-color": "rgba(0, 0, 0, 0)",
+    "box-shadow": "none",
+    "color": "rgb(156, 156, 156)",
+    "padding": "0px",
+    "border-radius": "0px"
+  },
+  "band": {
+    "background-color": "rgb(110, 110, 110)",
+    "box-shadow": "rgba(255, 255, 255, 0.18) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.2) 0px -1px 0px 0px inset"
+  },
+  "narrowLoop": {
+    "background-color": "rgb(71, 71, 71)",
+    "box-shadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset"
+  },
+  "07-contrast-more": {
+    "band": {
+      "background-color": "rgb(123, 123, 123)"
+    },
+    "link": {
+      "box-shadow": "rgba(255, 255, 255, 0) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0) 0px 1px 0px 0px, rgba(0, 0, 0, 0) 0px 2px 3px 0px",
+      "border-left": "0px solid rgb(242, 242, 242)"
+    },
+    "loop": {
+      "background-color": "rgb(71, 71, 71)",
+      "box-shadow": "rgb(242, 242, 242) 0px 0px 0px 1px inset"
+    }
+  },
+  "07-forced-colors": {
+    "band": {
+      "background-color": "rgba(55, 0, 110, 0.8)"
+    },
+    "link": {
+      "box-shadow": "none",
+      "border-left": "1px solid rgb(0, 0, 0)"
+    },
+    "loop": {
+      "background-color": "rgba(55, 0, 110, 0.8)",
+      "box-shadow": "rgba(0, 0, 0, 0) 0px 1px 2px 0px inset"
+    }
+  }
+}
