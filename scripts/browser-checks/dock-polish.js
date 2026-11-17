@@ -11,8 +11,9 @@
 // the timecode joined to the link button (no gap, same height), the transport, and Loop as a filled, raised key at the end
 // edge; row two is six flat 44px controls in equal cells: Markers, Capture, Guides, Zoom, More, Fullscreen. The
 // dock is 167px tall there (8px above and below, 6px between the rows).
+// Every width: the transport is one housing with its keys butted together (gaps of 1px at most, no clipping).
 // Narrow under 500px (`compact`): one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link,
-// Guides, Zoom, More, Fullscreen, Loop flat at rest and pressed while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
+// Guides, Zoom, More, Fullscreen, Loop flat at rest, and with no fill and its light on while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
 // is an item of the More menu; under 300px the side padding is 12px and under 288px the cells are 40px wide,
 // so six fit down to a 264px player; `I`, `O` and `Z` still work.
 const out = {};
@@ -134,12 +135,15 @@ if (!out.narrow) {
   const loopLook = async (on) => {
     if (((await page.getAttribute('[data-pro-tool="loop"]', 'aria-pressed')) === 'true') !== on) { await page.focus('.pro-transport .media-play-button'); await page.keyboard.press('r'); }
     await page.waitForTimeout(400);
-    return page.evaluate(() => { const c = getComputedStyle(document.querySelector('[data-pro-tool="loop"]')); return { fill: c.backgroundColor, shadow: c.boxShadow, pressed: document.querySelector('[data-pro-tool="loop"]').getAttribute('aria-pressed') }; });
+    return page.evaluate(() => { const e = document.querySelector('[data-pro-tool="loop"]'), c = getComputedStyle(e); return { fill: c.backgroundColor, shadow: c.boxShadow, pressed: e.getAttribute('aria-pressed'), light: getComputedStyle(e, '::after').opacity }; });
   };
   out.loopOn = await loopLook(true); out.loopOff = await loopLook(false);
   const clear = (colour) => /rgba\(.*, 0\)$/.test(colour) || colour === 'transparent';
-  checks.loopOn = out.loopOn.pressed === 'true' && !clear(out.loopOn.fill);
+  // On: a key (row one, from 500px) keeps its fill; a flat cell (compact) has none, the light carries it.
+  checks.loopOn = out.loopOn.pressed === 'true' && (keys ? !clear(out.loopOn.fill) : clear(out.loopOn.fill));
   checks.loopOff = out.loopOff.pressed === 'false' && (keys ? !clear(out.loopOff.fill) : clear(out.loopOff.fill));
+  // Loop is a mode: on, it shows the light (the ::after dot); off, the dot is there but clear.
+  checks.loopLight = out.loopOn.light === '1' && out.loopOff.light === '0';
   checks.order = out.row.order.join() === expected.join();
   const cell = out.player < 288 ? 40 : 44;
   checks.targets = out.row.sizes.join() === `${cell}x44`;
@@ -175,5 +179,13 @@ if (!out.narrow) {
   await page.keyboard.press('Escape');
 }
 out.checks = checks;
+// The keybed, every width: the transport is one housing, its keys butted together (1px seams; in forced colours they
+// share a border), and the housing does not clip, so a key's focus ring can draw over its neighbours.
+out.keybed = await page.evaluate(() => {
+  const t = document.querySelector('.pro-transport'), keys = [...t.querySelectorAll('.media-button')].filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect());
+  return { overflow: getComputedStyle(t).overflow, gaps: keys.slice(1).map((r, i) => +(r.left - keys[i].right).toFixed(2)), hugs: Math.abs(t.getBoundingClientRect().left - keys[0].left) < 1 && Math.abs(t.getBoundingClientRect().right - keys.at(-1).right) < 1 };
+});
+checks.keybed = out.keybed.overflow === 'visible' && out.keybed.hugs && out.keybed.gaps.every((g) => g >= -1 && g <= 1);
+
 out.pass = Object.values(checks).every(Boolean);
 return out;

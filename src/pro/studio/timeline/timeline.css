@@ -449,7 +449,7 @@
 
   @media (hover: hover) {
     .pro-skin .pro-tl-handle:not([data-set]):hover {
-      color: var(--fl-text-dim);
+      color: var(--fl-text);
     }
   }
 

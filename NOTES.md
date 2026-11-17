@@ -657,6 +657,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 - https://frameline.artmarchuk.me is the canonical URL (a custom domain on the Vercel project `videojs-pro`). `videojs-frameline.vercel.app` stays as a secondary domain (it redirects to the canonical one). The "public-URL checks" sections below ran on the earlier vercel.app domains. Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
 - 18 Nov 2026: Theme A, A.1 and A.2 (branch `theme-industrial`, fast-forwarded into `main` at 03712d4) deployed to production with `npm run deploy vercel` (deployment `videojs-frameline-7dvs4kql8`). Checked on https://frameline.artmarchuk.me: the site root and `/preview.html` answer 200 and load the same skin stylesheet as the local build (`demo-video-CeGZDIde.css`); on both, the dock is `#171717`, `--fl-range` is `#606060`, there is no played band, and the Capture menu is `surface-1` with plain-text shortcuts.
+- 18 Nov 2026: Theme B with B.8 (branch `theme-b`, fast-forwarded into `main` at 1fe3967 by pushing `theme-b` to `origin/main`; the local `main` worktree had uncommitted work and was not touched) deployed to production with `npm run deploy vercel` (deployment `videojs-frameline-m0nntqfod`). Checked on https://frameline.artmarchuk.me: the site root and `/preview.html` answer 200 and load the same skin stylesheet as the local build (`demo-video-Fj1rme_E.css`); on the site root the transport is one housing (1px gaps, `#050505`), Loop on has the `surface-2` fill and its light, Zoom at 200% has no fill and its light, idle handles are `#a0a0a0`.
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
@@ -1958,3 +1959,67 @@ Spec: `specs/landing-visuals-5.md`. Page code only: nothing under `src/` changed
 - The nine feature screenshots and `og.png` re-shot from `main` (Theme A): the range band is the neutral grey of the live player. Same states as before; the range region again moved 3 px right and the zoom region 125 px left to clear the controls.
 - A production deployment from another checkout (`videojs-frameline-m0nntqfod`, 01:34, an older page without this merge) replaced this one seconds later; `main` was deployed again with the new screenshots.
 
+## Theme B: the keybed, lit "on" states, readable idle handles (18 Nov 2026, branch `theme-b`, merged into `main` and deployed to production 18 Nov 2026)
+
+Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no markup, no behaviour. Preview: https://videojs-frameline-1q93pt97s-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login; production is unchanged). Screenshots, all on the site root and each paired with `main`: `design/screenshots/theme-b/` (`main-*`, `b-*`, `pair-*`, and `b-report.json` / `main-report.json` with the computed styles).
+
+### B.2 The keybed
+- `.pro-transport` in the dock is the housing: `gap: 1px`, `--fl-seam` (`#050505`) as its fill, `--fl-radius-group` (8px), `--fl-raise-shadow`. No `overflow: hidden`.
+- The two `.pro-seg` groups lose their fill, radius and shadow in the dock (they keep them in the overlay layout) and take `gap: 1px`. Their buttons are the tiles: `surface-2`, `--fl-tile-shadow` (`inset 0 1px 0 var(--fl-hi)`), `--fl-radius-tile` (2px); the first tile's start corners and the last tile's end corners are 8px. Play: `--fl-text`, 2px corners, `--fl-play-shadow` is now only its top edge (`inset 0 1px 0` white at 60%); its contact shadow moved to the housing.
+- Hover on a tile: `surface-3`. Pressed: `surface-2` with the press shadow and 1px travel. Focus: `z-index: 1`, so the ring and its halo draw over both neighbours.
+- A disabled tile (the cut keys on media with no cuts) keeps its face and dims its icon to 45%: an opacity on the tile would let the seam colour through. Not seen on the demo, which has cuts.
+- If a host turns off shot navigation or frame stepping, the remaining first and last tiles take the outer radius (`:first-child` / `:last-child`, and `:has()` for Play when a side is empty). Not run in a browser.
+- Narrow dock: the housing hugs its keys (`flex: 0 1 auto`; before, the transport box filled the space beside the timecode). The gaps between the three groups went from 4px to 1px, so row one needs 320px, not 324px; the fold of the cut pair stays at 324px. Under 324px the housing holds step back, Play, step forward, and those two take the outer radius.
+- `prefers-contrast: more`: the seam is `#7b7b7b`, 3.30:1 between two tiles. Forced colours: every tile has a `ButtonText` border, so the housing has no gap and no fill there and each tile overlaps its neighbour's border by 1px: one shared line.
+
+### B.3 The light
+- Loop, Zoom above Fit and captions, in the dock: pressed in (`--fl-press-shadow`), a `surface-2` fill, the icon at `--fl-text`, and a 4px dot in `--fl-led` with `--fl-led-glow`, centred, `--fl-led-inset` (4px) from the bottom edge. Drawn with `::after` on the button, which was free. **No markup added.**
+- An open menu and a held key: the same pressed fill and shade, no light.
+- The dot is always there at opacity 0 and fades: in over `--fl-duration-press`, out over `--fl-duration-quick`.
+- New tokens: `--fl-led: var(--fl-accent)`, `--fl-led-glow`, `--fl-led-inset`, `--fl-led-lift`, `--fl-tile-shadow`, `--fl-radius-tile`, `--fl-menu-edge`.
+- Compact density (28px controls): the dot at 4px overlapped the Loop icon and the foot of "200%" by about 1px. There the dot sits 2px from the edge and the icon or label moves up 1px while on (`--fl-led-inset`, `--fl-led-lift`). This differs from the spec's fixed 4px, at compact only. Touch resets both, because touch controls are 44px.
+- **`--fl-on` is kept, for the overlay layout only.** Uses left in `src/`: `.media-button[aria-expanded="true"]` (`skin.css`), the captions and picture-in-picture buttons when on (`skin.css`), `.pro-tool[data-pressed]` (`studio.css`). In the dock the pressed rule outweighs all three, so nothing in the dock draws `--fl-on`. Removing it would change the Viewer tier, which must match `main`. Its forced-colours value (`Highlight`) stays.
+- Forced colours: a control that is on keeps the `Highlight` fill, so a `Highlight` dot would not show; the dot is `HighlightText` there. `--fl-led` is still `Highlight` in that mode, for a host that draws it elsewhere. This differs from the spec's wording.
+- A toolbar button that is on (Zoom, captions) has a `surface-2` fill, as the spec says; that is lighter than the same button at rest, which has no fill (1.28:1 against the dock). A key that is on (Loop) has the same fill as at rest.
+- **Accent inventory** (`--fl-accent`, `--fl-led` in `src/`, apart from `tokens.css`): focus rings (`skin.css`: buttons, time toggle, slider thumbs, dialog; `studio.css`: the timecode field; `timeline.css`: the playhead and the handles), the selected marker (`timeline.css`: the pin and its end-time line), the set or dragged handle (`timeline.css`), and new: the light (`skin.css`, `--fl-led`).
+
+### B.4 Idle handles
+- `--fl-handle-idle` `#787878` → `#a0a0a0`: 7.48:1 on the groove, 6.86:1 on the dock, 2.40:1 against the band (decorative). Hover on an idle handle: `--fl-text` (was `--fl-text-dim`, which is now darker than the handle at rest). Grip lines and shadow unchanged.
+- `prefers-contrast: more` keeps `#b7b7b7` (9.75:1 on the groove): still the higher value.
+
+### B.5 Menu edge
+- `--fl-menu-edge: rgb(255 255 255 / 0.1)` on `.media-menu-popup` **in the dock layout only**, so the Viewer's settings menu is unchanged. On surface-1 it is 1.32:1 (the old `#333333`: 1.42:1 as a solid; as drawn the new edge measures `#2e2e2e`, a little darker than `#333333`). See "Differs from the spec".
+- Under more contrast it is `--fl-line` (4.24:1), in forced colours `CanvasText`.
+
+### B checks
+- typecheck, tests (219), build, `node scripts/contrast.mjs` (81 rows, all pass in both columns).
+- Browser checks on the local build, monitor page: `dock-polish` (1440 default, more contrast, forced colours; 724x375 touch; 422, 392, 352), `phone-transport` (430, 390, 375, 360, 352, 340, 320 touch; 1440 mouse), `handle-focus-ring`, `range-playback`: all pass. `guides-menu-focus` has no verdict field; it opened on "Title safe", walked the menu in reading order and returned focus to Guides.
+- No assertion described the old look, so none was changed. Two were added to `dock-polish.js`: `keybed` (the keys of the transport are at most 1px apart, the housing ends on its first and last key and does not clip) and `loopLight` (narrow dock: the dot's opacity is 1 with Loop on, 0 with it off).
+- Viewer tier on the site root: the two screenshots (controls shown; settings menu open) are pixel-identical to `main`.
+- CSS (raw / gzip): skin 43.51 / 7.48 kB, Studio 27.52 / 4.87 kB.
+
+### Differs from the spec, or worth knowing
+- **B.5:** white at 10% over `#171717` composites to `#2e2e2e`, which is darker than the `#333333` it replaces. So the new border is slightly quieter than the old one, not lighter. On the narrow dock (`pair-6-narrow-390-menu-edge.png`) the menu still separates from the dock mainly by its shadow; the edge itself is faint in both. Reported, as the spec asks; the fill was not changed.
+- The demo media on the site root has no captions, so the captions light was not seen. The rule is the same selector list as Loop and Zoom.
+- Compact density and forced colours: see B.3.
+
+### Unverified (Theme B)
+- The preview URL in a browser: it answers 302 to the Vercel login. The deployment reports READY and holds the build the screenshots were taken from.
+- Firefox and Safari; a real display; real touch devices.
+- The captions light (no captions on the demo), a disabled tile, and a transport with a feature turned off.
+- The fade of the light in motion: only its end states were captured.
+- Windows High Contrast itself: forced colours were emulated in Chrome.
+
+### B.8 Follow-up after review (18 Nov 2026)
+
+Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login, not opened in a browser; production is unchanged). Screenshots: `design/screenshots/theme-b8/` (`b-*` is `theme-b` before B.8, `b8-*` after, `pair-*` both; site root, 2x).
+
+- **Menu edge:** `--fl-menu-edge` is the solid `#424242` (1.78:1 against the dock; B.5's white at 10% came out as `#2e2e2e`). `--fl-line` under more contrast, as before. On the narrow dock the edge is now a visible lighter line all round the menu, where before it could hardly be told from the dock; the shadow still does part of the work.
+- **A flat toolbar button that is on has no fill.** Zoom above Fit, captions, and Loop as a cell of the compact dock's second row: no fill and no press shade, only the light and the icon or label at `--fl-text`. Hover gives the toolbar's `surface-2` hover fill. With its menu open, or while held, the button takes the pressed fill and shade as before. Loop as a key (row one) is unchanged: `surface-2`, press shade, light. This supersedes "B.3: a toolbar button that is on has a `surface-2` fill" above.
+- **More contrast:** a flat button that is on keeps the 1px edge in the text colour (`--fl-on-flat-shadow`), with no fill. The spec does not say; the edge was B.3's rule and a 4px dot alone seemed too little there.
+- **Forced colours:** unchanged, the `Highlight` fill with a `HighlightText` dot. The first build of this step lost the fill on Zoom (white label on white); the forced-colours rule now outweighs the new rule. Seen in `pair-forced-loop-and-zoom-on.png`.
+- **Check changed:** `dock-polish.js`, `loopOn` on the compact dock: it asserted a fill on Loop while looping; it now asserts no fill there (and still a fill where Loop is a key). `loopLight` covers the state.
+- Contrast: the menu-edge row is `#424242` (1.78 / 4.24); the two light rows are relabelled (on `surface-2`: Loop as a key; on the dock: a flat button that is on). 81 rows pass in both columns.
+- The shots not opened before B.8 were opened: the hovered tile, the focused tile, the timeline with both handles set, and the two Viewer pairs. Nothing wrong found. In the downscaled both-handles pair the grip line looks stronger on Theme B; at pixel level the handles are identical.
+- typecheck, tests (219), build, contrast, `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352): pass.
+- Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo).
