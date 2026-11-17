@@ -1955,5 +1955,6 @@ Spec: `specs/landing-visuals-5.md`. Page code only: nothing under `src/` changed
 ### Merged and deployed (18 Nov 2026)
 - `landing-visuals` merged into `main` (merge `ab5371f`) on top of Theme A, A.1 and A.2. Conflicts: `landing.css` keeps main's reset scoped out of the player (`:not(:where(.media-skin *))`) and adds `figure` to it; `NOTES.md` keeps both branches' sections. On the merged build: typecheck, 219 tests, build, `configurator.js` and axe (0 violations at 1440 and 390) pass.
 - Deployed to production: https://frameline.artmarchuk.me (deployment https://videojs-frameline-m9q4oesyy-artmarchuk.vercel.app). The live page serves the new descriptor and the re-shot `og.png`.
-- The nine feature screenshots and `og.png` were shot before Theme A: the range band in them is blue, the live player's is neutral grey.
+- The nine feature screenshots and `og.png` re-shot from `main` (Theme A): the range band is the neutral grey of the live player. Same states as before; the range region again moved 3 px right and the zoom region 125 px left to clear the controls.
+- A production deployment from another checkout (`videojs-frameline-m0nntqfod`, 01:34, an older page without this merge) replaced this one seconds later; `main` was deployed again with the new screenshots.
 
