@@ -1016,9 +1016,14 @@
 
   .pro-skin .media-menu-popup {
     z-index: var(--fl-z-controls);
+    /*
+     * Video.js sets --media-menu-width from the content it measures; the popup's 1px border sits outside that width
+     * (content-box), so the content gets all of it. With border-box the border took 2px and cut the longest value
+     * with an ellipsis (the Quality value, the longest marker).
+     */
+    box-sizing: content-box;
     width: var(--media-menu-width);
-    /* 224px: the measured width left the Quality value ("Auto (1080p)") 2px short and cut it with an ellipsis. */
-    min-width: calc(var(--media-spacing) * 56);
+    min-width: calc(var(--media-spacing) * 52);
     max-width: var(--media-menu-available-width);
     height: var(--media-menu-height);
     max-height: min(var(--media-menu-available-height, calc(var(--media-spacing) * 72)), calc(var(--media-spacing) * 72));

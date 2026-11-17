@@ -681,7 +681,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 ## Backlog
 
 - Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
-- Landing page: its unlayered `button:focus-visible` rule reaches into the player, and so may its element resets (`p`, `ul`, `a` and others; not checked one by one). Seen so far: the focus ring under `prefers-contrast: more` differs (2 px instead of 3). Scope them to the page's own markup or put the page's CSS in a layer.
+- On a narrow player (390 and 320 px) the Markers menu cuts long marker names with an ellipsis, and the times too. The times should never be cut: give the time column a fixed, unshrinkable width.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -1567,22 +1567,22 @@ The spec's starting values are the final values; none was changed after looking 
 ### A.5 Accent trial (screenshots only)
 `pair-09-accent.jpg`: the branch with the default blue and with `--media-accent-color: #ff6b3d` set on `html`, a range set, the marker at 12 s selected, the step-forward key focused. Nothing shipped; the default is unchanged.
 
-### A.6 Contrast (`node scripts/contrast.mjs`, every row passes in both columns; the table is the A.1 state)
+### A.6 Contrast (`node scripts/contrast.mjs`, every row passes in both columns; the table is the A.2 state)
 Theme A added `s0`, `s1`, `legend` and `seam` and reproduced its spec's numbers (3.84, 3.05, 4.55, 1.49, 11.69, 7.18, 1.87, 4.43, 7.18 / 6.58 / 5.13 / 3.41, 6.53, 6.94; legends 11.62 / 9.05 / 7.37 / 6.02). A.1 removed `rangePlayed` and its three rows, set `range` to `#606060` and reproduces 3.11, 5.62 and 2.31, and added the link legend on `surface-0` and the dialog's key caps. The landing page rows are unchanged and left out of this table.
 
 | Pair | Default | `prefers-contrast: more` |
 | --- | --- | --- |
 | text on surface-0 (timecode field) | 17.47 (min 4.5) | 17.47 (min 4.5) |
-| text on surface-1 (dock, menus) | 16.01 (min 4.5) | 16.01 (min 4.5) |
+| text on surface-1 (dock, every menu, dialogs) | 16.01 (min 4.5) | 16.01 (min 4.5) |
 | text on surface-2 (controls) | 12.47 (min 4.5) | 12.47 (min 4.5) |
 | text on surface-3 (hover, tooltips, badges) | 10.16 (min 4.5) | 10.16 (min 4.5) |
 | text on --fl-on (a toggle that is on) | 8.30 (min 4.5) | 8.30 (min 4.5) |
-| text-dim on surface-1 (the "of duration" text) | 6.53 (min 4.5) | 11.16 (min 7) |
+| text-dim on surface-1 (the "of duration" text; menu hints, shortcuts, sub-labels, notes, group labels) | 6.53 (min 4.5) | 11.16 (min 7) |
 | ruler label, blended, on the dock (surface-1) | 6.94 (min 4.5) | 9.44 (min 7) |
 | ruler label, blended, where the white playhead head passes under it | 10.16 (min 4.5) | 14.72 (min 4.5) |
-| text-dim on surface-2 (controls) | 5.09 (min 4.5) | 8.70 (min 7) |
-| text-dim-raised on surface-3 (shortcut in a tooltip or a menu, marker tooltip time) | 5.49 (min 4.5) | 8.06 (min 7) |
-| text-dim on surface-3: NOT USED for text (see text-dim-raised); menus are surface-3 | 4.14 (min -) | 7.08 (min -) |
+| text-dim on surface-2 (controls; a hint or shortcut on a highlighted menu item) | 5.09 (min 4.5) | 8.70 (min 7) |
+| text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time) | 5.49 (min 4.5) | 8.06 (min 7) |
+| text-dim on surface-3: NOT USED for text (see text-dim-raised) | 4.14 (min -) | 7.08 (min -) |
 | text on a key cap (surface-2) in the shortcuts dialog | 12.47 (min 4.5) | 12.47 (min 4.5) |
 | ink on text fill (Play) | 15.22 (min 4.5) | 15.22 (min 4.5) |
 | legend on surface-1 (a flat toolbar button at rest) | 11.62 (min 4.5) | 16.01 (min 4.5) |
@@ -1590,8 +1590,8 @@ Theme A added `s0`, `s1`, `legend` and `seam` and reproduced its spec's numbers 
 | legend on surface-2 (a transport key, Loop) | 9.05 (min 4.5) | 12.47 (min 4.5) |
 | legend on surface-3 (a hovered flat button; the legend is full text there, shown for the rest colour) | 7.37 (min 4.5) | 10.16 (min 4.5) |
 | legend on --fl-on (a toggle that is on; the legend is full text there, shown for the rest colour) | 6.02 (min 4.5) | 8.30 (min 4.5) |
-| text on a highlighted menu item (--fl-on) in a Studio menu | 8.30 (min 4.5) | 8.30 (min 4.5) |
-| text-dim-raised on a highlighted menu item (--fl-on): NOT USED, hints take the text colour there | 4.48 (min -) | 6.58 (min -) |
+| text on a highlighted menu item (surface-2), every menu | 12.47 (min 4.5) | 12.47 (min 4.5) |
+| selected dot and check mark (text) on a menu (surface-1) | 16.01 (min 3) | 16.01 (min 3) |
 | white text on accent: NEVER USED, shown as a warning | 2.72 (min -) | 2.72 (min -) |
 | text on scrim (0.88) over white frame | 12.97 (min 4.5) | 16.21 (min 4.5) |
 | text-dim on scrim (0.88) over white frame | 5.29 (min 4.5) | 11.30 (min 7) |
@@ -1628,6 +1628,8 @@ Theme A added `s0`, `s1`, `legend` and `seam` and reproduced its spec's numbers 
 | hairline (line) on surface-2, decorative; a line under more contrast | 1.11 (min -) | 3.30 (min 3) |
 | divider inside a control fill (white at the divider alpha on surface-2), decorative; a line under more contrast | 1.37 (min -) | 3.35 (min 3) |
 | menu separator (line) on surface-1, decorative; a line under more contrast | 1.42 (min -) | 4.24 (min 3) |
+| Studio menu separator and Guides column line (white at the divider alpha on surface-1), decorative; a line under more contrast | 1.32 (min -) | 3.58 (min 3) |
+| menu edge (line) against the dock, both surface-1, decorative: the popup shadow separates it; a line under more contrast | 1.42 (min -) | 4.24 (min 3) |
 | Play fill (text) against the dock | 16.01 (min 3) | 16.01 (min 3) |
 | toggle on (--fl-on) against control fill (surface-2), decorative by default: the pressed bevel and aria-pressed carry it | 1.50 (min -) | 1.50 (min -) |
 | Loop on (--fl-on) against the dock, decorative by default: the pressed bevel carries it | 1.93 (min -) | 1.93 (min -) |
@@ -1712,10 +1714,48 @@ Run with `playwright-core` in Google Chrome against the local production build, 
 - **`kbd` outside the player**, from a grep of `apps/preview/index.html` and `apps/preview/src` (the workbench shell excluded): `.cue-keys` in the "Try it in the player" cue sheet (3 rows: I O, `,` `.`, Z) and `.feature-keys` in "What Studio checks" (6 rows: I O, `,` `.`, Shift V, Z, G, Shift ?). No script creates a `kbd`. The rule is now `:where(.cue-keys, .feature-keys) > kbd`; nothing else on the page changed.
 - **The skin's shortcut rule is complete:** `.media-tooltip-shortcut` and `.pro-kbd` also set `display: inline; min-width: 0; height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; filter: none`. The help dialog's caps keep their own, more specific rule.
 - **The limit is documented** in the README under "Host page styles": an unlayered element selector on the host page overrides the skin; scope it or put it in a layer.
-- **A cut-off label came to light and is fixed:** the settings menu's Quality value "Auto (1080p)" needs 82 px and got 80, so it ended in an ellipsis. This was already so on production's monitor page and on `main`; on the site root the boxed `?` made the menu wide enough to hide it. The menu's `min-width` is now `calc(var(--media-spacing) * 56)` (224 px, was 208); the label fits at 1440 and 390 on the site root and at 1280 and 320 on the monitor page, and the menu stays inside the player.
+- **A cut-off label came to light and is fixed:** the settings menu's Quality value "Auto (1080p)" needs 82 px and got 80, so it ended in an ellipsis. This was already so on production's monitor page and on `main`; on the site root the boxed `?` made the menu wide enough to hide it. The menu's `min-width` became `calc(var(--media-spacing) * 56)` (224 px, was 208; A.2 found the cause, the popup's border, and set it back); the label fits at 1440 and 390 on the site root and at 1280 and 320 on the monitor page, and the menu stays inside the player.
 - Screenshots: `design/screenshots/theme-a1-8/`, headless Google Chrome at 2x, on the site root (`/?tier=studio`): `prod-*` from https://frameline.artmarchuk.me, `after-*` from the local production build of this branch, `pair-*` the two together. Capture menu, Guides tooltip, settings menu with `?`, the settings menu on the narrow dock (390 px window, with `M` and `?`), and the page's own keys. Computed styles in `prod-report.json` and `after-report.json`.
 - **The page's own keys are unchanged:** the two sections are pixel-identical to production (0 differing pixels in `pair-5-cue-keys.png` and `pair-5-feature-keys.png`), and their computed styles match.
 - **Another leak of the same kind, not fixed (Backlog):** the page's unlayered `button:focus-visible { outline: 2px solid var(--link) }` also reaches the player's buttons. By default it matches the player's ring (2 px, `#5b9dff`, 2 px offset), so nothing shows. Under `prefers-contrast: more` it cuts the player's 3 px ring to 2 px on the site root (3 px on the monitor page).
 - Checks: typecheck, tests (219), build, `node scripts/contrast.mjs` pass. The settings menu (surface-1) shows its shortcuts in `--fl-text-dim`, 6.53:1. Skin CSS 39,780 / 6,997 B raw / gzip (A.1: 39,663 / 6,942).
 - Preview deployment (behind Vercel's login): https://videojs-frameline-du992ala4-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
 - Unverified: Firefox and Safari; the preview URL itself (Vercel login); the dialog and tooltips on the site root under forced colours.
+
+## Theme A.2: one menu surface, and the last landing-page leaks (18 Nov 2026, branch `theme-industrial`, not merged, not in production)
+
+Requirements: `specs/theme-a2-menus.md`. Styling only. Screenshots: `design/screenshots/theme-a2/`, headless Google Chrome at 2x, all on the **site root** (`/?tier=studio`): `a18-*` from a build of the A1.8 commit (afddc60), `a2-*` from this step, `pair-*` the two together. Computed styles in `a18-report.json` and `a2-report.json`.
+
+### A2.1 Studio menus take the settings menu's surface
+- `.pro-menu-popup` (Guides, Capture, Markers, Zoom) no longer sets its own fill, border, radius or shadow. It inherits them from the shared `.media-popup` rule, as the settings menu does: `surface-1`, a 1px `--fl-line` border, the group radius (8px, was 10px), `--fl-shadow-popup`. It keeps its own spacing and minimum width. Read back from both families: fill `rgb(23 23 23)`, border `1px solid rgb(51 51 51)`, radius 8px, the same shadow.
+- Highlighted item: the Studio override to `--fl-on` is removed; every menu uses `surface-2` from `.media-menu-item`.
+- Dim text: hints, shortcuts, sub-labels (`.pro-menu-sub`), the notes at the top of Guides and Zoom, and the group labels all use `--fl-text-dim` (`#9c9c9c`, 6.53:1 on the menu, 5.09:1 on a highlighted item). The rules that switched hints and sub-labels to the text colour on highlight are removed; nothing else needed them. The `.pro-menu-popup .pro-menu-label` override is removed; group labels take the base `--fl-text-dim`.
+- Checked against the new fill: the selected dot and check mark are `--fl-text` (16.01:1); a disabled item is the item at 50% opacity (exempt, as before); the Studio separators and the Guides column line are white at 10% (1.32:1 on `surface-1`, 1.37:1 on the old `surface-3`), decorative, and they read in `pair-1-guides-highlighted.png`; under more contrast they are 3.58:1.
+- Tooltips and the toast are unchanged (`surface-3`).
+- **Over the dock** (`pair-1-guides-edge.png`, 2x): the menu and the dock are the same colour, and what separates them is the 1px `#333333` border (1.42:1) and the popup shadow below it. The edge is visible but faint, much quieter than the old `surface-3` menu. Under more contrast the border is `#7b7b7b` (4.24:1) and clear. In forced colours the border is `CanvasText`; before this step Studio menus there had no border at all.
+- In forced colours a highlighted Studio item now has a `Highlight` border on `Canvas` instead of a `Highlight` fill (the settings menu already did this: `surface-2` maps to `Canvas`). The selected options keep their `Highlight` fill.
+- **The popup border cut text, and that was the cause of A1.8's cut Quality value.** Video.js sets `--media-menu-width` from the content it measures; with `box-sizing: border-box` the 1px border took 2px of it. With the border on Studio menus, the longest marker ("Colourist: match the orange sole to the brand swatch") and its time were cut. `.media-menu-popup` is now `box-sizing: content-box`, and the A1.8 workaround (a 224px minimum width) is back to 208px. No menu text is cut at 1440 on the site root or the monitor page.
+
+### A2.2 Landing-page leaks into the player
+Method: computed styles of every element in the dock bar, the Guides tooltip, the Guides menu, the settings menu, the help dialog and a focused dock button, read on the site root and on the monitor page (`/preview.html`, the page the workbench frames) and compared property by property (box sizing, margins, paddings, font, smoothing, list style, colours, outline, decoration, display, border). Run in default colours and under `prefers-contrast: more`.
+
+| Page rule (`landing.css`) | Reached the player? | Fix |
+| --- | --- | --- |
+| `a:focus-visible, button:focus-visible, …` | Yes: under more contrast the focus ring was 2px, not 3px (dock buttons, the dialog's close button) | `:not(:where(.media-skin *))` on the `a` and `button` selectors; the class selectors in the list never match inside the player |
+| `h1, h2, h3, p, ol, ul, dl, dd, fieldset, legend, pre { margin: 0; padding: 0 }` | Yes: the notes at the top of Guides and Zoom (`p.pro-menu-note`) lost their padding. The dialog's `dl`, `dt` and `dd` showed no difference | `:is(…):not(:where(.media-skin *))`, the same specificity as before |
+| `*, *::before, *::after { box-sizing: border-box }` | No difference until A2.1 made the menus content-box; then it put the border back inside the measured width on the site root only | `*:not(:where(.media-skin *))` and its `::before` and `::after` |
+| `a, .link-button` (colour, underline) | No `a` inside the player; no difference | unchanged |
+| `ol, ul { list-style: none }`, `fieldset`, `html`, `body` (font, colour, smoothing inherit), `[hidden]` | No difference | unchanged |
+| `:where(.cue-keys, .feature-keys) > kbd` | Scoped in A1.8 | unchanged |
+
+After the fixes the two pages differ in 0 properties, in both colour modes. The page's own 265 elements outside the player and its 24 focus stops have the same computed styles as the A1.8 build, in both modes.
+
+### A2 checks
+- typecheck, tests (219), build, `node scripts/contrast.mjs`: pass. Contrast: the menu rows are now `surface-1` and `surface-2`; the rows for text on `surface-3` menus and for the `--fl-on` highlight are gone; new rows for the selected mark, the Studio separators and the menu edge over the dock. Text on `surface-2` is 12.47:1 (the spec estimated about 14).
+- Browser checks on the local build: `dock-polish.js` wide and at 724x375 touch pass; `guides-menu-focus.js` opens on "Title safe" and returns to Guides; `axe-audit.js` finds 0 violations with Guides, Zoom and the help dialog open on the monitor page, with Guides open on the site root, and with Guides open under more contrast.
+- CSS sizes (raw / gzip): skin 39,803 / 7,007 B; Studio 27,191 / 4,819 B (28,422 / 5,003 before A.1); landing page 29,533 / 5,887 B.
+
+### Unverified (Theme A.2)
+- The preview URL itself (Vercel login), Firefox and Safari, a real display.
+- Whether the faint menu edge over the dock is enough for the author: it is decorative by the rules and visible at 2x, but quieter than before.
+- On a narrow player the Markers menu cuts long names and also the times with an ellipsis (at 390 and 320). This was already so at A1.8 and is not changed here (Backlog).

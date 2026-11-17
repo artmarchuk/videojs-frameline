@@ -371,15 +371,13 @@
 
   /* ---------- Menus ---------- */
 
+  /*
+   * One menu family: a Studio menu takes the settings menu's surface, edge, radius and shadow from the shared
+   * `.media-popup` rule (skin.css), its highlight (surface-2) from `.media-menu-item`, and its dim text (--fl-text-dim,
+   * 6.53:1 on surface-1, 5.09:1 on a highlighted item) from `.media-menu-hint`. Only spacing is Studio's own.
+   */
   .pro-skin .pro-menu-popup {
     min-width: calc(var(--media-spacing) * 55);
-    border-radius: calc(var(--media-spacing) * 2.5);
-    background-color: var(--fl-surface-3);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel))),
-      0 10px 30px rgb(0 0 0 / 0.55),
-      0 0 0 1px rgb(255 255 255 / 0.06);
-    border: 0;
   }
 
   .pro-skin .media-menu-popup.pro-menu-popup {
@@ -394,21 +392,6 @@
     min-height: max(24px, calc(var(--media-spacing) * 8));
     padding-inline: calc(var(--media-spacing) * 2.5);
     border-radius: var(--fl-radius);
-  }
-
-  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] {
-    background-color: var(--fl-on);
-  }
-
-  .pro-skin .pro-menu-popup .media-menu-hint,
-  .pro-skin .pro-menu-popup .pro-kbd {
-    color: var(--fl-text-dim-raised);
-  }
-
-  /* On the highlight the raised dim text falls just under 4.5:1 (4.45), so it takes the text colour there. */
-  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .media-menu-hint,
-  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .pro-kbd {
-    color: var(--fl-text);
   }
 
   @media (pointer: coarse) {
@@ -427,10 +410,6 @@
     color: var(--fl-text-dim);
     font-size: var(--fl-text-xs);
     font-weight: 500;
-  }
-
-  .pro-skin .pro-menu-popup .pro-menu-label {
-    color: var(--fl-text-dim-raised);
   }
 
   .pro-skin .pro-menu-separator {
@@ -510,13 +489,9 @@
   .pro-skin .pro-menu-sub {
     min-width: 0;
     overflow: hidden;
-    color: var(--fl-text-dim-raised);
+    color: var(--fl-text-dim);
     font-size: var(--fl-text-xs);
     text-overflow: ellipsis;
-  }
-
-  .pro-skin .pro-menu-popup .media-menu-item[data-highlighted] .pro-menu-sub {
-    color: var(--fl-text);
   }
 
   /*
@@ -536,7 +511,7 @@
   .pro-skin .pro-menu-note {
     margin: 0;
     padding: calc(var(--media-spacing) * 1.5) calc(var(--media-spacing) * 2.5) 0;
-    color: var(--fl-text-dim-raised);
+    color: var(--fl-text-dim);
     font-size: var(--fl-text-xs);
     line-height: 1.4;
     white-space: normal;

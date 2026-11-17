@@ -17,8 +17,8 @@
      * text on the accent (2.7:1).
      */
     --fl-surface-0: #0c0c0c; /* behind the picture; the recessed timecode field; the timeline groove; scrim colour */
-    --fl-surface-1: #171717; /* the dock, menus, dialogs */
-    --fl-surface-2: #2c2c2c; /* control fill, segmented controls, the neutral track */
+    --fl-surface-1: #171717; /* the dock, every menu (settings and Studio alike), dialogs */
+    --fl-surface-2: #2c2c2c; /* control fill, segmented controls, a highlighted menu item */
     --fl-surface-3: #3a3a3a; /* hover, tooltips, small badges */
     --fl-on: #474747; /* a toggle that is on */
     --fl-line: #333333; /* hairlines, dividers */

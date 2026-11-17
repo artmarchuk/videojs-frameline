@@ -9,9 +9,10 @@
 
 /* ---------- Base ---------- */
 
-*,
-*::before,
-*::after {
+/* Not inside the player, which sets its own box sizing (its menus are content-box; see skin.css). */
+*:not(:where(.media-skin *)),
+*:not(:where(.media-skin *))::before,
+*:not(:where(.media-skin *))::after {
   box-sizing: border-box;
 }
 
@@ -28,17 +29,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-h3,
-p,
-ol,
-ul,
-dl,
-dd,
-fieldset,
-legend,
-pre {
+/*
+ * Not inside the player: these rules are unlayered and would beat the skin's layered styles there (they removed the
+ * padding of the Guides and Zoom menu notes). `:where()` keeps each selector's specificity as it was.
+ */
+:is(h1, h2, h3, p, ol, ul, dl, dd, fieldset, legend, pre):not(:where(.media-skin *)) {
   margin: 0;
   padding: 0;
 }
@@ -61,9 +56,9 @@ a,
   text-underline-position: from-font;
 }
 
-/* One focus ring for everything on the page, in the link colour. The player draws its own. */
-a:focus-visible,
-button:focus-visible,
+/* One focus ring for everything on the page, in the link colour. The player draws its own, so the rule stops at it. */
+a:focus-visible:not(:where(.media-skin *)),
+button:focus-visible:not(:where(.media-skin *)),
 .checkbox input:focus-visible,
 .segmented input:focus-visible + span,
 .code:focus-visible {

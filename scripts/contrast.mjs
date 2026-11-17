@@ -27,16 +27,16 @@ const c = (name) => rgb(T[name]);
 const rows = [
   // Text
   ['text on surface-0 (timecode field)', c('text'), c('s0'), 4.5],
-  ['text on surface-1 (dock, menus)', c('text'), c('s1'), 4.5],
+  ['text on surface-1 (dock, every menu, dialogs)', c('text'), c('s1'), 4.5],
   ['text on surface-2 (controls)', c('text'), c('s2'), 4.5],
   ['text on surface-3 (hover, tooltips, badges)', c('text'), c('s3'), 4.5],
   ['text on --fl-on (a toggle that is on)', c('text'), c('on'), 4.5],
-  ['text-dim on surface-1 (the "of duration" text)', c('dim'), c('s1'), 4.5, 7],
+  ['text-dim on surface-1 (the "of duration" text; menu hints, shortcuts, sub-labels, notes, group labels)', c('dim'), c('s1'), 4.5, 7],
   ['ruler label, blended, on the dock (surface-1)', diff(c('rulerLabel'), c('s1')), c('s1'), 4.5, 7],
   ['ruler label, blended, where the white playhead head passes under it', diff(c('rulerLabel'), c('text')), c('text'), 4.5],
-  ['text-dim on surface-2 (controls)', c('dim'), c('s2'), 4.5, 7],
-  ['text-dim-raised on surface-3 (shortcut in a tooltip or a menu, marker tooltip time)', c('dimRaised'), c('s3'), 4.5, 7],
-  ['text-dim on surface-3: NOT USED for text (see text-dim-raised); menus are surface-3', c('dim'), c('s3'), 0],
+  ['text-dim on surface-2 (controls; a hint or shortcut on a highlighted menu item)', c('dim'), c('s2'), 4.5, 7],
+  ['text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time)', c('dimRaised'), c('s3'), 4.5, 7],
+  ['text-dim on surface-3: NOT USED for text (see text-dim-raised)', c('dim'), c('s3'), 0],
   ['text on a key cap (surface-2) in the shortcuts dialog', c('text'), c('s2'), 4.5],
   ['ink on text fill (Play)', c('ink'), c('text'), 4.5],
   // Legends: the icon or word on a key at rest ("Fit" is text, so 4.5)
@@ -45,8 +45,8 @@ const rows = [
   ['legend on surface-2 (a transport key, Loop)', c('legend'), c('s2'), 4.5],
   ['legend on surface-3 (a hovered flat button; the legend is full text there, shown for the rest colour)', c('legend'), c('s3'), 4.5],
   ['legend on --fl-on (a toggle that is on; the legend is full text there, shown for the rest colour)', c('legend'), c('on'), 4.5],
-  ['text on a highlighted menu item (--fl-on) in a Studio menu', c('text'), c('on'), 4.5],
-  ['text-dim-raised on a highlighted menu item (--fl-on): NOT USED, hints take the text colour there', c('dimRaised'), c('on'), 0],
+  ['text on a highlighted menu item (surface-2), every menu', c('text'), c('s2'), 4.5],
+  ['selected dot and check mark (text) on a menu (surface-1)', c('text'), c('s1'), 3],
   ['white text on accent: NEVER USED, shown as a warning', c('white'), c('accent'), 0],
   // Overlay (Viewer tier) over footage
   [`text on scrim (${SCRIM}) over white frame`, c('text'), scrimWhite, 4.5],
@@ -86,6 +86,8 @@ const rows = [
   ['hairline (line) on surface-2, decorative; a line under more contrast', c('line'), c('s2'), 0, 3],
   ['divider inside a control fill (white at the divider alpha on surface-2), decorative; a line under more contrast', over(c('white'), T.dividerAlpha, c('s2')), c('s2'), 0, 3],
   ['menu separator (line) on surface-1, decorative; a line under more contrast', c('line'), c('s1'), 0, 3],
+  ['Studio menu separator and Guides column line (white at the divider alpha on surface-1), decorative; a line under more contrast', over(c('white'), T.dividerAlpha, c('s1')), c('s1'), 0, 3],
+  ['menu edge (line) against the dock, both surface-1, decorative: the popup shadow separates it; a line under more contrast', c('line'), c('s1'), 0, 3],
   // Controls
   ['Play fill (text) against the dock', c('text'), c('s1'), 3],
   ['toggle on (--fl-on) against control fill (surface-2), decorative by default: the pressed bevel and aria-pressed carry it', c('on'), c('s2'), 0],

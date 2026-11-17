@@ -337,7 +337,7 @@ The player container carries `data-tier`, `data-density`, `data-layout`, `data-b
 
 ### Host page styles
 
-The skin's CSS lives in cascade layers (`base`, `components`, `utilities`). Unlayered styles beat layered ones whatever their specificity, so an unlayered element selector on the host page, such as `kbd { … }`, `button { … }`, `button:focus-visible { … }` or `dialog { … }`, reaches into the player and overrides it. Scope such rules to your own markup (`.my-help > kbd`) or put them in a layer of your own. The skin resets every box property on the shortcuts in its tooltips and menus, but that cannot beat an unlayered rule.
+The skin's CSS lives in cascade layers (`base`, `components`, `utilities`). Unlayered styles beat layered ones whatever their specificity, so an unlayered element selector on the host page, such as `kbd { … }`, `button:focus-visible { … }`, `p { margin: 0; padding: 0 }` or `* { box-sizing: border-box }`, reaches into the player and overrides it. Scope such rules to your own markup (`.my-help > kbd`), keep them out of the player (`button:focus-visible:not(:where(.media-skin *))`), or put them in a layer of your own. The site's landing page does the second (`apps/preview/src/page/landing.css`). The skin resets every box property on the shortcuts in its tooltips and menus, but that cannot beat an unlayered rule.
 
 ### Tokens
 
@@ -348,7 +348,7 @@ Its own tokens are `--fl-*`, all defined in `src/styles/tokens.css`. The ones a 
 | Token | Default | What it is |
 | --- | --- | --- |
 | `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent, a signal: set In/Out handles, a selected marker, the focus ring |
-| `--fl-surface-0` … `--fl-surface-3` | `#0c0c0c`, `#171717`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture and the timeline groove, the dock, control fill, hover |
+| `--fl-surface-0` … `--fl-surface-3` | `#0c0c0c`, `#171717`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture and the timeline groove; the dock, every menu and dialog; control fill and a highlighted menu item; hover, tooltips |
 | `--fl-range` | `#606060` | The range band, one solid band |
 | `--fl-on` | `#474747` | A toggle that is on |
 | `--fl-legend` | `#d0d0d0` | Icons and words on the dock's keys at rest; full `--fl-text` on hover, focus, pressed and on |

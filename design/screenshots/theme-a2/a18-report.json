@@ -1,0 +1,73 @@
+{
+  "1-guides": {
+    "bg": "rgb(58, 58, 58)",
+    "border": "0px none rgb(242, 242, 242)",
+    "radius": "10px",
+    "shadow": "rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.55) 0px 10px 30px 0px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px",
+    "highlighted": "rgb(71, 71, 71)",
+    "hint": "rgb(242, 242, 242)",
+    "note": "rgb(180, 180, 180) pad 0px",
+    "label": "rgb(180, 180, 180)"
+  },
+  "2-capture-menu": {
+    "bg": "rgb(58, 58, 58)",
+    "border": "0px none rgb(242, 242, 242)",
+    "radius": "10px",
+    "shadow": "rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.55) 0px 10px 30px 0px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px",
+    "highlighted": "rgb(71, 71, 71)",
+    "hint": "rgb(242, 242, 242)",
+    "note": null,
+    "label": null
+  },
+  "2-markers-menu": {
+    "bg": "rgb(58, 58, 58)",
+    "border": "0px none rgb(242, 242, 242)",
+    "radius": "10px",
+    "shadow": "rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.55) 0px 10px 30px 0px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px",
+    "highlighted": "rgb(71, 71, 71)",
+    "hint": "rgb(242, 242, 242)",
+    "note": null,
+    "label": "rgb(180, 180, 180)"
+  },
+  "3-settings-menu": {
+    "bg": "rgb(23, 23, 23)",
+    "border": "1px solid rgb(51, 51, 51)",
+    "radius": "8px",
+    "shadow": "rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.45) 0px 4px 14px 0px",
+    "highlighted": "rgb(44, 44, 44)",
+    "hint": "rgb(156, 156, 156)",
+    "note": null,
+    "label": null
+  },
+  "4-zoom-menu": {
+    "bg": "rgb(58, 58, 58)",
+    "border": "0px none rgb(242, 242, 242)",
+    "radius": "10px",
+    "shadow": "rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.55) 0px 10px 30px 0px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px",
+    "highlighted": "rgb(71, 71, 71)",
+    "hint": null,
+    "note": "rgb(180, 180, 180) pad 0px",
+    "label": null
+  },
+  "5-focus-more": "Step forward one frame: 2px rgb(91, 157, 255)",
+  "7-guides-more": {
+    "bg": "rgb(58, 58, 58)",
+    "border": "0px none rgb(242, 242, 242)",
+    "radius": "10px",
+    "shadow": "rgba(255, 255, 255, 0) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.55) 0px 10px 30px 0px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px",
+    "highlighted": "rgb(71, 71, 71)",
+    "hint": "rgb(242, 242, 242)",
+    "note": "rgb(217, 217, 217) pad 0px",
+    "label": "rgb(217, 217, 217)"
+  },
+  "7-guides-forced": {
+    "bg": "rgb(255, 255, 255)",
+    "border": "0px none rgb(0, 0, 0)",
+    "radius": "10px",
+    "shadow": "none",
+    "highlighted": "rgba(55, 0, 110, 0.8)",
+    "hint": "rgb(0, 0, 0)",
+    "note": "rgb(0, 0, 0) pad 0px",
+    "label": "rgb(0, 0, 0)"
+  }
+}
