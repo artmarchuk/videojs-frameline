@@ -1814,7 +1814,7 @@ Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no
 
 ### B.8 Follow-up after review (18 Nov 2026)
 
-Screenshots: `design/screenshots/theme-b8/` (`b-*` is `theme-b` before B.8, `b8-*` after, `pair-*` both; site root, 2x).
+Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login, not opened in a browser; production is unchanged). Screenshots: `design/screenshots/theme-b8/` (`b-*` is `theme-b` before B.8, `b8-*` after, `pair-*` both; site root, 2x).
 
 - **Menu edge:** `--fl-menu-edge` is the solid `#424242` (1.78:1 against the dock; B.5's white at 10% came out as `#2e2e2e`). `--fl-line` under more contrast, as before. On the narrow dock the edge is now a visible lighter line all round the menu, where before it could hardly be told from the dock; the shadow still does part of the work.
 - **A flat toolbar button that is on has no fill.** Zoom above Fit, captions, and Loop as a cell of the compact dock's second row: no fill and no press shade, only the light and the icon or label at `--fl-text`. Hover gives the toolbar's `surface-2` hover fill. With its menu open, or while held, the button takes the pressed fill and shade as before. Loop as a key (row one) is unchanged: `surface-2`, press shade, light. This supersedes "B.3: a toolbar button that is on has a `surface-2` fill" above.
