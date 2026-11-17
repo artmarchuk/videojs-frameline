@@ -10,9 +10,8 @@
     />
     <meta name="author" content="Artem Marchuk" />
     <link rel="canonical" href="https://frameline.artmarchuk.me/" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f3f3f1" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#151517" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#161616" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
 
     <!-- The social image has to be an absolute URL. Change the host here if the site moves. -->
@@ -38,197 +37,296 @@
     />
     <meta name="twitter:image" content="https://frameline.artmarchuk.me/og.png" />
 
-    <link rel="stylesheet" href="/src/page/page.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;800&amp;family=JetBrains+Mono&amp;display=swap" />
+    <link rel="stylesheet" href="/src/page/landing.css" />
   </head>
   <body>
-    <a class="skip" href="#configure">Skip to the configuration</a>
+    <a class="skip" href="#configure-toggle">Skip to the configuration</a>
 
-    <header class="site-header">
-      <div class="wrap site-header-row">
-        <div class="brand">
-          <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <rect x="3.5" y="5" width="17" height="14" rx="2" />
-            <rect x="7" y="8.5" width="10" height="7" rx="0.5" stroke-dasharray="2 2" stroke-dashoffset="1" />
-          </svg>
-          <div>
-            <h1>Frameline</h1>
-            <p>A Video.js skin for video creators</p>
-          </div>
-        </div>
-        <nav aria-label="Project">
-          <ul class="site-links">
-            <!-- PLACEHOLDER: the repository URL. Replace both links below when the public repo exists. -->
-            <li><a href="https://github.com/artmarchuk/videojs-frameline">Source</a></li>
-            <li><a href="https://github.com/artmarchuk/videojs-frameline/blob/main/FEATURES.md">Features</a></li>
-            <li><a href="https://artmarchuk.me">artmarchuk.me</a></li>
-          </ul>
-        </nav>
-      </div>
+    <header class="wrap header">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Frameline</div>
+      <nav aria-label="Project">
+        <ul class="nav">
+          <!-- PLACEHOLDER: the repository URL. Replace every github.com link on this page when the public repo exists. -->
+          <li><a href="https://github.com/artmarchuk/videojs-frameline">GitHub</a></li>
+          <li><a href="https://github.com/artmarchuk/videojs-frameline/blob/main/FEATURES.md">Features</a></li>
+        </ul>
+      </nav>
     </header>
 
     <main>
-      <section class="wrap player-section" aria-labelledby="player-title">
-        <h2 id="player-title" class="visually-hidden">Player</h2>
-        <div id="player" class="player"></div>
-        <noscript><p class="notice">The player needs JavaScript.</p></noscript>
-      </section>
-
-      <section id="configure" class="wrap panel" aria-labelledby="configure-title" tabindex="-1">
-        <h2 id="configure-title">Configure</h2>
-        <p class="lead">Pick a tier, then switch single features on or off. Every change applies to the player above.</p>
-
-        <form id="config" class="config" autocomplete="off">
-          <div class="config-switches">
-            <fieldset class="segmented">
-              <legend>Tier</legend>
-              <div class="segmented-track">
-                <label><input type="radio" name="tier" value="viewer" /><span>Viewer</span></label>
-                <label><input type="radio" name="tier" value="studio" /><span>Studio</span></label>
-              </div>
-              <p class="hint" id="tier-hint">Viewer is for watching. Studio is for checking timing and framing.</p>
-            </fieldset>
-
-            <fieldset class="segmented">
-              <legend>Layout</legend>
-              <div class="segmented-track">
-                <label><input type="radio" name="layout" value="dock" /><span>Dock</span></label>
-                <label><input type="radio" name="layout" value="overlay" /><span>Overlay</span></label>
-              </div>
-              <p class="hint">Dock keeps the controls below the picture. Overlay puts them over it.</p>
-            </fieldset>
-          </div>
-
-          <fieldset class="features">
-            <legend>Features</legend>
-            <div class="feature-groups">
-              <fieldset class="feature-group">
-                <legend>Transport</legend>
-                <label class="check"><input type="checkbox" name="timecode" /><span>Timecode <code>timecode</code></span></label>
-                <label class="check"><input type="checkbox" name="frameStep" /><span>Frame step <code>frameStep</code></span></label>
-                <label class="check"><input type="checkbox" name="loop" /><span>Loop <code>loop</code></span></label>
-                <label class="check"><input type="checkbox" name="shotNav" /><span>Previous and next cut <code>shotNav</code></span></label>
-              </fieldset>
-              <fieldset class="feature-group">
-                <legend>Range</legend>
-                <label class="check"><input type="checkbox" name="inOut" /><span>In and Out points <code>inOut</code></span></label>
-                <label class="check"><input type="checkbox" name="markers" /><span>Markers <code>markers</code></span></label>
-              </fieldset>
-              <fieldset class="feature-group">
-                <legend>Capture</legend>
-                <label class="check"><input type="checkbox" name="grabFrame" /><span>Grab frame <code>grabFrame</code></span></label>
-                <label class="check"><input type="checkbox" name="copyTimecodeLink" /><span>Copy link at timecode <code>copyTimecodeLink</code></span></label>
-              </fieldset>
-              <fieldset class="feature-group">
-                <legend>Guides</legend>
-                <label class="check"><input type="checkbox" name="guides" /><span>Guides and crop masks <code>guides</code></span></label>
-                <label class="check"><input type="checkbox" name="platformZones" aria-describedby="zones-hint" /><span>Platform zones <code>platformZones</code></span></label>
-                <p class="hint" id="zones-hint">Platform zones need guides.</p>
-              </fieldset>
-              <fieldset class="feature-group">
-                <legend>Zoom</legend>
-                <label class="check"><input type="checkbox" name="zoom" /><span>Zoom and pan <code>zoom</code></span></label>
-              </fieldset>
-            </div>
-          </fieldset>
-        </form>
-      </section>
-
-      <section class="wrap panel" aria-labelledby="code-title">
-        <div class="panel-head">
-          <h2 id="code-title">Code</h2>
-          <div class="panel-actions">
-            <span id="copy-status" class="status" role="status"></span>
-            <button type="button" id="copy" class="button">Copy</button>
+      <div class="wrap hero">
+        <div class="positioning">
+          <h1>A monitor, not just a&nbsp;player.</h1>
+          <p class="descriptor">A Video.js skin for the tools people make video with.</p>
+          <div class="two-lines">
+            <p>Viewer is for watching.</p>
+            <p>Studio is for checking timing and framing.</p>
           </div>
         </div>
-        <p class="lead">This configuration as JSX. It lists only what differs from the tier's defaults.</p>
-        <pre class="code"><code id="snippet"></code></pre>
-      </section>
 
-      <div class="wrap columns">
-        <section class="panel" aria-labelledby="log-title">
-          <div class="panel-head">
-            <h2 id="log-title">Event log</h2>
-            <div class="panel-actions">
-              <button type="button" id="log-clear" class="button">Clear</button>
+        <div class="stage">
+          <section class="player-column" aria-labelledby="player-title">
+            <h2 id="player-title" class="visually-hidden">Player</h2>
+            <div class="tier-bar">
+              <fieldset class="segmented">
+                <legend class="visually-hidden">Tier</legend>
+                <div class="segmented-track"><label><input type="radio" name="hero-tier" value="viewer" /><span>Viewer</span></label><label><input type="radio" name="hero-tier" value="studio" /><span>Studio</span></label></div>
+              </fieldset>
+              <p id="tier-hint" class="tier-hint"></p>
             </div>
-          </div>
-          <p class="lead">For developers: the last 20 events the skin sent to its host app, newest first, with the player's timecode.</p>
-          <p id="log-empty" class="log-empty">No events yet. Set a range, switch a guide on, or grab a frame.</p>
-          <ol id="log" class="log"></ol>
-        </section>
+            <div id="player" class="player"></div>
+            <noscript><p class="notice">The player needs JavaScript.</p></noscript>
+          </section>
 
-        <section class="panel" aria-labelledby="try-title">
-          <h2 id="try-title">Try this</h2>
-          <p class="lead">Six things a creator does with the Studio monitor. Click the player first: its shortcuts work while it has focus. Each button does the task for you.</p>
-          <p id="try-status" class="status status-line" role="status"></p>
-          <ol class="tasks">
-            <li data-task="step">
-              <div>
-                <h3>Step to the exact frame</h3>
-                <p>Press <kbd>,</kbd> and <kbd>.</kbd> to move one frame back or forward. Hold <kbd>Shift</kbd> with <kbd>←</kbd> or <kbd>→</kbd> to jump ten.</p>
-                <p class="need" hidden></p>
+          <section id="configure" class="configure" aria-labelledby="configure-title">
+            <div class="configure-bar">
+              <h2 id="configure-title">
+                <button type="button" id="configure-toggle" class="configure-toggle" aria-expanded="false" aria-controls="configure-body">
+                  <svg class="configure-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false">
+                    <path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1" />
+                    <circle cx="15" cy="6.5" r="2" />
+                    <circle cx="9" cy="12" r="2" />
+                    <circle cx="17" cy="17.5" r="2" />
+                  </svg>
+                  Configure the player<span class="chevron" aria-hidden="true"></span>
+                </button>
+              </h2>
+              <p id="configure-summary" class="configure-summary"></p>
+            </div>
+            <div id="configure-body" class="configure-body">
+              <div class="configure-inner">
+                <div class="panels">
+                  <form id="config" class="panel" autocomplete="off">
+                    <div class="switches">
+                      <fieldset class="segmented">
+                        <legend class="label">Tier</legend>
+                        <div class="segmented-track"><label><input type="radio" name="tier" value="viewer" /><span>Viewer</span></label><label><input type="radio" name="tier" value="studio" /><span>Studio</span></label></div>
+                      </fieldset>
+                      <fieldset class="segmented">
+                        <legend class="label">Layout</legend>
+                        <div class="segmented-track"><label><input type="radio" name="layout" value="dock" /><span>Dock</span></label><label><input type="radio" name="layout" value="overlay" /><span>Overlay</span></label></div>
+                      </fieldset>
+                    </div>
+                    <fieldset>
+                      <legend class="visually-hidden">Features</legend>
+                      <div class="feature-groups">
+                        <fieldset class="feature-group">
+                          <legend class="label">Transport</legend>
+                          <label class="checkbox"><input type="checkbox" name="timecode" /><span>Timecode</span></label>
+                          <label class="checkbox"><input type="checkbox" name="frameStep" /><span>Frame step</span></label>
+                          <label class="checkbox"><input type="checkbox" name="loop" /><span>Loop</span></label>
+                          <label class="checkbox"><input type="checkbox" name="shotNav" /><span>Previous and next cut</span></label>
+                        </fieldset>
+                        <fieldset class="feature-group">
+                          <legend class="label">Range</legend>
+                          <label class="checkbox"><input type="checkbox" name="inOut" /><span>In and Out points</span></label>
+                          <label class="checkbox"><input type="checkbox" name="markers" /><span>Markers</span></label>
+                        </fieldset>
+                        <fieldset class="feature-group">
+                          <legend class="label">Capture</legend>
+                          <label class="checkbox"><input type="checkbox" name="grabFrame" /><span>Grab frame</span></label>
+                          <label class="checkbox"><input type="checkbox" name="copyTimecodeLink" /><span>Copy link at timecode</span></label>
+                        </fieldset>
+                        <fieldset class="feature-group">
+                          <legend class="label">Guides</legend>
+                          <label class="checkbox"><input type="checkbox" name="guides" /><span>Guides and crop masks</span></label>
+                          <label class="checkbox"><input type="checkbox" name="platformZones" aria-describedby="zones-hint" /><span>Platform zones</span></label>
+                          <p class="visually-hidden" id="zones-hint">Platform zones need guides.</p>
+                        </fieldset>
+                        <fieldset class="feature-group">
+                          <legend class="label">Zoom</legend>
+                          <label class="checkbox"><input type="checkbox" name="zoom" /><span>Zoom and pan</span></label>
+                        </fieldset>
+                      </div>
+                    </fieldset>
+                  </form>
+
+                  <div class="code-and-log">
+                    <section class="panel" aria-labelledby="code-title">
+                      <div class="panel-head">
+                        <h3 id="code-title">Code</h3>
+                        <div class="panel-actions">
+                          <span id="copy-status" class="status" role="status"></span>
+                          <button type="button" id="copy" class="button">Copy</button>
+                        </div>
+                      </div>
+                      <pre class="code"><code id="snippet"></code></pre>
+                    </section>
+
+                    <section class="panel" aria-labelledby="log-title">
+                      <div class="panel-head">
+                        <h3 id="log-title">Event log</h3>
+                        <button type="button" id="log-clear" class="button">Clear</button>
+                      </div>
+                      <p id="log-empty" class="log-empty">No events yet. Set a range, switch a guide on, or grab a frame.</p>
+                      <ol id="log" class="log"></ol>
+                    </section>
+                  </div>
+                </div>
               </div>
-              <button type="button" class="button" aria-label="Show me: step to the exact frame">Show me</button>
-            </li>
-            <li data-task="range">
-              <div>
-                <h3>Set a range and loop it</h3>
-                <p>Press <kbd>I</kbd> and <kbd>O</kbd> at the playhead, or drag the handles at the ends of the timeline. Play: the range loops. <kbd>R</kbd> switches Loop off, and playback then stops at Out.</p>
+            </div>
+          </section>
+        </div>
+
+        <section class="try-it" aria-labelledby="try-title">
+          <div class="cue-list">
+            <h2 id="try-title" class="label">Try it in the player</h2>
+            <ul>
+              <li class="cue" data-cue="range">
+                <span class="cue-keys"><kbd>I</kbd><kbd>O</kbd></span>
+                <span class="cue-label">Set a range and watch it loop</span>
+                <button type="button" class="link-button" aria-label="Show me: set a range and watch it loop">Show me</button>
+              </li>
+              <li class="cue" data-cue="step">
+                <span class="cue-keys"><kbd>,</kbd><kbd>.</kbd></span>
+                <span class="cue-label">Step one frame</span>
+                <button type="button" class="link-button" aria-label="Show me: step one frame">Show me</button>
+              </li>
+              <li class="cue" data-cue="zoom">
+                <span class="cue-keys"><kbd>Z</kbd></span>
+                <span class="cue-label">Zoom to the source’s pixels</span>
+                <button type="button" class="link-button" aria-label="Show me: zoom to the source’s pixels">Show me</button>
+              </li>
+            </ul>
+            <p class="cue-note">Keys work while the player has focus. Each row also does it for you.</p>
+            <p id="try-status" class="visually-hidden" role="status"></p>
+          </div>
+          <a class="button" href="https://github.com/artmarchuk/videojs-frameline">View on GitHub</a>
+        </section>
+      </div>
+
+      <section id="checks" class="wrap section" aria-labelledby="checks-title">
+        <div class="ruler" aria-hidden="true"><span>Check</span></div>
+        <div class="section-body">
+          <div class="section-heading">
+            <h2 id="checks-title">What Studio checks</h2>
+            <p>Five things other players leave out. Each one has a key, and each row does it in the player above.</p>
+          </div>
+          <ol class="features">
+            <li class="feature" data-task="range">
+              <div class="feature-keys"><kbd>I</kbd><kbd>O</kbd></div>
+              <h3>A range that plays only itself.</h3>
+              <div class="feature-detail">
+                <p>Mark In and Out and playback stays inside: it starts at In and loops. R turns the loop off; then it stops on Out.</p>
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: set a range and loop it">Show me</button>
             </li>
-            <li data-task="zones">
-              <div>
-                <h3>Check a vertical cut</h3>
-                <p>Open Guides and choose TikTok under Platform zones. It masks the picture to 9:16 and marks where the app puts its own interface, roughly.</p>
+            <li class="feature" data-task="step">
+              <div class="feature-keys"><kbd>,</kbd><kbd>.</kbd></div>
+              <h3>One frame at a time, in timecode.</h3>
+              <div class="feature-detail">
+                <p>HH:MM:SS:FF with a start offset and drop-frame counting. Frame-accurate where the browser allows; where it can’t be, the timecode’s tooltip says so.</p>
                 <p class="need" hidden></p>
               </div>
-              <button type="button" class="button" aria-label="Show me: turn on 9:16 and the TikTok zones">Show me</button>
+              <button type="button" class="button" aria-label="Show me: step to the exact frame">Show me</button>
             </li>
-            <li data-task="safe">
-              <div>
-                <h3>Check title safe</h3>
-                <p>Open Guides and choose Title safe. Text inside the frame stays clear of the edges on any screen.</p>
+            <li class="feature" data-task="guides">
+              <div class="feature-keys"><kbd>Shift</kbd><kbd>V</kbd></div>
+              <h3>Guides for delivery.</h3>
+              <div class="feature-detail">
+                <p>Title and action safe, thirds, centre, crops from 9:16 to 2.39:1, and the interface zones of YouTube Shorts, Instagram Reels and TikTok, labelled approximate.</p>
                 <p class="need" hidden></p>
               </div>
-              <button type="button" class="button" aria-label="Show me: check title safe">Show me</button>
+              <button type="button" class="button" aria-label="Show me: turn on the delivery guides">Show me</button>
             </li>
-            <li data-task="zoom">
-              <div>
-                <h3>Zoom to 200% and pan</h3>
-                <p>Press <kbd>Z</kbd> to step through the zoom levels, or use the Zoom button. Drag the picture, or press <kbd>Shift</kbd> <kbd>Alt</kbd> and an arrow, to move around.</p>
+            <li class="feature" data-task="zoom">
+              <div class="feature-keys"><kbd>Z</kbd></div>
+              <h3>Zoom that is true to the source.</h3>
+              <div class="feature-detail">
+                <p>At 100%, one pixel of the best rendition is one device pixel. When a lower rendition is playing, the skin says so.</p>
                 <p class="need" hidden></p>
               </div>
-              <button type="button" class="button" aria-label="Show me: zoom to 200% and pan">Show me</button>
+              <button type="button" class="button" aria-label="Show me: zoom to 100% and pan">Show me</button>
             </li>
-            <li data-task="grab">
-              <div>
-                <h3>Grab a frame</h3>
-                <p>Press <kbd>G</kbd> to save the frame on screen as a PNG, at the video's own size and without the guides.</p>
+            <li class="feature" data-task="grab">
+              <div class="feature-keys"><kbd>G</kbd></div>
+              <h3>The picture is never touched.</h3>
+              <div class="feature-detail">
+                <p>No filters, no scopes, no colour changes. A grabbed frame is the frame as encoded, at the video’s own size, with no guides in it.</p>
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: grab a frame">Show me</button>
             </li>
+            <li class="feature feature-note">
+              <div class="feature-keys"><kbd>Shift</kbd><kbd>?</kbd></div>
+              <p>Every action has a key, is announced to screen readers and is listed in the help dialog. Space, K, J, L and F work as they do on YouTube, in both tiers. Built to WCAG 2.2 AA; the automated axe audit finds zero violations in six states.</p>
+            </li>
           </ol>
-        </section>
-      </div>
+        </div>
+      </section>
+
+      <section id="host" class="wrap section" aria-labelledby="host-title">
+        <div class="ruler" aria-hidden="true"><span>Host</span></div>
+        <div class="section-body">
+          <div class="section-heading">
+            <h2 id="host-title">Built to be hosted</h2>
+            <p>One skin, two tiers. Studio is for the people who make the video. Their audience gets Viewer, and downloads none of the Studio code.</p>
+          </div>
+          <div class="columns">
+            <div class="host-contract">
+              <dl class="definitions">
+                <div><dt>Data in</dt><dd>The host supplies markers and chapters; the skin draws them.</dd></div>
+                <div><dt>Events out</dt><dd>Range, marker, frame, guides, zoom, frame grab, copy link.</dd></div>
+                <div><dt>A handle</dt><dd>apiRef drives the tools from the host’s own UI.</dd></div>
+                <div><dt>Flags</dt><dd>Switch a single tool on over Viewer, or off over Studio.</dd></div>
+                <div><dt>Slots, tokens</dt><dd>The host’s own buttons, the host’s own colours.</dd></div>
+              </dl>
+              <!-- PLACEHOLDER: the repository URL. Replace every github.com link on this page when the public repo exists. -->
+              <p class="links"><a href="https://github.com/artmarchuk/videojs-frameline#readme">Read the README</a> <a href="https://github.com/artmarchuk/videojs-frameline">View on GitHub</a></p>
+            </div>
+            <pre class="code" tabindex="0"><code>const frameline = useRef&lt;FramelineApi&gt;(null);
+
+&lt;FramelineSkin
+  tier="studio"
+  fps={24}
+  features={{ zoom: false }}
+  onInOutChange={(range) =&gt; saveRange(range)}
+  apiRef={frameline}
+/&gt;
+
+<span class="comment">// a comment in your app jumps to its range</span>
+frameline.current?.setRange({ in: 12, out: 16 });</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="limits" class="wrap section" aria-labelledby="limits-title">
+        <div class="ruler" aria-hidden="true"><span>Out of frame</span></div>
+        <div class="section-body">
+          <div class="section-heading">
+            <h2 id="limits-title">What Frameline won’t do</h2>
+            <p>Studio adds controls and overlays around the picture. These three stay outside the frame line, on purpose.</p>
+          </div>
+          <ul class="refusals">
+            <li class="refusal">
+              <h3>No image processing.</h3>
+              <p>No channels, exposure, gamma or scopes. A skin is not a grading engine, and a check is only honest on pixels nobody changed.</p>
+            </li>
+            <li class="refusal">
+              <h3>No setting posters.</h3>
+              <p>Choosing a poster needs a back end. That is the host product’s job; the skin hands it the frame.</p>
+            </li>
+            <li class="refusal">
+              <h3>No light theme for the player.</h3>
+              <p>A neutral dark surround keeps judgements of exposure and contrast honest.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
     </main>
 
-    <footer class="site-footer">
-      <section class="wrap" aria-labelledby="about-title">
-        <h2 id="about-title">About</h2>
-        <!-- PLACEHOLDER: the author replaces this pitch. -->
-        <p>
-          Frameline is a Video.js skin for the tools people use to make video: editors, generators and review platforms. Viewer is the clean player a
-          creator's client or audience gets, and Studio is the creator's own monitor, with frame-by-frame transport, timecode, a range to loop, guides,
-          zoom and frame grabs. It adds controls and overlays around the picture and never changes the picture itself.
-        </p>
-        <p>Dark by design: a neutral dark surround keeps judgements of exposure and contrast honest.</p>
-        <p class="byline">By Artem Marchuk · <a href="https://artmarchuk.me">artmarchuk.me</a></p>
-        <p class="byline">Apache 2.0</p>
-      </section>
+    <footer class="wrap">
+      <div class="footer-row">
+        <ul>
+          <li><a href="https://github.com/artmarchuk/videojs-frameline">GitHub</a></li>
+          <li>Apache 2.0</li>
+        </ul>
+        <p>Designed and built by <a href="https://artmarchuk.me">Artem Marchuk</a></p>
+      </div>
     </footer>
 
     <script type="module" src="/src/page/main.tsx"></script>

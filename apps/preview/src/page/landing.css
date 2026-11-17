@@ -1,0 +1,1103 @@
+/*
+ * The landing page: the page a judge or a developer lands on. Plain HTML and CSS around the player.
+ *
+ * Built from the Figma file "Frameline", page "Landing", frames "Landing / Desktop / Dark" and "Landing / Phone".
+ * Every colour, size, space and radius comes from tokens.css, which mirrors the Figma variables; a class here is
+ * named after the Figma component or layer it draws. The page is dark only. The player keeps its own tokens.
+ */
+@import "./tokens.css";
+
+/* ---------- Base ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--type-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ol,
+ul,
+dl,
+dd,
+fieldset,
+legend,
+pre {
+  margin: 0;
+  padding: 0;
+}
+
+fieldset {
+  min-width: 0;
+  border: 0;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+a,
+.link-button {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: from-font;
+  text-underline-position: from-font;
+}
+
+/* One focus ring for everything on the page, in the link colour. The player draws its own. */
+a:focus-visible,
+button:focus-visible,
+.checkbox input:focus-visible,
+.segmented input:focus-visible + span,
+.code:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+/* `hidden` wins over any display a class sets. */
+[hidden] {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  top: var(--space-8);
+  left: var(--space-8);
+  z-index: 10;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  transform: translateY(-200%);
+}
+
+.skip:focus-visible {
+  transform: none;
+}
+
+/* The page column: the wrap plus a gutter on each side. */
+.wrap {
+  width: 100%;
+  max-width: calc(var(--size-wrap) + var(--layout-gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--layout-gutter);
+}
+
+/* ---------- Components ---------- */
+
+/* Key */
+kbd {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--size-key);
+  height: var(--size-key);
+  padding-inline: var(--space-8);
+  border: 1px solid var(--key-edge);
+  border-radius: var(--radius-key);
+  background: var(--key);
+  color: var(--text);
+  font: var(--type-key);
+  filter: drop-shadow(0 1px 0 var(--key-drop));
+  white-space: nowrap;
+}
+
+/* Button */
+.button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--size-target);
+  padding: 0 var(--space-16);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font: var(--type-button);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: var(--key);
+}
+
+.button:disabled {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--dim);
+  cursor: default;
+}
+
+/* A chevron that points down when closed and up when open. */
+.chevron {
+  width: 7px;
+  height: 7px;
+  margin-top: -4px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+
+[aria-expanded="true"] > .chevron {
+  margin-top: 4px;
+  transform: rotate(-135deg);
+}
+
+/* A button that reads as a link: "Show me" in a Cue row. */
+.link-button {
+  flex: none;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: var(--type-small);
+  white-space: nowrap;
+}
+
+.link-button:disabled {
+  color: var(--dim);
+  cursor: default;
+  text-decoration: none;
+}
+
+/* Segmented: a radio group whose options sit in one track. */
+.segmented-track {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius-key) + 3px);
+  background: var(--sunken);
+}
+
+.segmented label {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.segmented input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.segmented span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  height: 32px;
+  padding-inline: var(--space-12);
+  border-radius: var(--radius-key);
+  color: var(--dim);
+  font: var(--type-button);
+  white-space: nowrap;
+}
+
+.segmented input:checked + span {
+  background: var(--control-fill);
+  color: var(--control-ink);
+}
+
+/* Checkbox */
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: fit-content;
+  min-height: 32px;
+  cursor: pointer;
+  font: 400 var(--size-button) / 1.5 var(--family-ui);
+}
+
+.checkbox input {
+  position: relative;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid var(--control);
+  border-radius: 4px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.checkbox input:checked {
+  border-color: var(--control-fill);
+  background: var(--control-fill);
+}
+
+.checkbox input:checked::before {
+  position: absolute;
+  inset: -1.5px;
+  background: var(--control-ink);
+  content: "";
+  -webkit-mask: url("./assets/tick.svg") center / 16px 16px no-repeat;
+  mask: url("./assets/tick.svg") center / 16px 16px no-repeat;
+}
+
+.checkbox input:disabled,
+.checkbox input:disabled + span {
+  cursor: default;
+}
+
+.checkbox input:disabled {
+  border-color: var(--line);
+}
+
+.checkbox input:disabled:checked {
+  background: var(--line);
+}
+
+.checkbox input:disabled + span {
+  color: var(--dim);
+}
+
+/* Label: the small caption over a group. */
+.label {
+  color: var(--dim);
+  font: var(--type-label);
+  letter-spacing: var(--type-label-tracking);
+}
+
+/* Ruler divider: opens every section. The ticks are the Figma asset, coloured by the token. */
+.ruler {
+  position: relative;
+  height: 28px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--tick);
+  color: var(--dim);
+  font: var(--type-ruler-label);
+  white-space: nowrap;
+}
+
+.ruler::before {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 2401px;
+  height: 28px;
+  background: var(--tick);
+  content: "";
+  -webkit-mask: url("./assets/ticks.svg") left top / 2401px 28px no-repeat;
+  mask: url("./assets/ticks.svg") left top / 2401px 28px no-repeat;
+}
+
+.ruler span {
+  position: absolute;
+  top: 0;
+  left: 6px;
+}
+
+/* Code: a sunken block of monospace. */
+.code {
+  width: 100%;
+  padding: var(--space-20);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--sunken);
+  font: var(--type-code);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.code code {
+  font: inherit;
+}
+
+.code .comment {
+  color: var(--dim);
+}
+
+/* ---------- Header ---------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  height: var(--size-header);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  font: var(--type-brand);
+  letter-spacing: var(--type-brand-tracking);
+  white-space: nowrap;
+}
+
+.brand-mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  background: var(--text);
+  -webkit-mask: url("./assets/mark.svg") center / 24px 24px no-repeat;
+  mask: url("./assets/mark.svg") center / 24px 24px no-repeat;
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-24);
+  font: var(--type-nav);
+  white-space: nowrap;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-hero-gap);
+  padding-top: var(--space-16);
+  padding-bottom: var(--layout-hero-bottom);
+}
+
+.positioning {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  padding-top: var(--layout-hero-gap);
+  text-align: center;
+}
+
+.positioning h1 {
+  font: var(--type-h1);
+  letter-spacing: var(--type-h1-tracking);
+  text-wrap: balance;
+}
+
+/* The Video.js descriptor under the H1: one text style above the two lines, in full text colour. */
+.descriptor {
+  font: var(--type-claim-small);
+  letter-spacing: var(--type-claim-small-tracking);
+}
+
+.two-lines {
+  font: var(--type-lead);
+}
+
+.two-lines p:first-child {
+  color: var(--dim);
+}
+
+/* The player and Configure: one block, so Configure sits right under the picture. */
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.player-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.tier-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  min-height: var(--size-target);
+}
+
+.tier-hint {
+  color: var(--dim);
+  font: var(--type-small);
+  text-align: right;
+}
+
+/* Holds the room before the script arrives, so the page does not jump. */
+.player {
+  min-height: 120px;
+  border-radius: var(--radius-player);
+}
+
+.player:empty {
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  background: var(--surface-0);
+}
+
+/* The skin's own hairline and radius frame the player on the page. */
+.player .media-skin {
+  --fl-frame-border: 1;
+}
+
+.player .media-skin[data-layout="overlay"] {
+  aspect-ratio: 16 / 9;
+}
+
+/* Player elements only provide state; the skin inside them is the box that gets sized. */
+media-i18n,
+video-player {
+  display: contents;
+}
+
+.notice {
+  padding-block: var(--space-12);
+  color: var(--dim);
+}
+
+/* Try it: the Cue list under the player. */
+.try-it {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-24);
+}
+
+.cue-list {
+  width: 100%;
+  border-top: 1px solid var(--line);
+}
+
+.cue-list h2 {
+  padding: var(--space-14) 0 var(--space-6);
+}
+
+.cue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-14);
+  min-height: 52px;
+  padding-block: var(--space-8);
+  border-bottom: 1px solid var(--line);
+}
+
+.cue-keys {
+  display: flex;
+  flex: none;
+  gap: var(--space-6);
+  width: 76px;
+}
+
+.cue-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.cue-note {
+  padding-top: var(--space-12);
+  color: var(--dim);
+  font: var(--type-small);
+}
+
+/* ---------- Sections ---------- */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-section-top);
+  padding-bottom: var(--layout-section-bottom);
+}
+
+.section-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-28);
+}
+
+.section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+
+.section-heading h2 {
+  font: var(--type-h2);
+  letter-spacing: var(--type-h2-tracking);
+}
+
+.section-heading p {
+  max-width: 620px;
+  color: var(--dim);
+}
+
+/* ---------- Configure: collapsed under the player; its button opens the whole section ---------- */
+
+.configure-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  text-align: center;
+}
+
+.configure-bar h2 {
+  font: inherit;
+}
+
+/*
+ * The Configure button. Dimmed at rest, so it stays visible without competing with the player: no fill, dim text,
+ * a dark edge with a faint light running round it while the section is closed. Hover and open bring it to full
+ * strength. The light is a conic gradient in the border box, turned by an animated angle; without `@property`
+ * (Firefox before 128) it stands still. Not in Figma.
+ */
+@property --configure-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.configure-toggle {
+  --configure-angle: 0deg;
+  --configure-fill: var(--bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  min-height: 52px;
+  padding: 0 var(--space-24);
+  border: 1px solid transparent;
+  border-radius: var(--radius-panel);
+  background:
+    linear-gradient(var(--configure-fill), var(--configure-fill)) padding-box,
+    conic-gradient(from var(--configure-angle), var(--key-edge) 0turn, var(--key-edge) 0.62turn, var(--dim) 0.75turn, var(--key-edge) 0.88turn) border-box;
+  color: var(--dim);
+  cursor: pointer;
+  font: var(--type-lead);
+  white-space: nowrap;
+}
+
+.configure-toggle:hover,
+.configure-toggle[aria-expanded="true"] {
+  --configure-fill: var(--surface);
+  color: var(--text);
+}
+
+/* Open: the light stops and the edge is plain. */
+.configure-toggle[aria-expanded="true"] {
+  border-color: var(--control);
+  background: var(--configure-fill);
+}
+
+.configure-toggle[aria-expanded="true"]:hover {
+  --configure-fill: var(--key);
+}
+
+.configure-icon {
+  flex: none;
+}
+
+.configure-summary {
+  color: var(--dim);
+  font: var(--type-small);
+}
+
+/*
+ * The body. Closed, its row is 0fr high, transparent and `visibility: hidden` (out of the tab order and the
+ * accessibility tree); open, 1fr. The height and opacity are animated below, under no-preference only.
+ */
+.configure-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.configure[data-open] .configure-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+
+.configure-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.configure-inner > .panels {
+  padding-top: var(--space-16);
+}
+
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+  padding: var(--space-24);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16) var(--space-40);
+}
+
+/* A legend is not a flex item, so the gap under it is its own padding. */
+.switches legend {
+  padding-bottom: var(--space-8);
+}
+
+.feature-groups {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-16) var(--space-20);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--line);
+}
+
+.feature-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.feature-group legend {
+  padding-bottom: calc(var(--space-6) + var(--space-2));
+}
+
+.code-and-log {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-20);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.panel-head h3 {
+  font: var(--type-body-strong);
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.status {
+  color: var(--dim);
+  font: var(--type-small);
+}
+
+/* Event log */
+.log,
+.log-empty {
+  font: var(--type-code);
+}
+
+.log-empty {
+  padding-block: var(--space-8);
+  color: var(--dim);
+}
+
+.log:empty {
+  display: none;
+}
+
+.log li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1ch;
+  padding-block: var(--space-8);
+  border-bottom: 1px solid var(--line);
+}
+
+.log .log-time {
+  flex: none;
+  margin-right: calc(var(--space-16) - 1ch);
+  color: var(--dim);
+}
+
+.log .log-detail {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- What Studio checks: Feature rows ---------- */
+
+.features {
+  border-top: 1px solid var(--line);
+}
+
+.feature {
+  display: grid;
+  grid-template-columns: var(--size-key-column) minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas: "keys claim detail action";
+  align-items: center;
+  gap: var(--space-10) var(--layout-row-gap);
+  padding-block: var(--layout-row-pad);
+  border-bottom: 1px solid var(--line);
+}
+
+.feature-keys {
+  display: flex;
+  grid-area: keys;
+  gap: var(--space-6);
+}
+
+.feature h3 {
+  grid-area: claim;
+  font: var(--type-h3-claim);
+  letter-spacing: var(--type-h3-claim-tracking);
+}
+
+.feature-detail {
+  grid-area: detail;
+  color: var(--dim);
+}
+
+.feature-detail .need {
+  margin-top: var(--space-6);
+  color: var(--text);
+  font: var(--type-small);
+}
+
+.feature .button {
+  grid-area: action;
+}
+
+/* Keyboard and accessibility: the last row, keys and one paragraph, no rule under it. */
+.feature-note {
+  grid-template-columns: var(--size-key-column) minmax(0, 1fr);
+  grid-template-areas: "keys detail";
+  border-bottom: 0;
+}
+
+.feature-note p {
+  grid-area: detail;
+}
+
+/* ---------- Built to be hosted ---------- */
+
+.columns {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--layout-column-gap);
+}
+
+.host-contract {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-20);
+  width: 513px;
+}
+
+.columns .code {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.definitions {
+  border-top: 1px solid var(--line);
+}
+
+.definitions div {
+  display: flex;
+  gap: var(--space-16);
+  padding-block: var(--space-12);
+  border-bottom: 1px solid var(--line);
+}
+
+.definitions dt {
+  flex: none;
+  width: 110px;
+}
+
+.definitions dd {
+  flex: 1;
+  min-width: 0;
+  color: var(--dim);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8) var(--space-24);
+}
+
+/* ---------- What Frameline won't do: Refusal items ---------- */
+
+.refusals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--layout-card-gap);
+}
+
+.refusal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: 22px 22px 26px;
+  border: 1px dashed var(--control);
+  border-radius: var(--radius-guide);
+}
+
+.refusal h3 {
+  font: var(--type-claim-small);
+  letter-spacing: var(--type-claim-small-tracking);
+}
+
+.refusal p {
+  color: var(--dim);
+}
+
+/* ---------- Footer ---------- */
+
+.footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12) var(--space-24);
+  padding: var(--space-28) 0 var(--space-40);
+  border-top: 1px solid var(--line);
+  color: var(--dim);
+  font: var(--type-nav);
+}
+
+.footer-row ul {
+  display: flex;
+  gap: var(--space-24);
+}
+
+/* ---------- Between Desktop and Phone: the wide rows give way first ---------- */
+
+@media (width < 1040px) {
+  .feature-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .code-and-log {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .columns {
+    flex-direction: column;
+    gap: var(--space-24);
+  }
+
+  .host-contract,
+  .columns .code {
+    width: 100%;
+  }
+
+  .refusals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Phone: the layouts of "Landing / Phone". The token values change in tokens.css. ---------- */
+
+@media (width < 760px) {
+  .brand {
+    gap: var(--space-8);
+  }
+
+  .nav {
+    gap: var(--space-14);
+    font: var(--type-small);
+  }
+
+  .hero {
+    padding-top: var(--space-8);
+  }
+
+  .positioning {
+    gap: var(--space-14);
+    padding-top: 0;
+  }
+
+  .tier-hint,
+  .cue-note {
+    display: none;
+  }
+
+  .section-body {
+    gap: var(--space-24);
+  }
+
+  .panels {
+    gap: var(--space-16);
+  }
+
+  .panel {
+    padding: var(--space-16);
+  }
+
+  .switches {
+    flex-direction: column;
+  }
+
+  .feature-groups {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feature-group legend {
+    padding-bottom: var(--space-2);
+  }
+
+  .checkbox {
+    min-height: var(--size-target);
+  }
+
+  .code {
+    padding: var(--space-16);
+  }
+
+  .log .log-time {
+    flex-basis: 100%;
+    margin-right: 0;
+  }
+
+  /* Feature row, Layout=Phone: claim, detail, then the keys and the button on one line. */
+  .feature {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "claim claim"
+      "detail detail"
+      "keys action";
+    padding-block: var(--space-20);
+  }
+
+  .feature h3 {
+    font: var(--type-claim-small);
+    letter-spacing: var(--type-claim-small-tracking);
+  }
+
+  .feature-note {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "keys"
+      "detail";
+  }
+
+  /* The snippet keeps its lines and scrolls sideways. */
+  .columns .code {
+    overflow-x: auto;
+    overflow-wrap: normal;
+    white-space: pre;
+  }
+
+  .footer-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: var(--space-24);
+  }
+}
+
+/* Touch: 44 px targets. */
+@media (pointer: coarse) {
+  .checkbox,
+  .link-button {
+    min-height: var(--size-target);
+  }
+
+  .segmented span {
+    height: calc(var(--size-target) - 8px);
+  }
+
+  .nav a,
+  .links a,
+  .footer-row a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--size-target);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .button,
+  .segmented span {
+    transition: background-color 120ms ease;
+  }
+
+  .configure-toggle {
+    transition: color 160ms ease;
+  }
+
+  .configure-toggle[aria-expanded="false"] {
+    animation: configure-edge 6s linear infinite;
+  }
+
+  .chevron {
+    transition: transform 240ms ease, margin-top 240ms ease;
+  }
+
+  /* Closing: the body folds and fades, then leaves the tab order. Opening: it is there at once and unfolds. */
+  .configure-body {
+    transition: grid-template-rows 280ms ease, opacity 180ms ease, visibility 0s linear 280ms;
+  }
+
+  .configure[data-open] .configure-body {
+    transition: grid-template-rows 280ms ease, opacity 240ms ease 60ms, visibility 0s;
+  }
+}
+
+@keyframes configure-edge {
+  to {
+    --configure-angle: 1turn;
+  }
+}
+
+@media (forced-colors: active) {
+  .segmented input:checked + span,
+  .checkbox input:checked {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .brand-mark,
+  .ruler::before {
+    background: CanvasText;
+  }
+
+  .configure-toggle {
+    border-color: ButtonText;
+  }
+}

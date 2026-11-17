@@ -1,0 +1,154 @@
+/*
+ * Landing page tokens. A mirror of the variables and text styles in the Figma file "Frameline", page "Landing".
+ *
+ * Naming rule, so a token can be found from either side:
+ *   Figma variable  `space/24`     ->  `--space-24`      (the slash becomes a hyphen; ungrouped names stay as they are)
+ *   Figma text style `Landing/H1`  ->  `--type-h1` (a `font` shorthand) and `--type-h1-tracking` (its letter spacing)
+ * Values are Figma's. Letter spacing is a percentage in Figma and the same fraction of an em here.
+ *
+ * Modes. Colours have a Light and a Dark mode in Figma; the page ships Dark only, so `:root` holds the Dark values.
+ * Sizes and layout have a Desktop and a Phone mode; Phone is the media query at the end of this file.
+ */
+:root {
+  color-scheme: dark;
+
+  /* ---------- Colour (Dark) ---------- */
+  --bg: #161616;
+  --surface: #1e1e1e;
+  --sunken: #0f0f0f;
+  --text: #f2f2f2;
+  --dim: #a6a6a6;
+  --line: #333333;
+  --link: #5b9dff;
+  --control: #7d7d7d;
+  --control-fill: #f2f2f2;
+  --control-ink: #1c1c1c;
+  --key: #2c2c2c;
+  --key-edge: #454545;
+  --key-drop: #000000;
+  --tick: #5e5e5e;
+
+  /* Colour, "Player mock" component only. On the page the real player stands where the mock is and takes its
+     colours from the skin's own `--fl-*` tokens; these are kept so the file matches Figma one to one. */
+  --surface-0: #0f0f0f;
+  --surface-1: #1e1e1e;
+  --surface-2: #2c2c2c;
+  --picture-placeholder: #242424;
+  --text-dim-raised: #b4b4b4;
+  --tick-minor: #565656;
+  --tick-mid: #787878;
+  --accent: #5b9dff;
+  --range: #4d7bc1;
+  --play: #f0f0f0;
+  --on: #474747;
+  --ink: #1c1c1c;
+
+  /* ---------- Type families ---------- */
+  --family-ui: "Google Sans Flex", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --family-mono: "JetBrains Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---------- Space ---------- */
+  --space-2: 2px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-40: 40px;
+
+  /* ---------- Radius ---------- */
+  --radius-guide: 2px;
+  --radius-small: 3px;
+  --radius-key: 6px;
+  --radius-control: 8px;
+  --radius-player: 8px;
+  --radius-panel: 10px;
+
+  /* ---------- Size (Desktop) ---------- */
+  --size-h1: 72px;
+  --size-h2: 28px;
+  --size-h3: 21px;
+  --size-claim: 19px;
+  --size-lead: 17px;
+  --size-timecode: 17px;
+  --size-brand: 16px;
+  --size-body: 15px;
+  --size-button: 14px;
+  --size-small: 13px;
+  --size-code: 13px;
+  --size-label: 12px;
+  --size-ruler: 11px;
+  --size-wrap: 1280px;
+  --size-header: 64px;
+  --size-key-column: 120px;
+  --size-target: 44px;
+  --size-key: 30px;
+
+  /* ---------- Layout (Desktop) ---------- */
+  --layout-gutter: 24px;
+  --layout-hero-gap: 48px;
+  --layout-hero-bottom: 56px;
+  --layout-section-top: 40px;
+  --layout-section-bottom: 72px;
+  --layout-row-gap: 32px;
+  --layout-row-pad: 22px;
+  --layout-column-gap: 48px;
+  --layout-card-gap: 24px;
+
+  /* ---------- Text styles ---------- */
+  --type-h1: 800 var(--size-h1) / 1.08 var(--family-ui);
+  --type-h1-tracking: -0.025em;
+  --type-h2: 400 var(--size-h2) / 1.15 var(--family-ui);
+  --type-h2-tracking: -0.02em;
+  --type-h3-claim: 400 var(--size-h3) / 1.2 var(--family-ui);
+  --type-h3-claim-tracking: -0.015em;
+  --type-claim-small: 400 var(--size-claim) / 1.25 var(--family-ui);
+  --type-claim-small-tracking: -0.01em;
+  --type-lead: 400 var(--size-lead) / 1.4 var(--family-ui);
+  --type-lead-strong: 400 var(--size-lead) / 1.4 var(--family-ui);
+  --type-body: 400 var(--size-body) / 1.5 var(--family-ui);
+  --type-body-strong: 400 var(--size-body) / 1.5 var(--family-ui);
+  --type-brand: 400 var(--size-brand) / 1.25 var(--family-ui);
+  --type-brand-tracking: -0.01em;
+  --type-nav: 400 var(--size-button) / 1.5 var(--family-ui);
+  --type-button: 400 var(--size-button) / 1 var(--family-ui);
+  --type-small: 400 var(--size-small) / 1.4 var(--family-ui);
+  --type-key: 400 var(--size-small) / 1 var(--family-ui);
+  --type-label: 400 var(--size-label) / 1.33 var(--family-ui);
+  --type-label-tracking: 0.02em;
+  --type-ruler-label: 400 var(--size-ruler) / 1.27 var(--family-ui);
+  --type-timecode: 400 var(--size-timecode) / 1 var(--family-ui);
+  --type-timecode-tracking: 0.01em;
+  --type-code: 400 var(--size-code) / 1.65 var(--family-mono);
+}
+
+/* ---------- Phone mode: the variables whose Phone value differs from Desktop ---------- */
+@media (width < 760px) {
+  :root {
+    --size-h1: 30px;
+    --size-h2: 24px;
+    --size-lead: 16px;
+    --size-timecode: 15px;
+    --size-header: 56px;
+    --layout-gutter: 16px;
+    --layout-hero-gap: 20px;
+    --layout-hero-bottom: 40px;
+    --layout-section-top: 28px;
+    --layout-section-bottom: 48px;
+    --layout-card-gap: 16px;
+  }
+}
+
+/* ---------- More contrast. Not in Figma: dim text 7:1, hairlines and control edges 3:1. Checked by scripts/contrast.mjs. ---------- */
+@media (prefers-contrast: more) {
+  :root {
+    --dim: #d2d2d2;
+    --line: #7f7f7f;
+    --control: #a4a4a4;
+  }
+}

@@ -1,5 +1,5 @@
 // Computes the WCAG contrast ratios recorded in NOTES.md. Run: node scripts/contrast.mjs
-// Values mirror src/styles/tokens.css, and for the configurator page apps/preview/src/page/page.css.
+// Values mirror src/styles/tokens.css, and for the landing page apps/preview/src/page/tokens.css.
 // Two columns: the default palette, and the palette under `prefers-contrast: more` (MORE and PAGE_MORE below), whose
 // minimums are higher where the step 9 brief asks for it: secondary text 7:1, lines 3:1, idle handles 4.5:1.
 const BASE = {
@@ -109,16 +109,12 @@ for (const [theme, p] of Object.entries(PAGE)) {
 return rows;
 };
 
-// The configurator page (apps/preview/src/page/page.css), in its light and its dark theme. The player stays dark in
-// both; the page takes the accent only for links and focus rings, a darker shade of it on the light theme.
+// The landing page (apps/preview/src/page/tokens.css, which mirrors the Figma variables). It is dark only, and has
+// under `prefers-contrast: more` three values change (they are not in Figma).
 const PAGE_BASE = {
-  light: { bg: '#F3F3F1', surface: '#FFFFFF', sunken: '#EAEAE7', text: '#1B1B1D', dim: '#5A5A61', line: '#D8D8D4', control: '#85858C', fill: '#1B1B1D', ink: '#FFFFFF', link: '#1D5FD1', focus: '#1D5FD1' },
-  dark: { bg: '#151517', surface: '#1E1E20', sunken: '#0E0E10', text: '#F2F2F4', dim: '#A3A3AA', line: '#333336', control: '#7D7D84', fill: '#F2F2F4', ink: '#1C1C1E', link: '#5B9DFF', focus: '#5B9DFF' },
+  dark: { bg: '#161616', surface: '#1E1E1E', sunken: '#0F0F0F', text: '#F2F2F2', dim: '#A6A6A6', line: '#333333', control: '#7D7D7D', fill: '#F2F2F2', ink: '#1C1C1C', link: '#5B9DFF', focus: '#5B9DFF' },
 };
-const PAGE_MORE = {
-  light: { ...PAGE_BASE.light, dim: '#3F3F46', line: '#86868D', control: '#5D5D64' },
-  dark: { ...PAGE_BASE.dark, dim: '#D2D2D8', line: '#7F7F86', control: '#A4A4AB' },
-};
+const PAGE_MORE = { dark: { ...PAGE_BASE.dark, dim: '#D2D2D2', line: '#7F7F7F', control: '#A4A4A4' } };
 
 const base = buildRows({ ...BASE, dividerAlpha: 0.1 }, 0.88, PAGE_BASE);
 const more = buildRows({ ...MORE, dividerAlpha: 0.38 }, 0.96, PAGE_MORE);

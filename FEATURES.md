@@ -35,7 +35,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Host UI slots: `slots={{ toolbarStart, toolbarEnd, overlay }}` | Both | README, "Props" |
 | Remembered choices per browser (guides, crop, zones, timecode or seconds): `persist` | Studio | Switch a guide on and reload |
 | Tokens: Video.js's public `--media-*` tokens and the skin's `--fl-*` tokens | Both | `--media-accent-color: orange` |
-| The configurator page: tier, flags, layout, live snippet, shareable URL | Both | The site root |
+| The landing page: the player with a tier switch, Configure collapsed right under it (tier, flags, layout, live snippet, event log, shareable URL; one button opens it), three things to try, what Studio checks with a "Show me" for each, the host contract and what the skin leaves out | Both | The site root |
 
 ## Viewer
 
@@ -156,8 +156,8 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Reduced motion: no transitions or animations in the skin or on the page | Both | System setting; `scripts/browser-checks/reduced-motion.js` |
 | More contrast (`prefers-contrast: more`): secondary text 7:1, lines 3:1, idle handles 4.5:1, a 3 px focus ring, a 2 px playhead edge, heavier guide lines, a denser Viewer scrim; the layout does not change | Both | System setting; the "more" column of `node scripts/contrast.mjs` |
 | Forced colours (Windows High Contrast): bordered buttons and menu items, Highlight for checked states and the range band, playhead, handles, markers and guides in system colours | Both | Windows High Contrast, or Playwright `forcedColors: 'active'` |
-| axe audit with zero violations: the page in both themes, Studio with the Guides menu, the Zoom menu and the help dialog open, the Viewer | Both | `scripts/browser-checks/axe-audit.js` |
-| The configurator page: landmarks, heading order, real radio groups and checkboxes, works at 320 px | Both | The site root |
+| axe audit with zero violations: the page (dark only) at desktop and phone width, Studio with the Guides menu, the Zoom menu and the help dialog open, the Viewer | Both | `scripts/browser-checks/axe-audit.js` |
+| The landing page: landmarks, heading order, real radio groups and checkboxes | Both | The site root |
 
 ## Performance
 
@@ -188,4 +188,4 @@ Floor: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4. Checked in Playwri
 | --- | --- |
 | Image processing and analysis: channels, exposure, gamma, scopes, false colour | That is the work of a grading or monitoring engine. A skin adds controls and overlays around the picture and leaves the picture alone |
 | Setting a poster or thumbnail from a frame | It writes to the host's media library, which a skin has no access to. Grab frame gives the host the image; what it does with it is the host's call |
-| A light theme that follows the system | The player is dark by design: a neutral dark surround keeps judgements of exposure and contrast honest. Only the page around it follows the system |
+| A light theme that follows the system | The player is dark by design: a neutral dark surround keeps judgements of exposure and contrast honest. The page around it is dark only for now |

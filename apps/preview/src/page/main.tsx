@@ -1,7 +1,7 @@
 /**
- * The configurator page's script. The page itself is plain HTML (apps/preview/index.html) and CSS (page.css); this
- * mounts the player into it and wires the form, the query string, the code snippet, the event log and the
- * "Show me" buttons. Everything that drives the player goes through the skin's public props and its `apiRef` handle.
+ * The landing page's script. The page itself is plain HTML (apps/preview/index.html) and CSS (landing.css, with its
+ * tokens in tokens.css); this mounts the player into it and wires the tier switch over the player, the form, the
+ * query string, the code snippet, the event log and the "Show me" buttons. Everything that drives the player goes through the skin's public props and its `apiRef` handle.
  */
 import { VideoPlayer } from '@videojs/react/video';
 import { StrictMode, useMemo, useSyncExternalStore } from 'react';
@@ -28,6 +28,19 @@ const subscribe = (listener: () => void) => {
 
 const form = $<HTMLFormElement>('#config');
 const snippetElement = $('#snippet');
+const configureToggle = $<HTMLButtonElement>('#configure-toggle');
+const configure = $('#configure');
+const configureSummary = $('#configure-summary');
+const heroTier = [...document.querySelectorAll<HTMLInputElement>('input[name="hero-tier"]')];
+const tierHint = $('#tier-hint');
+
+/** The line beside the tier switch over the player: where the controls are in this tier and layout. */
+function hint(current: PageConfig): string {
+  const name = current.tier === 'studio' ? 'Studio' : 'Viewer';
+  return current.layout === 'dock'
+    ? `${name}: the controls sit in a dock below the picture, never over it.`
+    : `${name}: the controls sit over the picture.`;
+}
 
 function setConfig(next: PageConfig) {
   config = next;
@@ -42,6 +55,24 @@ function render() {
   }
   // Platform zones are drawn inside the guides layer: without guides the flag has nothing to switch.
   form.querySelector<HTMLInputElement>('input[name="platformZones"]')!.disabled = !config.flags.guides;
+  /* ---------- Configure: a disclosure under the player, closed on load ---------- */
+
+/** Open or close Configure. The CSS animates the height from `data-open` and hides the closed body from everyone. */
+function setConfigureOpen(open: boolean) {
+  configureToggle.setAttribute('aria-expanded', String(open));
+  configure.toggleAttribute('data-open', open);
+}
+configureToggle.addEventListener('click', () => setConfigureOpen(configureToggle.getAttribute('aria-expanded') !== 'true'));
+// The skip link lands on the button, which is a better place for the keyboard than a closed section.
+$('.skip').addEventListener('click', (event) => {
+  event.preventDefault();
+  configureToggle.focus();
+});
+
+for (const input of heroTier) input.checked = input.value === config.tier;
+  tierHint.textContent = hint(config);
+  const on = FLAG_NAMES.filter((name) => config.flags[name]).length;
+  configureSummary.textContent = `${config.tier === 'studio' ? 'Studio' : 'Viewer'} · ${config.layout === 'dock' ? 'Dock' : 'Overlay'} · ${on} of ${FLAG_NAMES.length} features on`;
 
   snippetElement.textContent = snippet(config, MEDIA.fps);
 
@@ -59,6 +90,7 @@ form.addEventListener('change', (event) => {
   else if ((FLAG_NAMES as readonly string[]).includes(input.name)) setConfig({ ...config, flags: { ...config.flags, [input.name]: input.checked } });
 });
 form.addEventListener('submit', (event) => event.preventDefault());
+for (const input of heroTier) input.addEventListener('change', () => setConfig(tierConfig(input.value === 'viewer' ? 'viewer' : 'studio')));
 
 /* ---------- Code: copy ---------- */
 
@@ -199,18 +231,14 @@ const TASKS: Record<string, Task> = {
       return 'Marked a range and started playing it; it loops. Press K or Space to stop, R to switch Loop off.';
     },
   },
-  zones: {
-    needs: ['guides', 'platformZones'],
-    run(handle) {
-      handle.setZoom('fit');
-      handle.setGuides({ guides: [], crop: '9:16', zones: 'tiktok' });
-      return 'The 9:16 mask and the TikTok zones are on. Shift+V hides the guides and shows them again.';
-    },
-  },
-  safe: {
+  guides: {
     needs: ['guides'],
     run(handle) {
       handle.setZoom('fit');
+      if (config.flags.platformZones) {
+        handle.setGuides({ guides: [], crop: '9:16', zones: 'tiktok' });
+        return 'The 9:16 mask and the TikTok zones are on. Shift+V hides the guides and shows them again.';
+      }
       handle.setGuides({ guides: ['title-safe'], crop: null, zones: null });
       return 'Title safe is on. Shift+V hides the guides and shows them again.';
     },
@@ -218,9 +246,9 @@ const TASKS: Record<string, Task> = {
   zoom: {
     needs: ['zoom'],
     run(handle) {
-      handle.setZoom('200');
+      handle.setZoom('100');
       for (const [index, direction] of (['right', 'right', 'down'] as const).entries()) later(450 + index * 300, () => handle.pan(direction));
-      return 'Zoomed to 200% and moved the view right and down. Shift+Z steps back; Fit is in the Zoom menu.';
+      return 'Zoomed to 100%, the pixels of the source, and moved the view right and down. Shift+Z steps back; Fit is in the Zoom menu.';
     },
   },
   grab: {
@@ -240,21 +268,27 @@ const TASKS: Record<string, Task> = {
   },
 };
 
+/** Every element that runs a task: a Feature row (`data-task`) or a Cue row under the player (`data-cue`). */
+const taskItems = [...document.querySelectorAll<HTMLElement>('[data-task], [data-cue]')];
+const taskOf = (item: HTMLElement) => TASKS[item.dataset.task ?? item.dataset.cue ?? ''];
+
 function renderTasks() {
-  for (const item of document.querySelectorAll<HTMLElement>('[data-task]')) {
-    const task = TASKS[item.dataset.task ?? ''];
+  for (const item of taskItems) {
+    const task = taskOf(item);
     if (!task) continue;
     const missing = task.needs.filter((name) => !config.flags[name]);
-    const need = item.querySelector<HTMLElement>('.need')!;
     item.querySelector<HTMLButtonElement>('button')!.disabled = missing.length > 0;
+    // A Feature row says what to switch on; a Cue row only goes quiet.
+    const need = item.querySelector<HTMLElement>('.need');
+    if (!need) continue;
     need.hidden = missing.length === 0;
-    need.textContent = missing.length ? `Switch on ${missing.map((name) => FLAG_LABELS[name]).join(' and ')} in Features to try this.` : '';
+    need.textContent = missing.length ? `Switch on ${missing.map((name) => FLAG_LABELS[name]).join(' and ')} in Configure to try this.` : '';
   }
 }
 
-for (const item of document.querySelectorAll<HTMLElement>('[data-task]')) {
+for (const item of taskItems) {
   item.querySelector('button')!.addEventListener('click', () => {
-    const task = TASKS[item.dataset.task ?? ''];
+    const task = taskOf(item);
     const handle = api.current;
     const media = video();
     for (const timer of timers) window.clearTimeout(timer);
