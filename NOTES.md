@@ -1383,9 +1383,9 @@ Requirements: `specs/icons-phosphor-trial.md`. An evaluation: the branch is not 
 | Component | Phosphor icon | Weight |
 | --- | --- | --- |
 | `PlayIcon`, `PauseIcon`, `ReplayIcon` | `play`, `pause`, `arrow-counter-clockwise` | Fill |
-| `PreviousCutIcon`, `NextCutIcon` | `skip-back`, `skip-forward` | Fill |
-| `LoopIcon`, `GrabFrameIcon`, `BookmarkIcon`, `LinkIcon` | `repeat`, `camera`, `bookmark-simple`, `link` | Fill |
-| `GuidesIcon` | `frame-corners` | Fill |
+| `PreviousCutIcon`, `NextCutIcon` | `skip-back`, `skip-forward` (moved to the step icons in the polish, below) | Fill |
+| `LoopIcon`, `GrabFrameIcon`, `BookmarkIcon`, `LinkIcon` | `repeat`, `camera`, `bookmark-simple`, `link` (reverted in the polish) | Fill |
+| `GuidesIcon` | `frame-corners` (replaced in the polish) | Fill |
 | `FullscreenEnterIcon`, `FullscreenExitIcon` | `corners-out`, `corners-in` | Fill |
 | `CaptionsOnIcon`, `CaptionsOffIcon` | `subtitles`, `subtitles-slash` | Fill |
 | `SettingsIcon` | `sliders-horizontal` | Fill |
@@ -1441,6 +1441,24 @@ Phosphor's glyphs are not smaller than ours: most are the same size or a little 
 | Viewer path JS (`demo-video-*.js`) | 953,560 / 280,304 B | 957,472 / 281,753 B (+3,912 / +1,449) |
 | Studio JS (`studio-*.js`) | 60,910 / 19,309 B | 61,740 / 19,818 B (+830 / +509) |
 | Skin CSS | 38,121 / 6,770 B | unchanged |
+
+### Polish (the author's review of the first preview)
+The author's verdict on the first set: some icons work, some are wrong. Four changes:
+| Component | First trial | Now |
+| --- | --- | --- |
+| `GuidesIcon` | `frame-corners` | `rectangle-dashed`, Fill |
+| `LinkIcon` | `link`, Fill | our own outline drawing again, the same path data as on `main` |
+| `StepBackIcon`, `StepForwardIcon` | ours, outline | `skip-back`, `skip-forward`, Fill (the bar-and-arrow glyphs the cut buttons had) |
+| `PreviousCutIcon`, `NextCutIcon` | `skip-back`, `skip-forward` | `caret-double-left`, `caret-double-right`, Fill |
+
+All three new names exist in 2.1.1 and are one `<path>` on the 256 grid. `frame-corners` and `link` are no longer used and left `THIRD_PARTY_NOTICES.md`; the three new ones were added.
+- The transport is now solid end to end: double carets, bar-and-arrow, Play, bar-and-arrow, double carets. Glyphs at 18 px: cut 12.4 × 12.4, step 11.3 × 13.5, Play 12.4 × 14.6. The step mismatch of the first trial is gone.
+- **New mismatch:** the link button is now the only outline icon in the dock, next to the solid timecode field and a solid transport. At 18 px it reads lighter than its neighbours, as the step icons did before (`closeup-transport-polish.png`).
+- **Meaning:** the step buttons now use the glyph that media players use for previous/next track, and the cut buttons use the glyph used for rewind/fast-forward. This is the reverse of our earlier convention ("bar plus arrow pointing into it" was the cut). The names, tooltips and shortcuts are unchanged and say what each does.
+- `rectangle-dashed` is a solid tile with the dashed frame cut out; beside Fullscreen's four triangles it is clearly different (`closeup-guides-to-fullscreen-polish.png`).
+- Checks: typecheck, 219 unit tests, build; `dock-polish` (1440 mouse; 724 × 375 and 422 touch), `phone-transport` (422 touch, 1440 mouse), `viewer-gate` (1440), `configurator`: pass. Forced colours and more contrast: close-ups `*-polish-closeup.png`, icons follow the text colour.
+- Bundle sizes (raw / gzip -9): Studio JS 61,801 / 19,744 B (first trial 61,740 / 19,818); Viewer path JS unchanged at 957,472 / 281,752 B.
+- Preview deployment after the polish: see the line below.
 
 ### Unverified (icon trial)
 - **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
