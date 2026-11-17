@@ -329,7 +329,7 @@ Grab frame (in the Capture menu, or `G`) saves the raw frame at the video's own 
 
 The player container carries `data-tier`, `data-density`, `data-layout`, `data-bar="pro"` while pro controls are in the bar, `data-dock-size` (`wide` or `narrow`) in the Studio tier, one attribute per guide that is drawn, such as `data-guide-title-safe` or `data-guide-9-16` (`:` and `.` become `-`), `data-crop="9-16"`, `data-zones="tiktok"`, and `data-zoom="100"`, `"150"`, `"200"` or `"400"` while zoomed. The picture's rectangle inside the stage is published as `--fl-picture-x`, `--fl-picture-y`, `--fl-picture-w` and `--fl-picture-h` (CSS pixels); the overlay layer, and with it the `overlay` slot, is sized to it in the Studio tier. The look is driven by the `--fl-*` tokens in `src/styles/tokens.css` and the public `--media-*` tokens.
 
-**The look:** calm, truly neutral dark surfaces (R = G = B, so the surround adds no cast to the picture; the dock is macOS's dark window grey) and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--fl-accent`, or `--media-accent-color`) is reserved for the played part of the range, the In/Out handles once they are set, the focus ring and a selected marker. The Viewer's progress bar is white. Toggled-on controls use a lighter grey (`--fl-on`), Play is a neutral filled button, and the playhead is white.
+**The look:** calm, truly neutral dark surfaces (R = G = B, so the surround adds no cast to the picture; the dock is a dark matte grey, the display and the timeline groove darker still) and the system UI typeface (no webfont), with tabular numerals for every changing number. One soft blue accent (`--fl-accent`, or `--media-accent-color`) is a signal, not a fill: it appears only on the In/Out handles once they are set, on a selected marker and on the focus ring. The range band is neutral, light grey where it has played. The Viewer's progress bar is white. Toggled-on controls use a lighter grey (`--fl-on`), Play is a neutral filled button, and the playhead is white.
 
 **Tactile, in the dock only.** The keys you press while checking timing (the transport groups, Play, Loop and the link button) read as slightly raised; the rest of the row is a flat toolbar that takes a flat fill on hover. Both kinds read as pressed in when on, open or held, the timecode field and the track as recessed, and the range band, handles and pins as solid things on the track. It is all gradients and 1 px shadows scaled by one token, `--fl-bevel` (`1`; `0` is flat). Nothing of it is drawn over the picture: the overlay layout is flat, as are `prefers-contrast: more` and forced colours.
 
@@ -343,9 +343,11 @@ Its own tokens are `--fl-*`, all defined in `src/styles/tokens.css`. The ones a 
 
 | Token | Default | What it is |
 | --- | --- | --- |
-| `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent: played range, set handles, focus ring, selected marker |
-| `--fl-surface-0` … `--fl-surface-3` | `#0f0f0f`, `#1e1e1e`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture, the dock, control fill, hover |
+| `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent, a signal: set In/Out handles, a selected marker, the focus ring |
+| `--fl-surface-0` … `--fl-surface-3` | `#0c0c0c`, `#171717`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture and the timeline groove, the dock, control fill, hover |
+| `--fl-range`, `--fl-range-played` | `#6e6e6e`, `#c8c8c8` | The range band: not yet played, played |
 | `--fl-on` | `#474747` | A toggle that is on |
+| `--fl-legend` | `#d0d0d0` | Icons and words on the dock's keys at rest; full `--fl-text` on hover, focus, pressed and on |
 | `--fl-text`, `--fl-text-dim` | `#f2f2f2`, `#9c9c9c` | Text and secondary text |
 | `--fl-bevel` | `1` | Strength of the tactile treatment in the dock; `0` is flat |
 | `--fl-stage-ratio` | `16 / 9` | The picture's stage in the dock layout |

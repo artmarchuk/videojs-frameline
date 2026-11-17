@@ -74,12 +74,14 @@
     gap: calc(var(--media-spacing) * 0.5);
   }
 
+  /* A divider is a seam: a dark line with a line of light beside it. Under more contrast --fl-seam is a 3:1 line. */
   .pro-skin .pro-main-divider {
     flex: none;
     width: 1px;
     height: calc(var(--media-spacing) * 4.5);
     margin-inline: calc(var(--media-spacing) * 2);
-    background-color: var(--fl-divider);
+    background-color: var(--fl-seam);
+    box-shadow: 1px 0 0 var(--fl-hi);
   }
 
   /* Time and transport do not mirror in right-to-left pages; the row keeps its left-to-right order. */
@@ -107,7 +109,7 @@
     }
   }
 
-  /* In the dock Play is a white key: lit from above, a shadow under it; pressed, it darkens and sinks. */
+  /* In the dock Play is a white key: a flat face, a bright top edge, a contact shadow under it; pressed, it darkens and sinks. */
   .pro-skin[data-layout="dock"][data-bar="pro"] .pro-bar .pro-transport > .media-play-button {
     --fl-shade: var(--fl-play-shadow);
     background-color: var(--fl-text);
@@ -326,7 +328,7 @@
     line-height: 1;
     outline: none;
     white-space: nowrap;
-    /* A recessed well: shaded inside its top edge, a rim of light below. Flat where --fl-bevel is 0. */
+    /* A recessed well: shaded inside its top edge, a dark rim, a line of light below. Flat where --fl-bevel is 0. */
     --fl-shade: var(--fl-well-shadow);
     box-shadow: var(--fl-shade);
     transition: box-shadow var(--fl-duration) var(--fl-ease);

@@ -240,11 +240,11 @@
     --tl-gap-end: 0px;
   }
 
-  /* The track is neutral. The accent appears only inside a range, on its played part. */
+  /* The track is a groove, darker than the dock. The band in it is neutral: light grey where it has played. */
   .pro-skin .pro-tl-track {
     position: absolute;
     inset: 0;
-    background-color: var(--fl-surface-2);
+    background-color: var(--fl-surface-0);
     box-shadow: var(--fl-track-shadow); /* recessed; the band is drawn over it */
   }
 
@@ -286,7 +286,7 @@
   .pro-skin .pro-tl-band-played {
     left: var(--fl-band-start);
     right: max(calc(100% - var(--media-slider-fill, 0%)), calc(100% - var(--fl-band-end)));
-    background-color: var(--fl-accent);
+    background-color: var(--fl-range-played);
   }
 
   .pro-skin .pro-tl[data-dragging] .pro-tl-band-played {
@@ -431,17 +431,15 @@
     left: var(--tab-left, 0px);
     width: var(--tl-handle-width);
     background-color: currentColor;
-    /* A solid tab: the band's gradient, a grip in its centre (two 1px lines, 8px tall), a short shadow under it. */
+    /* A solid tab: a flat face with a grip in its centre (two 1px lines, 8px tall), a short shadow under it. */
     background-image: var(--fl-handle-image);
     background-repeat: no-repeat;
     background-position:
       50% 50%,
-      calc(50% + 1px) 50%,
-      0 0;
+      calc(50% + 1px) 50%;
     background-size:
       1px 8px,
-      1px 8px,
-      auto;
+      1px 8px;
     --fl-shade: var(--fl-handle-shadow);
     box-shadow: var(--fl-shade);
     /* The shadow grows when the handle is picked up, over the same time as the handle's colour. */

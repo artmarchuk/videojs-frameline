@@ -9,7 +9,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Viewer is for watching; Studio is for checking timing and framing | Both | Switch Tier on the page |
 | Studio adds controls and overlays around the picture and never processes the picture | Studio | Grab a frame with guides on: the file has no guides |
 | Controls sit in a dock below the picture, never over it, also in fullscreen | Studio | Press `F` in Studio |
-| One accent, reserved: the played part of the range, set In/Out handles, the focus ring, a selected marker | Both | Set a range; tab through the controls |
+| One accent, reserved as a signal: set In/Out handles, a selected marker, the focus ring; the range band is neutral | Both | Set a range; tab through the controls |
 | System typeface, tabular numerals for every changing number | Both | Watch the timecode while playing |
 | Frame numbers are best effort, and the skin says so | Studio | The timecode field's tooltip where the browser has no frame callback |
 | A neutral surround: every surface is a true grey (R = G = B), so the player adds no colour cast next to the picture | Both | `src/styles/tokens.css` |
@@ -79,7 +79,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | In and Out handles, always present at the ends of the track | Studio | Drag a handle |
 | Set In and Out at the playhead; unset them | Studio | `I` `O`; `Shift+I` `Shift+O` |
 | Handles from the keyboard: one frame, ten frames, to the limits, unset | Studio | Focus a handle: `←` `→`, `Shift`, `Home` `End`, `Delete` |
-| Range band, with the played part in the accent | Studio | Set a range and play |
+| Range band, neutral: light grey where it has played | Studio | Set a range and play |
 | A set range confines playback: play starts at In from outside the range or from the Out frame; at Out it goes back to In, or pauses on the Out frame with Loop off | Studio | Set a range, play; press `R` and play again |
 | A seek to outside the range while playing goes there and pauses; setting the range past a playing head sends it to In | Studio | Play inside a range, press `9`; then press `O` while playing |
 | Reset range | Studio | The × button after Loop, while a range is set |

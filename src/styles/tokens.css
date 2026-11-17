@@ -10,23 +10,28 @@
   .media-skin[data-theme="pro"] {
     /*
      * Colour. Dark only: Video.js v10 video skins are dark-only. True neutral surfaces (R = G = B), so the surround
-     * adds no cast to the picture, and one soft blue accent. The dock is macOS's dark window grey.
-     * The accent is reserved: progress and the played part of the range, the In/Out handles, the focus ring and a
-     * selected marker. Toggled-on states use --fl-on, never the accent. Never put white text on the accent (2.7:1).
+     * adds no cast to the picture, and one soft blue accent. The dock is a dark matte body; the display and the track
+     * groove (surface-0) sit clearly below it, the keys (surface-2) stand above it.
+     * The accent is a signal, not a fill: set In/Out handles, a selected marker and the focus ring. The range band
+     * is neutral (--fl-range, --fl-range-played). Toggled-on states use --fl-on, never the accent. Never put white
+     * text on the accent (2.7:1).
      */
-    --fl-surface-0: #0f0f0f; /* behind the picture; the recessed timecode field; scrim colour */
-    --fl-surface-1: #1e1e1e; /* the dock, menus, dialogs */
+    --fl-surface-0: #0c0c0c; /* behind the picture; the recessed timecode field; the timeline groove; scrim colour */
+    --fl-surface-1: #171717; /* the dock, menus, dialogs */
     --fl-surface-2: #2c2c2c; /* control fill, segmented controls, the neutral track */
     --fl-surface-3: #3a3a3a; /* hover, tooltips, small badges */
     --fl-on: #474747; /* a toggle that is on */
     --fl-line: #333333; /* hairlines, dividers */
+    --fl-seam: #050505; /* the dark half of a seam between two parts of the body (the picture and the dock, the dividers) */
     --fl-track: #888888; /* unfilled slider track over footage (Viewer overlay): 3:1 on the scrim over a white frame */
     --fl-text: #f2f2f2; /* primary text and icons; the playhead */
     --fl-text-dim: #9c9c9c; /* secondary text on surface-0 to surface-2 */
     --fl-text-dim-raised: #b4b4b4; /* secondary text on surface-3: tooltips, hovered controls (4.5:1 there) */
+    --fl-legend: #d0d0d0; /* icons and word labels printed on the dock's keys at rest; full --fl-text on hover, focus, pressed, on */
     --fl-accent: var(--media-accent-color, #5b9dff);
     --fl-accent-ink: var(--media-accent-text-color, #0b1220); /* text and icons placed on the accent */
-    --fl-range: #4d7bc1; /* the not-yet-played part of the range band */
+    --fl-range: #6e6e6e; /* the not-yet-played part of the range band: 3.84:1 on the groove */
+    --fl-range-played: #c8c8c8; /* the played part of the range band: 3.05:1 against the unplayed part */
     --fl-ink: #1c1c1c; /* text and icons on a --fl-text fill: Play, the playhead bubble */
     --fl-tick-minor: #565656; /* ruler ticks, short to tall */
     --fl-tick-mid: #787878;
@@ -74,45 +79,55 @@
     --fl-shadow-popup: inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel))), 0 4px 14px rgb(0 0 0 / 0.45);
 
     /*
-     * Tactile controls: controls read as slightly raised, toggles that are on as pressed in, and the timeline's
-     * range, handles and pins as solid things on a recessed track. Every highlight and shade is scaled by --fl-bevel
-     * (0 = flat), so one value tunes the whole treatment or switches it off. Only in the dock, never over the
-     * picture. The gradients are tokens so that forced colours and more-contrast can switch them all to `none`.
+     * Tactile controls: edge lighting. Every face is flat and matte; form comes from the edges: a crisp 1px line of
+     * light along a key's top edge, a contact shadow under it, a shaded top edge inside anything recessed. Toggles
+     * that are on read as pressed in; the timeline's range, handles and pins are solid things in a groove. Every
+     * highlight and shade is scaled by --fl-bevel (0 = flat), so one value tunes the whole treatment or switches it
+     * off. Only in the dock, never over the picture. The image tokens are kept (all `none` here) so that the overlay
+     * layout, forced colours and more-contrast can still set every layer flat with one rule each.
      */
     --fl-bevel: 1;
     --fl-hi: rgb(255 255 255 / calc(0.07 * var(--fl-bevel)));
     --fl-lo: rgb(0 0 0 / calc(0.35 * var(--fl-bevel)));
-    /* A control at rest: lit from above, a hairline of light on its top edge, a short shadow under it. */
-    --fl-raise-image: linear-gradient(to bottom, rgb(255 255 255 / calc(0.05 * var(--fl-bevel))), transparent 60%);
-    --fl-raise-shadow: inset 0 1px 0 var(--fl-hi), 0 1px 1px var(--fl-lo);
-    /* Pressed, or on: shaded from above, and a rim of light below. */
-    --fl-press-image: linear-gradient(to bottom, rgb(0 0 0 / calc(0.18 * var(--fl-bevel))), transparent 55%);
-    --fl-press-shadow: inset 0 1px 2px rgb(0 0 0 / calc(0.5 * var(--fl-bevel))), 0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
-    /* Play, the white key. */
-    --fl-play-image: linear-gradient(to bottom, #fafafa, #e2e2e2);
-    --fl-play-shadow: inset 0 -1px 0 rgb(0 0 0 / calc(0.12 * var(--fl-bevel))), 0 1px 2px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
-    --fl-play-press-image: linear-gradient(to bottom, #e6e6e6, #d6d6d6);
-    /* A recessed well: the timecode field, the timeline track. */
-    --fl-well-shadow: inset 0 1px 2px rgb(0 0 0 / calc(0.6 * var(--fl-bevel))), 0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
+    /* A key at rest: a flat face, a 1px line of light on its top edge, a 1px dark contact line and a soft shadow under it. */
+    --fl-raise-image: none;
+    --fl-raise-shadow:
+      inset 0 1px 0 rgb(255 255 255 / calc(0.1 * var(--fl-bevel))),
+      0 1px 0 rgb(0 0 0 / calc(0.5 * var(--fl-bevel))),
+      0 2px 3px rgb(0 0 0 / calc(0.25 * var(--fl-bevel)));
+    /* Pressed, or on: the face sinks; a shade inside its top edge, no light below. */
+    --fl-press-image: none;
+    --fl-press-shadow: inset 0 1px 2px rgb(0 0 0 / calc(0.55 * var(--fl-bevel)));
+    /* Play, the white key: a flat --fl-text face, a bright top edge, the same contact shadow as the other keys. */
+    --fl-play-image: none;
+    --fl-play-shadow:
+      inset 0 1px 0 rgb(255 255 255 / calc(0.6 * var(--fl-bevel))),
+      0 1px 0 rgb(0 0 0 / calc(0.5 * var(--fl-bevel))),
+      0 2px 3px rgb(0 0 0 / calc(0.3 * var(--fl-bevel)));
+    /* Play pressed: a flat, slightly darker face. */
+    --fl-play-press-image: linear-gradient(#dcdcdc, #dcdcdc);
+    /* A recessed well: the timecode field. Shaded inside its top edge, a dark rim all round, a line of light under it. */
+    --fl-well-shadow:
+      inset 0 1px 2px rgb(0 0 0 / calc(0.7 * var(--fl-bevel))),
+      inset 0 0 0 1px rgb(0 0 0 / calc(0.4 * var(--fl-bevel))),
+      0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
+    /* The timeline groove: shaded inside its top edge. */
     --fl-track-shadow: inset 0 1px 1px rgb(0 0 0 / calc(0.45 * var(--fl-bevel)));
-    /* A solid thing on the track: the range band, the handles, the marker pins. */
-    --fl-solid-image: linear-gradient(
-      to bottom,
-      rgb(255 255 255 / calc(0.16 * var(--fl-bevel))),
-      rgb(255 255 255 / 0) 50%,
-      rgb(0 0 0 / calc(0.12 * var(--fl-bevel)))
-    );
-    --fl-solid-shadow: inset 0 1px 0 rgb(255 255 255 / calc(0.22 * var(--fl-bevel)));
-    /* A handle's grip: a dark line 1px wide and 8px tall in its centre, a light one beside it, over the solid gradient. */
+    /* A solid thing in the groove: the range band, the handles, the marker pins. Flat face, lit top edge, dark bottom edge. */
+    --fl-solid-image: none;
+    --fl-solid-shadow: inset 0 1px 0 rgb(255 255 255 / calc(0.18 * var(--fl-bevel))), inset 0 -1px 0 rgb(0 0 0 / calc(0.2 * var(--fl-bevel)));
+    /* A handle's grip: a dark line 1px wide and 8px tall in its centre, a light one beside it, on the flat face. */
     --fl-handle-image:
       linear-gradient(rgb(0 0 0 / calc(0.35 * var(--fl-bevel))), rgb(0 0 0 / calc(0.35 * var(--fl-bevel)))),
-      linear-gradient(rgb(255 255 255 / calc(0.2 * var(--fl-bevel))), rgb(255 255 255 / calc(0.2 * var(--fl-bevel)))),
-      var(--fl-solid-image);
+      linear-gradient(rgb(255 255 255 / calc(0.2 * var(--fl-bevel))), rgb(255 255 255 / calc(0.2 * var(--fl-bevel))));
     --fl-handle-shadow: 0 1px 1px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
     --fl-handle-shadow-dragging: 0 2px 3px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
     --fl-pin-shadow: 0 1px 1px rgb(0 0 0 / calc(0.6 * var(--fl-bevel)));
     --fl-playhead-shadow: 0 1px 2px rgb(0 0 0 / calc(0.5 * var(--fl-bevel)));
-    --fl-dock-edge: inset 0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)));
+    --fl-dock-edge: inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel))); /* the light half of the seam under the picture */
+    /* Legends: the icon on a key is printed, with a dark edge under it; on Play's white face the glyph is engraved. */
+    --fl-legend-shadow: drop-shadow(0 1px 0 rgb(0 0 0 / calc(0.45 * var(--fl-bevel))));
+    --fl-legend-shadow-play: drop-shadow(0 1px 0 rgb(255 255 255 / calc(0.7 * var(--fl-bevel))));
     /* Set --fl-frame-border: 1 to draw a 1px hairline and a 10px radius around the player. Default: none. */
     --fl-frame-radius: var(--media-border-radius, calc(var(--fl-frame-border, 0) * 10px));
 
@@ -202,8 +217,12 @@
   @media (prefers-contrast: more) {
     .media-skin[data-theme="pro"] {
       --fl-line: #7b7b7b;
+      --fl-seam: #7b7b7b;
       --fl-divider: rgb(255 255 255 / 0.38);
       --fl-text-dim: #cccccc;
+      --fl-legend: var(--fl-text);
+      --fl-range: #7b7b7b;
+      --fl-range-played: #e6e6e6;
       --fl-text-dim-raised: #d9d9d9;
       --fl-tick-minor: #8d8d8d;
       --fl-tick-mid: #a7a7a7;
@@ -240,6 +259,8 @@
     --fl-play-press-image: none;
     --fl-solid-image: none;
     --fl-handle-image: none;
+    --fl-legend-shadow: none;
+    --fl-legend-shadow-play: none;
   }
 
   @media (prefers-contrast: more), (forced-colors: active) {
@@ -251,6 +272,8 @@
       --fl-play-press-image: none;
       --fl-solid-image: none;
       --fl-handle-image: none;
+      --fl-legend-shadow: none;
+      --fl-legend-shadow-play: none;
     }
   }
 
@@ -262,6 +285,9 @@
       --fl-surface-3: Canvas;
       --fl-on: Highlight;
       --fl-range: Highlight;
+      --fl-range-played: Highlight;
+      --fl-seam: CanvasText;
+      --fl-legend: CanvasText;
       --fl-ink: Canvas;
       --fl-tick-minor: CanvasText;
       --fl-tick-mid: CanvasText;

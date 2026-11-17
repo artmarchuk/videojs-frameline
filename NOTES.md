@@ -680,6 +680,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Backlog
 
+- Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A (range `#6e6e6e` / `#c8c8c8`, dock `#171717`). Update Figma and the page together.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -1515,3 +1516,138 @@ The trial is merged into `main` (fast-forward, with the tooltip fix `9c87df3` th
 - **Not seen in the player:** captions on and off (the demo source shows no captions button), volume low and muted, PiP exit, fullscreen exit, replay, the error dialog's icon, the audio-track row, the check after "Link copied" and the keyboard dialog's close button. All were looked at on the contact sheet only, at 18 and 72 px on the dock's grey; the check's size in the link button was also measured in the player.
 - Firefox and Safari were not run; the change is SVG `fill` on a path.
 - Forced colours and more contrast were emulated in Chrome.
+
+## Theme A: edge lighting, a darker body, a neutral range (17 Nov 2026, branch `theme-industrial`, not merged, not in production)
+
+Requirements: `specs/theme-a-edge-lighting-and-neutral-range.md`. The first of three theme steps. **Tokens and a few CSS rules only**: `src/styles/tokens.css`, the dock's seam, press travel and legend rules in `skin.css`, the divider and two comments in `studio.css`, the track, the played band and the handle's grip layers in `timeline.css`. No markup, component, behaviour or layout change. Preview deployment (behind Vercel's login, as every preview of this project is): https://videojs-frameline-ademw07s0-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
+
+Screenshots: `design/screenshots/theme-a/`, headless Google Chrome via `playwright-core` at 2x (1x where named), each pair opened and looked at: `main-*` from a build of `main` (f42957d), `a-*` from this branch, `pair-*` the two together (main first); the full-player shots are JPEG, the crops PNG, magnified with pixelated scaling where the name says 1x. Demo media: the reel, player 1280 px wide (`#width=1280`).
+
+### A.2 Body
+- `--fl-surface-0` `#0c0c0c`, `--fl-surface-1` `#171717`, new `--fl-seam` `#050505`. `surface-2`, `surface-3`, `--fl-on`, the text colours and the ticks are unchanged.
+- The dock's `border-top` is the seam and `--fl-dock-edge` is the 6% line of light under it. `.pro-main-divider` is `--fl-seam` with `box-shadow: 1px 0 0 var(--fl-hi)`; same size and margins.
+- Menus and dialogs are darker with the dock (`pair-05-guides-menu.jpg`, `pair-05-shortcuts.jpg`). Their `--fl-line` border is 1.42:1 against the new `surface-1` (1.32:1 before) and reads as before in `pair-05-guides-menu-crop.png`.
+- Under `prefers-contrast: more` the seam is `#7b7b7b` (4.24:1 on the dock), so the dock's top edge and the dividers stay 3:1 lines there; in forced colours it is `CanvasText`.
+
+### A.3 Edge lighting: final values
+The spec's starting values are the final values; none was changed after looking at the 2x crops (`pair-03-*`, `pair-04-timecode-link.png`).
+
+| Token | Final value |
+| --- | --- |
+| `--fl-raise-image` | `none` |
+| `--fl-raise-shadow` | `inset 0 1px 0 rgb(255 255 255 / calc(0.1 * var(--fl-bevel))), 0 1px 0 rgb(0 0 0 / calc(0.5 * var(--fl-bevel))), 0 2px 3px rgb(0 0 0 / calc(0.25 * var(--fl-bevel)))` |
+| `--fl-press-image` | `none` |
+| `--fl-press-shadow` | `inset 0 1px 2px rgb(0 0 0 / calc(0.55 * var(--fl-bevel)))` (under more contrast still the 1px edge in `--fl-text`) |
+| `--fl-play-image` | `none` |
+| `--fl-play-shadow` | `inset 0 1px 0 rgb(255 255 255 / calc(0.6 * var(--fl-bevel))), 0 1px 0 rgb(0 0 0 / calc(0.5 * var(--fl-bevel))), 0 2px 3px rgb(0 0 0 / calc(0.3 * var(--fl-bevel)))` |
+| `--fl-play-press-image` | `linear-gradient(#dcdcdc, #dcdcdc)` (a flat layer; the one `background-image` left in the dock, and only while Play is pressed) |
+| `--fl-solid-image` | `none` |
+| `--fl-solid-shadow` | `inset 0 1px 0 rgb(255 255 255 / calc(0.18 * var(--fl-bevel))), inset 0 -1px 0 rgb(0 0 0 / calc(0.2 * var(--fl-bevel)))` |
+| `--fl-handle-image` | the two grip lines only; the `background-position` and `background-size` lists in `timeline.css` are two entries now |
+| `--fl-well-shadow` | `inset 0 1px 2px rgb(0 0 0 / calc(0.7 * var(--fl-bevel))), inset 0 0 0 1px rgb(0 0 0 / calc(0.4 * var(--fl-bevel))), 0 1px 0 rgb(255 255 255 / calc(0.05 * var(--fl-bevel)))` |
+| `--fl-dock-edge` | `inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel)))` |
+| `--fl-legend-shadow` | `drop-shadow(0 1px 0 rgb(0 0 0 / calc(0.45 * var(--fl-bevel))))` |
+| `--fl-legend-shadow-play` | `drop-shadow(0 1px 0 rgb(255 255 255 / calc(0.7 * var(--fl-bevel))))` |
+
+- Press travel: the `:active` content shift is `translate: 0 1px` (read back on the pressed Play icon: `0px 1px`).
+- Still flat where it must be, read from the computed style: the Viewer overlay (`--fl-bevel` 0, `--fl-legend-shadow` none, button colour `--fl-text`, icon filter none, no gradient in its bar), `prefers-contrast: more` (every shadow at alpha 0, icon filters none) and forced colours (shadows `none`). The two legend-shadow tokens were added to the three flat blocks; the image tokens stay in them (all `none` by default now, so the blocks are belt and braces).
+- What the crops show: a key is a flat face with a 1px light line on top and a 1px dark line plus a soft shadow under it; nothing in the dock has a gradient at rest; the timecode field has a dark rim inside its edge; the Play face is flat white and flat `#dcdcdc` while pressed.
+
+### A.4 The range is neutral
+- `.pro-tl-track` is `surface-0` (a groove darker than the body, `--fl-track-shadow` kept), `--fl-range` `#6e6e6e`, new `--fl-range-played` `#c8c8c8` on `.pro-tl-band-played`. Under more contrast `#7b7b7b` / `#e6e6e6` (4.62:1 on the groove, 3.39:1 against each other, playhead 3.78:1 over the unplayed part). In forced colours both are `Highlight` and the played part keeps its `HighlightText` bottom line from step 9.2, so the two still differ (`pair-08-forced-colors.jpg`, unchanged from `main`).
+- **Buffer: kept `#4a4a4a`.** It sits under the track, on the dock: 2.02:1 there (1.88:1 before), 2.21:1 against the groove. In `pair-02-timeline-crop.png` it reads as a quiet line under the groove, which is what it is for. Under more contrast still `#6f6f6f` (3.57:1).
+- **Accent inventory** (every use of `--fl-accent` and `--fl-range` in `src/`, apart from `tokens.css`): focus rings (`skin.css` 199: buttons, time toggle, slider thumbs, dialog; `studio.css` 342: the timecode field; `timeline.css` 366 and 376: the playhead and the handles), the selected marker (`timeline.css` 173: the pin, 177: its end-time line), the set or dragged handle (`timeline.css` 424), the unplayed band (`timeline.css` 283, `--fl-range`). Nothing else: the accent appears only on set handles, the selected marker and focus rings. `--media-accent-color` is read in `tokens.css` only.
+
+### A.4b Legends
+- `--fl-legend` `#d0d0d0`: in the dock, every `.media-button` in the bar except Play takes it at rest, and `--fl-text` on hover, `:focus-visible`, while pressed, and when on or open. Chevrons keep `--fl-text-dim` and the count badge `--fl-text` by their own rules; the timecode field is not a `.media-button`; the ruler, menus, dialogs and tooltips are untouched. Read back: step keys and the flat tools `rgb(208 208 208)`, hovered step `rgb(242 242 242)`, Loop `rgb(242 242 242)` (it is on from the start in the demo), chevron `rgb(156 156 156)`, badge `rgb(242 242 242)`, Play `rgb(28 28 28)`. In forced colours a pressed dock button keeps `HighlightText` on `Highlight` (a rule in the forced-colours block, after the legend rules, at the same specificity).
+- **The printed edge is kept.** It is a `filter` on the `.media-button-icon` element (never the button), so the 1px travel and the link button's cross-fade are untouched (both are on the icon's own `translate` and `opacity`). At 2x (`pair-04b-*-2x-*.png`) it is a crisp dark line under each glyph, and the engraved Play glyph has a light line under it. At 1x (`pair-04b-*-1x-*.png` at 4x, `pair-04c-*.png` at 8x) it is one darker pixel row under the solid glyphs, not soft or doubled. **The one borderline case is the link icon**, the only outline icon left: at 1x the dark row under its thin strokes shows as darker pixels inside the knot (`pair-04c-link-1x.png`). It is a 1px effect on a 1.5px stroke, and the author should look at it on a 1x display. If it bothers, set `--fl-legend-shadow` and `--fl-legend-shadow-play` to `none` in `tokens.css`; the colour change stays.
+- Word labels ("Fit", the words at 1500 px and up) take the legend colour and no shadow (the spec puts the shadow on icons).
+
+### A.5 Accent trial (screenshots only)
+`pair-09-accent.jpg`: the branch with the default blue and with `--media-accent-color: #ff6b3d` set on `html`, a range set, the marker at 12 s selected, the step-forward key focused. Nothing shipped; the default is unchanged.
+
+### A.6 Contrast (`node scripts/contrast.mjs`, every row passes in both columns)
+The script has the new `s0`, `s1`, `range`, `rangePlayed`, `legend` and `seam`; the rows that measured the accent as a band are now the pairs of the spec; the spec's numbers are reproduced (3.84, 3.05, 4.55, 1.49, 11.69, 7.18, 1.87, 4.43, 7.18 / 6.58 / 5.13 / 3.41, 6.53, 6.94; legends 11.62 / 9.05 / 7.37 / 6.02). The landing page rows are unchanged and left out of this table.
+
+| Pair | Default | `prefers-contrast: more` |
+| --- | --- | --- |
+| text on surface-0 (timecode field) | 17.47 (min 4.5) | 17.47 (min 4.5) |
+| text on surface-1 (dock, menus) | 16.01 (min 4.5) | 16.01 (min 4.5) |
+| text on surface-2 (controls) | 12.47 (min 4.5) | 12.47 (min 4.5) |
+| text on surface-3 (hover, tooltips, badges) | 10.16 (min 4.5) | 10.16 (min 4.5) |
+| text on --fl-on (a toggle that is on) | 8.30 (min 4.5) | 8.30 (min 4.5) |
+| text-dim on surface-1 (the "of duration" text) | 6.53 (min 4.5) | 11.16 (min 7) |
+| ruler label, blended, on the dock (surface-1) | 6.94 (min 4.5) | 9.44 (min 7) |
+| ruler label, blended, where the white playhead head passes under it | 10.16 (min 4.5) | 14.72 (min 4.5) |
+| text-dim on surface-2 (controls) | 5.09 (min 4.5) | 8.70 (min 7) |
+| text-dim-raised on surface-3 (shortcut in a tooltip, marker tooltip time) | 5.49 (min 4.5) | 8.06 (min 7) |
+| text-dim on surface-3: NOT USED for text (see text-dim-raised) | 4.14 (min -) | 7.08 (min -) |
+| ink on text fill (Play) | 15.22 (min 4.5) | 15.22 (min 4.5) |
+| legend on surface-1 (a flat toolbar button at rest) | 11.62 (min 4.5) | 16.01 (min 4.5) |
+| legend on surface-2 (a transport key, the link button) | 9.05 (min 4.5) | 12.47 (min 4.5) |
+| legend on surface-3 (a hovered flat button; the legend is full text there, shown for the rest colour) | 7.37 (min 4.5) | 10.16 (min 4.5) |
+| legend on --fl-on (a toggle that is on; the legend is full text there, shown for the rest colour) | 6.02 (min 4.5) | 8.30 (min 4.5) |
+| text on a highlighted menu item (--fl-on) in a Studio menu | 8.30 (min 4.5) | 8.30 (min 4.5) |
+| text-dim-raised on a highlighted menu item (--fl-on): NOT USED, hints take the text colour there | 4.48 (min -) | 6.58 (min -) |
+| white text on accent: NEVER USED, shown as a warning | 2.72 (min -) | 2.72 (min -) |
+| text on scrim (0.88) over white frame | 12.97 (min 4.5) | 16.21 (min 4.5) |
+| text-dim on scrim (0.88) over white frame | 5.29 (min 4.5) | 11.30 (min 7) |
+| Viewer progress fill (text) on scrim over white frame | 12.97 (min 3) | 16.21 (min 3) |
+| Viewer progress fill (text) against the unfilled track (--fl-track) | 3.17 (min 3) | 3.17 (min 3) |
+| slider track (--fl-track) on surface-0 | 5.52 (min 3) | 5.52 (min 3) |
+| slider track (--fl-track) on scrim over white | 4.10 (min 3) | 5.12 (min 3) |
+| Viewer thumb (text) on scrim over white | 12.97 (min 3) | 16.21 (min 3) |
+| focus ring: accent on surface-0 | 7.18 (min 3) | 7.18 (min 3) |
+| focus ring: accent on surface-1 (dock) | 6.58 (min 3) | 6.58 (min 3) |
+| focus ring: accent on surface-2 | 5.13 (min 3) | 5.13 (min 3) |
+| focus ring: accent on --fl-on | 3.41 (min 3) | 3.41 (min 3) |
+| focus ring halo: surface-0 vs white frame | 19.56 (min 3) | 19.56 (min 3) |
+| playhead (text) over the unplayed band (--fl-range) | 4.55 (min 3) | 3.78 (min 3) |
+| playhead (text) over the played band (--fl-range-played): none, the dark outline carries it | 1.49 (min -) | 1.11 (min -) |
+| playhead outline (surface-0) over the played band (--fl-range-played) | 11.69 (min 3) | 15.67 (min 3) |
+| playhead (text) over the track groove (surface-0) | 17.47 (min 3) | 17.47 (min 3) |
+| unplayed band (--fl-range) against the track groove (surface-0) | 3.84 (min 3) | 4.62 (min 3) |
+| played band (--fl-range-played) against the unplayed band | 3.05 (min 3) | 3.39 (min 3) |
+| played band (--fl-range-played) against the track groove (surface-0) | 11.69 (min 3) | 15.67 (min 3) |
+| set handle (accent) against the dock (surface-1) | 6.58 (min 3) | 6.58 (min 3) |
+| set handle (accent) against the track groove (surface-0) | 7.18 (min 3) | 7.18 (min 3) |
+| set handle (accent) against the unplayed band, decorative: the handle also has a shape and stands proud of the track | 1.87 (min -) | 1.55 (min -) |
+| idle handle (--fl-handle-idle) against the dock (surface-1) | 4.06 (min 3) | 8.94 (min 3) |
+| idle handle (--fl-handle-idle) against the track groove (surface-0) | 4.43 (min 3) | 9.75 (min 4.5) |
+| hover hairline (text at 45%) over the track groove | 4.16 (min 3) | 4.16 (min 3) |
+| hover hairline (text at 45%) over the dock | 4.15 (min 3) | 4.15 (min 3) |
+| markers (text-dim) on the dock | 6.53 (min 3) | 11.16 (min 3) |
+| selected marker (accent) on the dock | 6.58 (min 3) | 6.58 (min 3) |
+| major ticks on the dock | 5.54 (min 3) | 9.54 (min 3) |
+| mid ticks on the dock, decorative | 4.06 (min -) | 7.45 (min -) |
+| minor ticks on the dock, decorative | 2.44 (min -) | 5.40 (min -) |
+| track groove (surface-0) on the dock, decorative: the playhead and the band carry the value | 1.09 (min -) | 1.09 (min -) |
+| buffered line on the dock, decorative | 2.02 (min -) | 3.57 (min 3) |
+| buffered line against the track groove, decorative (it sits under the track) | 2.21 (min -) | 3.89 (min -) |
+| seam (--fl-seam) on the dock, decorative; a line under more contrast | 1.14 (min -) | 4.24 (min 3) |
+| hairline (line) on surface-1, decorative; a line under more contrast | 1.42 (min -) | 4.24 (min 3) |
+| hairline (line) on surface-2, decorative; a line under more contrast | 1.11 (min -) | 3.30 (min 3) |
+| divider inside a control fill (white at the divider alpha on surface-2), decorative; a line under more contrast | 1.37 (min -) | 3.35 (min 3) |
+| menu separator (line) on surface-1, decorative; a line under more contrast | 1.42 (min -) | 4.24 (min 3) |
+| Play fill (text) against the dock | 16.01 (min 3) | 16.01 (min 3) |
+| toggle on (--fl-on) against control fill (surface-2), decorative by default: the pressed bevel and aria-pressed carry it | 1.50 (min -) | 1.50 (min -) |
+| Loop on (--fl-on) against the dock, decorative by default: the pressed bevel carries it | 1.93 (min -) | 1.93 (min -) |
+| pressed edge (text) against the dock; drawn under more contrast only | 16.01 (min -) | 16.01 (min 3) |
+| pressed edge (text) against --fl-on; drawn under more contrast only | 8.30 (min -) | 8.30 (min 3) |
+
+### Checks
+- `npm run typecheck`, `npm test` (219), `npm run build`, `node scripts/contrast.mjs`: pass.
+- Computed-style checks in the screenshot run (`a-report.json` beside the screenshots): the values listed above, and no `background-image` gradient on any element of the dock bar at rest.
+- Bundle sizes (raw / gzip -9): skin CSS `demo-video-*.css` 39,264 / 6,904 B (`main` 38,121 / 6,770 B); Studio CSS 28,422 / 5,003 B (28,396 / 4,997 B). JS unchanged.
+
+### Differs from the spec, or worth knowing
+- **The Viewer is flat and its rules are unchanged, but not pixel-identical to `main`:** the surface tokens are global, so its letterbox and scrim are `surface-0` `#0c0c0c` (was `#0f0f0f`) and its menus `#171717`. In `pair-07-viewer-bright.png` no difference is visible; text on the scrim over white is 12.97:1 (12.51:1 before).
+- README: "the dock is macOS's dark window grey" is no longer true and was reworded; `specs/PROJECT-OVERVIEW.md` still says it and still says the accent fills the played part (the author's file, not changed).
+- `FEATURES.md`: two rows reworded (the accent row, the range band row); no feature changed.
+
+### Unverified (Theme A)
+- **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
+- **A real display and pointer:** the 1px legend shadow on a 1x screen (the link icon above), the 1px press travel, and how the darker body reads next to the picture.
+- Firefox and Safari were not run. `filter: drop-shadow()` on an inline SVG inside a button and the three-layer `box-shadow` lists are inside the browser floor on paper.
+- The browser-check scripts in `scripts/browser-checks/` were not run for this step (CSS-only change); a few of them read computed colours and may need their expected values updated.
+- `prefers-contrast: more` and forced colours were emulated in Chromium.
