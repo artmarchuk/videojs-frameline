@@ -38,6 +38,7 @@ dl,
 dd,
 fieldset,
 legend,
+figure,
 pre {
   margin: 0;
   padding: 0;
@@ -764,9 +765,13 @@ video-player {
 
 .feature {
   display: grid;
-  grid-template-columns: var(--size-key-column) minmax(0, 1fr) minmax(0, 1fr) auto;
-  grid-template-areas: "keys claim detail action";
-  align-items: center;
+  grid-template-columns: var(--size-key-column) minmax(0, 1fr) var(--size-figure);
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "keys claim figure"
+    "keys detail figure"
+    "keys action figure";
+  align-items: start;
   gap: var(--space-10) var(--layout-row-gap);
   padding-block: var(--layout-row-pad);
   border-bottom: 1px solid var(--line);
@@ -797,12 +802,53 @@ video-player {
 
 .feature .button {
   grid-area: action;
+  justify-self: start;
+  margin-top: var(--space-6);
 }
 
-/* Keyboard and accessibility: the last row, keys and one paragraph, no rule under it. */
+/* A row's figure: a crop of the detail the row claims. The box keeps its 8:5 shape whatever is inside, so a clip can
+   take the image's place later; the image is what its poster would be. Framed as the player is: its radius, its
+   hairline, its surround colour. */
+.feature-figure {
+  grid-area: figure;
+  min-width: 0;
+}
+
+.shot {
+  overflow: hidden;
+  aspect-ratio: 8 / 5;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--sunken);
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Two captures of one frame, side by side, each with its caption under it. */
+.shot-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+}
+
+.shot-pair figcaption,
+.tier-pair figcaption {
+  margin-top: var(--space-8);
+  color: var(--dim);
+  font: var(--type-small);
+}
+
+/* Keyboard and accessibility: the last row, keys and one paragraph, no figure, no rule under it. */
 .feature-note {
   grid-template-columns: var(--size-key-column) minmax(0, 1fr);
+  grid-template-rows: auto;
   grid-template-areas: "keys detail";
+  align-items: center;
   border-bottom: 0;
 }
 
@@ -811,6 +857,23 @@ video-player {
 }
 
 /* ---------- Built to be hosted ---------- */
+
+/* The whole player in each tier, on one frame and at one width. The two differ in height; their tops line up. */
+.tier-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--layout-card-gap);
+}
+
+/* A capture of the whole player carries the player's own hairline; the radius here is the player's. */
+.tier-pair img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-panel);
+  background: var(--sunken);
+}
 
 .columns {
   display: flex;
@@ -905,6 +968,37 @@ video-player {
   gap: var(--space-24);
 }
 
+/* ---------- Under 1100: a Feature row is one column, the figure under the text ---------- */
+
+@media (width < 1100px) {
+  .feature {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: none;
+    grid-template-areas:
+      "claim claim"
+      "detail detail"
+      "figure figure"
+      "keys action";
+    align-items: center;
+    row-gap: var(--space-12);
+  }
+
+  .feature .button {
+    margin-top: 0;
+  }
+
+  .feature-note {
+    grid-template-columns: var(--size-key-column) minmax(0, 1fr);
+    grid-template-areas: "keys detail";
+  }
+}
+
+@media (width < 900px) {
+  .tier-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ---------- Between Desktop and Phone: the wide rows give way first ---------- */
 
 @media (width < 1040px) {
@@ -994,13 +1088,8 @@ video-player {
     margin-right: 0;
   }
 
-  /* Feature row, Layout=Phone: claim, detail, then the keys and the button on one line. */
+  /* Feature row, Layout=Phone: claim, detail, the figure, then the keys and the button on one line. */
   .feature {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "claim claim"
-      "detail detail"
-      "keys action";
     padding-block: var(--space-20);
   }
 

@@ -1515,3 +1515,48 @@ The trial is merged into `main` (fast-forward, with the tooltip fix `9c87df3` th
 - **Not seen in the player:** captions on and off (the demo source shows no captions button), volume low and muted, PiP exit, fullscreen exit, replay, the error dialog's icon, the audio-track row, the check after "Link copied" and the keyboard dialog's close button. All were looked at on the contact sheet only, at 18 and 72 px on the dock's grey; the check's size in the link button was also measured in the player.
 - Firefox and Safari were not run; the change is SVG `fill` on a path.
 - Forced colours and more contrast were emulated in Chrome.
+
+## Landing page visuals: a staged hero, six feature rows, screenshots (17 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals.md`. Nothing under `src/` changed.
+
+### Decisions: the staged hero
+- **The staged state is the source's data**: `staged` on the reel's entry in `media.ts`, as frame numbers (In 108, Out 242, playhead 144, guides `title-safe`); `stagedSeconds` converts it. A source without `staged` loads as before.
+- **Applied once, by the page, through `apiRef`**: when the Studio player first has a handle and the video has a duration, the page calls `setRange`, `setGuides` and `seek`. It is decided on load: a page opened in Studio. Not repeated after a tier switch or a change of the range; a page opened with `?tier=viewer` stages nothing, also after a switch to Studio.
+- **A frame link wins the playhead**: with `t=` in the hash the page does not seek (the skin does, to the link); the range and the guide are still set.
+- **Remembered guides win**: if `localStorage` has the skin's `frameline:v1` record, the page does not call `setGuides` and the skin restores what is stored. Any record counts, an empty set too: a visitor who switched every guide off does not get Title safe back. A visitor with no record gets Title safe, and the skin then stores it, so the next visit restores the same.
+- **The poster is the staged frame**: `posterTime` is the middle of the frame's interval, `(144 + 0.5) / 24`. Mux's thumbnail at a frame's own start time is the frame before it (`time=6` shows 00:00:05:23, `time=6.02` shows 00:00:06:00; the old `posterTime: 3` showed 00:00:02:23).
+- **Out of the event log**: the skin fires `onInOutChange` and `onGuidesChange` for the staged calls as for any other; the page drops them while it stages.
+- **Announcements**: `setRange` and `setGuides` say nothing. The seek does: Video.js's status announcer says "Seeked to 6 seconds" on load, as it already did for an opened `#t=` link. Video.js has no start-time option (its docs: seek on `loadedmetadata`), and the skin was not silenced.
+- **Fixed: the Configure button** stopped toggling after any configuration change. Its click listener sat inside `render()` and was added again on every change; two listeners open and close in one click. Wired once now; `configurator.js` checks it.
+
+### Decisions: rows and figures
+- Six rows; row 3 is new (`review`: to the marker `hold`, read from the loaded markers, paused; no clipboard write). Row 6 is "A frame grab is the frame as encoded."
+- From 1100 px a row is `120px minmax(0, 1fr) 560px`, text at the top of the figure; under 1100 px one column: claim, detail, figure, then keys and Show me. A figure is an 8:5 box (`.shot`) with the image as `object-fit: cover`, so a clip can replace the image later.
+- **One new token: `--size-figure: 560px`** (Figma: `size/figure`). The 8:5 ratio and the 1100 and 900 px breakpoints are written where they are used. The figure's radius is `--radius-panel` (10 px), the value of the real player's frame; Figma's `radius/player` is 8 px and does not match the skin.
+- The tier pair's images are whole players and carry the player's own hairline, so the page adds a radius only.
+
+### Decisions: screenshots (`scripts/landing-shots.mjs`)
+- One dev dependency, pinned: **`sharp` 0.35.5** (AVIF and WebP). `playwright-core` was already one.
+- States are reached with frame links, keys, clicks and hover on `/preview.html`; no hook was added to the monitor page. The best rendition is picked in the settings menu and played until it is on screen (a paused player keeps the rendition it has), then the keys walk back to the frame.
+- Crops are an element's box plus a region, clipped to the player less its 1 px hairline, on `#0f0f0f` where the region passes the player.
+- **Where the spec and the player did not fit, and what was done:**
+  - **Shot 1 (range): an 1100 px player, not 1280.** At 1280 a 700 px region holding the In handle and the Loop button cuts the timecode field in two.
+  - **Shot 2 (frame-step): a 560 px tall window and 150% zoom.** At Fit on a 1280 px player the burned-in timecode and the dock's field are 755 px apart; the region is 437.5 px. 560 px is the shortest window in which the monitor page still letterboxes the stage.
+  - **Shot 4 (guides): no "approximate" in the picture.** The skin says it in the Guides menu and to screen readers (`zonesSet`), not on the overlay, and the open menu covers the picture of a 760 px player. The shot shows the zones with their own labels.
+  - **Shot 5 (zoom): a 560 × 350 region exported one to one**, not 700 px at 80%: a source pixel is four device pixels at 400%, and scaling turns the squares uneven. The reel is soft at pixel level, so the squares show along the edge of the sole, not everywhere.
+  - **Shot 6 `grab-screen`: the whole picture**, fitted like the file beside it, not a 700 px crop, so the pair has one framing.
+  - **Shot 7 (tiers): 00:00:05:00.** Viewer has no frame link and no frame step, and the monitor's tier switch starts the video again; Right (5 s) from the start is the frame Viewer can reach exactly. Both images show 00:00:05:00.
+- Shot 2's stop condition: the captured frame reads 00:00:27:15 in the picture and in the field. Other frames looked at: 06:00, 21:08, 05:00 (both tiers) and 27:15 agree; 10:03 is the known missing frame (see the landing page section).
+
+### Checks (headless Chrome, local production build)
+- Hero: first load, `#t=00:00:27:15`, `?tier=viewer`, `?media=plain`, a remembered `thirds`, a remembered empty set: as specified, no console errors. Poster and staged frame are the same picture.
+- Page at 1440, 1100, 900 and 390 px (`design/screenshots/landing-visuals/`): no horizontal overflow; each row and the tier pair has the same height with the images blocked and loaded (no layout shift).
+- All six Show me buttons and the three cue rows, in Studio and from a page opened in Viewer.
+- `configurator.js` (now also: the staged state, the `review` task, Configure toggling after changes), `axe-audit.js` (zero violations at 1440 and 390, and on `/preview.html` in both tiers), `viewer-gate.js` (three runs): pass. Typecheck, 218 unit tests, build: pass.
+
+### Unverified (landing visuals)
+- Firefox, Safari and a real phone were not run on the new rows. AVIF with a WebP fallback is inside the browser floor on paper (Safari 16.4 has AVIF); Chrome picked AVIF.
+- A screen reader was not listened to: "Seeked to 6 seconds" on load was read from the live region, not heard.
+- **Seen, not touched (skin):** on a 760 px player the open Guides menu is cut at its bottom edge ("Hide guides" is half hidden).
+- The page's "zero violations in six states" line is unchanged and still not re-counted.

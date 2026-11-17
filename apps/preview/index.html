@@ -203,7 +203,7 @@
         <div class="section-body">
           <div class="section-heading">
             <h2 id="checks-title">What Studio checks</h2>
-            <p>Five things other players leave out. Each one has a key, and each row does it in the player above.</p>
+            <p>Six things other players leave out. Each one has a key, and each row does it in the player above.</p>
           </div>
           <ol class="features">
             <li class="feature" data-task="range">
@@ -214,6 +214,12 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: set a range and loop it">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/range.avif" type="image/avif" />
+                  <img src="./shots/range.webp" width="1120" height="700" alt="The Studio timeline with a range from 00:00:04:12 to 00:00:10:02, the playhead inside it on 00:00:06:00 and Loop on. Above it, the lower part of the picture with the Title safe line." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
             <li class="feature" data-task="step">
               <div class="feature-keys"><kbd>,</kbd><kbd>.</kbd></div>
@@ -223,6 +229,27 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: step to the exact frame">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/frame-step.avif" type="image/avif" />
+                  <img src="./shots/frame-step.webp" width="1120" height="700" alt="The picture at 150% with its burned-in timecode reading 00:00:27:15, and under it the dock’s timecode field reading the same frame, 00:00:27:15." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
+            </li>
+            <li class="feature" data-task="review">
+              <div class="feature-keys"><kbd>S</kbd></div>
+              <h3>Point at an exact moment.</h3>
+              <div class="feature-detail">
+                <p>The host’s markers show as pins on the ruler and in the Markers menu. S copies a link to the frame on screen, as timecode. Opening the link lands on that frame, paused.</p>
+                <p class="need" hidden></p>
+              </div>
+              <button type="button" class="button" aria-label="Show me: go to a review marker">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/markers.avif" type="image/avif" />
+                  <img src="./shots/markers.webp" width="1120" height="700" alt="The ruler with marker pins. The pin under the pointer shows its note, “Director: hold the pose two frames longer”, and its timecode, 00:00:21:08. The link button sits beside the timecode field." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
             <li class="feature" data-task="guides">
               <div class="feature-keys"><kbd>Shift</kbd><kbd>V</kbd></div>
@@ -232,6 +259,12 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: turn on the delivery guides">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/guides.avif" type="image/avif" />
+                  <img src="./shots/guides.webp" width="1120" height="700" alt="A dancer on a street, with everything outside a 9:16 crop dimmed and the TikTok zones drawn inside it: Top bar, Buttons, Captions and profile." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
             <li class="feature" data-task="zoom">
               <div class="feature-keys"><kbd>Z</kbd></div>
@@ -241,15 +274,41 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: zoom to 100% and pan">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/zoom.avif" type="image/avif" />
+                  <img src="./shots/zoom.webp" width="1120" height="700" alt="The toe of a sneaker’s orange sole at 400%, its edge in steps of single pixels. The Zoom button in the dock reads 400%." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
             <li class="feature" data-task="grab">
               <div class="feature-keys"><kbd>G</kbd></div>
-              <h3>The picture is never touched.</h3>
+              <h3>A frame grab is the frame as encoded.</h3>
               <div class="feature-detail">
-                <p>No filters, no scopes, no colour changes. A grabbed frame is the frame as encoded, at the video’s own size, with no guides in it.</p>
+                <p>G saves the frame on screen as a PNG, at the video’s own size and with no guides in it. Studio draws around the picture and never changes its pixels.</p>
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: grab a frame">Show me</button>
+              <div class="feature-figure shot-pair">
+                <figure>
+                  <div class="shot">
+                    <picture>
+                      <source srcset="./shots/grab-screen.avif" type="image/avif" />
+                      <img src="./shots/grab-screen.webp" width="1120" height="700" alt="The picture on screen at 00:00:21:08, with the 9:16 crop and the TikTok zones drawn over it." loading="lazy" decoding="async" />
+                    </picture>
+                  </div>
+                  <figcaption>On screen</figcaption>
+                </figure>
+                <figure>
+                  <div class="shot">
+                    <picture>
+                      <source srcset="./shots/grab-file.avif" type="image/avif" />
+                      <img src="./shots/grab-file.webp" width="1120" height="700" alt="The PNG saved from that frame: the same picture, whole, with no crop and no zones in it." loading="lazy" decoding="async" />
+                    </picture>
+                  </div>
+                  <figcaption>The saved PNG, 1920 × 1080</figcaption>
+                </figure>
+              </div>
             </li>
             <li class="feature feature-note">
               <div class="feature-keys"><kbd>Shift</kbd><kbd>?</kbd></div>
@@ -265,6 +324,22 @@
           <div class="section-heading">
             <h2 id="host-title">Built to be hosted</h2>
             <p>One skin, two tiers. Studio is for the people who make the video. Their audience gets Viewer, and downloads none of the Studio code.</p>
+          </div>
+          <div class="tier-pair">
+            <figure>
+              <picture>
+                <source srcset="./shots/tier-viewer.avif" type="image/avif" />
+                <img src="./shots/tier-viewer.webp" width="1520" height="854" alt="The Viewer tier on 00:00:05:00: play, volume, time, a seek bar, settings, picture-in-picture and fullscreen, over the picture." loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>Viewer</figcaption>
+            </figure>
+            <figure>
+              <picture>
+                <source srcset="./shots/tier-studio.avif" type="image/avif" />
+                <img src="./shots/tier-studio.webp" width="1520" height="1088" alt="The Studio tier on the same frame: the picture is clear, and a dock below it holds the ruler timeline with marker pins, the timecode field, frame transport, Loop, Markers, Capture, Guides and Zoom." loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>Studio</figcaption>
+            </figure>
           </div>
           <div class="columns">
             <div class="host-contract">

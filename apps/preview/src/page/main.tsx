@@ -197,6 +197,11 @@ const FLAG_LABELS: Record<FlagName, string> = {
   zoom: 'Zoom and pan',
 };
 
+/** The demo's markers as last loaded by the player, for the `review` task. */
+let demoMarkers: Marker[] = [];
+/** The marker the `review` task goes to: a note that names a single frame. */
+const REVIEW_MARKER = 'hold';
+
 /** Steps of a running "Show me", so the next one can cancel them. */
 let timers: number[] = [];
 let grabbed: (() => void) | null = null;
@@ -234,6 +239,18 @@ const TASKS: Record<string, Task> = {
       handle.setLoop(true);
       void media.play().catch(() => undefined);
       return 'Marked a range and started playing it; it loops. Press K or Space to stop, R to switch Loop off.';
+    },
+  },
+  review: {
+    needs: ['markers'],
+    run(handle, media) {
+      // The marker comes from the loaded markers file, not from a time written here.
+      const marker = demoMarkers.find((item) => item.id === REVIEW_MARKER);
+      if (!marker) return 'The markers have not loaded yet. Try again in a moment.';
+      media.pause();
+      handle.setZoom('fit');
+      handle.seek(marker.time);
+      return `On the marker "${marker.label}". Press S to copy a link to this frame.`;
     },
   },
   guides: {
@@ -372,6 +389,7 @@ function setApi(handle: FramelineApi | null) {
 function Player() {
   const current = useSyncExternalStore(subscribe, () => config);
   const markers = useDemoMarkers(MEDIA);
+  demoMarkers = markers;
   const features = useMemo(() => overrides(current), [current]);
 
   return (

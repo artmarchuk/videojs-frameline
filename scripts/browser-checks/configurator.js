@@ -26,6 +26,14 @@ const state = () => page.evaluate(() => {
     proChunks: performance.getEntriesByType('resource').map((e) => e.name.split('/').pop()).filter((n) => /^(runtime|studio|debug)-/.test(n)).length,
   };
 });
+// The staged hero: before anything is touched, a range, the playhead inside it, Title safe, paused, an empty log.
+out.staged = await page.evaluate(() => ({
+  in: document.querySelector('#player [data-handle="in"]')?.getAttribute('aria-valuetext'), out: document.querySelector('#player [data-handle="out"]')?.getAttribute('aria-valuetext'),
+  timecode: (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11), titleSafe: !!document.querySelector('#player [data-guide="title-safe"]'),
+  paused: document.querySelector('#player video').paused, log: document.querySelectorAll('#log li').length, focus: document.activeElement?.tagName, scroll: window.scrollY,
+}));
+out.stagedOk = out.staged.in === '00:00:04:12' && out.staged.out === '00:00:10:02' && out.staged.timecode === '00:00:06:00' && out.staged.titleSafe && out.staged.paused && out.staged.log === 0 && out.staged.focus === 'BODY' && out.staged.scroll === 0;
+
 const check = (name) => page.locator(`#config input[name="${name}"]`);
 const radio = (name, value) => page.locator(`#config input[name="${name}"][value="${value}"]`);
 const showMe = async (task) => { await page.locator(`[data-task="${task}"] button`).click(); };
@@ -54,7 +62,7 @@ out.flagOk = start.zoomButton && !noZoom.zoomButton && noZoom.snippet.includes('
 await radio('tier', 'viewer').check({ force: true }); await page.waitForTimeout(600);
 const viewer = await state();
 out.viewer = { tier: viewer.tier, layout: viewer.layout, timeline: viewer.timeline, snippet: viewer.snippet, query: viewer.query, showMeDisabled: await page.locator('[data-task] button:disabled').count(), need: await page.locator('[data-task="zoom"] .need').textContent() };
-out.tierOk = viewer.tier === 'viewer' && viewer.layout === 'overlay' && !viewer.timeline && /tier="viewer"/.test(viewer.snippet) && !/features/.test(viewer.snippet) && viewer.query === '?tier=viewer' && out.viewer.showMeDisabled === 5 && await page.locator('[data-cue] button:disabled').count() === 3;
+out.tierOk = viewer.tier === 'viewer' && viewer.layout === 'overlay' && !viewer.timeline && /tier="viewer"/.test(viewer.snippet) && !/features/.test(viewer.snippet) && viewer.query === '?tier=viewer' && out.viewer.showMeDisabled === 6 && await page.locator('[data-cue] button:disabled').count() === 3;
 
 // A pro flag over Viewer adds the feature to Viewer.
 await check('timecode').check(); await page.waitForTimeout(1200);
@@ -94,6 +102,12 @@ const ranged = await state();
 out.range = { log: ranged.log[0], playing: !ranged.paused, loop: await page.locator('#player [aria-label^="Loop"]').first().getAttribute('aria-pressed'), focus: ranged.focus };
 out.rangeOk = /onInOutChange \| in \d+\.\d{3} · out \d+\.\d{3}/.test(ranged.log[0] ?? '') && !ranged.paused && out.range.loop === 'true' && kept(ranged.focus, 'Show me: set a range and loop it');
 await page.evaluate(() => document.querySelector('#player video').pause());
+
+// Review: to the marker `hold`, paused; the status names the marker; nothing is written to the clipboard.
+await showMe('review'); await page.waitForTimeout(1500);
+const reviewed = await state();
+out.review = { time: reviewed.time, paused: reviewed.paused, said: reviewed.said, focus: reviewed.focus };
+out.reviewOk = reviewed.paused && Math.floor(reviewed.time * fps + 0.01) === 512 && reviewed.said === 'On the marker "Director: hold the pose two frames longer". Press S to copy a link to this frame.' && kept(reviewed.focus, 'Show me: go to a review marker');
 
 // Guides: 9:16 with the TikTok zones while platform zones are on, Title safe without them.
 await showMe('guides'); await page.waitForTimeout(500);
@@ -147,5 +161,12 @@ out.roundTripOk = out.roundTrip.every((entry) => entry.same);
 await page.goto(`${url.origin}${url.pathname}?tier=viewer`, { waitUntil: 'load' }); await page.waitForTimeout(2500);
 out.viewerNoProChunk = (await state()).proChunks === 0;
 
-out.pass = out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
+// Configure still opens and closes after all those configuration changes (its listener is wired once).
+const expanded = () => page.getAttribute('#configure-toggle', 'aria-expanded');
+const wasOpen = await expanded();
+await page.click('#configure-toggle'); const flipped = await expanded();
+await page.click('#configure-toggle'); const back = await expanded();
+out.configureToggles = flipped !== wasOpen && back === wasOpen;
+
+out.pass = out.stagedOk && out.reviewOk && out.configureToggles && out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
 return out;
