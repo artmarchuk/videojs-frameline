@@ -1829,7 +1829,7 @@ Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel pre
 
 ## Theme C: the timecode as a display (18 Nov 2026, branch `theme-c`, not merged)
 
-Spec: `specs/theme-c-timecode-display.md`. CSS, tokens and one markup change (C.3). Screenshots, site root, 2x, each paired with `main`: `design/screenshots/theme-c/` (`main-*`, `c-*`, `pair-*`, and the two `*-report.json` with computed styles and accessible names).
+Spec: `specs/theme-c-timecode-display.md`. CSS, tokens and one markup change (C.3). Preview: https://videojs-frameline-ntfb8uk8i-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login, not opened in a browser). Screenshots, site root, 2x, each paired with `main`: `design/screenshots/theme-c/` (`main-*`, `c-*`, `pair-*`, and the two `*-report.json` with computed styles and accessible names).
 
 ### C.2 Sizes and widths (measured in Chrome on macOS, SF)
 | Dock | Font | Weight | `00:00:14:20` | `≈00:00:14:20` | Field (was) |
