@@ -1679,6 +1679,7 @@ Spec: `specs/landing-visuals-4.md`. Page code only: nothing under `src/` changed
 Spec: `specs/landing-visuals-5.md`. Page code only: nothing under `src/` changed, and the screenshots were not re-shot.
 
 ### Decisions
+- 18 Nov 2026: the line under the H1 is now "A Video.js skin that adds a preview monitor to the player in your video tool."
 - Hero copy: the descriptor reads "A Video.js skin for checking timing and framing, in the tools people make video with."; the two tier lines and their styles are gone. Spacing tokens: hero top 24 / 40 / 40, text gap 12 / 16 / 16, hero gap 24 / 32 / 32 (Phone / Desktop / Wide). The Wide player-width formula subtracts the H1 and the descriptor only.
 - Player top and dock bottom: 1920 × 1080: 236.2 and 1064 (the player is 1273 px wide, was 1216); 1440 × 900: 236.2 and 967.4 (player at its 1100 px minimum).
 - Descriptor lines: 2 at 390, 1 at 760, 1100 and 1440. At Claim Small's 19 px it took three lines at 390, so on Phone it is set in Lead (16 px there): an existing text style, but not what Figma's Phone frame names, if it names one.
