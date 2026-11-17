@@ -417,11 +417,12 @@ kbd {
   color: var(--dim);
 }
 
-/* The player and Configure: one block, so Configure sits right under the picture. */
+/* The player and the row under it (the tier switch and Configure): one block, so the row keeps the player's width.
+   The gap leaves room for the player's shadow. */
 .stage {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
+  gap: var(--space-24);
 }
 
 /*
@@ -429,15 +430,14 @@ kbd {
  * it fits, the dock. Width = the height left for the picture × the picture's shape, never under --size-player-min
  * and never over the wrap. The height left is the screen less what is above the player, the dock, and a margin.
  * What is above: the header, the positioning block (its padding, the H1, the descriptor and the two lines, one line
- * each at this width, with their line heights from the text styles), the gap, the tier bar and its gap. The tier bar
- * and Configure are in the same block, so they keep the player's width.
+ * each at this width, with their line heights from the text styles) and the gap. The tier switch and Configure are
+ * in the row under the player, in the same block, so they keep the player's width.
  */
 @media (width >= 1200px) {
   .stage {
     --hero-above: calc(
       var(--size-header) + var(--layout-hero-top) + var(--size-h1) * 1.08 + var(--layout-hero-text-gap) +
-        var(--size-claim) * 1.25 + var(--layout-hero-text-gap) + var(--size-lead) * 1.4 * 2 + var(--layout-hero-gap) +
-        var(--size-target) + var(--space-8)
+        var(--size-claim) * 1.25 + var(--layout-hero-text-gap) + var(--size-lead) * 1.4 * 2 + var(--layout-hero-gap)
     );
     align-self: center;
     width: clamp(
@@ -448,41 +448,106 @@ kbd {
   }
 }
 
+/* The player's width is the container the reserved height below is chosen by, as the skin chooses its dock. */
 .player-column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
+  container: hero-player / inline-size;
 }
 
-.tier-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-16);
-  min-height: var(--size-target);
-}
-
-.tier-hint {
-  color: var(--dim);
-  font: var(--type-small);
-  text-align: right;
-}
-
-/* Holds the room before the script arrives, so the page does not jump. */
+/*
+ * The player floats above the page like a window above a desktop: a light rim just inside its outline, a dark
+ * contact edge just outside it, and a layered shadow below (tokens.css). The page's box, not the skin's; in
+ * fullscreen the skin leaves this box behind. The rim is a layer over the player, since a shadow inside the box
+ * would be painted under the skin; it takes no pointer events.
+ */
 .player {
+  position: relative;
   min-height: 120px;
   border-radius: var(--radius-player);
+  box-shadow: var(--elevation-player-shadow);
 }
 
+.player::after {
+  position: absolute;
+  z-index: 100;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--elevation-player-rim);
+  content: "";
+  pointer-events: none;
+}
+
+/*
+ * No jump on load. Until the Studio code has drawn its dock, the box keeps the height the player will have: the
+ * stage (the width over the stage's shape) plus the dock, whose height follows the skin's own rules for the player's
+ * width: one row from 740 px, two rows under it (167 px, or 181 px under 500 px), and two rows on a touch device at
+ * any width. main.tsx keeps `data-reserve` while the tier is Studio in the dock layout; Viewer reserves nothing.
+ * The dock is there once the Studio module has written its arrangement (`data-dock-size`) on the player: the
+ * skin's `data-bar="pro"` comes earlier, with a one-row placeholder bar.
+ * `--player-reserve` is registered as a length so the landing check can read it in pixels.
+ */
+@property --player-reserve {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.player {
+  --player-dock: var(--size-dock);
+  --player-reserve: calc(100cqw / (var(--fl-stage-ratio, 16 / 9)) + var(--player-dock));
+}
+
+@media (pointer: coarse) {
+  .player {
+    --player-dock: var(--size-dock-narrow);
+  }
+}
+
+@container hero-player (width < 740px) {
+  .player {
+    --player-dock: var(--size-dock-narrow);
+  }
+}
+
+@container hero-player (width < 500px) {
+  .player {
+    --player-dock: var(--size-dock-narrow-portrait);
+  }
+}
+
+.player[data-reserve]:not(:has([data-dock-size])) {
+  min-height: var(--player-reserve);
+}
+
+/*
+ * The skin's one-row bar that stands in until the dock arrives would move twice inside the reserved room; it is not
+ * shown meanwhile, so the room stays still. If the Studio code never arrives, it is shown after 4 s.
+ */
+@keyframes player-reveal-bar {
+  to {
+    visibility: visible;
+  }
+}
+
+.player[data-reserve]:not(:has([data-dock-size])) .pro-bar {
+  visibility: hidden;
+  animation: player-reveal-bar 0s linear 4s forwards;
+}
+
+/* Before the script: the picture's room, with the rim and the shadow already round it. */
 .player:empty {
   aspect-ratio: var(--fl-stage-ratio, 16 / 9);
-  border: 1px solid var(--line);
   background: var(--surface-0);
 }
 
-/* The skin's own hairline and radius frame the player on the page. */
+/* The skin's frame takes the page's radius, so the skin's corner, the rim and the shadow are one outline. Its own
+   hairline is drawn transparent: the rim below takes its place. Both through the skin's public tokens. */
 .player .media-skin {
   --fl-frame-border: 1;
+}
+
+.player {
+  --media-border-radius: var(--radius-player);
+  --media-border-color: transparent;
 }
 
 /* The stage's shape: 16:9, or the picture's own shape when main.tsx sets it for a file with black bars. */
@@ -578,16 +643,46 @@ video-player {
 
 /* ---------- Configure: collapsed under the player; its button opens the whole section ---------- */
 
+/*
+ * The row under the player: the tier switch with its hint on the left, Configure on the right with the summary under
+ * it. Under 760 px the row wraps: see the Phone section.
+ */
 .configure-bar {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "tier toggle"
+    ". summary";
   align-items: center;
-  gap: var(--space-8);
-  text-align: center;
+  column-gap: var(--space-24);
+  row-gap: var(--space-8);
+}
+
+.configure-open {
+  display: contents;
 }
 
 .configure-bar h2 {
+  grid-area: toggle;
   font: inherit;
+}
+
+.tier-try {
+  display: flex;
+  grid-area: tier;
+  align-items: center;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.tier-try .segmented {
+  flex: none;
+}
+
+.tier-hint {
+  min-width: 0;
+  color: var(--dim);
+  font: var(--type-small);
 }
 
 /*
@@ -643,8 +738,10 @@ video-player {
 }
 
 .configure-summary {
+  grid-area: summary;
   color: var(--dim);
   font: var(--type-small);
+  text-align: right;
 }
 
 /*
@@ -1086,9 +1183,43 @@ video-player {
     font: var(--type-small);
   }
 
-  .tier-hint,
   .cue-note {
     display: none;
+  }
+
+  /*
+   * The row under the player wraps: the switch and Configure share the first line when both fit at full size, else
+   * Configure goes to the next line (alone on a line, it starts at the left). The hint sits under the switch and
+   * takes no width of its own, so it never decides the wrap.
+   */
+  .configure-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-16);
+  }
+
+  .configure-open {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-8);
+  }
+
+  .tier-try {
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-8);
+  }
+
+  .tier-try .segmented {
+    align-self: flex-start;
+  }
+
+  .tier-hint {
+    contain: inline-size;
   }
 
   .section-body {
@@ -1228,5 +1359,10 @@ video-player {
 
   .configure-toggle {
     border-color: ButtonText;
+  }
+
+  /* Shadows are dropped in forced colours; the rim becomes a system-colour line. */
+  .player {
+    outline: 1px solid CanvasText;
   }
 }

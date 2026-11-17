@@ -93,7 +93,9 @@
   --size-key-column: 120px;
   --size-figure: 560px;
   --size-player-min: 1100px; /* the narrowest hero player in Wide: the dock keeps its full one-row layout */
-  --size-dock: 117px; /* the Studio dock's height on one row, measured in the browser; the hero sizes the player with it */
+  --size-dock: 117px; /* the Studio dock's height on one row (player 740 px and wider), measured in the browser */
+  --size-dock-narrow: 167px; /* two rows, player 500 to 739 px wide */
+  --size-dock-narrow-portrait: 181px; /* two rows, player under 500 px wide */
   --size-target: 44px;
   --size-key: 30px;
 
@@ -109,6 +111,10 @@
   --layout-row-pad: 22px;
   --layout-column-gap: 48px;
   --layout-card-gap: 24px;
+
+  /* ---------- Elevation: the hero player above the page, like a window above a desktop ---------- */
+  --elevation-player-rim: inset 0 0 0 1px rgb(255 255 255 / 0.11); /* inside the outline, over the player's edge */
+  --elevation-player-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 8px 20px rgb(0 0 0 / 0.35), 0 24px 64px 8px rgb(0 0 0 / 0.55);
 
   /* ---------- Text styles ---------- */
   --type-h1: 800 var(--size-h1) / 1.08 var(--family-ui);
@@ -155,7 +161,6 @@
     --layout-gutter: 16px;
     --layout-hero-gap: 20px;
     --layout-hero-top: 16px;
-    --layout-hero-text-gap: 8px;
     --layout-hero-bottom: 40px;
     --layout-section-top: 28px;
     --layout-section-bottom: 48px;
@@ -169,5 +174,8 @@
     --dim: #d2d2d2;
     --line: #7f7f7f;
     --control: #a4a4a4;
+    /* No shadow; the rim is a solid hairline at 3:1. */
+    --elevation-player-rim: inset 0 0 0 1px var(--line);
+    --elevation-player-shadow: 0 0 #0000;
   }
 }

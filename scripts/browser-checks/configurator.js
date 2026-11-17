@@ -1,7 +1,7 @@
 // Browser check (step 8.2, updated for the landing page). Body of an async function; `page` on the site root (`/`), 1440x900.
 // Tier and flags change the player and the snippet; the query string round-trips with no reload; each "Show me"
 // does what it says through the skin's handle and leaves the keyboard on its button; the event log receives a range
-// change and a frame grab.
+// change and a frame grab; the room kept for the dock on load is the player's final height.
 const out = {};
 await page.waitForFunction(() => document.querySelector('#player video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForTimeout(1500);
@@ -70,7 +70,7 @@ const viewerPlus = await state();
 out.viewerPlus = { snippet: viewerPlus.snippet, query: viewerPlus.query, timecode: await page.locator('#player [class*="timecode"]').count() > 0 };
 out.viewerPlusOk = viewerPlus.snippet.includes('features={{ timecode: true }}') && viewerPlus.query === '?tier=viewer&timecode=1' && out.viewerPlus.timecode;
 
-// The tier switch over the player is the same switch as the form's, and the line beside it follows.
+// The tier switch under the player is the same switch as the form's, and the line beside it follows.
 await page.locator('input[name="hero-tier"][value="studio"]').check({ force: true }); await page.waitForTimeout(600);
 const heroStudio = await state();
 out.heroTier = { tier: heroStudio.tier, form: await radio('tier', 'studio').isChecked(), hint: await page.textContent('#tier-hint') };
@@ -168,5 +168,31 @@ await page.click('#configure-toggle'); const flipped = await expanded();
 await page.click('#configure-toggle'); const back = await expanded();
 out.configureToggles = flipped !== wasOpen && back === wasOpen;
 
-out.pass = out.stagedOk && out.reviewOk && out.configureToggles && out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
+// No jump on load: the room the page keeps for Studio's dock (`--player-reserve`, landing.css) is the height the
+// player has once the dock is drawn, at each width and on a touch device, where the dock has two rows at any width.
+const reserveAt = async (target) => {
+  await target.waitForFunction(() => document.querySelector('#player [data-dock-size]'), null, { timeout: 30000 }); await target.waitForTimeout(600);
+  return target.evaluate(() => {
+    const player = document.querySelector('#player');
+    return {
+      width: innerWidth, reserved: parseFloat(getComputedStyle(player).getPropertyValue('--player-reserve')), rendered: player.getBoundingClientRect().height,
+      dock: document.querySelector('#player .pro-bar').getBoundingClientRect().height, rows: document.querySelector('#player [data-dock-size]').dataset.dockRows ?? 'one',
+    };
+  });
+};
+out.reserve = [];
+for (const [width, height] of [[1440, 900], [900, 900], [760, 1000], [390, 844]]) {
+  await page.setViewportSize({ width, height });
+  await page.goto(`${url.origin}${url.pathname}?tier=studio`, { waitUntil: 'load' });
+  out.reserve.push(await reserveAt(page));
+}
+const touch = await page.context().browser().newContext({ viewport: { width: 820, height: 1180 }, hasTouch: true, isMobile: true });
+const touchPage = await touch.newPage();
+await touchPage.goto(`${url.origin}${url.pathname}?tier=studio`, { waitUntil: 'load' });
+out.reserve.push({ ...(await reserveAt(touchPage)), touch: true });
+await touch.close();
+await page.setViewportSize({ width: 1440, height: 900 });
+out.reserveOk = out.reserve.every((entry) => Math.abs(entry.reserved - entry.rendered) <= 1);
+
+out.pass = out.reserveOk && out.stagedOk && out.reviewOk && out.configureToggles && out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
 return out;

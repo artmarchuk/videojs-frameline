@@ -1618,9 +1618,59 @@ Spec: `specs/landing-visuals-3.md`. Nothing under `src/` changed. The hero opens
 - Typecheck, 219 tests, build. `configurator.js` passes; axe: 0 violations at 1440 and 390. Monitor checks: `range-playback`, `dock-polish`, `viewer-gate`, `guides-menu-focus`, `zoom-rendition-note`, `reduced-motion` (both pages) pass; `zoom.js` passes on `&media=cosmicDawn` (see above).
 - Pure-black rows in the nine images: none, except the burned-in timecode's own box in the zoom shot.
 
-### Open: layout shift on load (not caused by this round, not fixed)
+### Layout shift on load (fixed in round four, below)
 - Studio's dock arrives after the page has laid out: the player first has a 34 px bar, which grows to the dock (181, 167 or 117 px, by the skin's arrangement from the player's width and pointer). Configure and the section under it move down. CLS: 0.112 at 390, 0.122 at 760, 0.049 at 900, 0.001 to 0.014 from 1100. The live site: 0.111 at 390, 0.053 at 760; the shorter hero brings more of what moves into the first screen.
 - A page-only fix: reserve the player's final height (stage plus dock) until the Studio handle arrives. It needs the narrow docks' heights (167 and 181 px, and their touch-pointer heights, not measured) as tokens, and those are not in Figma.
 
 ### Unverified (round three)
 - Firefox, Safari and a real phone were not run. The dock heights under a touch pointer were not measured.
+
+## Landing page visuals, round four: the tier switch under the player, a floating player, no jump on load (18 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-4.md`. Page code only: nothing under `src/` changed, the skin gained no rim, shadow or token, and the screenshots were not re-shot.
+
+### Decisions: the row under the player
+- The tier switch and its hint left the bar above the player and joined Configure in the row under it (`.configure-bar` in `index.html`). Tab order: the player, the switch, Configure. The switch keeps its fieldset, hidden legend "Tier" and arrow keys.
+- From 760 px: a grid, the switch and the hint on the left (the hint fills), Configure on the right, the summary under it aligned to its right edge. The summary is now the button's accessible description (`aria-describedby="configure-summary"`); it was not before, although the spec said "stays".
+- Under 760 px: a wrapping flex row. The switch and Configure share line one when both fit at full size (from about 450 px); otherwise Configure goes to line two and, alone there, starts at the left. The hint sits under the switch and has `contain: inline-size`, so its length never decides the wrap. The hint was hidden under 760 px before; it is shown now, as the spec asks.
+- Gap between the player and the row: `--space-24`. The Wide player-width formula no longer subtracts the tier bar (44 + 8 px). Player top and dock bottom: 1920 × 1080: 267.8 and 1064 (top was 319.8); 1440 × 900: 267.8 and 999. At 1440 the player is at its minimum width (1100 px), so the dock still ends below the window, as before.
+
+### Decisions: the switch stays where the pointer is (`holdInPlace` in `main.tsx`; the author decides after trying it)
+- Native scroll anchoring does not keep the control in place in Chrome, Firefox or WebKit: the player above the control is the anchor's own box, so the control moved by the dock's height (117 px at 1440; 181 to 199 px at 390) in all three. The code is needed in every engine tested.
+- The function notes the control's position, runs the tier change, and on each change of the player's size scrolls by the difference, instantly (`behavior: 'auto'`; the page has no smooth scrolling). It stops 800 ms after the last change of size, after 6 s with none, or on the visitor's wheel, touch or key. At the top of the page, or where the page cannot scroll far enough, the control moves.
+- Measured (control top before → after, px), hero switch and Configure's Tier radios, by mouse and by keyboard: Chrome, Firefox and WebKit at 1440: 0 in every case. At 390: 0 to 0.8, except hero → Viewer from 176 px down the page, where the page could only scroll 176 of 181 px: 5 to 6 px. At the top of the page: the control moves (-117 at 1440, -181 at 390) and nothing scrolls.
+- To remove it: delete `holdInPlace` and `setTier`'s wrapper and call `setConfig(tierConfig(...))` directly, as before.
+
+### Decisions: the player floats above the page
+- Page CSS on `#player`, the page's box around the skin. Tokens (new, for Figma): `--elevation-player-rim: inset 0 0 0 1px rgb(255 255 255 / 0.11)` and `--elevation-player-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 8px 20px rgb(0 0 0 / 0.35), 0 24px 64px 8px rgb(0 0 0 / 0.55)`: the spec's values.
+- The rim is drawn inside the outline, by a `::after` layer over the player (no pointer events). As an outer ring it lay on top of the dark contact edge and could not be seen (about #1f1f1f against #161616). Inside, it is a light line on the dock and the picture, with the dark contact edge just outside: one light line and one dark, as on a macOS window.
+- The skin's own frame hairline would have been a second line beside the rim, so the page sets the public `--media-border-color: transparent`. It also sets `--media-border-radius: var(--radius-player)` (8 px): the skin's frame was 10 px, the page's box 8, and the rim and shadow have to follow one corner. The placeholder before the script lost its own border for the same reason.
+- `prefers-contrast: more`: no shadow; the rim is `var(--line)` (#7f7f7f, 3:1). Forced colours: the browser drops both shadows; the box gets `outline: 1px solid CanvasText`. Checked by screenshot: one line in each.
+- The shadow ends about 90 px under the player, within the row under it and short of the next section's text at 1440 and 390.
+
+### Decisions: no jump on load
+- New tokens: `--size-dock-narrow: 167px` and `--size-dock-narrow-portrait: 181px`, next to `--size-dock: 117px`. The phone `--layout-hero-text-gap` is 12 px (Figma), so the Phone override is gone.
+- `.player-column` is a size container (`hero-player`); the reserved height is the stage (100cqw over the stage's shape) plus the dock chosen with the skin's rules: 117 from 740 px, 167 under it, 181 under 500 px, and 167 on a touch pointer at any width (181 under 500). It is a registered `--player-reserve` length, so the check reads it in pixels.
+- Kept while `data-reserve` (Studio in the dock layout, set by `main.tsx` and in the HTML for the default) and until the Studio module has written its arrangement (`data-dock-size`). The skin's `data-bar="pro"` was the first signal tried; it is set before the Studio code arrives, with a one-row bar, so the room went too early.
+- That one-row bar would still move twice inside the kept room (its Play button grows, then the row drops 53 px); it is `visibility: hidden` while the room is kept, and an animation shows it after 4 s in case the Studio code never arrives.
+- Layout shift on first load, staged Studio, headless Chrome, the same three-run script on both builds (identical runs):
+
+  | Window | Round three | Round four |
+  |---|---|---|
+  | 390 | 0.107 | 0.002 |
+  | 760 | 0.100 | 0.002 |
+  | 900 | 0.048 | 0.006 |
+  | 1100 | 0.001 | 0.002 |
+  | 1440 | 0.002 | 0.002 |
+
+  What is left is the H1 moving 2 px when the web font arrives, and the timeline's handles settling.
+- `configurator.js` checks reserved against rendered: 1440 731.17 / 731.16, 900 592.70 / 592.69, 760 564.53 / 564.53, 390 380.88 / 380.88, touch at 820 598.03 / 598.03 (dock 167 px, as the token).
+
+### Checks (headless Chrome, Firefox and WebKit from Playwright, local production build)
+- Typecheck, tests, build. `configurator.js` passes (with the reserve check); axe: 0 violations at 1440 and 390; `reduced-motion` on the landing page passes.
+- Screenshots: `design/screenshots/landing-visuals-4/` (the hero in Studio and Viewer at 1440 × 900, 1920 × 1080, 760 × 1000, 390 × 844; the player's edge at 1440 and 390; the rim under more contrast and forced colours).
+
+### Unverified (round four)
+- Safari itself and a real phone: the scroll compensation was run in Playwright's WebKit, not Safari. The touch dock height was measured with Chrome's touch emulation, not a device.
+- The rim and shadow were tuned on screenshots; not looked at on a real display at 1×.
+
