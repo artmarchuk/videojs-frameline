@@ -863,7 +863,22 @@ video-player {
 .shot-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-12);
+  gap: var(--layout-row-gap);
+}
+
+/* A row whose figure is a pair: the pair sits under the text, from the claim's left edge to the row's right edge,
+   so each of its figures is about the size of another row's figure. The text keeps its own column. */
+.feature-wide {
+  grid-template-rows: none;
+  grid-template-areas:
+    "keys claim ."
+    "keys detail ."
+    "keys action ."
+    "keys figure figure";
+}
+
+.feature-wide .feature-figure {
+  margin-top: var(--space-14);
 }
 
 .shot-pair figcaption,
@@ -1015,6 +1030,15 @@ video-player {
 
   .feature .button {
     margin-top: 0;
+  }
+
+  .feature-wide .feature-figure {
+    margin-top: 0;
+  }
+
+  .shot-pair {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-12);
   }
 
   .feature-note {

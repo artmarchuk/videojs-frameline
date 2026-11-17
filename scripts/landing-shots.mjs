@@ -11,7 +11,8 @@
 //
 // The script cannot read the picture, so two things are for a person to look at after a run:
 //   frame-step  the burned-in timecode and the dock's timecode must read the same frame;
-//   zoom        single pixels must show as squares, and no lower-rendition note may be in the shot.
+//   zoom        the edges of the burned-in digits must show as square steps, and no lower-rendition note may be in the shot;
+//   guides      the peak must sit well against the thirds.
 import { mkdir, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -37,8 +38,11 @@ const AT = {
   rangeIn: '00:00:04:12',
   beforeFlash: '00:00:27:14', // one frame before the marker `flash`
   flash: '00:00:27:15',
-  sneaker: '00:00:46:12', // Sneaker color correction
+  snowPeak: '00:00:49:12', // Snow peak: the summit sits by the upper right crossing of the thirds
 };
+/** The burned-in timecode's box in the reel's 1920 × 1080 frame, measured on the frame 00:00:06:00. */
+const BURN_IN = { x: 192, y: 108, width: 245, height: 58 };
+const SOURCE = { width: 1920, height: 1080 };
 const FPS = 24;
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -193,16 +197,28 @@ async function save(name, image, size, quality = {}) {
   }
 }
 
-/** Opens the Guides menu and switches on the TikTok zones, which bring the 9:16 crop with them. */
-async function tiktokZones(page) {
-  await page.click('[data-pro-menu="guides"]');
-  await page.waitForTimeout(400);
-  await page.locator('.pro-menu-popup [role^=menuitem]', { hasText: 'TikTok' }).first().click();
-  await page.waitForTimeout(300);
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(300);
-  const drawn = await page.evaluate(() => ({ zones: document.querySelector('.pro-skin').dataset.zones ?? null, layers: document.querySelectorAll('.pro-overlay *').length }));
-  if (!drawn.layers) throw new Error('The TikTok zones are not drawn');
+/**
+ * Switches guides on in the Guides menu, by the names the menu shows, and closes the menu. `expected` is the
+ * `data-guide-*` attributes the player must then carry, and no others.
+ */
+async function guidesOn(page, labels, expected) {
+  for (const label of labels) {
+    if (!(await page.locator('.pro-menu-popup:visible').count())) {
+      await page.click('[data-pro-menu="guides"]');
+      await page.waitForTimeout(400);
+    }
+    await page.locator('.pro-menu-popup [role^=menuitem]', { hasText: label }).first().click();
+    await page.waitForTimeout(300);
+  }
+  for (let i = 0; i < 3 && (await page.locator('.pro-menu-popup:visible').count()); i++) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+  }
+  const drawn = await page.evaluate(() => {
+    const skin = document.querySelector('.pro-skin');
+    return { guides: skin.getAttributeNames().filter((name) => name.startsWith('data-guide-')).map((name) => name.slice(11)).sort(), zones: skin.dataset.zones ?? null };
+  });
+  if (drawn.zones || drawn.guides.join() !== [...expected].sort().join()) throw new Error(`The guides are not as wanted: ${JSON.stringify(drawn)}, wanted ${expected.join()}`);
 }
 
 /* ---------- The shots ---------- */
@@ -309,23 +325,35 @@ const SHOTS = {
   },
 
   /**
-   * 4 and 6. The 9:16 crop mask and the TikTok zones on the Dancer, on a 760 px player; then the same picture whole
-   * beside the PNG that `G` saves from it. One session, so the pair is one frame in one state.
+   * 4. The 2.39:1 crop and the rule of thirds on the Snow peak, on a 760 px player. A different moment and guide set
+   * from the frame grab's row.
    */
   async guides() {
+    const page = await monitor({ width: 760, at: AT.snowPeak, viewport: { width: 1100, height: 1000 } });
+    await bestRendition(page);
+    await guidesOn(page, ['2.39:1', 'Rule of thirds'], ['2-39', 'thirds']);
+    await page.focus('.pro-skin');
+    await settle(page);
+    notes.push(`guides: the 2.39:1 crop and the rule of thirds on ${await timecode(page)}`);
+    const picture = await box(page, '.pro-picture');
+    await save('guides', await clip(page, regionAt(picture, { x: 'centre', y: 'centre' }), picture), EXPORT);
+    await page.context().close();
+  },
+
+  /**
+   * 6. The Dancer with Title safe, the thirds and the centre cross, whole, beside the PNG that `G` saves from it. One
+   * session, so the pair is one frame in one state.
+   */
+  async grab() {
     const markers = await (await fetch(`${base}/demo/reel/markers.json`)).json();
     const hold = markers.find((marker) => marker.id === 'hold');
     const at = `00:00:${String(Math.floor(hold.time)).padStart(2, '0')}:${String(Math.round((hold.time % 1) * FPS)).padStart(2, '0')}`;
     const page = await monitor({ width: 760, at, viewport: { width: 1100, height: 1000 } });
     await bestRendition(page);
-    await tiktokZones(page);
-    // The zones are labelled by part on the picture. "Approximate" is said in the Guides menu and to screen readers,
-    // not on the picture, and the open menu covers the picture at this width: the shot shows the zones.
+    await guidesOn(page, ['Title safe', 'Rule of thirds', 'Centre cross'], ['title-safe', 'thirds', 'centre']);
     await page.focus('.pro-skin');
     await settle(page);
-
     const picture = await box(page, '.pro-picture');
-    await save('guides', await clip(page, regionAt(picture, { x: 'centre', y: 'centre' }), picture), EXPORT);
 
     // 6a. On screen: the whole picture, guides on.
     const screen = await page.screenshot({ type: 'png', clip: picture });
@@ -363,18 +391,32 @@ const SHOTS = {
   },
 
   /**
-   * 5. 400% on the toe of the Sneaker's sole, single pixels as squares, the Zoom button reading 400%. A 560 × 350 region
-   * exported one to one, not 700 px scaled to 80%: a source pixel is four device pixels here, and scaling would
-   * turn exact squares into uneven ones.
+   * 5. 400% on the burned-in timecode of the staged frame, the Zoom button reading 400%. A 560 × 350 region exported
+   * one to one, not 700 px scaled to 80%: a source pixel is four device pixels here, and scaling would turn exact
+   * squares into uneven ones.
+   *
+   * The timecode is in the picture's top left corner and the Zoom button in the dock's right half, and a pan stops
+   * at the picture's edge. So the player is sized to bring them together: with the picture panned to its top left
+   * corner, the timecode's centre is a fixed distance from the stage's corner (two CSS px per source pixel), and the
+   * player's width and the window's height put the middle of the region's picture area on that point.
    */
   async zoom() {
-    const page = await monitor({ width: 1280, at: AT.sneaker });
+    const size = { width: EXPORT.width / SCALE, height: EXPORT.height / SCALE };
+    const perPixel = 4 / SCALE; // CSS px per source pixel at 400%
+    const centre = { x: (BURN_IN.x + BURN_IN.width / 2) * perPixel, y: (BURN_IN.y + BURN_IN.height / 2) * perPixel };
+    const DOCK = 117; // the one-row dock; checked below
+    const BARS = 62; // the monitor page's own bars above and below the player
+    const pictureArea = size.height - DOCK; // the part of the region above the dock
+    const width = Math.round(centre.x + size.width / 2);
+    const stageHeight = Math.round(centre.y + pictureArea / 2);
+    const page = await monitor({ width, at: AT.staged, viewport: { width: 1500, height: stageHeight + DOCK + BARS } });
     const best = await bestRendition(page);
     await page.focus('.pro-skin');
     await key(page, 'z', 4); // 100%, 150%, 200%, 400%
-    // To the toe of the sole: orange against the white platform, the sharpest edge in the shot.
-    await key(page, 'Shift+Alt+ArrowDown', 4);
-    await key(page, 'Shift+Alt+ArrowRight', 5);
+    await page.waitForTimeout(600);
+    // A pan key moves the picture a tenth of the stage; 30 presses reach the corner from anywhere, and the pan stops there.
+    await key(page, 'Shift+Alt+ArrowLeft', 30);
+    await key(page, 'Shift+Alt+ArrowUp', 30);
     await page.waitForTimeout(2500); // a rendition note, if one is coming, has arrived by now
     await settle(page);
 
@@ -387,12 +429,21 @@ const SHOTS = {
     }));
     if (state.zoom !== '400' || state.height !== best || !state.button.startsWith('400%') || /showing|\dp/.test(state.button + state.label))
       throw new Error(`The zoom shot is not in its state, or a lower rendition is playing: ${JSON.stringify(state)}`);
-    notes.push(`zoom: ${state.button}, ${state.height}p playing, image-rendering ${state.rendering}`);
 
     const player = await playerBox(page);
-    const size = { width: EXPORT.width / SCALE, height: EXPORT.height / SCALE };
     const region = regionAt(player, { x: 'end', y: 'end' }, size);
+    // Where the burned-in timecode is on screen: the frame's box, scaled, from the frame's top left corner.
+    const stage = await box(page, '.pro-stage');
+    const frame = await page.evaluate((source) => {
+      const video = document.querySelector('video').getBoundingClientRect();
+      const scale = Math.min(video.width / source.width, video.height / source.height);
+      return { x: video.x + (video.width - source.width * scale) / 2, y: video.y + (video.height - source.height * scale) / 2, scale };
+    }, SOURCE);
+    if (Math.abs(frame.scale - perPixel) > 0.01) throw new Error(`A source pixel is ${frame.scale} CSS px, not ${perPixel}`);
+    const burnIn = { x: frame.x + BURN_IN.x * frame.scale, y: frame.y + BURN_IN.y * frame.scale, width: BURN_IN.width * frame.scale, height: BURN_IN.height * frame.scale };
+    assertInside({ ...region, height: stage.y + stage.height - region.y }, burnIn, 'The burned-in timecode');
     assertInside({ ...region, height: region.height + 6 }, await box(page, '[data-pro-menu="zoom"]'), 'The Zoom button');
+    notes.push(`zoom: ${state.button}, ${state.height}p playing, image-rendering ${state.rendering}, a ${width} px player with a ${Math.round(stage.height)} px stage, on ${await timecode(page)}`);
     await save('zoom', await clip(page, region, player));
     await page.context().close();
   },

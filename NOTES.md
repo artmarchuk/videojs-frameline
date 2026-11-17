@@ -1558,6 +1558,37 @@ Spec: `specs/landing-visuals.md`. Nothing under `src/` changed.
 
 ### Unverified (landing visuals)
 - Firefox, Safari and a real phone were not run on the new rows. AVIF with a WebP fallback is inside the browser floor on paper (Safari 16.4 has AVIF); Chrome picked AVIF.
-- A screen reader was not listened to: "Seeked to 6 seconds" on load was read from the live region, not heard.
+- "Seeked to 6 seconds" on load is accepted for now (round two). What was read: the text Video.js's status announcer puts in its live region after the staged seek. What was not heard: a screen reader speaking it, and whether it interrupts the page title.
 - **Seen, not touched (skin):** on a 760 px player the open Guides menu is cut at its bottom edge ("Hide guides" is half hidden).
 - The page's "zero violations in six states" line is unchanged and still not re-counted.
+
+## Landing page visuals, round two: new icons, three better shots, a compact hero (17 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-2.md`. Nothing under `src/` changed. The branch was rebased onto `main` (new icons, narrow dock rows, tooltips); the one conflict was this file, both sides kept.
+
+### Decisions: the compact hero (from 1200 px wide; narrower layouts unchanged)
+- **A third token mode, Wide** (`@media (width >= 1200px)` in `tokens.css`): `--size-h1` 56 px (72), `--layout-hero-gap` 24 px (48), and two new tokens, `--layout-hero-top` 24 px (48: the space above the H1) and `--layout-hero-text-gap` 12 px (20: the gap inside the positioning block). Two more new tokens, not moded: `--size-player-min` 1100 px and `--size-dock` 117 px (the one-row Studio dock, measured in the browser at 1100 and 1280 px).
+- **Where the spec's values and its targets disagreed.** The spec's table (hero gap 32 px, 24 px above the H1) puts the picture's top at 343.8 px; its targets need 320 or less (and a dock bottom of 1064 or less at 1920 × 1080). The 24 px missing are the hero's own 16 px top padding and the 8 px between the tier bar and the player. Done on the page: in Wide the hero has no top padding (the 24 px above the H1 is all of it), and the hero gap is 24 px, not 32. No skin change was needed.
+- **The player's width follows the screen's height**: `.stage` is `clamp(--size-player-min, (100svh − what is above − --size-dock − 16 px) × the picture's shape, 100%)`, centred. What is above is a `calc()` of the same tokens that lay it out (header, hero top, the three text lines with the line heights of their text styles, the gap, the tier bar and its gap); it matched the browser to the pixel. The shape is `--fl-stage-ratio`, which `main.tsx` now sets on `.stage` from `media.ts` (it was on `#player`). The tier bar and Configure are inside `.stage`, so they keep the width.
+- Measured, staged state: 1440 × 900: top 319.8, width 1100, dock bottom 1051 (not whole). 1536 × 864: 319.8, 1100, 1051 (not whole). 1920 × 1080: 319.8, 1123.3, 1063.97 (whole). 1440 × 1200: 319.8, 1280, 1151.5 (whole). The H1 is one line at 1200 px.
+
+### Decisions: screenshots and row 6
+- All nine files regenerated on the rebased build, so every shot has the new icons.
+- **Shot 5 (zoom): the burned-in timecode at 400%, whole, not two or three digits.** At 400% on a 2x screen a source pixel is 2 CSS px, and the figure's picture area is 560 × 233 px: 280 × 116 source pixels. The burn-in is 245 × 58 px, so all of it fits and it fills the width; two or three digits filling the area would need about 1200%. The squares are 4 × 4 device pixels, checked in the exported file at 8x.
+- **How shot 5 gets the timecode beside the Zoom button.** The timecode is in the picture's top left corner, the button in the dock's right half, and a pan stops at the picture's edge. The script sizes the player (909 px wide, a 391 px stage in a 570 px window) so that, with the picture panned to its corner by `Shift` `Alt` and the arrows, the timecode is in the middle of the region's picture area. A pan key moves a tenth of the stage, so the corner takes more presses at 400% than at 150% (30 are sent; the pan stops at the edge).
+- **Shot 4 (guides): the 2.39:1 crop and the rule of thirds on 00:00:49:12**, Snow peak. The skin draws the thirds inside the crop; the summit is by their upper right crossing. The section runs 00:00:48:11 to 00:00:50:17 and the peak moves little in it.
+- **Shot 6**: "On screen" is the Dancer on 00:00:21:08 with Title safe, thirds and centre, no zones; the PNG is the file `G` saved (1920 × 1080).
+- **Row 6**: from 1100 px the pair sits under the text, from the claim's left edge to the row's right edge, with the row gap between (548 px each at 1440; another row's figure is 560). Under 1100 px the pair stacks. It did not stack before, whatever round one's notes implied: the pair was two columns at every width.
+- The monitor page still shows the reel's 4 black rows above and below the picture, so they are in the shots that reach the picture's top or bottom edge (guides, the grab pair, the tier pair).
+
+### The duration: 00:00:56:02 on the page, 00:00:56:01 in the shots
+Both come from `video.duration`; nothing was changed. On load the duration is the playlist's, 56.0833 s: 1346 frames, shown as 00:00:56:02. Once the player has played, the browser reports 56.0437 s (1345.05 frames, shown as 00:00:56:01), at every quality. The shots read 56:01 because the script plays the video to bring the best rendition on screen. 56:02 matches the reel's 1346 frames. Why the browser's figure shrinks was not traced; a shorter audio track at the end of the stream is the likely cause.
+
+### Checks (headless Chrome, local production build)
+- The hero at the four viewports and at 1100, 900 and 390 px; "What Studio checks" at 1440, 1100 and 390 px (`design/screenshots/landing-visuals-2/`). No horizontal overflow; row and tier-pair heights are the same with the images blocked and loaded.
+- Each of the nine files opened: new icons, no cursor, no tooltip but the marker's label.
+- `configurator.js` passes; `axe-audit.js` finds zero violations at 1440 and 390 px. Typecheck, 219 unit tests, build: pass.
+
+### Unverified (round two)
+- Firefox, Safari and a real phone were not run. `svh` is inside the browser floor on paper (Chrome 108, Firefox 101, Safari 15.4).
+- Before the script runs, the stage's shape falls back to 16:9, so between the width limits the player can be up to about 9 px narrower for a moment on load. Not seen in a capture; not measured as a shift.
