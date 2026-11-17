@@ -657,6 +657,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 - https://frameline.artmarchuk.me is the canonical URL (a custom domain on the Vercel project `videojs-pro`). `videojs-frameline.vercel.app` stays as a secondary domain (it redirects to the canonical one). The "public-URL checks" sections below ran on the earlier vercel.app domains. Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
 - 18 Nov 2026: Theme A, A.1 and A.2 (branch `theme-industrial`, fast-forwarded into `main` at 03712d4) deployed to production with `npm run deploy vercel` (deployment `videojs-frameline-7dvs4kql8`). Checked on https://frameline.artmarchuk.me: the site root and `/preview.html` answer 200 and load the same skin stylesheet as the local build (`demo-video-CeGZDIde.css`); on both, the dock is `#171717`, `--fl-range` is `#606060`, there is no played band, and the Capture menu is `surface-1` with plain-text shortcuts.
+- 18 Nov 2026: Theme B with B.8 (branch `theme-b`, fast-forwarded into `main` at 1fe3967 by pushing `theme-b` to `origin/main`; the local `main` worktree had uncommitted work and was not touched) deployed to production with `npm run deploy vercel` (deployment `videojs-frameline-m0nntqfod`). Checked on https://frameline.artmarchuk.me: the site root and `/preview.html` answer 200 and load the same skin stylesheet as the local build (`demo-video-Fj1rme_E.css`); on the site root the transport is one housing (1px gaps, `#050505`), Loop on has the `surface-2` fill and its light, Zoom at 200% has no fill and its light, idle handles are `#a0a0a0`.
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
@@ -1761,7 +1762,7 @@ After the fixes the two pages differ in 0 properties, in both colour modes. The 
 - Whether the faint menu edge over the dock is enough for the author: it is decorative by the rules and visible at 2x, but quieter than before.
 - On a narrow player the Markers menu cuts long names and also the times with an ellipsis (at 390 and 320). This was already so at A1.8 and is not changed here (Backlog).
 
-## Theme B: the keybed, lit "on" states, readable idle handles (18 Nov 2026, branch `theme-b`, not merged)
+## Theme B: the keybed, lit "on" states, readable idle handles (18 Nov 2026, branch `theme-b`, merged into `main` and deployed to production 18 Nov 2026)
 
 Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no markup, no behaviour. Preview: https://videojs-frameline-1q93pt97s-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login; production is unchanged). Screenshots, all on the site root and each paired with `main`: `design/screenshots/theme-b/` (`main-*`, `b-*`, `pair-*`, and `b-report.json` / `main-report.json` with the computed styles).
 
