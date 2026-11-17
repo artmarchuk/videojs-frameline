@@ -1724,7 +1724,7 @@ Run with `playwright-core` in Google Chrome against the local production build, 
 
 ## Theme A.2: one menu surface, and the last landing-page leaks (18 Nov 2026, branch `theme-industrial`, not merged, not in production)
 
-Requirements: `specs/theme-a2-menus.md`. Styling only. Screenshots: `design/screenshots/theme-a2/`, headless Google Chrome at 2x, all on the **site root** (`/?tier=studio`): `a18-*` from a build of the A1.8 commit (afddc60), `a2-*` from this step, `pair-*` the two together. Computed styles in `a18-report.json` and `a2-report.json`.
+Requirements: `specs/theme-a2-menus.md`. Styling only. Preview deployment (behind Vercel's login): https://videojs-frameline-3ogkn8j91-artmarchuk.vercel.app. Production was not deployed, no tag, not merged. Screenshots: `design/screenshots/theme-a2/`, headless Google Chrome at 2x, all on the **site root** (`/?tier=studio`): `a18-*` from a build of the A1.8 commit (afddc60), `a2-*` from this step, `pair-*` the two together. Computed styles in `a18-report.json` and `a2-report.json`.
 
 ### A2.1 Studio menus take the settings menu's surface
 - `.pro-menu-popup` (Guides, Capture, Markers, Zoom) no longer sets its own fill, border, radius or shadow. It inherits them from the shared `.media-popup` rule, as the settings menu does: `surface-1`, a 1px `--fl-line` border, the group radius (8px, was 10px), `--fl-shadow-popup`. It keeps its own spacing and minimum width. Read back from both families: fill `rgb(23 23 23)`, border `1px solid rgb(51 51 51)`, radius 8px, the same shadow.
