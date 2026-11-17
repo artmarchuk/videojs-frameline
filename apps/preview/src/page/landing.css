@@ -513,7 +513,9 @@ kbd {
 
 /*
  * The skin's one-row bar that stands in until the dock arrives would move twice inside the reserved room; it is not
- * shown meanwhile, so the room stays still. If the Studio code never arrives, it is shown after 4 s.
+ * shown meanwhile, so the room stays still. Nor is the dock while the page stages the range (`data-staging`,
+ * main.tsx): the handles would travel to it and Reset range would push the transport aside. If the Studio code or the
+ * video never arrives, the controls are shown after 4 s.
  */
 @keyframes player-reveal-bar {
   to {
@@ -521,7 +523,8 @@ kbd {
   }
 }
 
-.player[data-reserve]:not(:has([data-dock-size])) .pro-bar {
+.player[data-reserve]:not(:has([data-dock-size])) .pro-bar,
+.player[data-staging] .pro-bar {
   visibility: hidden;
   animation: player-reveal-bar 0s linear 4s forwards;
 }
@@ -684,9 +687,10 @@ video-player {
   flex: none;
 }
 
-/* The line under the Tier switch in Configure: where the controls are in this tier and layout. */
+/* The line under Configure's switches, across the panel: where the controls are in this tier and layout. It is not
+   inside the Tier group, whose width would then change with the tier and move the Layout switch. */
 .tier-hint {
-  padding-top: var(--space-8);
+  margin-top: calc(var(--space-8) - var(--space-16));
   color: var(--dim);
   font: var(--type-small);
 }

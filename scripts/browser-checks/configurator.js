@@ -32,7 +32,7 @@ out.staged = await page.evaluate(() => ({
   timecode: (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11), titleSafe: !!document.querySelector('#player [data-guide="title-safe"]'),
   paused: document.querySelector('#player video').paused, log: document.querySelectorAll('#log li').length, focus: document.activeElement?.tagName, scroll: window.scrollY,
 }));
-out.stagedOk = out.staged.in === '00:00:03:02' && out.staged.out === '00:00:07:10' && out.staged.timecode === '00:00:03:18' && out.staged.titleSafe && out.staged.paused && out.staged.log === 0 && out.staged.focus === 'BODY' && out.staged.scroll === 0;
+out.stagedOk = out.staged.in === '00:00:02:18' && out.staged.out === '00:00:50:16' && out.staged.timecode === '00:00:04:12' && out.staged.titleSafe && out.staged.paused && out.staged.log === 0 && out.staged.focus === 'BODY' && out.staged.scroll === 0;
 
 const check = (name) => page.locator(`#config input[name="${name}"]`);
 const radio = (name, value) => page.locator(`#config input[name="${name}"][value="${value}"]`);

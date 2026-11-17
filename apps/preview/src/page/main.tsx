@@ -379,6 +379,15 @@ const REMEMBERED_KEY = 'frameline:v1';
 /** Staging is decided once, on load: a page opened in Studio, on a source that has a staged state. */
 let stagePending = STAGED !== null && config.tier === 'studio';
 
+/**
+ * While staging is pending the dock's controls are not shown (`data-staging`, landing.css): the range lands after the
+ * dock is drawn, and its handles and the Reset range button would move the dock about once it does. Shown again two
+ * frames after the staged state is set, so they appear once, in place; landing.css shows them after 4 s regardless.
+ */
+const player = $('#player');
+player.toggleAttribute('data-staging', stagePending);
+const staged = () => requestAnimationFrame(() => requestAnimationFrame(() => player.removeAttribute('data-staging')));
+
 /** Whether this visitor has a remembered set of guides. The skin restores it, and it wins over the staged guide. */
 function hasRememberedGuides(): boolean {
   try {
@@ -404,7 +413,7 @@ function stage() {
     media.removeEventListener('loadedmetadata', apply);
     media.removeEventListener('durationchange', apply);
     const handle = api.current;
-    if (!handle) return; // the visitor went to Viewer before the video was ready
+    if (!handle) return staged(); // the visitor went to Viewer before the video was ready
     staging = true;
     try {
       handle.setRange({ in: STAGED.in, out: STAGED.out });
@@ -412,6 +421,7 @@ function stage() {
       if (!/(?:^#|&)t=/.test(window.location.hash)) handle.seek(STAGED.playhead);
     } finally {
       staging = false;
+      staged();
     }
   };
   media.addEventListener('loadedmetadata', apply);

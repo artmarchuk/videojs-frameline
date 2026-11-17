@@ -94,13 +94,14 @@
                       <fieldset class="segmented" aria-describedby="tier-hint">
                         <legend class="label">Tier</legend>
                         <div class="segmented-track"><label><input type="radio" name="tier" value="viewer" /><span>Viewer</span></label><label><input type="radio" name="tier" value="studio" /><span>Studio</span></label></div>
-                        <p id="tier-hint" class="tier-hint"></p>
                       </fieldset>
                       <fieldset class="segmented">
                         <legend class="label">Layout</legend>
                         <div class="segmented-track"><label><input type="radio" name="layout" value="dock" /><span>Dock</span></label><label><input type="radio" name="layout" value="overlay" /><span>Overlay</span></label></div>
                       </fieldset>
                     </div>
+                    <!-- Its own line, under both switches, so a tier change never moves the Layout switch. -->
+                    <p id="tier-hint" class="tier-hint"></p>
                     <fieldset>
                       <legend class="visually-hidden">Features</legend>
                       <div class="feature-groups">
@@ -208,7 +209,7 @@
               <figure class="feature-figure shot">
                 <picture>
                   <source srcset="./shots/range.avif" type="image/avif" />
-                  <img src="./shots/range.webp" width="1120" height="700" alt="The Studio timeline with a range from 00:00:03:02 to 00:00:07:10, the playhead inside it on 00:00:03:18 and Loop on: the state the player above opens in. Above it, the lower part of the green-screen picture with the Title safe line." loading="lazy" decoding="async" />
+                  <img src="./shots/range.webp" width="1120" height="700" alt="The Studio timeline with a short range from 00:00:03:02 to 00:00:07:10, the playhead inside it on 00:00:03:18 and Loop on. Above it, the lower part of the green-screen picture with the Title safe line." loading="lazy" decoding="async" />
                 </picture>
               </figure>
             </li>

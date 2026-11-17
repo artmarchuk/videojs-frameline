@@ -1695,3 +1695,14 @@ Spec: `specs/landing-visuals-5.md`. Page code only: nothing under `src/` changed
 ### Unverified (round five)
 - Firefox, Safari and a real phone were not run this round; `holdInPlace` was checked in all three engines in round four.
 
+### Section 5: a wider staged range
+- `media.ts`: In 66 (00:00:02:18), Out 1216 (00:00:50:16), playhead 108 (00:00:04:12). Checked against the files: the chapter "Courier greenscreen comp" starts at 2.750 s = frame 66; "Titles" starts at 50.708 s = frame 1217, so 1216 is the last frame before it; the marker `spill` is at 4.5 s = frame 108. All three match the spec. The poster follows the playhead, `(108 + 0.5) / 24` s.
+- Read on the page after load (Chrome, 1440 and 390): In 00:00:02:18, Out 00:00:50:16, timecode 00:00:04:12.
+- The range shot has its own range in `scripts/landing-shots.mjs` (`RANGE_SHOT`: 00:00:03:02 to 00:00:07:10, playhead 00:00:03:18), no longer read from `media.ts`; its alt text says "a short range" and no longer claims to be the state the player opens in. Re-shot alone: same state, region moved 3 px right to clear the controls, no control cut, 17,546 / 19,598 bytes (AVIF / WebP).
+- The landing check and `FEATURES.md` name the new values.
+- The staged range lands about 400 ms after the dock is drawn. With the long range, the Out handle travels about 900 px and Reset range pushes the transport aside: layout shift 0.015 at 1100. The page now keeps the dock's controls hidden while it stages (`data-staging` on `#player`, removed two frames after the staged state is set, or after 4 s by the same CSS fallback as the reserve), so they appear once, in place. Layout shift after: 0.006 at 390, 0.002 at 760, 0.002 at 1100, 0.002 at 1440. The dock's room is empty for that moment on first load.
+
+### Section 6: the tier hint on its own line
+- The hint left the Tier fieldset and is a line of its own under the row of switches, across the panel (8 px under the switches); the Tier fieldset keeps it as its description. The Layout switch's left edge in Studio and in Viewer: 411 and 411 px at 1440, 33 and 33 px at 390 (stacked there).
+- Screenshots: `design/screenshots/landing-visuals-5/staged-1440.png`, `staged-390.png` (the hero with the wide range), `configure-hint-viewer-1440.png`, `configure-hint-viewer-390.png`.
+

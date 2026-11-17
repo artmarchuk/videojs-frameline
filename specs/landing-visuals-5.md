@@ -57,3 +57,23 @@ The rim and shadow values, the reserved dock height and its check, the feature r
 ## Report
 
 The preview URL, the player top and dock bottom, the descriptor line counts, the layout-shift table, anything the repo contradicted.
+
+## 5. A wider staged range (added after the spec above; do it in the same round)
+
+A short range on first load makes some visitors think they can't watch the whole video, and the small × that clears it is easy to miss. The staged range now covers almost the whole reel, still with visible handles, and starts and ends on cuts, as an editor would set it:
+
+| | Timecode | Frame (24 fps) | Why |
+|---|---|---|---|
+| In | `00:00:02:18` | 66 | First frame after the leader (chapter "Courier greenscreen comp" starts at 2.750 s) |
+| Out | `00:00:50:16` | 1216 | Last frame before the titles (chapter "Titles" starts at 50.708 s) |
+| Playhead | `00:00:04:12` | 108 | The marker "Comp: green spill on the coat edge" (4.5 s), so its pin sits under the playhead |
+
+- Change the staged values in `media.ts`, and check them against `chapters.vtt` and `markers.json`: if a chapter start or the marker time doesn't convert to the frame above, use the file's value and report it.
+- The poster follows the new playhead frame, as before.
+- **The range screenshot keeps its own short range.** With a near-full range, a crop can't hold both handles. Give the range shot its own In and Out in the script (the previous `00:00:03:02` to `00:00:07:10`, playhead `00:00:03:18`), separate from the hero's staged values, and keep its alt text in step with them. Re-shoot only that file and check it as in round three.
+- Update the landing check and `FEATURES.md` where they name the staged values.
+- Report the In, Out and playhead timecodes as read on the page after load.
+
+## 6. The tier hint doesn't move the Layout switch (added after the round-five report)
+
+In the open Configure panel the hint sits inside the Tier group and makes it wider. The two hints differ in length, so a tier change moves the Layout switch sideways. Put the hint on its own line under the row of switches, across the panel's width, so neither switch moves when the tier changes. Check: the Layout switch's left edge is the same in Viewer and Studio, at 1440 and 390 px.

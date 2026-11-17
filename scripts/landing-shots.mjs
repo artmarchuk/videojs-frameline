@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import sharp from 'sharp';
 
-// The source both pages play, and the hero's staged state, from the one file that names them. Node strips the types.
+// The source both pages play, from the one file that names it. Node strips the types.
 import { MEDIA } from '../apps/preview/src/frame/media.ts';
 
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
@@ -36,12 +36,12 @@ const EXPORT = { width: 1120, height: 700 };
 const SCALE = 2;
 
 const FPS = MEDIA.fps;
-/** A frame number of the source as the timecode a frame link carries. */
-const toTimecode = (frame) =>
-  [Math.floor(frame / (FPS * 3600)), Math.floor(frame / (FPS * 60)) % 60, Math.floor(frame / FPS) % 60, frame % FPS].map((part) => String(part).padStart(2, '0')).join(':');
-if (!MEDIA.staged) throw new Error('The source in media.ts has no staged state for the range shot');
-/** The hero's staged state (`media.ts`): the range shot shows it. */
-const STAGED = { in: toTimecode(MEDIA.staged.in), out: toTimecode(MEDIA.staged.out), playhead: toTimecode(MEDIA.staged.playhead) };
+/**
+ * The range shot's own range, not the hero's: the hero stages a range across almost the whole reel (`media.ts`), and
+ * a crop of the dock cannot hold both its handles. A short range on the Courier section, the playhead inside it. The
+ * alt text of `range` in index.html names these timecodes.
+ */
+const RANGE_SHOT = { in: '00:00:03:02', out: '00:00:07:10', playhead: '00:00:03:18' };
 
 /** The reel moments the other shots use, as the timecodes a frame link carries. */
 const AT = {
@@ -292,17 +292,17 @@ async function guidesOn(page, labels, expected) {
 
 const SHOTS = {
   /**
-   * 1. The hero's staged state, read from `media.ts`: both handles, the band, the playhead inside it, Loop on. The
+   * 1. A short range (`RANGE_SHOT`): both handles, the band, the playhead inside it, Loop on, Title safe. The
    * region starts at the player's left edge, for the timecode field. The dock's middle and right groups move with the
    * player's width; on a 1196 px player the region's right edge falls between Reset range and Markers.
    */
   async range() {
-    const page = await monitor({ width: 1196, at: STAGED.in });
+    const page = await monitor({ width: 1196, at: RANGE_SHOT.in });
     await page.focus('.pro-skin');
     await key(page, 'i');
-    await walk(page, STAGED.in, STAGED.out);
+    await walk(page, RANGE_SHOT.in, RANGE_SHOT.out);
     await key(page, 'o');
-    await walk(page, STAGED.out, STAGED.playhead);
+    await walk(page, RANGE_SHOT.out, RANGE_SHOT.playhead);
     // Title safe, as on the staged hero.
     await page.click('[data-pro-menu="guides"]');
     await page.waitForTimeout(400);
@@ -317,8 +317,8 @@ const SHOTS = {
       loop: document.querySelector('.pro-range button').getAttribute('aria-pressed'),
     }));
     const playhead = await timecode(page);
-    if (state.in !== STAGED.in || state.out !== STAGED.out || playhead !== STAGED.playhead || state.loop !== 'true')
-      throw new Error(`The range shot is not in the hero's state: ${JSON.stringify({ ...state, playhead })}, wanted ${JSON.stringify(STAGED)}`);
+    if (state.in !== RANGE_SHOT.in || state.out !== RANGE_SHOT.out || playhead !== RANGE_SHOT.playhead || state.loop !== 'true')
+      throw new Error(`The range shot is not in its state: ${JSON.stringify({ ...state, playhead })}, wanted ${JSON.stringify(RANGE_SHOT)}`);
     notes.push(`range: In ${state.in}, Out ${state.out}, playhead ${playhead}, Loop on`);
 
     const player = await playerBox(page);
