@@ -1361,6 +1361,8 @@ Requirements: `specs/mobile-dock-rows.md`. Checked with Playwright (`playwright-
 - Typecheck, 219 unit tests (one new), build, the contrast script: pass.
 - `scripts/browser-checks/dock-polish.js` now covers both narrow arrangements (row one's order and positions, the pair, Loop at the end edge, the dock's height, Loop raised or flat when off and pressed when on). Pass at players of 692, 500, 499, 739 (mouse), 780 (touch), 390, 343, 320 and 1280 px. `phone-transport.js`: pass at 390, 360, 320 and 724 px windows (touch) and 1440 (mouse).
 
+- Public URL (https://frameline.artmarchuk.me/preview.html, deployed from `mobile-dock-rows`): `dock-polish.js` passes at the same nine sizes.
+
 ### Unverified (narrow dock rows)
 - A real phone, upright or on its side: touch and the coarse pointer were emulated. Safari on iOS and Chrome on Android were not run.
 - Forced colours and more contrast were emulated in Chrome only (`forcedColors`, `contrast` in Playwright), not seen in Windows High Contrast.
