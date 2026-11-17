@@ -1507,6 +1507,9 @@ Preview deployment (behind Vercel's login, not opened; checks ran on the local b
 
 Rounding saves 4,562 / 2,295 B. Against round two the chunk is 1,510 / 744 B larger, because Loop now carries three drawings where Phosphor's `repeat` was one path. The Viewer chunk is not affected: the drawings are only in the Studio chunk, the Viewer path JS is 957,351 B raw as in round two (281,724 B gzip, 3 B off round two's 281,721).
 
+### Merged and deployed (17 Nov 2026)
+The trial is merged into `main` (fast-forward, with the tooltip fix `9c87df3` that was on the branch) and deployed to production: https://frameline.artmarchuk.me (deployment `ky8ssngzj`, serving `demo-video-Cs5UF89-.js`). Before the deploy, on the local production build of `main`: typecheck, 219 unit tests, build and every browser check listed under round three pass; the tooltips open one at a time, on hover and on keyboard focus, and none is left open after a menu closes by mouse. The trial's preview deployments named above (`8hxotu28e`, `5s4hf9jem`, `dkat45dan`, `3t1n2ptff`) and an older unrecorded preview (`irie1ludr`) are removed, so those URLs no longer answer. The earlier production deployments are kept as rollback history.
+
 ### Unverified (icon trial)
 - **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
 - **Not seen in the player:** captions on and off (the demo source shows no captions button), volume low and muted, PiP exit, fullscreen exit, replay, the error dialog's icon, the audio-track row, the check after "Link copied" and the keyboard dialog's close button. All were looked at on the contact sheet only, at 18 and 72 px on the dock's grey; the check's size in the link button was also measured in the player.
