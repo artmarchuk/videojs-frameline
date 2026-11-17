@@ -13,14 +13,15 @@
      * adds no cast to the picture, and one soft blue accent. The dock is a dark matte body; the display and the track
      * groove (surface-0) sit clearly below it, the keys (surface-2) stand above it.
      * The accent is a signal, not a fill: set In/Out handles, a selected marker and the focus ring. The range band
-     * is one neutral band (--fl-range); the playhead shows the position. Toggled-on states use --fl-on, never the accent. Never put white
-     * text on the accent (2.7:1).
+     * is one neutral band (--fl-range); the playhead shows the position. In the dock a mode that is on (Loop, Zoom above
+     * Fit, captions) stays pressed in and shows a small light in the accent (--fl-led). --fl-on is the "on" fill of the
+     * overlay layout only, where the controls sit flat over the picture. Never put white text on the accent (2.7:1).
      */
     --fl-surface-0: #0c0c0c; /* behind the picture; the recessed timecode field; the timeline groove; scrim colour */
     --fl-surface-1: #171717; /* the dock, every menu (settings and Studio alike), dialogs */
     --fl-surface-2: #2c2c2c; /* control fill, segmented controls, a highlighted menu item */
     --fl-surface-3: #3a3a3a; /* hover, tooltips, small badges */
-    --fl-on: #474747; /* a toggle that is on */
+    --fl-on: #474747; /* overlay layout only: a toggle that is on, a button whose menu is open. The dock uses the light. */
     --fl-line: #333333; /* hairlines, dividers */
     --fl-seam: #050505; /* the dark half of a seam between two parts of the body (the picture and the dock, the dividers) */
     --fl-track: #888888; /* unfilled slider track over footage (Viewer overlay): 3:1 on the scrim over a white frame */
@@ -36,7 +37,12 @@
     --fl-tick-mid: #787878;
     --fl-tick-major: #8f8f8f;
     --fl-buffer: #4a4a4a; /* buffered range under the timeline track */
-    --fl-handle-idle: #787878; /* a range handle whose point is not set */
+    --fl-handle-idle: #a0a0a0; /* a range handle whose point is not set: 7.48:1 on the groove */
+    --fl-led: var(--fl-accent); /* the indicator light of a mode that is on (dock): Loop, Zoom above Fit, captions */
+    --fl-led-glow: 0 0 4px color-mix(in srgb, var(--fl-led) 60%, transparent);
+    --fl-led-inset: var(--media-spacing); /* the light's distance from the bottom edge of its control */
+    --fl-led-lift: 0px; /* how far the icon moves up while the light is on: only where the control is too short for both */
+    --fl-menu-edge: rgb(255 255 255 / 0.1); /* the border of a menu in the dock layout, where it can sit over the dock's own colour */
     --fl-ruler-label: #b8b8b8; /* ruler labels are blended (difference) with the dock: the result there is close to --fl-text-dim */
     --fl-divider: rgb(255 255 255 / 0.1); /* dividers inside a control fill */
     --fl-frame-line: var(--media-border-color, var(--fl-line)); /* hairline around the player, see --fl-frame-border */
@@ -97,12 +103,15 @@
     /* Pressed, or on: the face sinks; a shade inside its top edge, no light below. */
     --fl-press-image: none;
     --fl-press-shadow: inset 0 1px 2px rgb(0 0 0 / calc(0.55 * var(--fl-bevel)));
-    /* Play, the white key: a flat --fl-text face, a bright top edge, the same contact shadow as the other keys. */
+    /*
+     * The keybed: the transport is one housing (it carries --fl-raise-shadow) with its keys butted together as tiles,
+     * 1px of --fl-seam between them. A tile has only its own line of light on the top edge.
+     */
+    --fl-tile-shadow: inset 0 1px 0 var(--fl-hi);
+    --fl-radius-tile: 2px; /* the inner corners of a tile; the housing's outer corners keep --fl-radius-group */
+    /* Play, the white tile: a flat --fl-text face and a bright top edge. */
     --fl-play-image: none;
-    --fl-play-shadow:
-      inset 0 1px 0 rgb(255 255 255 / calc(0.6 * var(--fl-bevel))),
-      0 1px 0 rgb(0 0 0 / calc(0.5 * var(--fl-bevel))),
-      0 2px 3px rgb(0 0 0 / calc(0.3 * var(--fl-bevel)));
+    --fl-play-shadow: inset 0 1px 0 rgb(255 255 255 / calc(0.6 * var(--fl-bevel)));
     /* Play pressed: a flat, slightly darker face. */
     --fl-play-press-image: linear-gradient(#dcdcdc, #dcdcdc);
     /* A recessed well: the timecode field. Shaded inside its top edge, a dark rim all round, a line of light under it. */
@@ -177,6 +186,9 @@
     --fl-density-control: calc(var(--media-spacing) * 7); /* 28px */
     --fl-density-gap: calc(var(--media-spacing) * 0.5); /* 2px */
     --fl-density-pad: calc(var(--media-spacing) * 2); /* 8px */
+    /* A 28px control has no room for the icon and the light 4px from the edge: the light sits 2px up, the icon lifts 1px. */
+    --fl-led-inset: calc(var(--media-spacing) * 0.5);
+    --fl-led-lift: -1px;
   }
 }
 
@@ -190,6 +202,8 @@
       --fl-density-pad: calc(var(--media-spacing) * 3);
       --fl-control-size: max(44px, var(--fl-density-control));
       --fl-slider-hit: max(44px, calc(var(--media-spacing) * 11));
+      --fl-led-inset: var(--media-spacing);
+      --fl-led-lift: 0px;
     }
   }
 
@@ -216,6 +230,7 @@
     .media-skin[data-theme="pro"] {
       --fl-line: #7b7b7b;
       --fl-seam: #7b7b7b;
+      --fl-menu-edge: var(--fl-line);
       --fl-divider: rgb(255 255 255 / 0.38);
       --fl-text-dim: #cccccc;
       --fl-legend: var(--fl-text);
@@ -235,8 +250,9 @@
   }
 
   /*
-   * More contrast has no bevel, and the "on" fill alone is under 3:1 against the dock, so a pressed or on control
-   * (Loop on, an open menu, Zoom above Fit) draws a 1px edge in the text colour instead of the inner shadow.
+   * More contrast has no bevel, and a pressed fill alone is under 3:1 against the dock, so a pressed or on control
+   * (Loop on, an open menu, Zoom above Fit) draws a 1px edge in the text colour instead of the inner shadow. A mode
+   * that is on keeps its light as well.
    */
   @media (prefers-contrast: more) {
     .media-skin[data-theme="pro"] {
@@ -279,6 +295,9 @@
       --fl-on: Highlight;
       --fl-range: Highlight;
       --fl-seam: CanvasText;
+      --fl-led: Highlight;
+      --fl-led-glow: none;
+      --fl-menu-edge: CanvasText;
       --fl-legend: CanvasText;
       --fl-ink: Canvas;
       --fl-tick-minor: CanvasText;

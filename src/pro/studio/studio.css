@@ -109,7 +109,7 @@
     }
   }
 
-  /* In the dock Play is a white key: a flat face, a bright top edge, a contact shadow under it; pressed, it darkens and sinks. */
+  /* In the dock Play is the white tile of the keybed: a flat face, a bright top edge; pressed, it darkens and sinks. */
   .pro-skin[data-layout="dock"][data-bar="pro"] .pro-bar .pro-transport > .media-play-button {
     --fl-shade: var(--fl-play-shadow);
     background-color: var(--fl-text);
@@ -144,7 +144,7 @@
     align-items: center;
     border-radius: var(--fl-radius-group);
     background-color: var(--fl-surface-2);
-    /* The group is one raised object; its buttons are flat until pressed. Flat where --fl-bevel is 0. */
+    /* Overlay layout: the group is one object. In the dock the transport is the housing and the buttons are tiles (skin.css). */
     background-image: var(--fl-raise-image);
     box-shadow: var(--fl-raise-shadow);
   }
@@ -236,8 +236,9 @@
   }
 
   /*
-   * "On": the pressed treatment (skin.css), plus aria-pressed. The accent is reserved for the timeline. Under more
-   * contrast the pressed state draws an edge in the text colour (tokens.css); in forced colours it is Highlight.
+   * "On", overlay layout: the --fl-on fill, plus aria-pressed. In the dock the pressed rule and the light replace it
+   * (skin.css). Under more contrast the pressed state draws an edge in the text colour (tokens.css); in forced
+   * colours it is Highlight.
    */
   .pro-skin .pro-tool[data-pressed] {
     background-color: var(--fl-on);
@@ -611,15 +612,16 @@
    * The transport stays one group, centred in the space beside the timecode: on a phone held upright it fills that
    * space, and on a wider narrow dock (a phone on its side, a tablet) it does not spread apart.
    */
-  .pro-skin[data-dock-size="narrow"] .pro-main-centre,
-  .pro-skin[data-dock-size="narrow"] .pro-transport {
+  .pro-skin[data-dock-size="narrow"] .pro-main-centre {
     flex: 1;
     justify-content: center;
     min-width: 0;
   }
 
-  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-transport {
-    gap: var(--media-spacing);
+  /* The housing hugs its keys (it has a fill), and shrinks with them. */
+  .pro-skin[data-dock-size="narrow"] .pro-transport {
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   /*
@@ -645,7 +647,7 @@
    * Row one holds the whole transport, as on the wide dock: previous cut, step back, Play, step forward, next cut.
    * The four tool buttons are fluid: 44px wide where the row has room, down to 36px (always 44px tall) where it has
    * not, so a 360px phone with 16px page margins (a 328px player) shows every button. Play stays 44px. The row
-   * needs 324px in all: 15 + 92 + 6 + 4 × 36 + 44 + 2 × 4 + 15; under that the cut pair folds away, see below.
+   * needs 320px in all: 15 + 92 + 6 + 4 × 36 + 44 + 4 × 1 + 15; the fold stays at 324px; under that the cut pair folds away, see below.
    */
   /* A descendant, not a child: the group is portalled into a `display: contents` slot inside the transport. */
   .pro-skin[data-dock-size="narrow"] .pro-transport .pro-seg {
@@ -699,9 +701,19 @@
       display: none;
     }
 
-    .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-transport {
+    .pro-skin[data-dock-size="narrow"] .pro-main-centre {
       justify-content: flex-end;
-      gap: calc(var(--media-spacing) * 1.5);
+    }
+
+    /* Step back is now the housing's first tile, step forward its last. */
+    .pro-skin[data-dock-size="narrow"][data-layout="dock"] .pro-bar .pro-transport .pro-seg[data-pro-seg="back"] > .media-button:last-child {
+      border-start-start-radius: var(--fl-radius-group);
+      border-end-start-radius: var(--fl-radius-group);
+    }
+
+    .pro-skin[data-dock-size="narrow"][data-layout="dock"] .pro-bar .pro-transport .pro-seg[data-pro-seg="forward"] > .media-button:first-child {
+      border-start-end-radius: var(--fl-radius-group);
+      border-end-end-radius: var(--fl-radius-group);
     }
   }
 

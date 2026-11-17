@@ -1,0 +1,371 @@
+{
+  "captionsButton": false,
+  "rest": {
+    "player": 1232,
+    "dock": "wide",
+    "rows": null,
+    "housing": {
+      "w": 186,
+      "gap": "1px",
+      "bg": "rgb(5, 5, 5)",
+      "radius": "8px",
+      "shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Previous cut: 34x34 bg rgb(44, 44, 44) r 8px 2px 2px 8px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step back one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Play: 46x34 bg rgb(242, 242, 242) r 2px sh rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step forward one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Next cut: 34x34 bg rgb(44, 44, 44) r 2px 8px 8px 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "0",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+      "color": "rgb(208, 208, 208)",
+      "ariaPressed": "false"
+    },
+    "zoom": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "0",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgba(0, 0, 0, 0)",
+      "btnShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "color": "rgb(208, 208, 208)",
+      "ariaPressed": null
+    },
+    "captions": null,
+    "handle": "rgb(160, 160, 160)"
+  },
+  "zoomSet": true,
+  "captionsSet": false,
+  "on": {
+    "player": 1232,
+    "dock": "wide",
+    "rows": null,
+    "housing": {
+      "w": 186,
+      "gap": "1px",
+      "bg": "rgb(5, 5, 5)",
+      "radius": "8px",
+      "shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Previous cut: 34x34 bg rgb(44, 44, 44) r 8px 2px 2px 8px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step back one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Play: 46x34 bg rgb(242, 242, 242) r 2px sh rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step forward one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Next cut: 34x34 bg rgb(44, 44, 44) r 2px 8px 8px 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "1",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": "true"
+    },
+    "zoom": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "1",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": null
+    },
+    "captions": null,
+    "handle": "rgb(160, 160, 160)"
+  },
+  "compact": [
+    "[data-pro-tool=\"loop\"]: button 28px, content bottom 22.0, dot top 20",
+    ".pro-tool-zoom: button 28px, content bottom 20.8, dot top 20",
+    ".pro-bar .media-captions-button: none"
+  ],
+  "menuWide": {
+    "player": 1232,
+    "dock": "wide",
+    "rows": null,
+    "housing": {
+      "w": 186,
+      "gap": "1px",
+      "bg": "rgb(5, 5, 5)",
+      "radius": "8px",
+      "shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Previous cut: 34x34 bg rgb(44, 44, 44) r 8px 2px 2px 8px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step back one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Play: 46x34 bg rgb(242, 242, 242) r 2px sh rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step forward one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Next cut: 34x34 bg rgb(44, 44, 44) r 2px 8px 8px 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "1",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": "true"
+    },
+    "zoom": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "0",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgba(0, 0, 0, 0)",
+      "btnShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "color": "rgb(208, 208, 208)",
+      "ariaPressed": null
+    },
+    "captions": null,
+    "handle": "rgb(160, 160, 160)",
+    "menuBorder": "1px solid rgba(255, 255, 255, 0.1)"
+  },
+  "narrow390": {
+    "player": 390,
+    "dock": "narrow",
+    "rows": "compact",
+    "housing": {
+      "w": 224,
+      "gap": "1px",
+      "bg": "rgb(5, 5, 5)",
+      "radius": "8px",
+      "shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Previous cut: 44x44 bg rgb(44, 44, 44) r 8px 2px 2px 8px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step back one frame: 44x44 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Play: 44x44 bg rgb(242, 242, 242) r 2px sh rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step forward one frame: 44x44 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Next cut: 44x44 bg rgb(44, 44, 44) r 2px 8px 8px 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "1",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": "true"
+    },
+    "zoom": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "0",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgba(0, 0, 0, 0)",
+      "btnShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "color": "rgb(208, 208, 208)",
+      "ariaPressed": null
+    },
+    "captions": null,
+    "handle": "rgb(160, 160, 160)",
+    "loopVisible": true,
+    "viewport": 422
+  },
+  "narrowMenu": {
+    "player": 390,
+    "dock": "narrow",
+    "rows": "compact",
+    "housing": {
+      "w": 224,
+      "gap": "1px",
+      "bg": "rgb(5, 5, 5)",
+      "radius": "8px",
+      "shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Previous cut: 44x44 bg rgb(44, 44, 44) r 8px 2px 2px 8px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step back one frame: 44x44 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Play: 44x44 bg rgb(242, 242, 242) r 2px sh rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step forward one frame: 44x44 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Next cut: 44x44 bg rgb(44, 44, 44) r 2px 8px 8px 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "1",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": "true"
+    },
+    "zoom": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "0",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgba(0, 0, 0, 0)",
+      "btnShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "color": "rgb(208, 208, 208)",
+      "ariaPressed": null
+    },
+    "captions": null,
+    "handle": "rgb(160, 160, 160)",
+    "menuBorder": "1px solid rgba(255, 255, 255, 0.1)"
+  },
+  "narrow320": {
+    "player": 320,
+    "dock": "narrow",
+    "rows": "compact",
+    "housing": {
+      "w": 134,
+      "gap": "1px",
+      "bg": "rgb(5, 5, 5)",
+      "radius": "8px",
+      "shadow": "rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.5) 0px 1px 0px 0px, rgba(0, 0, 0, 0.25) 0px 2px 3px 0px",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Step back one frame: 44x44 bg rgb(44, 44, 44) r 8px 2px 2px 8px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Play: 44x44 bg rgb(242, 242, 242) r 2px sh rgba(255, 255, 255, 0.6) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step forward one frame: 44x44 bg rgb(44, 44, 44) r 2px 8px 8px 2px sh rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset border 0px ml 0px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "1",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px 0px inset",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": "true"
+    },
+    "zoom": null,
+    "captions": null,
+    "handle": "rgb(160, 160, 160)",
+    "loopVisible": true,
+    "viewport": 352
+  },
+  "more": {
+    "player": 1232,
+    "dock": "wide",
+    "rows": null,
+    "housing": {
+      "w": 186,
+      "gap": "1px",
+      "bg": "rgb(123, 123, 123)",
+      "radius": "8px",
+      "shadow": "rgba(255, 255, 255, 0) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0) 0px 1px 0px 0px, rgba(0, 0, 0, 0) 0px 2px 3px 0px",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Previous cut: 34x34 bg rgb(44, 44, 44) r 8px 2px 2px 8px sh rgba(255, 255, 255, 0) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step back one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Play: 46x34 bg rgb(242, 242, 242) r 2px sh rgba(255, 255, 255, 0) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Step forward one frame: 34x34 bg rgb(44, 44, 44) r 2px sh rgba(255, 255, 255, 0) 0px 1px 0px 0px inset border 0px ml 0px",
+      "Next cut: 34x34 bg rgb(44, 44, 44) r 2px 8px 8px 2px sh rgba(255, 255, 255, 0) 0px 1px 0px 0px inset border 0px ml 0px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "1",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgb(44, 44, 44)",
+      "btnShadow": "rgb(242, 242, 242) 0px 0px 0px 1px inset",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": "true"
+    },
+    "zoom": {
+      "content": "\"\"",
+      "bg": "rgb(91, 157, 255)",
+      "opacity": "0",
+      "shadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgba(0, 0, 0, 0)",
+      "btnShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "color": "rgb(242, 242, 242)",
+      "ariaPressed": null
+    },
+    "captions": null,
+    "handle": "rgb(183, 183, 183)"
+  },
+  "forced": {
+    "player": 1232,
+    "dock": "wide",
+    "rows": null,
+    "housing": {
+      "w": 178,
+      "gap": "0px",
+      "bg": "rgba(255, 255, 255, 0)",
+      "radius": "8px",
+      "shadow": "none",
+      "overflow": "visible"
+    },
+    "tiles": [
+      "Previous cut: 34x34 bg rgb(255, 255, 255) r 8px 2px 2px 8px sh none border 1px ml 0px",
+      "Step back one frame: 34x34 bg rgb(255, 255, 255) r 2px sh none border 1px ml -1px",
+      "Play: 46x34 bg rgb(0, 0, 0) r 2px sh none border 1px ml -1px",
+      "Step forward one frame: 34x34 bg rgb(255, 255, 255) r 2px sh none border 1px ml -1px",
+      "Next cut: 34x34 bg rgb(255, 255, 255) r 2px 8px 8px 2px sh none border 1px ml -1px"
+    ],
+    "loop": {
+      "content": "\"\"",
+      "bg": "rgb(255, 255, 255)",
+      "opacity": "1",
+      "shadow": "none",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgba(55, 0, 110, 0.8)",
+      "btnShadow": "rgba(0, 0, 0, 0) 0px 1px 2px 0px inset",
+      "color": "rgb(255, 255, 255)",
+      "ariaPressed": "true"
+    },
+    "zoom": {
+      "content": "\"\"",
+      "bg": "rgb(255, 255, 255)",
+      "opacity": "0",
+      "shadow": "none",
+      "size": "4pxx4px",
+      "bottom": "4px",
+      "fill": "rgba(255, 255, 255, 0)",
+      "btnShadow": "none",
+      "color": "rgb(0, 0, 0)",
+      "ariaPressed": null
+    },
+    "captions": null,
+    "handle": "rgb(0, 0, 0)"
+  }
+}
