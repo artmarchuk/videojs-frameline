@@ -29,7 +29,38 @@ export interface DemoSource {
   info?: string;
   /** Leave out the `crossorigin` attribute, so frame capture is blocked. For testing the error path. */
   noCors?: boolean;
+  /** What a first-time visitor finds on the landing page's Studio player before touching it. */
+  staged?: StagedState;
+  /**
+   * The picture inside the file, in source pixels, when the file carries black bars around it. The landing page shapes
+   * its player to this and crops the bars. Leave it out when the picture fills the file.
+   */
+  picture?: { width: number; height: number };
 }
+
+/**
+ * A staged state, in frame numbers of the source (a timecode `HH:MM:SS:FF` is frame `SS × fps + FF`). It belongs to
+ * the source: the moments are picked from its picture. `stagedSeconds` converts it for the skin's handle.
+ */
+export interface StagedState {
+  /** The In and Out frames of the range. */
+  in: number;
+  out: number;
+  /** The frame the playhead rests on, paused. The poster shows the same frame. */
+  playhead: number;
+  /** The checkbox guides that are on. A visitor's remembered guides win over these. */
+  guides: readonly string[];
+}
+
+/**
+ * The reel's staged state: a range across almost the whole reel, set on cuts as an editor would, so a first visit can
+ * still watch it all, with the handles in view. In 00:00:02:18 (frame 66): the first frame after the leader, where the
+ * chapter "Courier greenscreen comp" starts (2.750 s). Out 00:00:50:16 (frame 1216): the last frame before "Titles"
+ * (50.708 s, frame 1217). Playhead 00:00:04:12 (frame 108): the marker "Comp: green spill on the coat edge" (4.5 s),
+ * so its pin sits under the playhead.
+ */
+const REEL_STAGED: StagedState = { in: 66, out: 1216, playhead: 108, guides: ['title-safe'] };
+const REEL_FPS = 24;
 
 export const SOURCES = {
   /** NASA's Cosmic Dawn trailer on Mux: the scaffold's test stream. Its captions are in the stream. */
@@ -52,10 +83,15 @@ export const SOURCES = {
   reel: {
     playbackId: '9Y7a3hqNCi4u02fmBFbaK5qWoS6A5cPce7P1mA00JA02tY',
     // Measured with ffprobe on the 1080p rendition: 24/1.
-    fps: 24,
+    fps: REEL_FPS,
     chapters: './demo/reel/chapters.vtt',
     markers: './demo/reel/markers.json',
-    posterTime: 3,
+    // The staged frame, asked for at the middle of its interval: Mux's thumbnail at the frame's own start time is the
+    // frame before it (`time=6` shows 00:00:05:23, `time=6.02` shows 00:00:06:00).
+    posterTime: (REEL_STAGED.playhead + 0.5) / REEL_FPS,
+    staged: REEL_STAGED,
+    // Every frame carries 4 black rows at the top and 4 at the bottom: the picture is 1920×1072 inside 1920×1080.
+    picture: { width: 1920, height: 1072 },
     capRenditionToPlayerSize: false,
     info: 'reel.m3u8 · 1920×1080 · 24 fps',
   },
@@ -93,6 +129,13 @@ function pick(): DemoSource {
 
 /** The source in use. */
 export const MEDIA: DemoSource = pick();
+
+/** A source's staged state in seconds, for `apiRef.setRange` and `apiRef.seek`; `null` for a source without one. */
+export function stagedSeconds(source: DemoSource): { in: number; out: number; playhead: number; guides: readonly string[] } | null {
+  const staged = source.staged;
+  if (!staged) return null;
+  return { in: staged.in / source.fps, out: staged.out / source.fps, playhead: staged.playhead / source.fps, guides: staged.guides };
+}
 
 /** The stream or file URL of a source. */
 export function streamUrl(source: DemoSource): string {

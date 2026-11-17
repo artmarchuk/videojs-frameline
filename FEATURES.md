@@ -36,7 +36,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Remembered choices per browser (guides, crop, zones, timecode or seconds): `persist` | Studio | Switch a guide on and reload |
 | An iframe embed for any site, no React needed: `/embed.html?src=<video URL>` (or `?mux=<playback ID>`), with `tier`, `fps` and `poster` in the URL | Both | `/embed.html?tier=viewer&src=…` in an `<iframe>` |
 | Tokens: Video.js's public `--media-*` tokens and the skin's `--fl-*` tokens | Both | `--media-accent-color: orange` |
-| The landing page: the player with a tier switch, Configure collapsed right under it (tier, flags, layout, live snippet, event log, shareable URL; one button opens it), three things to try, what Studio checks with a "Show me" for each, the host contract and what the skin leaves out | Both | The site root |
+| The landing page: the Studio player opens staged (a range from 00:00:02:18 to 00:00:50:16, cut to cut, the playhead paused on the marker at 00:00:04:12, Title safe on, nothing moving while it loads), Configure in one row under it (collapsed; one button opens the tier, flags, layout, live snippet, event log and shareable URL), three things to try, six things Studio checks, each with a screenshot of the real player and a "Show me", the two tiers side by side, the host contract and what the skin leaves out | Both | The site root; `/#t=00:00:27:15` opens on that frame with the range still staged |
 
 ## Viewer
 

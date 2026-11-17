@@ -6,7 +6,7 @@
     <title>Frameline — a Video.js skin for video creators</title>
     <meta
       name="description"
-      content="Frameline is a Video.js v10 skin for the tools video creators use. Viewer is a clean player for clients and audiences; Studio is a monitor with frame-by-frame transport, timecode, In and Out points, guides, zoom and frame grabs."
+      content="Frameline is a Video.js v10 skin that adds a preview monitor to the player in your video tool: frame-by-frame transport, timecode, In and Out points, guides, zoom and frame grabs."
     />
     <meta name="author" content="Artem Marchuk" />
     <link rel="canonical" href="https://frameline.artmarchuk.me/" />
@@ -19,7 +19,7 @@
     <meta property="og:title" content="Frameline — a Video.js skin for video creators" />
     <meta
       property="og:description"
-      content="One skin, two tiers: a clean Viewer for clients and audiences, and a Studio monitor for checking timing and framing."
+      content="A Video.js skin that adds a preview monitor to the player in your video tool."
     />
     <meta property="og:url" content="https://frameline.artmarchuk.me/" />
     <meta property="og:image" content="https://frameline.artmarchuk.me/og.png" />
@@ -33,7 +33,7 @@
     <meta name="twitter:title" content="Frameline — a Video.js skin for video creators" />
     <meta
       name="twitter:description"
-      content="One skin, two tiers: a clean Viewer for clients and audiences, and a Studio monitor for checking timing and framing."
+      content="A Video.js skin that adds a preview monitor to the player in your video tool."
     />
     <meta name="twitter:image" content="https://frameline.artmarchuk.me/og.png" />
 
@@ -60,31 +60,22 @@
       <div class="wrap hero">
         <div class="positioning">
           <h1>A monitor, not just a&nbsp;player.</h1>
-          <p class="descriptor">A Video.js skin for the tools people make video with.</p>
-          <div class="two-lines">
-            <p>Viewer is for watching.</p>
-            <p>Studio is for checking timing and framing.</p>
-          </div>
+          <p class="descriptor">A Video.js skin that adds a preview monitor to the player in your video tool.</p>
         </div>
 
         <div class="stage">
           <section class="player-column" aria-labelledby="player-title">
             <h2 id="player-title" class="visually-hidden">Player</h2>
-            <div class="tier-bar">
-              <fieldset class="segmented">
-                <legend class="visually-hidden">Tier</legend>
-                <div class="segmented-track"><label><input type="radio" name="hero-tier" value="viewer" /><span>Viewer</span></label><label><input type="radio" name="hero-tier" value="studio" /><span>Studio</span></label></div>
-              </fieldset>
-              <p id="tier-hint" class="tier-hint"></p>
-            </div>
-            <div id="player" class="player"></div>
+            <!-- data-reserve: main.tsx keeps it while the player is Studio in the dock layout (landing.css). -->
+            <div id="player" class="player" data-reserve></div>
             <noscript><p class="notice">The player needs JavaScript.</p></noscript>
           </section>
 
           <section id="configure" class="configure" aria-labelledby="configure-title">
             <div class="configure-bar">
+              <p id="configure-summary" class="configure-summary"></p>
               <h2 id="configure-title">
-                <button type="button" id="configure-toggle" class="configure-toggle" aria-expanded="false" aria-controls="configure-body">
+                <button type="button" id="configure-toggle" class="configure-toggle" aria-expanded="false" aria-controls="configure-body" aria-describedby="configure-summary">
                   <svg class="configure-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false">
                     <path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1" />
                     <circle cx="15" cy="6.5" r="2" />
@@ -94,14 +85,13 @@
                   Configure the player<span class="chevron" aria-hidden="true"></span>
                 </button>
               </h2>
-              <p id="configure-summary" class="configure-summary"></p>
             </div>
             <div id="configure-body" class="configure-body">
               <div class="configure-inner">
                 <div class="panels">
                   <form id="config" class="panel" autocomplete="off">
                     <div class="switches">
-                      <fieldset class="segmented">
+                      <fieldset class="segmented" aria-describedby="tier-hint">
                         <legend class="label">Tier</legend>
                         <div class="segmented-track"><label><input type="radio" name="tier" value="viewer" /><span>Viewer</span></label><label><input type="radio" name="tier" value="studio" /><span>Studio</span></label></div>
                       </fieldset>
@@ -110,6 +100,8 @@
                         <div class="segmented-track"><label><input type="radio" name="layout" value="dock" /><span>Dock</span></label><label><input type="radio" name="layout" value="overlay" /><span>Overlay</span></label></div>
                       </fieldset>
                     </div>
+                    <!-- Its own line, under both switches, so a tier change never moves the Layout switch. -->
+                    <p id="tier-hint" class="tier-hint"></p>
                     <fieldset>
                       <legend class="visually-hidden">Features</legend>
                       <div class="feature-groups">
@@ -203,7 +195,7 @@
         <div class="section-body">
           <div class="section-heading">
             <h2 id="checks-title">What Studio checks</h2>
-            <p>Five things other players leave out. Each one has a key, and each row does it in the player above.</p>
+            <p>Six things other players leave out. Each one has a key, and each row does it in the player above.</p>
           </div>
           <ol class="features">
             <li class="feature" data-task="range">
@@ -214,6 +206,12 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: set a range and loop it">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/range.avif" type="image/avif" />
+                  <img src="./shots/range.webp" width="1120" height="700" alt="The Studio timeline with a short range from 00:00:03:02 to 00:00:07:10, the playhead inside it on 00:00:03:18 and Loop on. Above it, the lower part of the green-screen picture with the Title safe line." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
             <li class="feature" data-task="step">
               <div class="feature-keys"><kbd>,</kbd><kbd>.</kbd></div>
@@ -223,6 +221,27 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: step to the exact frame">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/frame-step.avif" type="image/avif" />
+                  <img src="./shots/frame-step.webp" width="1120" height="700" alt="The picture at 150% with its burned-in timecode reading 00:00:27:15, and under it the dock’s timecode field reading the same frame, 00:00:27:15." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
+            </li>
+            <li class="feature" data-task="review">
+              <div class="feature-keys"><kbd>S</kbd></div>
+              <h3>Point at an exact moment.</h3>
+              <div class="feature-detail">
+                <p>The host’s markers show as pins on the ruler and in the Markers menu. S copies a link to the frame on screen, as timecode. Opening the link lands on that frame, paused.</p>
+                <p class="need" hidden></p>
+              </div>
+              <button type="button" class="button" aria-label="Show me: go to a review marker">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/markers.avif" type="image/avif" />
+                  <img src="./shots/markers.webp" width="1120" height="700" alt="The ruler with marker pins. The pin under the pointer shows its note, “Director: hold the pose two frames longer”, and its timecode, 00:00:21:08. The link button sits beside the timecode field." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
             <li class="feature" data-task="guides">
               <div class="feature-keys"><kbd>Shift</kbd><kbd>V</kbd></div>
@@ -232,6 +251,12 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: turn on the delivery guides">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/guides.avif" type="image/avif" />
+                  <img src="./shots/guides.webp" width="1120" height="700" alt="A snow peak on 00:00:49:12 with everything outside a 2.39:1 crop dimmed and the rule of thirds drawn inside the crop. The summit sits by the upper right crossing of the lines." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
             <li class="feature" data-task="zoom">
               <div class="feature-keys"><kbd>Z</kbd></div>
@@ -241,15 +266,41 @@
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: zoom to 100% and pan">Show me</button>
+              <figure class="feature-figure shot">
+                <picture>
+                  <source srcset="./shots/zoom.avif" type="image/avif" />
+                  <img src="./shots/zoom.webp" width="1120" height="700" alt="The picture’s burned-in timecode, 00:00:06:00, at 400%: the edges of its digits show as steps of single pixels. The Zoom button in the dock reads 400%." loading="lazy" decoding="async" />
+                </picture>
+              </figure>
             </li>
-            <li class="feature" data-task="grab">
+            <li class="feature feature-wide" data-task="grab">
               <div class="feature-keys"><kbd>G</kbd></div>
-              <h3>The picture is never touched.</h3>
+              <h3>A frame grab is the frame as encoded.</h3>
               <div class="feature-detail">
-                <p>No filters, no scopes, no colour changes. A grabbed frame is the frame as encoded, at the video’s own size, with no guides in it.</p>
+                <p>G saves the frame on screen as a PNG, at the video’s own size and with no guides in it. Studio draws around the picture and never changes its pixels.</p>
                 <p class="need" hidden></p>
               </div>
               <button type="button" class="button" aria-label="Show me: grab a frame">Show me</button>
+              <div class="feature-figure shot-pair">
+                <figure>
+                  <div class="shot">
+                    <picture>
+                      <source srcset="./shots/grab-screen.avif" type="image/avif" />
+                      <img src="./shots/grab-screen.webp" width="1120" height="700" alt="The picture on screen at 00:00:21:08, a dancer on a street, with the Title safe line, the rule of thirds and the centre cross drawn over it." loading="lazy" decoding="async" />
+                    </picture>
+                  </div>
+                  <figcaption>On screen</figcaption>
+                </figure>
+                <figure>
+                  <div class="shot">
+                    <picture>
+                      <source srcset="./shots/grab-file.avif" type="image/avif" />
+                      <img src="./shots/grab-file.webp" width="1120" height="700" alt="The PNG saved from that frame: the same picture with no guides in it." loading="lazy" decoding="async" />
+                    </picture>
+                  </div>
+                  <figcaption>The saved PNG, 1920 × 1080</figcaption>
+                </figure>
+              </div>
             </li>
             <li class="feature feature-note">
               <div class="feature-keys"><kbd>Shift</kbd><kbd>?</kbd></div>
@@ -265,6 +316,22 @@
           <div class="section-heading">
             <h2 id="host-title">Built to be hosted</h2>
             <p>One skin, two tiers. Studio is for the people who make the video. Their audience gets Viewer, and downloads none of the Studio code.</p>
+          </div>
+          <div class="tier-pair">
+            <figure>
+              <picture>
+                <source srcset="./shots/tier-viewer.avif" type="image/avif" />
+                <img src="./shots/tier-viewer.webp" width="1520" height="854" alt="The Viewer tier on 00:00:05:00: play, volume, time, a seek bar, settings, picture-in-picture and fullscreen, over the picture." loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>Viewer</figcaption>
+            </figure>
+            <figure>
+              <picture>
+                <source srcset="./shots/tier-studio.avif" type="image/avif" />
+                <img src="./shots/tier-studio.webp" width="1520" height="1088" alt="The Studio tier on the same frame: the picture is clear, and a dock below it holds the ruler timeline with marker pins, the timecode field, frame transport, Loop, Markers, Capture, Guides and Zoom." loading="lazy" decoding="async" />
+              </picture>
+              <figcaption>Studio</figcaption>
+            </figure>
           </div>
           <div class="columns">
             <div class="host-contract">

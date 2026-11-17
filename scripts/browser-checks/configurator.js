@@ -1,7 +1,7 @@
 // Browser check (step 8.2, updated for the landing page). Body of an async function; `page` on the site root (`/`), 1440x900.
 // Tier and flags change the player and the snippet; the query string round-trips with no reload; each "Show me"
 // does what it says through the skin's handle and leaves the keyboard on its button; the event log receives a range
-// change and a frame grab.
+// change and a frame grab; the room kept for the dock on load is the player's final height.
 const out = {};
 await page.waitForFunction(() => document.querySelector('#player video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForTimeout(1500);
@@ -26,6 +26,14 @@ const state = () => page.evaluate(() => {
     proChunks: performance.getEntriesByType('resource').map((e) => e.name.split('/').pop()).filter((n) => /^(runtime|studio|debug)-/.test(n)).length,
   };
 });
+// The staged hero: before anything is touched, a range, the playhead inside it, Title safe, paused, an empty log.
+out.staged = await page.evaluate(() => ({
+  in: document.querySelector('#player [data-handle="in"]')?.getAttribute('aria-valuetext'), out: document.querySelector('#player [data-handle="out"]')?.getAttribute('aria-valuetext'),
+  timecode: (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11), titleSafe: !!document.querySelector('#player [data-guide="title-safe"]'),
+  paused: document.querySelector('#player video').paused, log: document.querySelectorAll('#log li').length, focus: document.activeElement?.tagName, scroll: window.scrollY,
+}));
+out.stagedOk = out.staged.in === '00:00:02:18' && out.staged.out === '00:00:50:16' && out.staged.timecode === '00:00:04:12' && out.staged.titleSafe && out.staged.paused && out.staged.log === 0 && out.staged.focus === 'BODY' && out.staged.scroll === 0;
+
 const check = (name) => page.locator(`#config input[name="${name}"]`);
 const radio = (name, value) => page.locator(`#config input[name="${name}"][value="${value}"]`);
 const showMe = async (task) => { await page.locator(`[data-task="${task}"] button`).click(); };
@@ -54,7 +62,7 @@ out.flagOk = start.zoomButton && !noZoom.zoomButton && noZoom.snippet.includes('
 await radio('tier', 'viewer').check({ force: true }); await page.waitForTimeout(600);
 const viewer = await state();
 out.viewer = { tier: viewer.tier, layout: viewer.layout, timeline: viewer.timeline, snippet: viewer.snippet, query: viewer.query, showMeDisabled: await page.locator('[data-task] button:disabled').count(), need: await page.locator('[data-task="zoom"] .need').textContent() };
-out.tierOk = viewer.tier === 'viewer' && viewer.layout === 'overlay' && !viewer.timeline && /tier="viewer"/.test(viewer.snippet) && !/features/.test(viewer.snippet) && viewer.query === '?tier=viewer' && out.viewer.showMeDisabled === 5 && await page.locator('[data-cue] button:disabled').count() === 3;
+out.tierOk = viewer.tier === 'viewer' && viewer.layout === 'overlay' && !viewer.timeline && /tier="viewer"/.test(viewer.snippet) && !/features/.test(viewer.snippet) && viewer.query === '?tier=viewer' && out.viewer.showMeDisabled === 6 && await page.locator('[data-cue] button:disabled').count() === 3;
 
 // A pro flag over Viewer adds the feature to Viewer.
 await check('timecode').check(); await page.waitForTimeout(1200);
@@ -62,12 +70,13 @@ const viewerPlus = await state();
 out.viewerPlus = { snippet: viewerPlus.snippet, query: viewerPlus.query, timecode: await page.locator('#player [class*="timecode"]').count() > 0 };
 out.viewerPlusOk = viewerPlus.snippet.includes('features={{ timecode: true }}') && viewerPlus.query === '?tier=viewer&timecode=1' && out.viewerPlus.timecode;
 
-// The tier switch over the player is the same switch as the form's, and the line beside it follows.
-await page.locator('input[name="hero-tier"][value="studio"]').check({ force: true }); await page.waitForTimeout(600);
-const heroStudio = await state();
-out.heroTier = { tier: heroStudio.tier, form: await radio('tier', 'studio').isChecked(), hint: await page.textContent('#tier-hint') };
+// The tier is chosen only in Configure, and the line under its Tier switch follows it.
+out.noHeroSwitch = await page.locator('input[name="hero-tier"]').count() === 0;
+await radio('tier', 'studio').check({ force: true }); await page.waitForTimeout(600);
+out.tierHint = { studio: await page.textContent('#tier-hint') };
 await radio('tier', 'viewer').check({ force: true }); await page.waitForTimeout(400);
-out.heroTierOk = out.heroTier.tier === 'studio' && out.heroTier.form && /^Studio: .*dock below/.test(out.heroTier.hint) && await page.locator('input[name="hero-tier"][value="viewer"]').isChecked() && /^Viewer: /.test(await page.textContent('#tier-hint'));
+out.tierHint.viewer = await page.textContent('#tier-hint');
+out.heroTierOk = out.noHeroSwitch && /^Studio: .*dock below/.test(out.tierHint.studio) && /^Viewer: /.test(out.tierHint.viewer);
 
 // Layout.
 await radio('tier', 'studio').check({ force: true }); await radio('layout', 'overlay').check({ force: true }); await page.waitForTimeout(600);
@@ -94,6 +103,12 @@ const ranged = await state();
 out.range = { log: ranged.log[0], playing: !ranged.paused, loop: await page.locator('#player [aria-label^="Loop"]').first().getAttribute('aria-pressed'), focus: ranged.focus };
 out.rangeOk = /onInOutChange \| in \d+\.\d{3} · out \d+\.\d{3}/.test(ranged.log[0] ?? '') && !ranged.paused && out.range.loop === 'true' && kept(ranged.focus, 'Show me: set a range and loop it');
 await page.evaluate(() => document.querySelector('#player video').pause());
+
+// Review: to the marker `hold`, paused; the status names the marker; nothing is written to the clipboard.
+await showMe('review'); await page.waitForTimeout(1500);
+const reviewed = await state();
+out.review = { time: reviewed.time, paused: reviewed.paused, said: reviewed.said, focus: reviewed.focus };
+out.reviewOk = reviewed.paused && Math.floor(reviewed.time * fps + 0.01) === 512 && reviewed.said === 'On the marker "Director: hold the pose two frames longer". Press S to copy a link to this frame.' && kept(reviewed.focus, 'Show me: go to a review marker');
 
 // Guides: 9:16 with the TikTok zones while platform zones are on, Title safe without them.
 await showMe('guides'); await page.waitForTimeout(500);
@@ -147,5 +162,38 @@ out.roundTripOk = out.roundTrip.every((entry) => entry.same);
 await page.goto(`${url.origin}${url.pathname}?tier=viewer`, { waitUntil: 'load' }); await page.waitForTimeout(2500);
 out.viewerNoProChunk = (await state()).proChunks === 0;
 
-out.pass = out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
+// Configure still opens and closes after all those configuration changes (its listener is wired once).
+const expanded = () => page.getAttribute('#configure-toggle', 'aria-expanded');
+const wasOpen = await expanded();
+await page.click('#configure-toggle'); const flipped = await expanded();
+await page.click('#configure-toggle'); const back = await expanded();
+out.configureToggles = flipped !== wasOpen && back === wasOpen;
+
+// No jump on load: the room the page keeps for Studio's dock (`--player-reserve`, landing.css) is the height the
+// player has once the dock is drawn, at each width and on a touch device, where the dock has two rows at any width.
+const reserveAt = async (target) => {
+  await target.waitForFunction(() => document.querySelector('#player [data-dock-size]'), null, { timeout: 30000 }); await target.waitForTimeout(600);
+  return target.evaluate(() => {
+    const player = document.querySelector('#player');
+    return {
+      width: innerWidth, reserved: parseFloat(getComputedStyle(player).getPropertyValue('--player-reserve')), rendered: player.getBoundingClientRect().height,
+      dock: document.querySelector('#player .pro-bar').getBoundingClientRect().height, rows: document.querySelector('#player [data-dock-size]').dataset.dockRows ?? 'one',
+    };
+  });
+};
+out.reserve = [];
+for (const [width, height] of [[1440, 900], [900, 900], [760, 1000], [390, 844]]) {
+  await page.setViewportSize({ width, height });
+  await page.goto(`${url.origin}${url.pathname}?tier=studio`, { waitUntil: 'load' });
+  out.reserve.push(await reserveAt(page));
+}
+const touch = await page.context().browser().newContext({ viewport: { width: 820, height: 1180 }, hasTouch: true, isMobile: true });
+const touchPage = await touch.newPage();
+await touchPage.goto(`${url.origin}${url.pathname}?tier=studio`, { waitUntil: 'load' });
+out.reserve.push({ ...(await reserveAt(touchPage)), touch: true });
+await touch.close();
+await page.setViewportSize({ width: 1440, height: 900 });
+out.reserveOk = out.reserve.every((entry) => Math.abs(entry.reserved - entry.rendered) <= 1);
+
+out.pass = out.reserveOk && out.stagedOk && out.reviewOk && out.configureToggles && out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
 return out;
