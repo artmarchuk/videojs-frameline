@@ -377,7 +377,7 @@ Accessibility, in short:
 - `forced-colors` (Windows High Contrast): system colours, bordered buttons and menu items, Highlight for checked states and the range band.
 - `prefers-reduced-motion`: no transitions or animations in the skin or on the page.
 - Targets at least 24 px, 44 px on touch.
-- axe-core (`@axe-core/playwright`): zero violations on the page in both themes, in Studio with the Guides menu, the Zoom menu and the help dialog open, and in the Viewer.
+- axe-core (`@axe-core/playwright`): zero violations on the page (dark only, at desktop and phone width), in Studio with the Guides menu, the Zoom menu and the help dialog open, and in the Viewer.
 
 **Language:** the skin's own strings (Studio controls, tooltips, announcements, the help dialog) are English only. Video.js's own components follow the player's locale.
 
@@ -392,11 +392,11 @@ Every source the demo can play is an entry in `apps/preview/src/frame/media.ts`:
 **To switch the demo to another source, change one line** in that file:
 
 ```ts
-export const ACTIVE_SOURCE: SourceName = 'reel'; // was 'cosmicDawn'
+export const ACTIVE_SOURCE: SourceName = 'cosmicDawn'; // was 'reel'
 ```
 
-- `cosmicDawn` (active): NASA's Cosmic Dawn trailer on Mux, 30 fps. Files in `apps/preview/public/demo/cosmic-dawn/`.
-- `reel`: the author's reel, 24 fps. It holds a placeholder playback ID (`REEL_PLAYBACK_ID`) and placeholder files in `apps/preview/public/demo/reel/` (`captions.vtt`, `chapters.vtt`, `markers.json`). Put the real ID in the entry and replace the three files.
+- `reel` (active): the author's reel on Mux, 56 s, 1920×1080, 24 fps, with a burned-in timecode. Its chapters in `apps/preview/public/demo/reel/` are the reel's 13 sections and its markers are 14 simulated review notes; it has no captions (`captions.vtt` there is a placeholder the entry does not load).
+- `cosmicDawn`: NASA's Cosmic Dawn trailer on Mux, 30 fps. Files in `apps/preview/public/demo/cosmic-dawn/`.
 
 `?media=reel` (or `plain`, `nocors`, `error`) plays another entry without a code change. Every entry sets Video.js's `capRenditionToPlayerSize` to `false`, so automatic quality is not held to the player's size; `?cap=1` puts the cap back for testing.
 

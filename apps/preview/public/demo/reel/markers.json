@@ -1,5 +1,16 @@
 [
-  { "id": "sample-1", "time": 4, "label": "Sample note" },
-  { "id": "sample-2", "time": 18, "end": 22, "label": "Sample range note" },
-  { "id": "sample-3", "time": 36.5, "label": "Sample note near the end" }
+  {"id": "two-pop", "time": 1.0, "label": "Sound: two-pop missing from the leader"},
+  {"id": "spill", "time": 4.5, "end": 7.0, "label": "Comp: green spill on the coat edge"},
+  {"id": "cut-driver", "time": 10.125, "label": "Editor: cut lands a frame early"},
+  {"id": "grade", "time": 12.0, "end": 15.5, "label": "Director: skin tones too warm"},
+  {"id": "hold", "time": 21.333, "label": "Director: hold the pose two frames longer"},
+  {"id": "flash", "time": 27.625, "label": "Editor: flash frame after the kickflip"},
+  {"id": "sync", "time": 32.0, "end": 35.0, "label": "Sound: scratches two frames off the beat"},
+  {"id": "dragon-in", "time": 37.208, "label": "VFX: dragon enters on the cut, keep"},
+  {"id": "dragon-wing", "time": 37.5, "label": "VFX: wing tip clips the top of frame"},
+  {"id": "dragon-blur", "time": 37.833, "label": "VFX: motion blur smears the head"},
+  {"id": "horizon", "time": 40.5, "label": "Comp: seam visible along the horizon"},
+  {"id": "sneaker", "time": 45.917, "end": 48.417, "label": "Colourist: match the orange sole to the brand swatch"},
+  {"id": "end-card", "time": 52.0, "end": 55.5, "label": "Director: URL too small to read on a phone"},
+  {"id": "tail", "time": 56.0, "label": "Editor: last frame, check the fade"}
 ]

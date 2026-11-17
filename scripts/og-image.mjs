@@ -13,7 +13,7 @@ const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
 const out = process.argv[3] ?? fileURLToPath(new URL('../apps/preview/public/og.png', import.meta.url));
 
 /** The moment shown, and the range marked around it, in seconds of the active demo source. */
-const SHOT = { time: 69, in: 62, out: 80 };
+const SHOT = { time: 13, in: 10.125, out: 17.083 }; // the reel: the Driver section, 00:00:10:03 to 00:00:17:02
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const context = await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1, colorScheme: 'dark' });

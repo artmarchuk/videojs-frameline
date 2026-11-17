@@ -44,13 +44,18 @@ export const SOURCES = {
     capRenditionToPlayerSize: false,
     info: 'cosmic-dawn-trailer.m3u8 · 1920×1080 · 30 fps',
   },
-  /** The author's reel. Placeholder ID and files until the real ones arrive. */
+  /**
+   * The author's reel on Mux: 56 s, 1920×1080, green screen with a burned-in timecode. No captions: the stream has
+   * none and the file in `demo/reel/` is a placeholder. Chapters are the reel's 13 sections, from the author's cut list;
+   * markers are simulated editor and director notes.
+   */
   reel: {
-    playbackId: 'REEL_PLAYBACK_ID',
+    playbackId: '9Y7a3hqNCi4u02fmBFbaK5qWoS6A5cPce7P1mA00JA02tY',
+    // Measured with ffprobe on the 1080p rendition: 24/1.
     fps: 24,
-    captions: './demo/reel/captions.vtt',
     chapters: './demo/reel/chapters.vtt',
     markers: './demo/reel/markers.json',
+    posterTime: 3,
     capRenditionToPlayerSize: false,
     info: 'reel.m3u8 · 1920×1080 · 24 fps',
   },
@@ -59,7 +64,7 @@ export const SOURCES = {
 export type SourceName = keyof typeof SOURCES;
 
 /** ACTIVE: the source both pages play. Change this one line to switch the demo, for example to `'reel'`. */
-export const ACTIVE_SOURCE: SourceName = 'cosmicDawn';
+export const ACTIVE_SOURCE: SourceName = 'reel';
 
 /**
  * Test sources for the gate checklist, chosen with `?media=<name>` on either page (`?media=reel` also works):

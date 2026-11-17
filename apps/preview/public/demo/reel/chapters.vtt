@@ -1,12 +1,42 @@
 WEBVTT
 
-NOTE Placeholder chapters for the reel. Replace this file with the real one.
+NOTE The reel's sections. Times are frame starts at 24 fps, rounded to the millisecond; each cue ends where the next begins.
 
-00:00:00.000 --> 00:00:15.000
-Opening
+00:00:00.000 --> 00:00:02.750
+Leader
 
-00:00:15.000 --> 00:00:30.000
-Middle
+00:00:02.750 --> 00:00:10.125
+Courier greenscreen comp
 
-00:00:30.000 --> 00:00:45.000
-Close
+00:00:10.125 --> 00:00:17.125
+Driver color grading
+
+00:00:17.125 --> 00:00:24.417
+Dancer on the street
+
+00:00:24.417 --> 00:00:30.292
+Skateboarder
+
+00:00:30.292 --> 00:00:37.208
+Cat DJ
+
+00:00:37.208 --> 00:00:39.792
+Dragon VFX
+
+00:00:39.792 --> 00:00:42.000
+City upside-down
+
+00:00:42.000 --> 00:00:43.708
+Jellyfish
+
+00:00:43.708 --> 00:00:45.917
+Caravan
+
+00:00:45.917 --> 00:00:48.458
+Sneaker color correction
+
+00:00:48.458 --> 00:00:50.708
+Snow peak
+
+00:00:50.708 --> 00:00:56.042
+Titles
