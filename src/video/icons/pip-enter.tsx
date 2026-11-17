@@ -1,10 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `picture-in-picture`, Fill. */
 export function PipEnterIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <rect x="11.5" y="11.5" width="6.5" height="4.5" rx="0.75" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M216,48H40A16,16,0,0,0,24,64V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V64A16,16,0,0,0,216,48Zm0,144H136V128h80v64Z" />
+    </FillIcon>
   );
 }

@@ -1,11 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `warning-circle`, Fill. */
 export function ErrorIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <path d="M12 4.25l8.75 15h-17.5z" />
-      <path d="M12 10v4.25" />
-      <path d="M11.99 16.75h.02" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z" />
+    </FillIcon>
   );
 }

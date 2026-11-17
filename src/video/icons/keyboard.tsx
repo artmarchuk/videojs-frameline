@@ -1,10 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `keyboard`, Fill. */
 export function KeyboardIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <rect x="2.5" y="6.25" width="19" height="11.5" rx="2" />
-      <path d="M6.49 10.25h.02M9.99 10.25h.02M13.49 10.25h.02M16.99 10.25h.02M8 14h8" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM64,168H48a8,8,0,0,1,0-16H64a8,8,0,0,1,0,16Zm96,0H96a8,8,0,0,1,0-16h64a8,8,0,0,1,0,16Zm48,0H192a8,8,0,0,1,0-16h16a8,8,0,0,1,0,16Zm0-32H48a8,8,0,0,1,0-16H208a8,8,0,0,1,0,16Zm0-32H48a8,8,0,0,1,0-16H208a8,8,0,0,1,0,16Z" />
+    </FillIcon>
   );
 }

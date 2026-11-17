@@ -172,7 +172,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | The pro runtime, the Studio layer and the debug readout are separate lazy chunks | Studio | Network panel on `/` |
 | The skin does not re-render per frame: the frame clock writes to a small store, and only the timecode field subscribes to the frame | Studio | `/preview.html?debug` shows the render count |
 | Frame time from `requestVideoFrameCallback` where the browser has it | Studio | `/preview.html?debug` shows the clock source |
-| Plain CSS, no webfont, our own icons | Both | The source |
+| Plain CSS, no webfont, icons copied into the source (no icon package at runtime) | Both | The source |
 
 ## Browser support
 

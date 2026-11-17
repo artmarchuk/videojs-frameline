@@ -1,12 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `corners-in`, Fill. */
 export function FullscreenExitIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <path d="M9 4.5V8a1 1 0 0 1-1 1H4.5" />
-      <path d="M19.5 9H16a1 1 0 0 1-1-1V4.5" />
-      <path d="M15 19.5V16a1 1 0 0 1 1-1h3.5" />
-      <path d="M4.5 15H8a1 1 0 0 1 1 1v3.5" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M152,96V48a8,8,0,0,1,13.66-5.66l48,48A8,8,0,0,1,208,104H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0-5.66,13.66l48,48A8,8,0,0,0,104,208V160A8,8,0,0,0,96,152ZM99.06,40.61a8,8,0,0,0-8.72,1.73l-48,48A8,8,0,0,0,48,104H96a8,8,0,0,0,8-8V48A8,8,0,0,0,99.06,40.61ZM208,152H160a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66l48-48A8,8,0,0,0,208,152Z" />
+    </FillIcon>
   );
 }

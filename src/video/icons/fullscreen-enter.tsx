@@ -1,12 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `corners-out`, Fill. */
 export function FullscreenEnterIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <path d="M4.5 9V5.5a1 1 0 0 1 1-1H9" />
-      <path d="M15 4.5h3.5a1 1 0 0 1 1 1V9" />
-      <path d="M19.5 15v3.5a1 1 0 0 1-1 1H15" />
-      <path d="M9 19.5H5.5a1 1 0 0 1-1-1V15" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M93.66,202.34A8,8,0,0,1,88,216H48a8,8,0,0,1-8-8V168a8,8,0,0,1,13.66-5.66ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,13.66,5.66l40-40A8,8,0,0,0,88,40ZM211.06,160.61a8,8,0,0,0-8.72,1.73l-40,40A8,8,0,0,0,168,216h40a8,8,0,0,0,8-8V168A8,8,0,0,0,211.06,160.61ZM208,40H168a8,8,0,0,0-5.66,13.66l40,40A8,8,0,0,0,216,88V48A8,8,0,0,0,208,40Z" />
+    </FillIcon>
   );
 }

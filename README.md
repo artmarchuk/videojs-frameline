@@ -456,6 +456,10 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
 
 Apache 2.0, copyright 2026 Artem Marchuk. See [LICENSE](LICENSE).
 
+## Credits
+
+Icons from [Phosphor Icons](https://phosphoricons.com) (MIT); see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Learn more
 
 - [Build your own skin](https://videojs.org/docs/framework/react/guides/build-your-own-skin)

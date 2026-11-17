@@ -1,10 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `pause`, Fill. */
 export function PauseIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <rect x="6.75" y="5.25" width="3.5" height="13.5" rx="0.75" />
-      <rect x="13.75" y="5.25" width="3.5" height="13.5" rx="0.75" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z" />
+    </FillIcon>
   );
 }

@@ -1,12 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `subtitles`, Fill. */
 export function CaptionsOnIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <rect x="3" y="3.25" width="18" height="13.5" rx="2" />
-      <path d="M10.5 8.2a2.2 2.2 0 1 0 0 3.6" />
-      <path d="M17 8.2a2.2 2.2 0 1 0 0 3.6" />
-      <path d="M6 20.75h12" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM56,128H72a8,8,0,0,1,0,16H56a8,8,0,0,1,0-16Zm96,48H56a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Zm48,0H184a8,8,0,0,1,0-16h16a8,8,0,0,1,0,16Zm0-32H104a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z" />
+    </FillIcon>
   );
 }

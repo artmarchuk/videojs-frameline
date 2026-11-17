@@ -1,11 +1,10 @@
-import { Icon, type IconProps } from './icon';
+import { FillIcon, type IconProps } from './icon';
 
+/** Phosphor `sliders-horizontal`, Fill. */
 export function SettingsIcon(props: IconProps) {
   return (
-    <Icon {...props}>
-      <circle cx="12" cy="12" r="6.25" />
-      <circle cx="12" cy="12" r="2.25" />
-      <path d="M12 2.75v3M12 18.25v3M2.75 12h3M18.25 12h3M5.46 5.46l2.12 2.12M16.42 16.42l2.12 2.12M5.46 18.54l2.12-2.12M16.42 7.58l2.12-2.12" />
-    </Icon>
+    <FillIcon {...props}>
+      <path d="M32,80a8,8,0,0,1,8-8H77.17a28,28,0,0,1,53.66,0H216a8,8,0,0,1,0,16H130.83a28,28,0,0,1-53.66,0H40A8,8,0,0,1,32,80Zm184,88H194.83a28,28,0,0,0-53.66,0H40a8,8,0,0,0,0,16H141.17a28,28,0,0,0,53.66,0H216a8,8,0,0,0,0-16Z" />
+    </FillIcon>
   );
 }
