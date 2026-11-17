@@ -31,6 +31,11 @@ export interface DemoSource {
   noCors?: boolean;
   /** What a first-time visitor finds on the landing page's Studio player before touching it. */
   staged?: StagedState;
+  /**
+   * The picture inside the file, in source pixels, when the file carries black bars around it. The landing page shapes
+   * its player to this and crops the bars. Leave it out when the picture fills the file.
+   */
+  picture?: { width: number; height: number };
 }
 
 /**
@@ -79,6 +84,8 @@ export const SOURCES = {
     // frame before it (`time=6` shows 00:00:05:23, `time=6.02` shows 00:00:06:00).
     posterTime: (REEL_STAGED.playhead + 0.5) / REEL_FPS,
     staged: REEL_STAGED,
+    // Every frame carries 4 black rows at the top and 4 at the bottom: the picture is 1920×1072 inside 1920×1080.
+    picture: { width: 1920, height: 1072 },
     capRenditionToPlayerSize: false,
     info: 'reel.m3u8 · 1920×1080 · 24 fps',
   },

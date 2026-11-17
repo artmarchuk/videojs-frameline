@@ -403,6 +403,14 @@ function Player() {
 
 render();
 
+// A file with black bars around its picture: the stage takes the picture's shape and the video covers it, so the
+// bars fall outside the stage. Set before the player mounts, so the placeholder already has the final height.
+if (MEDIA.picture) {
+  const holder = $('#player');
+  holder.style.setProperty('--fl-stage-ratio', `${MEDIA.picture.width} / ${MEDIA.picture.height}`);
+  holder.style.setProperty('--media-object-fit', 'cover');
+}
+
 createRoot($('#player')).render(
   <StrictMode>
     <Player />

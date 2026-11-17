@@ -451,7 +451,7 @@ kbd {
 }
 
 .player:empty {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: var(--fl-stage-ratio, 16 / 9);
   border: 1px solid var(--line);
   background: var(--surface-0);
 }
@@ -461,8 +461,9 @@ kbd {
   --fl-frame-border: 1;
 }
 
+/* The stage's shape: 16:9, or the picture's own shape when main.tsx sets it for a file with black bars. */
 .player .media-skin[data-layout="overlay"] {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: var(--fl-stage-ratio, 16 / 9);
 }
 
 /* Player elements only provide state; the skin inside them is the box that gets sized. */
