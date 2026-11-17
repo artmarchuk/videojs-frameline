@@ -1481,6 +1481,7 @@ All three new names exist in 2.1.1 and are one `<path>` on the 256 grid. `frame-
 - `THIRD_PARTY_NOTICES.md`: added `skip-back`, `skip-forward`, `dots-three-outline`; removed `camera`, `bookmark-simple`, `caret-double-left`, `caret-double-right`, `sliders-horizontal`.
 - Checks: typecheck, 219 unit tests, build, the contrast script; browser checks `dock-polish` (1440 mouse; 724 × 375, 422, 352 touch), `phone-transport` (422, 352, 724 × 375 touch; 1440 mouse), `viewer-gate` (1440, 320), `guides-menu-focus`, `handle-focus-ring`, `fullscreen-focus`, `reduced-motion`, `two-players`, `configurator`, `zoom`, `range-playback`, `error-retry`: pass. axe (Studio idle, Guides, help; Viewer): no violations.
 - Screenshots, each opened and looked at: `design/screenshots/icons-phosphor-trial/round-2/`.
+- Preview deployment (behind Vercel's login): https://videojs-frameline-dkat45dan-artmarchuk.vercel.app. Production was not deployed.
 
 | Bundle (raw / gzip -9) | `main` | Polish round | Round two |
 | --- | --- | --- | --- |
