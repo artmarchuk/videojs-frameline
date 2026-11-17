@@ -19,6 +19,7 @@ import {
   layoutMarkers,
   MIN_LABEL_PX,
   MIN_MINOR_PX,
+  pressesPlayhead,
   rangeBand,
   resolveHandleMove,
   snapSeekTime,
@@ -253,6 +254,14 @@ describe('handle drag maths', () => {
   it('ignores magnets outside the clip and works without any', () => {
     expect(handleDragTime(100, 1200, 60, 24, [Number.NaN, -1, 90])).toBe(5);
     expect(handleDragTime(100, 1200, 60, 24)).toBe(5);
+  });
+
+  it('gives the playhead priority over a pin or a handle: within 10 px of its centre, 22 px on touch', () => {
+    expect(pressesPlayhead(110, 100, false)).toBe(true);
+    expect(pressesPlayhead(111, 100, false)).toBe(false);
+    expect(pressesPlayhead(78, 100, true)).toBe(true);
+    expect(pressesPlayhead(77, 100, true)).toBe(false);
+    expect(pressesPlayhead(100, 100, false)).toBe(true);
   });
 
   it('puts an unset handle at its own end of the track', () => {

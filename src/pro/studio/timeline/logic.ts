@@ -243,6 +243,22 @@ export const MAGNET_PX = 5;
 /** Width of a handle's tab, in pixels. */
 export const HANDLE_TAB_PX = 9;
 
+/**
+ * How far from the playhead's centre a press still grabs the playhead rather than a marker pin or a range handle
+ * under the same spot: 10 px, and 22 px on touch, so the playhead has a 44 px target there like every other control.
+ */
+export const PLAYHEAD_GRAB_PX = 10;
+export const PLAYHEAD_GRAB_TOUCH_PX = 22;
+
+/**
+ * Whether a press at `x` belongs to the playhead (centred on `playheadX`) rather than to the pin or handle it landed
+ * on. The playhead sits on top of everything on the timeline: the press then goes on to the slider, which grabs and
+ * drags the playhead.
+ */
+export function pressesPlayhead(x: number, playheadX: number, coarse: boolean): boolean {
+  return Math.abs(x - playheadX) <= (coarse ? PLAYHEAD_GRAB_TOUCH_PX : PLAYHEAD_GRAB_PX);
+}
+
 export interface HandleBox {
   /** The x of the point itself: the edge of the range. */
   anchor: number;

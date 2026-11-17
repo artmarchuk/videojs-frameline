@@ -596,17 +596,25 @@
     padding: calc(var(--media-spacing) * 3) 15px calc(var(--media-spacing) * 3.5);
   }
 
-  /* Row one: the timecode, then step, Play and cut across the rest. Row two: the right column, full width. */
+  /* Row one: the timecode, then the transport across the rest. Row two: the right column, full width. */
   .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-main-row {
     grid-template-columns: auto minmax(0, 1fr);
     gap: calc(var(--media-spacing) * 2.5) calc(var(--media-spacing) * 1.5);
   }
 
+  /*
+   * The transport stays one group, centred in the space beside the timecode: on a phone held upright it fills that
+   * space, and on a wider narrow dock (a phone on its side, a tablet) it does not spread apart.
+   */
   .pro-skin[data-dock-size="narrow"] .pro-main-centre,
   .pro-skin[data-dock-size="narrow"] .pro-transport {
     flex: 1;
-    justify-content: space-between;
+    justify-content: center;
     min-width: 0;
+  }
+
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-transport {
+    gap: var(--media-spacing);
   }
 
   /*
@@ -628,16 +636,33 @@
     display: contents;
   }
 
+  /*
+   * Row one holds the whole transport, as on the wide dock: previous cut, step back, Play, step forward, next cut.
+   * The four tool buttons are fluid: 44px wide where the row has room, down to 36px (always 44px tall) where it has
+   * not, so a 360px phone with 16px page margins (a 328px player) shows every button. Play stays 44px. The row
+   * needs 324px in all: 15 + 92 + 6 + 4 × 36 + 44 + 2 × 4 + 15; under that the cut pair folds away, see below.
+   */
+  /* A descendant, not a child: the group is portalled into a `display: contents` slot inside the transport. */
+  .pro-skin[data-dock-size="narrow"] .pro-transport .pro-seg {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
   .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool {
-    width: calc(var(--media-spacing) * 10);
+    flex: 1 1 auto;
+    width: var(--fl-control-size);
+    min-width: calc(var(--media-spacing) * 9);
+    padding-inline: 0;
   }
 
   .pro-skin[data-dock-size="narrow"] .pro-transport > .media-play-button {
-    width: calc(var(--media-spacing) * 11.5);
+    flex: none;
+    width: var(--fl-control-size);
   }
 
+  /* 92px: "00:00:14:20" at 14px measures 84px (tabular figures and colons), "≈00:00:14:20" 92px. */
   .pro-skin[data-dock-size="narrow"] .pro-timecode {
-    width: calc(var(--media-spacing) * 25);
+    width: calc(var(--media-spacing) * 23);
     font-size: calc(var(--media-spacing) * 3.5);
   }
 
@@ -660,13 +685,16 @@
     display: flex;
   }
 
-  /* Under 350px the row cannot hold four 40px buttons beside Play and the timecode: the cut buttons step aside. */
-  @container media-root (width < 350px) {
-    .pro-skin[data-dock-size="narrow"] .pro-seg[data-pro-seg="cut"] {
+  /*
+   * Under 324px the row cannot hold four 36px buttons beside Play and the timecode: the cut buttons step aside
+   * (`[`, `]` and the Markers menu still reach the cuts), and step back, Play and step forward gather at the end.
+   */
+  @container media-root (width < 324px) {
+    .pro-skin[data-dock-size="narrow"] .pro-seg .pro-tool:is([data-pro-tool="previous-cut"], [data-pro-tool="next-cut"]) {
       display: none;
     }
 
-    .pro-skin[data-dock-size="narrow"] .pro-transport {
+    .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-transport {
       justify-content: flex-end;
       gap: calc(var(--media-spacing) * 1.5);
     }

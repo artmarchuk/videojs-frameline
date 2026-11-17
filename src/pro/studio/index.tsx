@@ -61,9 +61,8 @@ export default function StudioLayer(props: StudioLayerProps) {
 
 /**
  * Whether the dock is in its narrow arrangement (a narrow player, or a touch device). CSS container queries do the
- * rest of the responsive work; this exists because the narrow arrangement changes the order of the controls (and
- * moves the link button into the second row), and the DOM order has to change with it so the focus order matches
- * what is on screen.
+ * rest of the responsive work; this exists because the narrow arrangement moves controls (Loop and the link button
+ * go into the second row), and the DOM order has to change with it so the focus order matches what is on screen.
  * Also written to the container as `data-dock-size` for the styles; the attribute is removed with this module.
  */
 function useNarrowDock(anchor: RefObject<HTMLElement | null>): boolean {
@@ -218,11 +217,12 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
     return () => setSettingsItems(null);
   }, [narrow, features.copyTimecodeLink, copyLink, setSettingsItems]);
 
+  // Named, so the narrow dock's styles can fold the two cut buttons away under 324px.
   const previousCut = features.shotNav && (
-    <ToolButton label={t.previousCut} shortcut="[" icon={<PreviousCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('previous')} />
+    <ToolButton name="previous-cut" label={t.previousCut} shortcut="[" icon={<PreviousCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('previous')} />
   );
   const nextCut = features.shotNav && (
-    <ToolButton label={t.nextCut} shortcut="]" icon={<NextCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('next')} />
+    <ToolButton name="next-cut" label={t.nextCut} shortcut="]" icon={<NextCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('next')} />
   );
   const stepBack = features.frameStep && <ToolButton label={t.stepBack} shortcut="," icon={<StepBackIcon />} onClick={() => controller.step(-1)} />;
   const stepForward = features.frameStep && <ToolButton label={t.stepForward} shortcut="." icon={<StepForwardIcon />} onClick={() => controller.step(1)} />;
@@ -244,38 +244,23 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
       {time && features.timecode && createPortal(<TimecodeField controller={controller} fps={fps} dropFrame={dropFrame} link={narrow ? null : linkButton} />, time)}
       {time && !features.timecode && !narrow && linkButton && createPortal(linkButton, time)}
 
-      {/* Wide: cut and step either side of Play. Narrow: step, Play, cut, so the two step buttons sit together. */}
+      {/*
+        Cut and step either side of Play, on every dock: previous cut, step back, Play, step forward, next cut. The
+        narrow dock compacts the buttons instead of reordering them (and folds the cut pair away under 324px).
+      */}
       {transportStart &&
         createPortal(
-          <Segmented name={narrow ? 'step' : 'back'}>
-            {narrow ? (
-              <>
-                {stepBack}
-                {stepForward}
-              </>
-            ) : (
-              <>
-                {previousCut}
-                {stepBack}
-              </>
-            )}
+          <Segmented name="back">
+            {previousCut}
+            {stepBack}
           </Segmented>,
           transportStart
         )}
       {transportEnd &&
         createPortal(
-          <Segmented name={narrow ? 'cut' : 'forward'}>
-            {narrow ? (
-              <>
-                {previousCut}
-                {nextCut}
-              </>
-            ) : (
-              <>
-                {stepForward}
-                {nextCut}
-              </>
-            )}
+          <Segmented name="forward">
+            {stepForward}
+            {nextCut}
           </Segmented>,
           transportEnd
         )}

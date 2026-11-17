@@ -680,7 +680,6 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Backlog
 
-- Row one of the narrow dock is 2 to 4 px too long at a player 350 to 353 px wide.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -1308,3 +1307,27 @@ The site root is rebuilt from the Figma file "Frameline", page "Landing", frame 
 - The page at 320 px and the tablet range were not looked at closely.
 - **The reel has no captions.** The step 2 gate asks for the captions toggle "on a source with captions"; the demo source now has none, so `C` and the captions button have nothing to show on the site. `?media=cosmicDawn` plays a source with captions. The reel was played in headless Chrome, Firefox and WebKit through the checks below; not in a headed Safari or on a phone.
 - **WebKit, `configurator.js`:** `copied` is false because headless WebKit gives the check no clipboard read; Chrome and Firefox pass it. **One frame is missing at the 10 s segment join:** stepping from 10:02, Chrome shows the frame burned 10:04 at the 10:03 position (the skin's timecode reads 10:03 there), and a seek to 10:03 shows the picture and the skin both at 10:04. In the stream, frame timestamps run about 57 ms behind the burned-in timecode in that segment, and the first segment holds 119 frames, not 120. A Mux encode or MSE segment-join effect, not the chapter data; other segment joins (every 5 s) were not checked one by one. Next/previous cut lands on the right frame at the other 11 sections.
+
+## Phone fixes: the playhead on top, the full transport on row one (17 Nov 2026)
+
+### The playhead wins over a range handle
+- Found on a phone: with In set at the playhead (`I`, or a loop restarting at In) the In handle's 44 px touch target covered the playhead, and every press there moved the handle. The handle stopped the press (so the slider under it would not seek), as the marker pins did before the 6c follow-up.
+- Now one rule for pins and handles, `pressesPlayhead` in `timeline/logic.ts`: a press within 10 px of the playhead's centre, 22 px on touch (a 44 px target), is not stopped by the pin or handle it landed on; the slider takes it, grabs the playhead and drags it. The pin or handle keeps the rest of its target (a handle on the playhead keeps its outer 22 px on touch). A double click on that overlap no longer unsets the point. The rule is unit-tested; the DOM part is `playheadUnder` in `timeline/index.tsx`.
+- Checked (headless Chrome, production build, `/preview.html`, Studio). Touch (390 px window, CDP touch events): playhead at 10 s, `I`; a press 8 px left of the playhead, inside the handle's target (53.8 to 97.8 px, playhead centre 98), dragged 60 px right: playback at 19.69 s, In still 10 s; a press 30 px left of the playhead, dragged 40 px left: In 2.54 s, playback unchanged. Mouse (1440): the same with 6 and 16 px; a double click on the overlap seeks and leaves In alone. `scripts/browser-checks/phone-transport.js` runs both.
+
+### Row one holds the whole transport
+- Found: the narrow row showed step, Play, cut, and dropped the cut pair under 350 px, which is what a phone gets: the site's 16 px margins make the player 328 px on a 360 px phone and 343 px on a 375 px one, so the cut buttons were never there on the phones people hold. The row needed 354 px (100 + 6 + 2 × 80 + 46 + 2 × 6, and 30 of padding).
+- Now the narrow dock has the wide dock's composition, previous cut, step back, Play, step forward, next cut, from the same JSX (one branch less in `studio/index.tsx`; the focus order is the same on every dock). Compacted: the timecode field is 92 px (was 100; the text measures 84 px at 14 px, 92 with the `≈` prefix), Play 44 (was 46), the transport's gaps 4 px (were 6), and the four tool buttons are fluid, `flex: 1 1 auto` from 44 px down to a 36 px minimum, always 44 px tall. The groups have `flex-shrink: 0` and are portalled into a `display: contents` slot, so the override is a descendant selector on the transport, not a child one (the child one matched nothing, and the first run showed 44 px buttons overflowing by 9 to 32 px). The row needs 324 px in all; under that the cut buttons fold away (named `data-pro-tool="previous-cut"` and `"next-cut"` for it) and step back, Play, step forward gather at the end as before.
+- Measured (headless Chrome, touch context, player width: tool button width): 398: 44; 358: 44; 343: 40.75; 328: 37; 324: 36; 308 and 288: cut folded, 44. No overflow of the bar's content box at any of them, no page overflow, two rows. Row two is unchanged.
+- The Backlog item "row one is 2 to 4 px too long at 350 to 353 px" is gone with the 350 px fold.
+- Found on a phone held on its side (a 796 px player, still the narrow dock because the pointer is coarse): the transport's groups spread to the ends of the row (`justify-content: space-between`). The transport is now centred as one group beside the timecode, 4 px gaps. Measured: at 844x390 220 px of space on each side; at 390x844 and 360x780 unchanged (1 px and 0 px of slack); under 324 px the folded row still gathers at the end.
+- Target widths: between 324 and 358 px the tool buttons are under 44 px wide (never under 36, always 44 tall), as the 40 px step buttons were before on every narrow dock. WCAG 2.5.8 asks 24 px; the 44 px touch rule holds for Play, the timecode field and all of row two.
+
+### Checks
+- Typecheck, 218 unit tests (one new), build: pass. `scripts/browser-checks/phone-transport.js` at windows of 430, 390, 375, 360, 352, 340 and 320 px (touch) and at 1440 (mouse).
+- `dock-polish.js` again: narrow (392 px, touch) all 11 checks pass; wide (1440) 12 of 13. The one, `link`, fails only because the runner opened the page with `#tier=studio` already in the URL, so the copied link ends in `&t=00:00:14:00`, not `#t=…`; the copy and its announcement were right.
+
+### Unverified (phone fixes)
+- A real phone: touch was emulated (Chrome's CDP touch events in a touch context); Safari on iOS and Chrome on Android were not run. Firefox and WebKit were not run on the flex change.
+- The `≈` prefix in the 92 px field is computed from the measured text width, not seen.
+- The landing page on a phone was not re-measured; the numbers above are from `/preview.html`, whose 16 px side padding equals the landing page's gutter under 760 px.

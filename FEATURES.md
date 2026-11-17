@@ -86,6 +86,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Marker pins from the host's `markers`; an end time draws a line | Studio | Pins on the ruler |
 | Markers menu: markers with timecodes, and the media's chapters | Studio | The bookmark button |
 | A selected marker is drawn in the accent and reported to the host | Studio | Click a pin; `onMarkerSelect` |
+| The playhead sits on top of the timeline: a press within 10 px of it (22 px on touch) grabs the playhead, also through a marker pin or a range handle that overlaps it; the pin or handle keeps the rest of its target | Studio | Set In at the playhead with `I`, then drag from the playhead on a phone |
 
 ## Studio: capture
 
@@ -131,6 +132,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | --- | --- | --- |
 | The Viewer bar becomes two rows under 640 px | Viewer | Narrow the window |
 | The Studio row sheds controls in a set order from 1100 px down, and becomes a narrow dock under 740 px | Studio | Narrow the window |
+| Narrow and touch dock, row one: the timecode, then the whole transport as on the wide dock (previous cut, step back, Play, step forward, next cut); the four tool buttons are 44 px wide where the row has room and shrink to 36 px (always 44 px tall) where it has not, so a 360 px phone shows every button; under 324 px the cut buttons fold away (`[` `]` and the Markers menu still reach the cuts) | Studio | A 360 or 375 px phone; a 320 px player |
 | Narrow and touch dock, row two: one row of equal cells, each a 44 px target, in the order Markers, Loop, Capture, Link, Guides, Zoom, Settings, Fullscreen | Studio | Open the page on a phone |
 | The narrow row folds: under 382 px the Zoom button is not shown (`Z`, `Shift+Z` and `apiRef.setZoom` still zoom); under 340 px the Link button is not shown and "Copy link at timecode" is an item of the settings menu; under 300 px the side padding is 12 px, and under 288 px the cells are 40 px wide, so the row fits down to a 264 px player | Studio | A 360, 320 and 264 px wide player |
 | Markers have their own button on the narrow dock, with the same menu as on the wide one | Studio | The bookmark button on a phone |

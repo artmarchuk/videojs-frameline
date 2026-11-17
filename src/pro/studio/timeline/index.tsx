@@ -36,6 +36,7 @@ import {
   isSnapped,
   layoutMarkers,
   MARKER_SOFT_LIMIT,
+  pressesPlayhead,
   rangeBand,
   resolveHandleMove,
   snapFrame,
@@ -281,6 +282,7 @@ const MarkerPins = memo(function MarkerPins({
   const selected = useProStore((state) => state.selectedMarker);
   const [hover, setHover] = useState<MarkerPin | null>(null);
   const tip = useRef<HTMLSpanElement>(null);
+  const coarse = useCoarsePointer();
   // Set when a press landed on the playhead through a pin: that press belongs to the playhead (seek and drag), not the pin.
   const playheadPress = useRef(false);
 
@@ -308,8 +310,7 @@ const MarkerPins = memo(function MarkerPins({
           // the playhead is under the pointer: the playhead has priority, and the press goes on to the slider so it
           // can be grabbed and dragged from a marker.
           onPointerDown={(event: ReactPointerEvent) => {
-            const playhead = event.currentTarget.closest('.pro-tl')?.querySelector('.pro-tl-playhead')?.getBoundingClientRect();
-            playheadPress.current = playhead !== undefined && Math.abs(event.clientX - (playhead.left + playhead.width / 2)) <= PLAYHEAD_GRAB_PX;
+            playheadPress.current = playheadUnder(event.currentTarget, event.clientX, coarse);
             if (!playheadPress.current) event.stopPropagation();
           }}
           onPointerUp={(event: ReactPointerEvent) => {
@@ -369,8 +370,15 @@ function useRoom(track: { current: HTMLElement | null }, width: number): { left:
   return room;
 }
 
-/** How far from the playhead's centre a press still grabs the playhead rather than a marker pin, in pixels. */
-const PLAYHEAD_GRAB_PX = 10;
+/**
+ * Whether a press on `target` (a pin or a handle over the slider) lands on the playhead: within 10 px of its centre,
+ * 22 px on touch (`pressesPlayhead`). The playhead has priority over anything it overlaps: such a press is not
+ * stopped, so the slider under it grabs and drags the playhead.
+ */
+function playheadUnder(target: Element, clientX: number, coarse: boolean): boolean {
+  const playhead = target.closest('.pro-tl')?.querySelector('.pro-tl-playhead')?.getBoundingClientRect();
+  return playhead !== undefined && pressesPlayhead(clientX, playhead.left + playhead.width / 2, coarse);
+}
 
 /** How long after the last key press a handle move is announced, so a held key speaks once. */
 const HANDLE_ANNOUNCE_MS = 400;
@@ -382,6 +390,10 @@ const HANDLE_ANNOUNCE_MS = 400;
  * `onInOutChange` fires once; the drag snaps to frames, and magnetically to the playhead and to markers. Dragging it
  * back to its end, a double click, `Delete` or `Backspace` unsets the point. With focus on it: `←` `→` one frame,
  * `Shift` ten, `Home` `End` its limits.
+ *
+ * The playhead sits on top: a press within its grab width (10 px, 44 px on touch), also through this handle's target,
+ * goes on to the slider and drags the playhead. The two overlap often (In set at the playhead with `I`, a loop
+ * restarting at In), and on touch a handle's 44 px target would otherwise cover the playhead completely.
  */
 function RangeHandle({
   which,
@@ -414,6 +426,9 @@ function RangeHandle({
   const drag = useRef<{ base: RangePoints; left: number; offset: number; time: number; moved: boolean; magnets: number[] } | null>(null);
   const [dragTime, setDragTime] = useState<number | null>(null);
   const timer = useRef(0);
+  const coarse = useCoarsePointer();
+  // Set when the last press on this handle was the playhead's: the double click that may follow must not unset the point.
+  const playheadPress = useRef(false);
 
   const set = (which === 'in' ? points.in : points.out) !== null;
   const value = handleValue(which, points, duration);
@@ -489,6 +504,9 @@ function RangeHandle({
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 && event.pointerType === 'mouse') return;
+    // On the playhead: not stopped, so the slider takes the press (grab and drag the playhead), not this handle.
+    playheadPress.current = playheadUnder(event.currentTarget, event.clientX, coarse);
+    if (playheadPress.current) return;
     // Stopped, so the seek slider under the handle does not start a seek.
     event.stopPropagation();
     event.preventDefault();
@@ -527,7 +545,6 @@ function RangeHandle({
     if (!move.rejected) setDraft({ in: move.in, out: move.out });
   };
 
-  const coarse = useCoarsePointer();
   const room = useRoom(root, width);
   const otherValue = handleValue(which === 'in' ? 'out' : 'in', points, duration);
   const box = handleBox(which, value, duration, width, {
@@ -569,7 +586,9 @@ function RangeHandle({
         }}
         onPointerCancel={() => end(false)}
         onLostPointerCapture={() => end(false)}
-        onDoubleClick={clear}
+        onDoubleClick={() => {
+          if (!playheadPress.current) clear();
+        }}
       />
       {dragTime !== null && (
         // The same preview as a playhead drag: the frame at the handle's point and its timecode, over the anchor.
