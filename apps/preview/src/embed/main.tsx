@@ -7,7 +7,7 @@ import './embed.css';
 import { FramelineSkin, TIERS, type Tier } from '@/pro';
 
 import { DemoVideo, useDemoMarkers } from '../frame/demo-video';
-import { MEDIA, posterUrl, type DemoSource } from '../frame/media';
+import { MEDIA, posterUrl, SOURCES, type DemoSource } from '../frame/media';
 
 /**
  * The player alone, for an iframe on another site. No title, no switches, nothing outside the player. It fills the
@@ -41,6 +41,9 @@ const POSTER = httpUrl(QUERY.get('poster'));
 /** The host's own video, or `null` to play the demo. */
 function hostSource(): DemoSource | null {
   if (!SRC && !MUX) return null;
+  // A playback ID this site already knows plays as it does on the landing page: its poster frame, chapters and markers.
+  const known = MUX && Object.values(SOURCES as Record<string, DemoSource>).find((source) => source.playbackId === MUX);
+  if (known) return { ...known, ...(POSTER ? { poster: POSTER } : {}), noCors: TIER === 'viewer' };
   return {
     ...(MUX ? { playbackId: MUX } : { src: SRC }),
     fps: FPS > 0 && FPS <= 240 ? FPS : 24,

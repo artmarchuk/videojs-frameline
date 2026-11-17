@@ -18,6 +18,8 @@ body {
 
 .embed-page .media-skin {
   --fl-stage-ratio: 16 / 9;
+  /* The skin's own hairline and radius frame the player, as on the landing page. */
+  --fl-frame-border: 1;
   width: 100%;
   /* The skin fills its parent by default; here it takes its content's height and is centred in the frame. */
   height: auto;
