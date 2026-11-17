@@ -6,7 +6,7 @@ Frameline is licensed under Apache 2.0 (see `LICENSE`). It includes the third-pa
 
 Path data of the icons listed here is copied from `@phosphor-icons/core` 2.1.1 (https://phosphoricons.com, https://github.com/phosphor-icons/core) into `src/video/icons/` and `src/pro/studio/icons.tsx`. The package is not a runtime dependency.
 
-Fill weight: `arrow-counter-clockwise`, `caret-right`, `check-fat`, `corners-in`, `corners-out`, `dots-three-outline`, `gauge`, `high-definition`, `keyboard`, `pause`, `picture-in-picture`, `play`, `rectangle-dashed`, `repeat`, `skip-back`, `skip-forward`, `speaker-high`, `speaker-low`, `speaker-x`, `subtitles`, `subtitles-slash`, `warning-circle`, `waveform`.
+Fill weight: `arrow-counter-clockwise`, `caret-right`, `check-fat`, `corners-in`, `corners-out`, `dots-three-outline`, `gauge`, `high-definition`, `keyboard`, `pause`, `picture-in-picture`, `play`, `rectangle-dashed`, `skip-back`, `skip-forward`, `speaker-high`, `speaker-low`, `speaker-x`, `subtitles`, `subtitles-slash`, `warning-circle`, `waveform`.
 
 Bold weight: `x`.
 

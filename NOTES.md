@@ -1490,6 +1490,21 @@ All three new names exist in 2.1.1 and are one `<path>` on the 256 grid. `frame-
 
 The Studio chunk grew by about 4 kB gzip: each of our four icons carries three drawings with full-precision path data, which the spec says not to re-optimise.
 
+### Round three: our Loop icon, and our drawings rounded to 2 decimal places
+- **`LoopIcon`** is ours now, from `design/icons/fl-loop-18|20|24.svg`, built like the other four: both paths copied, `#F2F2F2` → `currentColor` (the files have no `fill-rule` or `clip-rule`), and the same CSS picks the 18 px drawing on the wide dock and the 20 px one on the narrow dock. Both gaps in the loop stay open at every size (`closeup-wide-18-transport-loop-*.png`, `closeup-narrow-20-transport-loop-*.png`). Phosphor `repeat` is gone from the code and from `THIRD_PARTY_NOTICES.md`.
+- **Rounding** (asked for by the author; it overrides round two's "don't re-optimise"): every coordinate in the five drawings (step back, step forward, Loop, Markers, Capture; 18, 20 and 24 px) is rounded to 2 decimal places, nothing else changed. A script checks each path in `icons.tsx` against its file in `design/icons/`, rounded. The largest change is 0.005 of a pixel at the drawing's own size.
+- **Compared at 400%**, each drawing at its own size with full and with rounded coordinates, pixel by pixel (`round-2/rounding-compare-400.png`: before, after, changed pixels in red). At most 18 of 9,216 pixels change per drawing, all on anti-aliased edges, by one anti-aliasing step (54 of 255; one pixel of 108 on `fl-loop-20`). No edge or cut-out moves; the lens ring and the loop's gaps stay open. **No drawing was kept at full precision.**
+- DOM, on the local production build: wide dock (1280), step back, step forward, Loop, Markers and Capture each show the 18 drawing at 18 px; narrow dock (724 × 375 touch, 692 px player), each shows the 20 drawing at 20 px.
+- Checks: typecheck, 219 unit tests, build; browser checks `dock-polish` (1440; 724 × 375, 422, 352 touch), `phone-transport` (422, 352, 724 × 375 touch; 1440), `viewer-gate` (1440, 320), `guides-menu-focus`, `handle-focus-ring`, `fullscreen-focus`, `reduced-motion`, `two-players`, `configurator`, `zoom`, `range-playback`, `error-retry`: pass.
+
+| Studio JS (raw / gzip -9) | Bytes |
+| --- | --- |
+| Round two | 71,222 / 23,741 B |
+| Round three, Loop added, not rounded | 77,294 / 26,780 B |
+| Round three, rounded (this commit) | 72,732 / 24,485 B |
+
+Rounding saves 4,562 / 2,295 B. Against round two the chunk is 1,510 / 744 B larger, because Loop now carries three drawings where Phosphor's `repeat` was one path. The Viewer chunk is not affected: the drawings are only in the Studio chunk, the Viewer path JS is 957,351 B raw as in round two (281,724 B gzip, 3 B off round two's 281,721).
+
 ### Unverified (icon trial)
 - **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
 - **Not seen in the player:** captions on and off (the demo source shows no captions button), volume low and muted, PiP exit, fullscreen exit, replay, the error dialog's icon, the audio-track row, the check after "Link copied" and the keyboard dialog's close button. All were looked at on the contact sheet only, at 18 and 72 px on the dock's grey; the check's size in the link button was also measured in the player.
