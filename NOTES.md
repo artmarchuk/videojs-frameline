@@ -1369,3 +1369,81 @@ Requirements: `specs/mobile-dock-rows.md`. Checked with Playwright (`playwright-
 - The browser checks ran in Chrome only; Firefox and WebKit were measured for positions, not run through the checks.
 - Fullscreen on a phone on its side (the dock under a full-screen picture) was not looked at; headless Chrome refuses fullscreen.
 - A host with `timecode: false` or `loop: false` on the `keys` dock was reasoned from the code (the link stands alone at the start; the end cell is empty), not screenshotted.
+
+## Trial: Phosphor Fill icons (17 Nov 2026, branch `icons-phosphor-trial`, not merged, not in production)
+
+Requirements: `specs/icons-phosphor-trial.md`. An evaluation: the branch is not merged and production was not deployed. Preview deployment (behind Vercel's login, as every preview of this project is): https://videojs-frameline-8hxotu28e-artmarchuk.vercel.app. After it, production still served the `main` build (same chunk names as before).
+
+### What came in
+- `@phosphor-icons/core` **2.1.1**, devDependency, pinned exactly. It is only read; path data is copied into `src/video/icons/*.tsx` and `src/pro/studio/icons.tsx`. No runtime dependency. Every file is one `<path>` on a `0 0 256 256` viewBox (checked for each icon used).
+- `FillIcon` next to `Icon` in `src/video/icons/icon.tsx`: 256 grid, `fill="currentColor"`, no stroke, `aria-hidden`, `focusable="false"`, no fixed size. Component names and props are unchanged, so no other file changed.
+- `THIRD_PARTY_NOTICES.md` (Phosphor's copyright line and MIT text from the package's `LICENSE`), a Credits line in the README. `LICENSE` untouched.
+
+### Icons used (all names exist in 2.1.1; none had to be replaced)
+| Component | Phosphor icon | Weight |
+| --- | --- | --- |
+| `PlayIcon`, `PauseIcon`, `ReplayIcon` | `play`, `pause`, `arrow-counter-clockwise` | Fill |
+| `PreviousCutIcon`, `NextCutIcon` | `skip-back`, `skip-forward` | Fill |
+| `LoopIcon`, `GrabFrameIcon`, `BookmarkIcon`, `LinkIcon` | `repeat`, `camera`, `bookmark-simple`, `link` | Fill |
+| `GuidesIcon` | `frame-corners` | Fill |
+| `FullscreenEnterIcon`, `FullscreenExitIcon` | `corners-out`, `corners-in` | Fill |
+| `CaptionsOnIcon`, `CaptionsOffIcon` | `subtitles`, `subtitles-slash` | Fill |
+| `SettingsIcon` | `sliders-horizontal` | Fill |
+| `VolumeHighIcon`, `VolumeLowIcon`, `VolumeMutedIcon` | `speaker-high`, `speaker-low`, `speaker-x` | Fill |
+| `PipEnterIcon`, `PipExitIcon` | `picture-in-picture` for both (there is no exit variant) | Fill |
+| `SpeedIcon`, `QualityIcon`, `AudioTrackIcon` | `gauge`, `high-definition`, `waveform` | Fill |
+| `KeyboardIcon`, `ErrorIcon` | `keyboard`, `warning-circle` | Fill |
+| `CheckIcon` (menus and "Link copied") | `check-fat` | Fill |
+| `ChevronIcon` | `caret-right` (rotated by CSS where it points down) | Fill |
+| `CloseIcon` | `x` | **Bold** |
+| `StepBackIcon`, `StepForwardIcon`, `SpinnerIcon` | ours, unchanged | outline |
+
+### Decisions, and what differs from the spec
+- **Close is Bold.** `x` in Fill is a filled rounded square with the cross cut out. `check` in Fill is a tile too, but `check-fat` exists and is a plain solid tick, so the check stays Fill.
+- **Chevron stays Fill**, a solid triangle: not a tile or a blob, so the spec's rule for Bold does not apply. It reads well as the small dimmed caret on the Markers, Capture and Guides buttons. In the settings menu the full-size triangles after Speed and Quality read like small play buttons; Bold `caret-right` is the fix if that bothers.
+- **`CheckIcon` is one component** for menu items and for "Link copied", so `check-fat` shows in both. It is 16.3 px wide in the link button's 18 px box (the old tick was 11.6).
+- **Guides against Fullscreen:** `frame-corners` in Fill is a solid tile with two corner marks cut out; `corners-out` is four separate triangles. They are easy to tell apart at 18 px, so `selection` was not used. It is on the contact sheet for comparison (a tile with four corner marks, closer to Fullscreen).
+- `FEATURES.md` said "our own icons"; on this branch it says the icons are copied into the source.
+- Play and Pause in the Studio dock have a `fill: currentColor` rule from before; it is now redundant and was left alone.
+
+### The step icons against the solid ones
+The two frame-step icons are still 1.5 px outlines, 9.4 × 9.4 px of glyph at the 18 px size. Beside them the cut icons are solid, 11.3 × 13.5 px, and Play is 12.4 × 14.6. The step icons read as lighter and smaller, like a secondary or disabled pair, although they are used more than the cut buttons. This is the weakest spot of the trial (`closeup-transport-after.png`).
+
+### Glyph size (wide dock, 18 px icon box; visible glyph, stroke included for the old set)
+| Icon | Before | After |
+| --- | --- | --- |
+| Play | 9.2 × 11.3 | 12.4 × 14.6 |
+| Previous / next cut | 11.6 × 9.4 | 11.3 × 13.5 |
+| Step back / forward | 9.4 × 9.4 | unchanged |
+| Loop | 13.1 × 13.9 | 14.6 × 13.5 |
+| Link | 12.8 × 12.8 | 13.5 × 13.5 |
+| Check after a copy | 11.6 × 8.3 | 16.3 × 12.7 |
+| Reset range (14 px box) | 7.9 × 7.9 | 9.2 × 9.2 |
+| Markers | 9.4 × 12.4 | 10.1 × 14.1 |
+| Capture | 13.9 × 12 | 14.6 × 12.9 |
+| Guides | 13.9 × 11.6 | 14.6 × 12.4 |
+| Menu caret (12 px box) | 3.8 × 6.8 | 4.5 × 8.3 |
+| Settings | 15 × 15 | 13.5 × 10.7 |
+| Volume high | 12.8 × 10.5 | 16.3 × 14.6 |
+| Picture-in-picture | 14.6 × 11.6 | 14.6 × 11.3 |
+| Fullscreen | 12.4 × 12.4 | 12.4 × 12.4 |
+
+Phosphor's glyphs are not smaller than ours: most are the same size or a little larger, and being solid they look heavier. Only Settings is smaller. **No global size change is proposed.**
+
+### Checks (headless Google Chrome via Playwright, local production build)
+- Typecheck, 219 unit tests, build, the contrast script: pass.
+- Browser checks, all pass: `dock-polish` (1440 mouse; 724 × 375, 422 and 352 px touch), `phone-transport` (422, 352, 724 × 375 touch; 1440 mouse), `viewer-gate` (1440 and 320), `guides-menu-focus`, `handle-focus-ring`, `fullscreen-focus`, `reduced-motion`, `two-players`, `configurator`, `zoom`, `range-playback`, `error-retry`. axe on Studio (idle, Guides open, help open) and Viewer: no violations.
+- Screenshots, before (`main`) and after in the same states, each opened and looked at: `design/screenshots/icons-phosphor-trial/` (full shots as JPEG, close-ups at 400% as PNG, `pair-*.png` side by side, `contact-sheet.png` with the candidates at 18 and 72 px). Forced colours and more contrast: the solid icons take the text colour like the old ones.
+
+### Bundle sizes (raw / gzip -9)
+| Chunk | `main` | This branch |
+| --- | --- | --- |
+| Viewer path JS (`demo-video-*.js`) | 953,560 / 280,304 B | 957,472 / 281,753 B (+3,912 / +1,449) |
+| Studio JS (`studio-*.js`) | 60,910 / 19,309 B | 61,740 / 19,818 B (+830 / +509) |
+| Skin CSS | 38,121 / 6,770 B | unchanged |
+
+### Unverified (icon trial)
+- **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
+- **Not seen in the player:** captions on and off (the demo source shows no captions button), volume low and muted, PiP exit, fullscreen exit, replay, the error dialog's icon, the audio-track row, the check after "Link copied" and the keyboard dialog's close button. All were looked at on the contact sheet only, at 18 and 72 px on the dock's grey; the check's size in the link button was also measured in the player.
+- Firefox and Safari were not run; the change is SVG `fill` on a path.
+- Forced colours and more contrast were emulated in Chrome.
