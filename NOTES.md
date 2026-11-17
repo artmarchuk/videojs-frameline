@@ -2024,4 +2024,4 @@ Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel pre
 - typecheck, tests (219), build, contrast, `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352): pass.
 - Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo).
 - 18 Nov 2026: the staged playhead is 00:00:03:02 (frame 74), inside the range 00:00:02:18 to 00:00:50:16; it was 00:00:04:12 on the green-spill marker. The poster follows it. `origin/main` had Theme B merged and deployed meanwhile (that was the 01:34 production deployment); local `main` merged it, then went to production with this change.
-
+- 18 Nov 2026: the staged guides are Title safe, Action safe and the centre cross (`['title-safe', 'action-safe', 'centre']`). A visitor with remembered guides still gets their own.

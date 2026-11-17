@@ -26,13 +26,14 @@ const state = () => page.evaluate(() => {
     proChunks: performance.getEntriesByType('resource').map((e) => e.name.split('/').pop()).filter((n) => /^(runtime|studio|debug)-/.test(n)).length,
   };
 });
-// The staged hero: before anything is touched, a range, the playhead inside it, Title safe, paused, an empty log.
+// The staged hero: before anything is touched, a range, the playhead inside it, Title safe, Action safe and the centre
+// cross, paused, an empty log.
 out.staged = await page.evaluate(() => ({
   in: document.querySelector('#player [data-handle="in"]')?.getAttribute('aria-valuetext'), out: document.querySelector('#player [data-handle="out"]')?.getAttribute('aria-valuetext'),
-  timecode: (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11), titleSafe: !!document.querySelector('#player [data-guide="title-safe"]'),
+  timecode: (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11), titleSafe: !!document.querySelector('#player [data-guide="title-safe"]'), actionSafe: !!document.querySelector('#player [data-guide="action-safe"]'), centre: !!document.querySelector('#player [data-guide="centre"]'),
   paused: document.querySelector('#player video').paused, log: document.querySelectorAll('#log li').length, focus: document.activeElement?.tagName, scroll: window.scrollY,
 }));
-out.stagedOk = out.staged.in === '00:00:02:18' && out.staged.out === '00:00:50:16' && out.staged.timecode === '00:00:03:02' && out.staged.titleSafe && out.staged.paused && out.staged.log === 0 && out.staged.focus === 'BODY' && out.staged.scroll === 0;
+out.stagedOk = out.staged.in === '00:00:02:18' && out.staged.out === '00:00:50:16' && out.staged.timecode === '00:00:03:02' && out.staged.titleSafe && out.staged.actionSafe && out.staged.centre && out.staged.paused && out.staged.log === 0 && out.staged.focus === 'BODY' && out.staged.scroll === 0;
 
 const check = (name) => page.locator(`#config input[name="${name}"]`);
 const radio = (name, value) => page.locator(`#config input[name="${name}"][value="${value}"]`);
