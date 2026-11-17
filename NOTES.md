@@ -1717,4 +1717,5 @@ Run with `playwright-core` in Google Chrome against the local production build, 
 - **The page's own keys are unchanged:** the two sections are pixel-identical to production (0 differing pixels in `pair-5-cue-keys.png` and `pair-5-feature-keys.png`), and their computed styles match.
 - **Another leak of the same kind, not fixed (Backlog):** the page's unlayered `button:focus-visible { outline: 2px solid var(--link) }` also reaches the player's buttons. By default it matches the player's ring (2 px, `#5b9dff`, 2 px offset), so nothing shows. Under `prefers-contrast: more` it cuts the player's 3 px ring to 2 px on the site root (3 px on the monitor page).
 - Checks: typecheck, tests (219), build, `node scripts/contrast.mjs` pass. The settings menu (surface-1) shows its shortcuts in `--fl-text-dim`, 6.53:1. Skin CSS 39,780 / 6,997 B raw / gzip (A.1: 39,663 / 6,942).
+- Preview deployment (behind Vercel's login): https://videojs-frameline-du992ala4-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
 - Unverified: Firefox and Safari; the preview URL itself (Vercel login); the dialog and tooltips on the site root under forced colours.
