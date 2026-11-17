@@ -1,0 +1,35 @@
+/* The embed page: the player edge to edge in its iframe, nothing around it. */
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  background: #151517;
+}
+
+.embed-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.embed-page .media-skin {
+  --fl-stage-ratio: 16 / 9;
+  width: 100%;
+  /* The skin fills its parent by default; here it takes its content's height and is centred in the frame. */
+  height: auto;
+  /* Stage plus dock fit the frame's height; on a short frame the stage shrinks and the picture is letterboxed. */
+  max-height: 100dvh;
+}
+
+.embed-page .media-skin[data-layout="overlay"] {
+  aspect-ratio: 16 / 9;
+}
+
+/* Player elements only provide state; the skin inside them is the box that gets sized. */
+video-player {
+  display: contents;
+}

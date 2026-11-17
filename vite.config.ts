@@ -32,6 +32,8 @@ export default defineConfig({
         workbench: path('./apps/preview/workbench.html'),
         // A test page with two players, not linked from the site (step 9.6).
         two: path('./apps/preview/two-players.html'),
+        // The player alone (Studio, comfortable), for embedding in an iframe on another site.
+        embed: path('./apps/preview/embed.html'),
       },
     },
   },

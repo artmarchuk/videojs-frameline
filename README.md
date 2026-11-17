@@ -408,6 +408,26 @@ npm run dev
 
 The site root (`/`) is the configurator page (`apps/preview/index.html`, `src/page/`). The CLI's workbench is at `/workbench.html`: it opens the skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (the host's guide list; `?guides=0` for none), `?zones=0` and `?debug` (debug readout and event log) set its state. It plays the active demo source (see Demo media). The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/workbench.html?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
 
+`/embed.html` is the player alone, for an iframe on another site, including a plain HTML one: comfortable density, no title and no switches. Without parameters it plays the active demo source in Studio. The URL can name your own video and tier:
+
+| Parameter | What it does |
+| --- | --- |
+| `src` | An http(s) URL of an HLS stream (`.m3u8`) or a file such as an `.mp4`. Encode it with `encodeURIComponent` |
+| `mux` | A Mux playback ID instead of `src`; adds hover thumbnails and a poster |
+| `tier` | `viewer` or `studio` (default) |
+| `fps` | Frame rate of the source; default 24 |
+| `poster` | An http(s) URL of a poster image |
+
+In Viewer the video loads without `crossorigin`, so a file plays from a host that sends no CORS headers. Studio sets it so frames can be grabbed, and then the host must send CORS headers. An HLS stream needs CORS headers in both tiers.
+
+```html
+<iframe src="https://frameline.artmarchuk.me/embed.html?tier=viewer&src=https%3A%2F%2Fexample.com%2Freel.mp4"
+        style="width:100%;aspect-ratio:16/9;border:0"
+        allow="fullscreen; picture-in-picture; clipboard-write" title="Showreel"></iframe>
+```
+
+The page fills the frame's width and fits its height (on a short frame the picture letterboxes). In Viewer an iframe at 16:9 fits the player exactly. For the whole Studio player at 16:9 give the iframe a height of about width × 9/16 plus the dock (117 px at 640 px wide and up, about 180 px below that), with `allow="fullscreen; clipboard-write"` so fullscreen and the copy-link button work.
+
 ## Deploy
 
 ```sh
