@@ -13,7 +13,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | System typeface, tabular numerals for every changing number | Both | Watch the timecode while playing |
 | Frame numbers are best effort, and the skin says so | Studio | The timecode field's tooltip where the browser has no frame callback |
 | A neutral surround: every surface is a true grey (R = G = B), so the player adds no colour cast next to the picture | Both | `src/styles/tokens.css` |
-| Raised keys for the instrument, a flat toolbar for the rest: the transport groups, Play, Loop and the link button read as physical keys (on a narrow dock under 500 px, where Loop and Link are cells of the second row, they are flat like their neighbours); Markers, Capture, Guides, Zoom, Reset range, Captions, Settings, Mute and Fullscreen are flat until hovered (a flat fill) or pressed. Both press in the same way when on, open or held | Studio | Hover Guides, then hold Loop |
+| Raised keys for the instrument, a flat toolbar for the rest: the transport groups, Play, Loop and the link button read as physical keys (on a narrow dock under 500 px, where Loop and Link are cells of the second row, they are flat like their neighbours); Markers, Capture, Guides, Zoom, Reset range, Captions, More, Mute and Fullscreen are flat until hovered (a flat fill) or pressed. Both press in the same way when on, open or held | Studio | Hover Guides, then hold Loop |
 | Tactile controls, in the dock only: toggles that are on read as pressed in, the range, handles and pins as solid things on a recessed track; one token (`--fl-bevel`) scales or removes it, and nothing of it is drawn over the picture. Under more contrast a pressed control draws an edge in the text colour, in forced colours a Highlight fill | Studio | Press and hold a dock button; set a range; `--fl-bevel: 0` |
 | Nothing that shows time animates (playhead, timecode, ruler, handles, the band's ends); only presses, hovers, menus and the range band's appearance move | Both | Set a range with `I` `O`, clear it with `Shift+I` `Shift+O` |
 | A range arrives and leaves visibly: the band fades and grows from its centre line in 160 ms, and goes in 120 ms; a handle turns from idle to set in the same 160 ms. It plays however the range is made: `I`, `O`, dragging a handle, `apiRef.setRange` | Studio | Drag an idle handle; press Reset range |
@@ -48,8 +48,8 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Current time and duration | Viewer | In the bar |
 | Mute and an inline volume slider | Viewer | `M`, `↑` `↓` |
 | Captions | Viewer | `C`, or the captions button |
-| Settings menu: speed, quality, audio track, captions | Viewer | The gear button; `<` `>` for speed |
-| Picture-in-picture | Viewer | Its button in the bar (in Settings in the Studio dock) |
+| More menu (the settings): speed, quality, audio track, captions | Viewer | The More button (three dots); `<` `>` for speed |
+| Picture-in-picture | Viewer | Its button in the bar (in the More menu in the Studio dock) |
 | Fullscreen | Viewer | `F`; double click the picture |
 | Shortcut help dialog listing the keys that are live | Both | `Shift+?` |
 | Error dialog with retry | Both | `/preview.html?media=error` |
@@ -94,7 +94,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | --- | --- | --- |
 | Grab frame: a PNG at the video's own size, with no guides, whatever the zoom | Studio | `G`; Capture menu |
 | Copy frame image to the clipboard | Studio | `Shift+G`; Capture menu |
-| Copy link at timecode: `#t=HH:MM:SS:FF` in the page URL, announced with the timecode | Studio | `S`; the link button beside the timecode (on a narrow dock under 500 px, in its second row; under 340 px, in Settings) |
+| Copy link at timecode: `#t=HH:MM:SS:FF` in the page URL, announced with the timecode | Studio | `S`; the link button beside the timecode (on a narrow dock under 500 px, in its second row; under 340 px, in the More menu) |
 | The Capture menu holds the image actions only, and is not shown without `grabFrame` | Studio | `/?grabFrame=0` |
 | A page opened with `#t=…` opens on that frame, paused | Studio | Paste a copied link |
 | A clear message when the browser refuses the grab (media without CORS) | Studio | `/preview.html?media=nocors`, then `G` |
@@ -133,10 +133,10 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | The Viewer bar becomes two rows under 640 px | Viewer | Narrow the window |
 | The Studio row sheds controls in a set order from 1100 px down, and becomes a narrow dock under 740 px | Studio | Narrow the window |
 | The narrow dock has one rule: row one is the instrument (the raised keys, as far as the width allows), row two the flat toolbar. Two arrangements, by the player's width: 500 px and up (a phone on its side), and under 500 px (a phone held upright) | Studio | Turn a phone on its side |
-| Narrow dock, 500 px and up: row one is the timecode joined to the Link button, the whole transport in the centre, and Loop as a raised key at the end edge; row two is six flat buttons in equal cells: Markers, Capture, Guides, Zoom, Settings, Fullscreen. The dock is lower there (8 px above and below, 6 px between the rows), every target still 44 px | Studio | A phone on its side, or a 500 to 739 px wide player |
+| Narrow dock, 500 px and up: row one is the timecode joined to the Link button, the whole transport in the centre, and Loop as a raised key at the end edge; row two is six flat buttons in equal cells: Markers, Capture, Guides, Zoom, More, Fullscreen. The dock is lower there (8 px above and below, 6 px between the rows), every target still 44 px | Studio | A phone on its side, or a 500 to 739 px wide player |
 | Narrow dock under 500 px, row one: the timecode, then the whole transport as on the wide dock (previous cut, step back, Play, step forward, next cut); the four tool buttons are 44 px wide where the row has room and shrink to 36 px (always 44 px tall) where it has not, so a 360 px phone shows every button; under 324 px the cut buttons fold away (`[` `]` and the Markers menu still reach the cuts) | Studio | A 360 or 375 px phone; a 320 px player |
-| Narrow dock under 500 px, row two: one row of equal cells, each a 44 px target, in the order Markers, Loop, Capture, Link, Guides, Zoom, Settings, Fullscreen. All flat: Loop has no fill at rest and the pressed treatment while looping | Studio | Open the page on a phone |
-| The narrow row folds: under 382 px the Zoom button is not shown (`Z`, `Shift+Z` and `apiRef.setZoom` still zoom); under 340 px the Link button is not shown and "Copy link at timecode" is an item of the settings menu; under 300 px the side padding is 12 px, and under 288 px the cells are 40 px wide, so the row fits down to a 264 px player | Studio | A 360, 320 and 264 px wide player |
+| Narrow dock under 500 px, row two: one row of equal cells, each a 44 px target, in the order Markers, Loop, Capture, Link, Guides, Zoom, More, Fullscreen. All flat: Loop has no fill at rest and the pressed treatment while looping | Studio | Open the page on a phone |
+| The narrow row folds: under 382 px the Zoom button is not shown (`Z`, `Shift+Z` and `apiRef.setZoom` still zoom); under 340 px the Link button is not shown and "Copy link at timecode" is an item of the More menu; under 300 px the side padding is 12 px, and under 288 px the cells are 40 px wide, so the row fits down to a 264 px player | Studio | A 360, 320 and 264 px wide player |
 | Markers have their own button on the narrow dock, with the same menu as on the wide one | Studio | The bookmark button on a phone |
 | No In and Out buttons on the narrow dock: the range is set with the handles on the timeline; `I`, `O`, `Shift+I` and `Shift+O` still work from a keyboard | Studio | Drag a handle on a phone |
 | 44 px targets on touch | Both | A phone |
@@ -172,7 +172,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | The pro runtime, the Studio layer and the debug readout are separate lazy chunks | Studio | Network panel on `/` |
 | The skin does not re-render per frame: the frame clock writes to a small store, and only the timecode field subscribes to the frame | Studio | `/preview.html?debug` shows the render count |
 | Frame time from `requestVideoFrameCallback` where the browser has it | Studio | `/preview.html?debug` shows the clock source |
-| Plain CSS, no webfont, icons copied into the source (no icon package at runtime) | Both | The source |
+| Plain CSS, no webfont, icons copied into the source (no icon package at runtime): frame step, Markers, Capture and Link are our own drawings; step, Markers and Capture are drawn by hand at 18, 20 and 24 px and the dock shows the one drawn for its size | Both | The source |
 
 ## Browser support
 

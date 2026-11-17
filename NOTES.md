@@ -691,7 +691,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - Measure the Viewer skin's own weight against a stock Video.js skin.
 - Redraw the settings icon: it reads a little like a sun.
 - AirPlay and Cast buttons (removed in step 2), with custom icons.
-- Translate `src/video/strings.ts` through Video.js i18n (`Text` tokens) so the help dialog follows the locale.
+- Translate `src/video/strings.ts` through Video.js i18n (`Text` tokens) so the help dialog and the More button follow the locale.
 - Soften the top edge of the control-bar scrim.
 
 - Code-split the preview bundle: `preview-*.js` is 972 kB minified, and Vite warns about it. Check whether the Viewer tier stays "as light as a stock skin" in step 2.
@@ -1459,6 +1459,35 @@ All three new names exist in 2.1.1 and are one `<path>` on the 256 grid. `frame-
 - Checks: typecheck, 219 unit tests, build; `dock-polish` (1440 mouse; 724 × 375 and 422 touch), `phone-transport` (422 touch, 1440 mouse), `viewer-gate` (1440), `configurator`: pass. Forced colours and more contrast: close-ups `*-polish-closeup.png`, icons follow the text colour.
 - Bundle sizes (raw / gzip -9): Studio JS 61,801 / 19,744 B (first trial 61,740 / 19,818); Viewer path JS unchanged at 957,472 / 281,752 B.
 - Preview deployment after the polish (behind Vercel's login): https://videojs-frameline-5s4hf9jem-artmarchuk.vercel.app. Production was not deployed.
+
+### Round two (`specs/icons-trial-2.md`): our step, marker and capture icons, cut icons put right, "More"
+**The step and cut convention**, as in After Effects and Premiere: frame step `◀|` `|▶` (the arrow points away from the bar), previous and next cut `|◀` `▶|` (the arrow points into the bar). The polish round had it the other way, with double carets on the cut buttons; those are gone.
+
+| Component | Now | Source |
+| --- | --- | --- |
+| `StepBackIcon`, `StepForwardIcon` | `◀|`, `|▶` | ours: `design/icons/fl-step-back-*.svg`, `fl-step-forward-*.svg` |
+| `PreviousCutIcon`, `NextCutIcon` | `|◀`, `▶|` | Phosphor `skip-back`, `skip-forward`, Fill |
+| `MarkerIcon` (was `BookmarkIcon`; the Markers button) | a marker pin | ours: `design/icons/fl-marker-*.svg` |
+| `GrabFrameIcon` (the Capture button) | a camera, lens ring open | ours: `design/icons/fl-capture-*.svg` |
+| `SettingsIcon` (the button is now named "More") | three dots | Phosphor `dots-three-outline`, Fill |
+| `LinkCopiedIcon` (new; the check after "Link copied") | our thin outline tick, as on `main` | ours (the path of the old `CheckIcon`) |
+
+- **Our drawings are copied as drawn.** Path data and `fill-rule`/`clip-rule` are kept exactly; only `fill="#F2F2F2"` became `currentColor` (set once on the `<svg>`), and the files' `width`/`height` and `fill="none"` were dropped. The camera's lens ring stays open (`closeup-*-marker-capture.png`). The SVG files stay in `design/icons/` and are not shipped.
+- **Size mechanism: CSS.** Each of our icons renders three `<svg>` siblings, one per drawing, each with its own viewBox (`0 0 18 18`, `0 0 20 20`, `0 0 24 24`) and a `data-drawn` attribute. `studio.css` shows the 18 px drawing inside a dock button, the 20 px drawing under `.pro-skin[data-dock-size="narrow"][data-bar="pro"]` (the selector that sets `--fl-icon-size` to 20 px), and the 24 px drawing anywhere else. The size and the drawing come from the same attribute, so they switch in the same style pass; the hidden drawings are `display: none` and take no space. Measured in the DOM: wide dock, the 18 drawing at 18 px; narrow dock at 692 × 375 and 390, the 20 drawing at 20 px; after resizing a wide page to 700 px, the 20 drawing at 20 px.
+- **Where this is not exact:** a host that changes `--media-scale-unit` scales `--fl-icon-size` with it (e.g. 22.5 px instead of 18), and the 18 px drawing is still the one shown. CSS on the browser floor cannot test a custom property's value (style queries need Chrome 111+, Firefox has none); picking by measured size would need script per icon. At the default scale unit the rule is exact.
+- **`BookmarkIcon` renamed to `MarkerIcon`:** two references, covered by the typecheck.
+- **More:** Video.js has no text token for "More" (`menu.settings` is the only one), so the label is `strings.more` in `src/video/strings.ts`, used for the button's text and its tooltip. Unlike "Settings", it is English only until the skin strings are translated (Backlog). The help dialog does not name the button. Class names (`media-settings-button`), `SettingsMenu` and `SettingsIcon` keep their names. `FEATURES.md`, the README and `dock-polish.js` say "More".
+- **The check after "Link copied"** (asked for alongside the spec): the author found `check-fat` too heavy there. It is our old outline tick again, as `LinkCopiedIcon`, used only in the link button. `CheckIcon` (menu items, the Guides menu) stays `check-fat`, since only the link button was asked about.
+- `THIRD_PARTY_NOTICES.md`: added `skip-back`, `skip-forward`, `dots-three-outline`; removed `camera`, `bookmark-simple`, `caret-double-left`, `caret-double-right`, `sliders-horizontal`.
+- Checks: typecheck, 219 unit tests, build, the contrast script; browser checks `dock-polish` (1440 mouse; 724 × 375, 422, 352 touch), `phone-transport` (422, 352, 724 × 375 touch; 1440 mouse), `viewer-gate` (1440, 320), `guides-menu-focus`, `handle-focus-ring`, `fullscreen-focus`, `reduced-motion`, `two-players`, `configurator`, `zoom`, `range-playback`, `error-retry`: pass. axe (Studio idle, Guides, help; Viewer): no violations.
+- Screenshots, each opened and looked at: `design/screenshots/icons-phosphor-trial/round-2/`.
+
+| Bundle (raw / gzip -9) | `main` | Polish round | Round two |
+| --- | --- | --- | --- |
+| Viewer path JS (`demo-video-*.js`) | 953,560 / 280,304 B | 957,472 / 281,752 B | 957,351 / 281,721 B |
+| Studio JS (`studio-*.js`) | 60,910 / 19,309 B | 61,801 / 19,744 B | 71,222 / 23,741 B |
+
+The Studio chunk grew by about 4 kB gzip: each of our four icons carries three drawings with full-precision path data, which the spec says not to re-optimise.
 
 ### Unverified (icon trial)
 - **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.

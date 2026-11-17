@@ -9,11 +9,11 @@
 // `Shift+G` copies a PNG; the Capture menu holds the two image actions; the help dialog lists both keys.
 // Narrow, 500px and up (`data-dock-rows="keys"`; for example a touch context of 724x375, a 692px player): row one is
 // the timecode joined to the link button (2px apart, same height), the transport, and Loop as a raised key at the end
-// edge; row two is six flat 44px controls in equal cells: Markers, Capture, Guides, Zoom, Settings, Fullscreen. The
+// edge; row two is six flat 44px controls in equal cells: Markers, Capture, Guides, Zoom, More, Fullscreen. The
 // dock is 167px tall there (8px above and below, 6px between the rows).
 // Narrow under 500px (`compact`): one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link,
-// Guides, Zoom, Settings, Fullscreen, Loop flat at rest and pressed while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
-// is an item of the settings menu; under 300px the side padding is 12px and under 288px the cells are 40px wide,
+// Guides, Zoom, More, Fullscreen, Loop flat at rest and pressed while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
+// is an item of the More menu; under 300px the side padding is 12px and under 288px the cells are 40px wide,
 // so six fit down to a 264px player; `I`, `O` and `Z` still work.
 const out = {};
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
@@ -82,7 +82,7 @@ if (!out.narrow) {
     const buttons = [...row.querySelectorAll('button')].filter((e) => e.getClientRects().length);
     const centres = buttons.map((e) => { const r = e.getBoundingClientRect(); return r.left + r.width / 2; });
     return {
-      order: buttons.map((e) => (e.getAttribute('aria-label') || 'Settings').replace(/,.*$/, '')),
+      order: buttons.map((e) => (e.getAttribute('aria-label') || e.textContent.trim()).replace(/,.*$/, '')),
       sizes: [...new Set(buttons.map((e) => { const r = e.getBoundingClientRect(); return `${r.width}x${r.height}`; }))],
       steps: [...new Set(centres.slice(1).map((c, i) => Math.round(c - centres[i])))],
       over: row.scrollWidth - row.clientWidth,
@@ -93,8 +93,8 @@ if (!out.narrow) {
   const keys = out.rows === 'keys';
   checks.rows = keys === out.player >= 500;
   const expected = keys
-    ? ['Markers', 'Capture', 'Guides', 'Zoom', 'Settings', 'Enter fullscreen']
-    : ['Markers', 'Loop', 'Capture', ...(out.player >= 340 ? ['Copy link at timecode'] : []), 'Guides', ...(out.player >= 382 ? ['Zoom'] : []), 'Settings', 'Enter fullscreen'];
+    ? ['Markers', 'Capture', 'Guides', 'Zoom', 'More', 'Enter fullscreen']
+    : ['Markers', 'Loop', 'Capture', ...(out.player >= 340 ? ['Copy link at timecode'] : []), 'Guides', ...(out.player >= 382 ? ['Zoom'] : []), 'More', 'Enter fullscreen'];
   // Row one, in source order (which is the focus order), with each control's place on screen.
   out.rowOne = await page.evaluate(() => {
     const box = (e) => e.getBoundingClientRect();

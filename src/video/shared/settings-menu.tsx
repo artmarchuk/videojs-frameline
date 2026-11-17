@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
+import { audioText, captionsText, qualityText, speedText } from '@videojs/core/i18n/text/menu';
 import { Text as TextPrimitive } from '@videojs/react';
 import { Menu, selectPiP, selectVolume, usePlayer } from '@videojs/react';
 import { AudioTrackRadioGroup } from '@videojs/react/ui/audio-track-radio-group';
@@ -206,12 +206,10 @@ export function SettingsMenu() {
 
   return (
     <Menu.Root side="top" align="end">
-      <ButtonTooltip label={<TextPrimitive token={settingsText.key}>{settingsText.text}</TextPrimitive>}>
+      <ButtonTooltip label={<span>{strings.more}</span>}>
         <Menu.Trigger render={<Button />} className={'media-settings-button'}>
           <SettingsIcon className={'media-button-icon'} />
-          <TextPrimitive className={'media-settings-button-label'} token={settingsText.key}>
-            {settingsText.text}
-          </TextPrimitive>
+          <span className={'media-settings-button-label'}>{strings.more}</span>
         </Menu.Trigger>
       </ButtonTooltip>
       <Menu.Popup keepMounted className={cn('media-popup', 'media-menu-popup')}>

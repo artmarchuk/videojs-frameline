@@ -161,6 +161,29 @@
     height: 100%;
   }
 
+  /*
+   * Our own solid icons carry three drawings, made by hand at 18, 20 and 24px (icons.tsx). One shows: the 18px
+   * drawing in a dock button (--fl-icon-size is 18px), the 20px drawing on the narrow dock (20px there, from the same
+   * data-dock-size rule), the 24px drawing anywhere else, scaled.
+   */
+  .pro-skin .pro-drawn,
+  .pro-skin .pro-tool-icon > .pro-drawn[data-drawn="24"] {
+    display: none;
+  }
+
+  .pro-skin .pro-drawn[data-drawn="24"],
+  .pro-skin .pro-tool-icon > .pro-drawn[data-drawn="18"] {
+    display: block;
+  }
+
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-tool-icon > .pro-drawn[data-drawn="18"] {
+    display: none;
+  }
+
+  .pro-skin[data-dock-size="narrow"][data-bar="pro"] .pro-tool-icon > .pro-drawn[data-drawn="20"] {
+    display: block;
+  }
+
   /* Loop is a little wider than a plain button; Reset range a little narrower. */
   .pro-skin .pro-tool[data-pro-tool="loop"] {
     width: calc(var(--fl-control-size) + var(--media-spacing));

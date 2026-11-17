@@ -1,6 +1,6 @@
 /**
  * Every string the skin itself adds, in one place so it can be translated.
- * Labels of the Video.js controls (Play, Mute, Settings, error messages and so on) are not here: they come from
+ * Labels of the Video.js controls (Play, Mute, error messages and so on) are not here: they come from
  * Video.js's own i18n, which the host switches with its locale APIs.
  */
 export const strings = {
@@ -8,6 +8,8 @@ export const strings = {
   shortcutsMenuItem: 'Keyboard shortcuts',
   shortcutsClose: 'Close',
   shortcutsOr: 'or',
+  /** The settings menu's button. Video.js has no text token for "More", so it is a skin string. */
+  more: 'More',
   pictureInPicture: 'Picture-in-picture',
   mute: 'Mute',
   unmute: 'Unmute',

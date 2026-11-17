@@ -1,10 +1,10 @@
 import { FillIcon, type IconProps } from './icon';
 
-/** Phosphor `sliders-horizontal`, Fill. */
+/** The settings menu's button, named "More". Phosphor `dots-three-outline`, Fill. */
 export function SettingsIcon(props: IconProps) {
   return (
     <FillIcon {...props}>
-      <path d="M32,80a8,8,0,0,1,8-8H77.17a28,28,0,0,1,53.66,0H216a8,8,0,0,1,0,16H130.83a28,28,0,0,1-53.66,0H40A8,8,0,0,1,32,80Zm184,88H194.83a28,28,0,0,0-53.66,0H40a8,8,0,0,0,0,16H141.17a28,28,0,0,0,53.66,0H216a8,8,0,0,0,0-16Z" />
+      <path d="M156,128a28,28,0,1,1-28-28A28,28,0,0,1,156,128ZM48,100a28,28,0,1,0,28,28A28,28,0,0,0,48,100Zm160,0a28,28,0,1,0,28,28A28,28,0,0,0,208,100Z" />
     </FillIcon>
   );
 }

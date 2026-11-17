@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/resolve-class-name';
 
-import { CheckIcon, ChevronIcon, CloseIcon } from '../../video/icons';
+import { ChevronIcon, CloseIcon } from '../../video/icons';
 import { useProSlot, useProThumbnailRenderer, useSetProSettingsItems } from '../../video/pro-slots';
 import { Button } from '../../video/shared/button';
 import { useShortcutsDialog, type ShortcutRow } from '../../video/shared/shortcuts-dialog';
@@ -19,7 +19,7 @@ import type { Marker } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import { AnnouncerProvider, useAnnounce } from './announcer';
 import { useStudioController, type CopyLinkInfo, type FrameGrabInfo, type StudioController } from './controller';
-import { BookmarkIcon, GrabFrameIcon, LinkIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
+import { GrabFrameIcon, LinkCopiedIcon, LinkIcon, LoopIcon, MarkerIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
 import { isNarrowDock, narrowDockRows } from './logic';
 import { studioStrings as t } from './strings';
 import { Timeline, type TimelineProps } from './timeline';
@@ -451,7 +451,7 @@ function LinkButton({ copied, onCopy }: { copied: boolean; onCopy: () => void })
           <LinkIcon />
         </span>
         <span className={'media-button-icon pro-tool-icon pro-link-check'}>
-          <CheckIcon />
+          <LinkCopiedIcon />
         </span>
       </Button>
     </ButtonTooltip>
@@ -579,7 +579,7 @@ function MarkerItems({ markers, chapters, controller, fps }: MarkerListProps) {
 function MarkersMenu(props: MarkerListProps) {
   const count = props.markers.length;
   return (
-    <ToolMenu name="markers" label={count > 0 ? t.markersCount(count) : t.chapters} tooltip={count > 0 ? t.markers : t.chapters} icon={<BookmarkIcon />} badge={count}>
+    <ToolMenu name="markers" label={count > 0 ? t.markersCount(count) : t.chapters} tooltip={count > 0 ? t.markers : t.chapters} icon={<MarkerIcon />} badge={count}>
       <MarkerItems {...props} />
     </ToolMenu>
   );
