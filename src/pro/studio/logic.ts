@@ -27,6 +27,21 @@ export function isNarrowDock(width: number, coarsePointer = false): boolean {
 /** Frames jumped by `Shift+←` and `Shift+→`. */
 export const JUMP_FRAMES = 10;
 
+/**
+ * From this player width the narrow dock has room for the instrument on row one: the timecode joined to its link
+ * button, the transport, and Loop at the end (15 + 92 + 2 + 50 + 6 + 232 + 6 + 44 + 15 = 462 px at 44 px targets).
+ */
+export const DOCK_NARROW_KEYS_FROM = 500;
+
+/**
+ * The narrow dock has two arrangements. `keys`: row one is the instrument (timecode and link, transport, Loop) and
+ * row two the flat toolbar. `compact`, under 500 px (a phone held upright): Loop and the link button are cells of
+ * row two.
+ */
+export function narrowDockRows(width: number): 'keys' | 'compact' {
+  return width >= DOCK_NARROW_KEYS_FROM ? 'keys' : 'compact';
+}
+
 /** Number of the last frame of a clip of `duration` seconds. */
 export function lastFrameOf(duration: number, fps: number): number {
   return Math.max(0, framesFromSeconds(duration, fps) - 1);

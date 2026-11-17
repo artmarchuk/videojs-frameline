@@ -8,6 +8,7 @@ import {
   formatLinkPosition,
   grabFileName,
   isNarrowDock,
+  narrowDockRows,
   lastFrameOf,
   outsideRange,
   playbackDecision,
@@ -242,5 +243,12 @@ describe('dock arrangement', () => {
     expect(isNarrowDock(1280)).toBe(false);
     expect(isNarrowDock(1280, true)).toBe(true);
     expect(isNarrowDock(0)).toBe(false); // not measured yet
+  });
+
+  it('puts the instrument on row one of the narrow dock from 500 px', () => {
+    expect(narrowDockRows(499)).toBe('compact');
+    expect(narrowDockRows(500)).toBe('keys');
+    expect(narrowDockRows(796)).toBe('keys'); // a phone on its side
+    expect(narrowDockRows(320)).toBe('compact');
   });
 });

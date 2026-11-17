@@ -20,7 +20,7 @@ import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecod
 import { AnnouncerProvider, useAnnounce } from './announcer';
 import { useStudioController, type CopyLinkInfo, type FrameGrabInfo, type StudioController } from './controller';
 import { BookmarkIcon, GrabFrameIcon, LinkIcon, LoopIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
-import { isNarrowDock } from './logic';
+import { isNarrowDock, narrowDockRows } from './logic';
 import { studioStrings as t } from './strings';
 import { Timeline, type TimelineProps } from './timeline';
 import { snapFrame, validMarkers } from './timeline/logic';
@@ -60,22 +60,30 @@ export default function StudioLayer(props: StudioLayerProps) {
 }
 
 /**
- * Whether the dock is in its narrow arrangement (a narrow player, or a touch device). CSS container queries do the
- * rest of the responsive work; this exists because the narrow arrangement moves controls (Loop and the link button
- * go into the second row), and the DOM order has to change with it so the focus order matches what is on screen.
- * Also written to the container as `data-dock-size` for the styles; the attribute is removed with this module.
+ * The dock's arrangement: `wide`, or one of the two narrow ones (a narrow player, or a touch device): `keys`, with
+ * the instrument on row one, and `compact` under 500 px, where Loop and the link button are cells of row two. CSS
+ * container queries do the rest of the responsive work; this exists because the arrangements move controls, and
+ * the DOM order has to change with them so the focus order matches what is on screen. Also written to the
+ * container as `data-dock-size` (`wide` or `narrow`) and `data-dock-rows` (`keys` or `compact`, narrow only) for
+ * the styles; the attributes are removed with this module.
  */
-function useNarrowDock(anchor: RefObject<HTMLElement | null>): boolean {
-  const [narrow, setNarrow] = useState(false);
+type DockArrangement = 'wide' | 'keys' | 'compact';
+
+function useDockArrangement(anchor: RefObject<HTMLElement | null>): DockArrangement {
+  const [arrangement, setArrangement] = useState<DockArrangement>('wide');
 
   useLayoutEffect(() => {
     const container = anchor.current?.closest<HTMLElement>('.media-container') ?? null;
     if (!container) return;
     const coarse = typeof matchMedia === 'function' ? matchMedia('(pointer: coarse)') : null;
     const update = () => {
-      const next = isNarrowDock(container.getBoundingClientRect().width, coarse?.matches ?? false);
-      container.dataset.dockSize = next ? 'narrow' : 'wide';
-      setNarrow(next);
+      const width = container.getBoundingClientRect().width;
+      const narrow = isNarrowDock(width, coarse?.matches ?? false);
+      const next = narrow ? narrowDockRows(width) : 'wide';
+      container.dataset.dockSize = narrow ? 'narrow' : 'wide';
+      if (narrow) container.dataset.dockRows = next;
+      else delete container.dataset.dockRows;
+      setArrangement(next);
     };
     update();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
@@ -85,10 +93,11 @@ function useNarrowDock(anchor: RefObject<HTMLElement | null>): boolean {
       observer?.disconnect();
       coarse?.removeEventListener?.('change', update);
       delete container.dataset.dockSize;
+      delete container.dataset.dockRows;
     };
   }, [anchor]);
 
-  return narrow;
+  return arrangement;
 }
 
 /**
@@ -141,7 +150,10 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const cuts = useCuts(chapters, features.shotNav ? markers : NO_MARKERS, fps);
   const controller = useStudioController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink, onFrameGrab });
   const paused = usePlayer(selectPlayback)?.paused ?? true;
-  const narrow = useNarrowDock(anchor);
+  const arrangement = useDockArrangement(anchor);
+  const narrow = arrangement !== 'wide';
+  // Loop and the link button are cells of row two only on the compact dock; elsewhere they are keys of row one.
+  const compact = arrangement === 'compact';
   useMarkerDeselect(video, fps);
 
   // Guides: what the host allows, where the picture is, and the actions the menu and `Shift+V` share.
@@ -202,7 +214,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   // (shown by the styles at that width only). It is rendered inside the settings menu's own tree.
   const setSettingsItems = useSetProSettingsItems();
   useEffect(() => {
-    if (!narrow || !features.copyTimecodeLink) return;
+    if (!compact || !features.copyTimecodeLink) return;
     setSettingsItems(
       <Menu.Item className={'media-menu-item pro-menu-item-dock-narrow pro-menu-item-link'} onSelect={copyLink}>
         <span className={'media-menu-icon pro-tool-icon'}>
@@ -215,7 +227,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
       </Menu.Item>
     );
     return () => setSettingsItems(null);
-  }, [narrow, features.copyTimecodeLink, copyLink, setSettingsItems]);
+  }, [compact, features.copyTimecodeLink, copyLink, setSettingsItems]);
 
   // Named, so the narrow dock's styles can fold the two cut buttons away under 324px.
   const previousCut = features.shotNav && (
@@ -240,9 +252,9 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
           timeline
         )}
 
-      {/* Wide: the link button is joined to the timecode field, because it copies what the field shows. */}
-      {time && features.timecode && createPortal(<TimecodeField controller={controller} fps={fps} dropFrame={dropFrame} link={narrow ? null : linkButton} />, time)}
-      {time && !features.timecode && !narrow && linkButton && createPortal(linkButton, time)}
+      {/* The link button is joined to the timecode field, because it copies what the field shows (not when compact). */}
+      {time && features.timecode && createPortal(<TimecodeField controller={controller} fps={fps} dropFrame={dropFrame} link={compact ? null : linkButton} />, time)}
+      {time && !features.timecode && !compact && linkButton && createPortal(linkButton, time)}
 
       {/*
         Cut and step either side of Play, on every dock: previous cut, step back, Play, step forward, next cut. The
@@ -265,21 +277,23 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
           transportEnd
         )}
 
-      {/* Wide: Loop and Reset range after the transport. */}
+      {/* Wide: Loop and Reset range after the transport. Narrow from 500px: Loop alone, at the end of row one. */}
       {!narrow && rangeSlot && (features.inOut || features.loop) && createPortal(<RangeControls controller={controller} features={features} />, rangeSlot)}
+      {arrangement === 'keys' && rangeSlot && features.loop && createPortal(<LoopButton controller={controller} />, rangeSlot)}
 
       {/*
-        Wide: Markers, Capture, Guides, Zoom. Narrow and touch, one row of equal cells with the playback buttons
-        that follow: Markers, Loop, Capture, Link, Guides, Zoom (then Settings, Fullscreen). The range is set with
-        the handles there; `I` and `O` still work from a keyboard.
+        Wide: Markers, Capture, Guides, Zoom. Narrow and touch, the same four as one row of equal cells with the
+        playback buttons that follow (Settings, Fullscreen); under 500px Loop and Link are cells of that row too:
+        Markers, Loop, Capture, Link, Guides, Zoom. The range is set with the handles there; `I` and `O` still
+        work from a keyboard.
       */}
       {tools &&
         createPortal(
           <>
             {(listed.length > 0 || listedChapters.length > 0) && <MarkersMenu markers={listed} chapters={listedChapters} controller={controller} fps={fps} />}
-            {narrow && features.loop && <LoopButton controller={controller} />}
+            {compact && features.loop && <LoopButton controller={controller} />}
             {features.grabFrame && <CaptureMenu controller={controller} />}
-            {narrow && linkButton}
+            {compact && linkButton}
             {guides && <GuidesMenu allowed={allowed} actions={guidesActions} />}
             {allowed.zoom && <ZoomMenu actions={zoomActions} note={renditionNote} />}
           </>,

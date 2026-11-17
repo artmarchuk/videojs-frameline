@@ -1331,3 +1331,39 @@ The site root is rebuilt from the Figma file "Frameline", page "Landing", frame 
 - A real phone: touch was emulated (Chrome's CDP touch events in a touch context); Safari on iOS and Chrome on Android were not run. Firefox and WebKit were not run on the flex change.
 - The `≈` prefix in the 92 px field is computed from the measured text width, not seen.
 - The landing page on a phone was not re-measured; the numbers above are from `/preview.html`, whose 16 px side padding equals the landing page's gutter under 760 px.
+
+## Narrow dock: row one is the instrument, row two the toolbar (17 Nov 2026, branch `mobile-dock-rows`)
+
+Requirements: `specs/mobile-dock-rows.md`. Checked with Playwright (`playwright-core` 1.65): the installed Google Chrome headless in touch contexts, against the local production build and then the public URL; widths are the player's own (the monitor page adds 16 px each side). Screenshots: `design/screenshots/mobile-dock-rows/`, each opened and looked at.
+
+### How it is built
+- The module's `useNarrowDock` became `useDockArrangement`: `wide`, or one of two narrow arrangements, `keys` (500 px and up) and `compact` (under 500). The container still gets `data-dock-size="wide|narrow"`, and on the narrow dock also `data-dock-rows="keys|compact"`. The threshold is `DOCK_NARROW_KEYS_FROM` in `studio/logic.ts`, unit-tested. It is set in script, not by a container query, because the DOM order changes with it (Loop and Link move between the rows), and the focus order has to follow.
+- `keys`: the link button is rendered inside `.pro-timecode-pair` as on the wide dock, and Loop alone in the `range` slot (no Reset range on a narrow dock, as before). The row is the wide dock's grid, `minmax(max-content, 1fr) auto minmax(max-content, 1fr)`; the centre column's box is dropped with `display: contents`, so the transport is the middle cell and Loop the end cell (`justify-self: end`). Row two is the same grid of equal cells as before, with six buttons.
+- `compact`: the DOM of `main`. Loop is flat there because the raised rule now selects Loop only in the centre column (`.pro-main-centre [data-pro-tool="loop"]`); in row two it gets the flat hover and the shared pressed rule. `aria-pressed` is untouched.
+
+### Measured
+- **Threshold: 500 px, as specified.** Row one needs 462 px: 15 + 92 (field) + 2 + 50 (link) + 6 + 232 (transport) + 6 + 44 (Loop) + 15. At 500 px there are 48 px between the transport and Loop, nothing overlaps, no overflow. Every target is 44 × 44 (the link 50 × 44); the fluid 36 px buttons of the compact dock are switched off here.
+- **Dock height at 692 × 375 (724 × 375 window, touch): 181 px before, 167 px after** (padding 12 + 14 → 8 + 8, row gap 10 → 6). The timeline and its gap to row one are unchanged.
+- The transport is centred on the player from 558 px up. From 500 to 557 px the timecode pair is wider than half the free space, so the transport sits right of centre (29 px at 500, 19 px at 520), the same rule as the wide dock's row: off-centre, not overlapping.
+- At 692 px: 73 px between Link and the transport, 173 px between the transport and Loop; row two's cells are 110 px apart (were 81 px with eight).
+- 739 px (mouse) is `keys`; 740 px (mouse) is the wide dock, unchanged; a touch device stays `keys` above 740 (measured at 780).
+- Tab order, by pressing Tab: `keys`: timecode, Link, previous cut, step back, Play, step forward, next cut, Loop, Markers, Capture, Guides, Zoom, Settings, Fullscreen. `compact`: timecode, the transport, Markers, Loop, Capture, Link, Guides, Zoom, Settings, Fullscreen. Both match the screen.
+- Loop, computed styles. Row one: off, the raised gradient and shadow; on, `--fl-on` with the pressed gradient and inner shadow. Row two: off, no fill, no image, no shadow; on, the same pressed treatment. Forced colours: off, a `ButtonText` border; on, `Highlight` fill with `HighlightText`, in both places. `prefers-contrast: more`: on, `--fl-on` with a 1 px inner edge in the text colour, in both places; off, no fill.
+- Firefox 159 and WebKit (Safari 27 build) give the same positions to the pixel at 500, 692 and 390 px.
+
+### Differs from the spec
+- Row one's grid is `minmax(max-content, 1fr) auto minmax(max-content, 1fr)`, not plain `1fr auto 1fr`, and the transport has `min-width: max-content`. With plain `1fr` and the narrow dock's shrinkable transport, Chrome let the centre column shrink under the transport at 500 to 560 px and Play overlapped a step button (seen in the first measurement).
+- The link button on row one is 50 × 44 px (the wide dock's rule, control size + 6 px, at the narrow dock's 44 px control size), so the pair is one height.
+- "At the threshold and at 740 px": 740 px with a mouse is the wide dock, so the screenshots are 499 and 500 (touch), 739 and 740 (mouse) and 740 (touch).
+- Loop on row one is 44 px wide (48 px would follow from the wide dock's "a little wider" rule); it lines up with the end of row two's last cell this way.
+
+### Checks
+- Typecheck, 219 unit tests (one new), build, the contrast script: pass.
+- `scripts/browser-checks/dock-polish.js` now covers both narrow arrangements (row one's order and positions, the pair, Loop at the end edge, the dock's height, Loop raised or flat when off and pressed when on). Pass at players of 692, 500, 499, 739 (mouse), 780 (touch), 390, 343, 320 and 1280 px. `phone-transport.js`: pass at 390, 360, 320 and 724 px windows (touch) and 1440 (mouse).
+
+### Unverified (narrow dock rows)
+- A real phone, upright or on its side: touch and the coarse pointer were emulated. Safari on iOS and Chrome on Android were not run.
+- Forced colours and more contrast were emulated in Chrome only (`forcedColors`, `contrast` in Playwright), not seen in Windows High Contrast.
+- The browser checks ran in Chrome only; Firefox and WebKit were measured for positions, not run through the checks.
+- Fullscreen on a phone on its side (the dock under a full-screen picture) was not looked at; headless Chrome refuses fullscreen.
+- A host with `timecode: false` or `loop: false` on the `keys` dock was reasoned from the code (the link stands alone at the start; the end cell is empty), not screenshotted.

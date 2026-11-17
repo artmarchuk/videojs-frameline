@@ -9,9 +9,13 @@
  *   <  900px  the menu buttons' chevrons; the timecode field gets narrower
  *   <  820px  the count badges and the divider; tighter gaps
  *   narrow    (under 740px, or a touch device; set as data-dock-size by the module, because the order of the
- *             controls changes): timecode, step, Play, cut; then one row of equal cells: Markers, Loop, Capture,
- *             Link, Guides, Zoom, Settings, Fullscreen (under 382px without Zoom; under 340px without Link, which
- *             is then an item of the settings menu)
+ *             controls changes). Row one is the instrument, the raised keys; row two the flat toolbar, in equal
+ *             cells. Two arrangements (data-dock-rows):
+ *             keys     (500px and up: a phone on its side) timecode joined to Link, the transport, Loop at the
+ *                      end; then Markers, Capture, Guides, Zoom, Settings, Fullscreen
+ *             compact  (under 500px: a phone held upright) timecode and the transport; then Markers, Loop,
+ *                      Capture, Link, Guides, Zoom, Settings, Fullscreen, all flat (under 382px without Zoom;
+ *                      under 340px without Link, which is then an item of the settings menu)
  * Picture-in-picture is in the settings menu at every width.
  */
 @layer components {
@@ -698,6 +702,50 @@
       justify-content: flex-end;
       gap: calc(var(--media-spacing) * 1.5);
     }
+  }
+
+  /*
+   * ---------- Narrow, 500px and up: the instrument on row one ----------
+   * `[ timecode | link ]   [ |< <| ] [ Play ] [ |> >| ]   [ Loop ]`, three columns like the wide dock: the sides
+   * share the free space, so the transport is in the centre and Loop, at the end edge, mirrors the timecode. The
+   * centre column's box is dropped (`display: contents`), so the transport and Loop are cells of the row's grid;
+   * the source order is still timecode, link, transport, Loop. Row one needs 462px, so it fits from 500px with
+   * every target at 44px; the buttons do not shrink here.
+   */
+  .pro-skin[data-dock-rows="keys"][data-bar="pro"] .pro-main-row {
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    gap: calc(var(--media-spacing) * 1.5);
+  }
+
+  .pro-skin[data-dock-rows="keys"] .pro-main-centre {
+    display: contents;
+  }
+
+  .pro-skin[data-dock-rows="keys"][data-bar="pro"] .pro-transport {
+    grid-column: 2;
+    min-width: max-content; /* the centre column never gets narrower than the transport */
+  }
+
+  /* The groups and their buttons keep 44px: the fluid widths of the compact dock are not needed here. */
+  .pro-skin[data-dock-rows="keys"] .pro-transport .pro-seg,
+  .pro-skin[data-dock-rows="keys"] .pro-seg .pro-tool {
+    flex: none;
+  }
+
+  .pro-skin[data-dock-rows="keys"] .pro-main-row .pro-tool[data-pro-tool="loop"] {
+    grid-column: 3;
+    justify-self: end;
+    width: var(--fl-control-size);
+  }
+
+  /* The pair is as tall as every other target of the row: the field and the link button are both 44px. */
+  .pro-skin[data-dock-rows="keys"] .pro-timecode-pair > .pro-tool-link {
+    height: var(--fl-control-size);
+  }
+
+  /* A phone on its side has little height: 8px above and below (12 and 14 when compact), 6px between the rows. */
+  .pro-skin[data-dock-rows="keys"][data-layout="dock"][data-bar="pro"] .pro-bar {
+    padding-block: calc(var(--media-spacing) * 2);
   }
 
   /* Under 382px eight 44px cells do not fit: the Zoom button goes. `Z`, `Shift+Z` and the host's handle still zoom. */

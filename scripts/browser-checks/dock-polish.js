@@ -7,8 +7,12 @@
 // the link button are one pair (2px apart, same height); `S` copies `#t=<timecode>`,
 // shows the check for about 1.2s and announces "Link copied, <timecode>"; a refused clipboard shows no check;
 // `Shift+G` copies a PNG; the Capture menu holds the two image actions; the help dialog lists both keys.
-// Narrow: one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link, Guides, Zoom, Settings,
-// Fullscreen; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
+// Narrow, 500px and up (`data-dock-rows="keys"`; for example a touch context of 724x375, a 692px player): row one is
+// the timecode joined to the link button (2px apart, same height), the transport, and Loop as a raised key at the end
+// edge; row two is six flat 44px controls in equal cells: Markers, Capture, Guides, Zoom, Settings, Fullscreen. The
+// dock is 167px tall there (8px above and below, 6px between the rows).
+// Narrow under 500px (`compact`): one row of 44px controls in equal cells, in the order Markers, Loop, Capture, Link,
+// Guides, Zoom, Settings, Fullscreen, Loop flat at rest and pressed while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
 // is an item of the settings menu; under 300px the side padding is 12px and under 288px the cells are 40px wide,
 // so six fit down to a 264px player; `I`, `O` and `Z` still work.
 const out = {};
@@ -85,7 +89,56 @@ if (!out.narrow) {
       inside: [...document.querySelectorAll('.pro-main-row button')].filter((e) => e.getClientRects().length).every((e) => { const r = e.getBoundingClientRect(), s = document.querySelector('.pro-skin').getBoundingClientRect(); return r.left >= s.left && r.right <= s.right; }),
     };
   });
-  const expected = ['Markers', 'Loop', 'Capture', ...(out.player >= 340 ? ['Copy link at timecode'] : []), 'Guides', ...(out.player >= 382 ? ['Zoom'] : []), 'Settings', 'Enter fullscreen'];
+  out.rows = await page.getAttribute('.pro-skin', 'data-dock-rows');
+  const keys = out.rows === 'keys';
+  checks.rows = keys === out.player >= 500;
+  const expected = keys
+    ? ['Markers', 'Capture', 'Guides', 'Zoom', 'Settings', 'Enter fullscreen']
+    : ['Markers', 'Loop', 'Capture', ...(out.player >= 340 ? ['Copy link at timecode'] : []), 'Guides', ...(out.player >= 382 ? ['Zoom'] : []), 'Settings', 'Enter fullscreen'];
+  // Row one, in source order (which is the focus order), with each control's place on screen.
+  out.rowOne = await page.evaluate(() => {
+    const box = (e) => e.getBoundingClientRect();
+    const bar = document.querySelector('.pro-bar'), pad = parseFloat(getComputedStyle(bar).paddingRight);
+    const items = [...document.querySelectorAll('.pro-main-left .pro-timecode, .pro-main-left button, .pro-main-centre button')].filter((e) => e.getClientRects().length);
+    const loop = document.querySelector('[data-pro-tool="loop"]'), field = document.querySelector('.pro-timecode'), link = document.querySelector('.pro-tool-link');
+    const play = box(document.querySelector('.pro-transport .media-play-button'));
+    return {
+      order: items.map((e) => (e.matches('.pro-timecode') ? 'Timecode' : e.getAttribute('aria-label') || '').replace(/,.*$/, '')),
+      leftToRight: items.every((e, i) => i === 0 || box(e).left >= box(items[i - 1]).right - 0.5),
+      oneLine: new Set(items.map((e) => Math.round(box(e).top + box(e).height / 2))).size === 1,
+      targets: items.every((e) => box(e).width >= 36 && box(e).height >= 44),
+      loopInRowOne: !!loop?.closest('.pro-main-centre'),
+      loopAtEnd: loop ? Math.abs(box(bar).right - pad - box(loop).right) < 1 : null,
+      loopRaised: loop ? getComputedStyle(loop).backgroundImage !== 'none' || getComputedStyle(loop).boxShadow !== 'none' : null,
+      loopPressed: loop?.getAttribute('aria-pressed'),
+      pairGap: link && field ? +(box(link).left - box(field).right).toFixed(2) : null,
+      pairSameHeight: link && field ? box(link).height === box(field).height : null,
+      linkInPair: !!link?.closest('.pro-timecode-pair'),
+      playOffCentre: +(play.left + play.width / 2 - (box(bar).left + box(bar).width / 2)).toFixed(1),
+      dockHeight: box(bar).height,
+    };
+  });
+  const transport = ['Previous cut', 'Step back one frame', 'Play', 'Step forward one frame', 'Next cut'].filter((n) => out.player >= 324 || !/cut/.test(n));
+  checks.rowOneOrder = out.rowOne.order.join() === ['Timecode', ...(keys ? ['Copy link at timecode'] : []), ...transport, ...(keys ? ['Loop'] : [])].join();
+  checks.rowOneFits = out.rowOne.leftToRight && out.rowOne.oneLine && out.rowOne.targets;
+  if (keys) {
+    checks.pair = out.rowOne.linkInPair && out.rowOne.pairGap === 2 && out.rowOne.pairSameHeight;
+    checks.loopKey = out.rowOne.loopInRowOne && out.rowOne.loopAtEnd;
+    checks.dockHeight = out.rowOne.dockHeight === 167;
+    if (out.player >= 562) checks.transportCentred = Math.abs(out.rowOne.playOffCentre) <= 1;
+  } else {
+    checks.loopCell = !out.rowOne.loopInRowOne && !out.rowOne.linkInPair;
+  }
+  // Loop off: a raised key on row one, flat as a cell of row two. Loop on: the pressed treatment in both places.
+  const loopLook = async (on) => {
+    if (((await page.getAttribute('[data-pro-tool="loop"]', 'aria-pressed')) === 'true') !== on) { await page.focus('.pro-transport .media-play-button'); await page.keyboard.press('r'); }
+    await page.waitForTimeout(400);
+    return page.evaluate(() => { const c = getComputedStyle(document.querySelector('[data-pro-tool="loop"]')); return { fill: c.backgroundColor, image: c.backgroundImage !== 'none', pressed: document.querySelector('[data-pro-tool="loop"]').getAttribute('aria-pressed') }; });
+  };
+  out.loopOn = await loopLook(true); out.loopOff = await loopLook(false);
+  const clear = (colour) => /rgba\(.*, 0\)$/.test(colour) || colour === 'transparent';
+  checks.loopOn = out.loopOn.pressed === 'true' && !clear(out.loopOn.fill);
+  checks.loopOff = out.loopOff.pressed === 'false' && clear(out.loopOff.fill) && out.loopOff.image === keys;
   checks.order = out.row.order.join() === expected.join();
   const cell = out.player < 288 ? 40 : 44;
   checks.targets = out.row.sizes.join() === `${cell}x44`;
