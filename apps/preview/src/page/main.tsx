@@ -12,7 +12,7 @@ import { FramelineSkin, type CopyLinkInfo, type EffectiveGuides, type FrameGrabI
 import { formatTimecode, framesFromSeconds } from '@/pro/timecode';
 
 import { DemoVideo, useDemoMarkers } from '../frame/demo-video';
-import { MEDIA, posterUrl } from '../frame/media';
+import { MEDIA, posterUrl, stagedSeconds } from '../frame/media';
 import { FLAG_NAMES, overrides, readQuery, snippet, tierConfig, writeQuery, type FlagName, type PageConfig } from './config';
 
 const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -55,21 +55,7 @@ function render() {
   }
   // Platform zones are drawn inside the guides layer: without guides the flag has nothing to switch.
   form.querySelector<HTMLInputElement>('input[name="platformZones"]')!.disabled = !config.flags.guides;
-  /* ---------- Configure: a disclosure under the player, closed on load ---------- */
-
-/** Open or close Configure. The CSS animates the height from `data-open` and hides the closed body from everyone. */
-function setConfigureOpen(open: boolean) {
-  configureToggle.setAttribute('aria-expanded', String(open));
-  configure.toggleAttribute('data-open', open);
-}
-configureToggle.addEventListener('click', () => setConfigureOpen(configureToggle.getAttribute('aria-expanded') !== 'true'));
-// The skip link lands on the button, which is a better place for the keyboard than a closed section.
-$('.skip').addEventListener('click', (event) => {
-  event.preventDefault();
-  configureToggle.focus();
-});
-
-for (const input of heroTier) input.checked = input.value === config.tier;
+  for (const input of heroTier) input.checked = input.value === config.tier;
   tierHint.textContent = hint(config);
   const on = FLAG_NAMES.filter((name) => config.flags[name]).length;
   configureSummary.textContent = `${config.tier === 'studio' ? 'Studio' : 'Viewer'} · ${config.layout === 'dock' ? 'Dock' : 'Overlay'} · ${on} of ${FLAG_NAMES.length} features on`;
@@ -82,6 +68,21 @@ for (const input of heroTier) input.checked = input.value === config.tier;
 
   renderTasks();
 }
+
+/* ---------- Configure: a disclosure under the player, closed on load ---------- */
+
+/** Open or close Configure. The CSS animates the height from `data-open` and hides the closed body from everyone. */
+function setConfigureOpen(open: boolean) {
+  configureToggle.setAttribute('aria-expanded', String(open));
+  configure.toggleAttribute('data-open', open);
+}
+// Wired once, here: inside `render` every configuration change added another listener, and two of them cancel out.
+configureToggle.addEventListener('click', () => setConfigureOpen(configureToggle.getAttribute('aria-expanded') !== 'true'));
+// The skip link lands on the button, which is a better place for the keyboard than a closed section.
+$('.skip').addEventListener('click', (event) => {
+  event.preventDefault();
+  configureToggle.focus();
+});
 
 form.addEventListener('change', (event) => {
   const input = event.target as HTMLInputElement;
@@ -129,6 +130,9 @@ $('#copy').addEventListener('click', () => {
 
 /* ---------- Event log ---------- */
 
+/** True while the page stages the player on load, so the skin's events for it stay out of the log. */
+let staging = false;
+
 const LOG_SIZE = 20;
 const log = $('#log');
 const logEmpty = $('#log-empty');
@@ -138,6 +142,7 @@ const seconds = (value: number) => value.toFixed(3);
 const timecodeNow = () => formatTimecode(framesFromSeconds(video()?.currentTime ?? 0, MEDIA.fps), MEDIA.fps);
 
 function logEvent(name: string, detail: string) {
+  if (staging) return; // the staged state is the page's doing, not the visitor's
   const item = document.createElement('li');
   for (const [className, text] of [['log-time', timecodeNow()], ['log-name', name], ['log-detail', detail]] as const) {
     const part = document.createElement('span');
@@ -307,6 +312,61 @@ for (const item of taskItems) {
   });
 }
 
+/* ---------- Staging: what a first-time visitor sees before touching the player ---------- */
+
+const STAGED = stagedSeconds(MEDIA);
+/** The skin's own storage key for the guides it remembers (`persist` is left at its default on this page). */
+const REMEMBERED_KEY = 'frameline:v1';
+
+/** Staging is decided once, on load: a page opened in Studio, on a source that has a staged state. */
+let stagePending = STAGED !== null && config.tier === 'studio';
+
+/** Whether this visitor has a remembered set of guides. The skin restores it, and it wins over the staged guide. */
+function hasRememberedGuides(): boolean {
+  try {
+    return window.localStorage.getItem(REMEMBERED_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sets the range, the guide and the playhead, once, when the Studio player first has a handle and the video has a
+ * duration. Paused, silent, no focus, no scrolling. A frame link in the hash (`#t=…`) keeps the playhead: the skin
+ * seeks to it itself. Not repeated after the visitor changes the range or comes back from Viewer.
+ */
+function stage() {
+  if (!stagePending || !STAGED) return;
+  const media = video();
+  if (!media) return;
+  stagePending = false;
+
+  const apply = () => {
+    if (!(media.duration > 0)) return;
+    media.removeEventListener('loadedmetadata', apply);
+    media.removeEventListener('durationchange', apply);
+    const handle = api.current;
+    if (!handle) return; // the visitor went to Viewer before the video was ready
+    staging = true;
+    try {
+      handle.setRange({ in: STAGED.in, out: STAGED.out });
+      if (!hasRememberedGuides()) handle.setGuides({ guides: STAGED.guides });
+      if (!/(?:^#|&)t=/.test(window.location.hash)) handle.seek(STAGED.playhead);
+    } finally {
+      staging = false;
+    }
+  };
+  media.addEventListener('loadedmetadata', apply);
+  media.addEventListener('durationchange', apply);
+  apply();
+}
+
+/** The skin's handle arrives here: `null` in Viewer and until the Studio code has loaded. */
+function setApi(handle: FramelineApi | null) {
+  api.current = handle;
+  if (handle) stage();
+}
+
 /* ---------- The player ---------- */
 
 function Player() {
@@ -316,7 +376,7 @@ function Player() {
 
   return (
     <VideoPlayer poster={posterUrl(MEDIA)}>
-      <FramelineSkin tier={current.tier} layout={current.layout} features={features} fps={MEDIA.fps} markers={markers} apiRef={api} {...handlers}>
+      <FramelineSkin tier={current.tier} layout={current.layout} features={features} fps={MEDIA.fps} markers={markers} apiRef={setApi} {...handlers}>
         <DemoVideo source={MEDIA} />
       </FramelineSkin>
     </VideoPlayer>
