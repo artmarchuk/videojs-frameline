@@ -1521,13 +1521,13 @@ The trial is merged into `main` (fast-forward, with the tooltip fix `9c87df3` th
 Spec: `specs/landing-visuals.md`. Nothing under `src/` changed.
 
 ### Decisions: the staged hero
-- **The staged state is the source's data**: `staged` on the reel's entry in `media.ts`, as frame numbers (In 108, Out 242, playhead 144, guides `title-safe`); `stagedSeconds` converts it. A source without `staged` loads as before.
+- **The staged state is the source's data**: `staged` on the reel's entry in `media.ts`, as frame numbers (In 74, Out 178, playhead 90, guides `title-safe`: 00:00:03:02 to 00:00:07:10, playhead 00:00:03:18; round one staged 108, 242 and 144); `stagedSeconds` converts it. A source without `staged` loads as before.
 - **Applied once, by the page, through `apiRef`**: when the Studio player first has a handle and the video has a duration, the page calls `setRange`, `setGuides` and `seek`. It is decided on load: a page opened in Studio. Not repeated after a tier switch or a change of the range; a page opened with `?tier=viewer` stages nothing, also after a switch to Studio.
 - **A frame link wins the playhead**: with `t=` in the hash the page does not seek (the skin does, to the link); the range and the guide are still set.
 - **Remembered guides win**: if `localStorage` has the skin's `frameline:v1` record, the page does not call `setGuides` and the skin restores what is stored. Any record counts, an empty set too: a visitor who switched every guide off does not get Title safe back. A visitor with no record gets Title safe, and the skin then stores it, so the next visit restores the same.
-- **The poster is the staged frame**: `posterTime` is the middle of the frame's interval, `(144 + 0.5) / 24`. Mux's thumbnail at a frame's own start time is the frame before it (`time=6` shows 00:00:05:23, `time=6.02` shows 00:00:06:00; the old `posterTime: 3` showed 00:00:02:23).
+- **The poster is the staged frame**: `posterTime` is the middle of the frame's interval, `(playhead + 0.5) / 24`. Mux's thumbnail at a frame's own start time is the frame before it (`time=6` shows 00:00:05:23, `time=6.02` shows 00:00:06:00; the old `posterTime: 3` showed 00:00:02:23).
 - **Out of the event log**: the skin fires `onInOutChange` and `onGuidesChange` for the staged calls as for any other; the page drops them while it stages.
-- **Announcements**: `setRange` and `setGuides` say nothing. The seek does: Video.js's status announcer says "Seeked to 6 seconds" on load, as it already did for an opened `#t=` link. Video.js has no start-time option (its docs: seek on `loadedmetadata`), and the skin was not silenced.
+- **Announcements**: `setRange` and `setGuides` say nothing. The seek does: Video.js's status announcer said "Seeked to 6 seconds" on load with the first staged playhead (00:00:06:00; the text for 00:00:03:18 was not read), as it already did for an opened `#t=` link. Video.js has no start-time option (its docs: seek on `loadedmetadata`), and the skin was not silenced.
 - **Fixed: the Configure button** stopped toggling after any configuration change. Its click listener sat inside `render()` and was added again on every change; two listeners open and close in one click. Wired once now; `configurator.js` checks it.
 
 ### Decisions: rows and figures

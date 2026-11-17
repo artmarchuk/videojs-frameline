@@ -52,8 +52,8 @@ export interface StagedState {
   guides: readonly string[];
 }
 
-/** The reel's staged state: the Courier section's comp note. In 00:00:04:12, Out 00:00:10:02, playhead 00:00:06:00. */
-const REEL_STAGED: StagedState = { in: 108, out: 242, playhead: 144, guides: ['title-safe'] };
+/** The reel's staged state: the Courier section's comp note. In 00:00:03:02, Out 00:00:07:10, playhead 00:00:03:18. */
+const REEL_STAGED: StagedState = { in: 74, out: 178, playhead: 90, guides: ['title-safe'] };
 const REEL_FPS = 24;
 
 export const SOURCES = {
