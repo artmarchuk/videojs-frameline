@@ -1,0 +1,179 @@
+{
+  "5601": {
+    "player": 1232,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "00:00:56:00 of 00:00:56:01",
+    "linkLeft": 190,
+    "html": "00:00:56:00<span class=\"pro-visually-hidden\"> of 00:00:56:01</span>",
+    "ariaSnapshot": "- button \"00:00:56:00 of 00:00:56:01 Time in seconds\"",
+    "axName": "00:00:56:00 of 00:00:56:01 Time in seconds"
+  },
+  "fpsZero": "00:00:00:00",
+  "zero": {
+    "player": 1232,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "00:00:00:00 of 00:00:56:02",
+    "linkLeft": 190,
+    "html": "00:00:00:00<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "ariaSnapshot": "- button \"00:00:00:00 of 00:00:56:02 Time in seconds\"",
+    "axName": "00:00:00:00 of 00:00:56:02 Time in seconds"
+  },
+  "fps0204": 24,
+  "0204": {
+    "player": 1232,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "00:00:02:04 of 00:00:56:02",
+    "linkLeft": 190,
+    "html": "00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "ariaSnapshot": "- button \"00:00:02:04 of 00:00:56:02 Time in seconds\"",
+    "axName": "00:00:02:04 of 00:00:56:02 Time in seconds"
+  },
+  "fps5601": null,
+  "seconds": {
+    "player": 1232,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "2.167 of 56.044 s",
+    "linkLeft": 190,
+    "html": "2.167<span class=\"pro-visually-hidden\"> of 56.044 s</span>",
+    "axName": "2.167 of 56.044 s Time in seconds"
+  },
+  "platformFonts300": [
+    {
+      "familyName": ".SF NS",
+      "postScriptName": ".SFNS-Regular",
+      "isCustomFont": false,
+      "glyphCount": 25
+    }
+  ],
+  "weight300": "500",
+  "dock900": {
+    "player": 900,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "00:00:02:04 of 00:00:56:02",
+    "linkLeft": 190,
+    "html": "00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "fits": {
+      "rightOver": 0,
+      "pageScroll": 0,
+      "textInsideField": false,
+      "sizes": "34,34,46,34,34"
+    }
+  },
+  "dock852": {
+    "player": 852,
+    "font": "15px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "116x34",
+    "lead": null,
+    "text": "00:00:02:04 of 00:00:56:02",
+    "linkLeft": 156,
+    "html": "00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "fits": {
+      "rightOver": 0,
+      "pageScroll": 0,
+      "textInsideField": false,
+      "sizes": "34,34,46,34,34"
+    }
+  },
+  "dock390": {
+    "player": 390,
+    "font": "14px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "92x44",
+    "lead": null,
+    "text": "00:00:02:04 of 00:00:56:02",
+    "linkLeft": 166.5,
+    "html": "00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "fits": {
+      "rightOver": -0.5,
+      "pageScroll": 0,
+      "textInsideField": false,
+      "sizes": "44,44,44,44,44"
+    }
+  },
+  "dock320": {
+    "player": 320,
+    "font": "14px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "92x44",
+    "lead": null,
+    "text": "00:00:02:04 of 00:00:56:02",
+    "linkLeft": 0,
+    "html": "00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "fits": {
+      "rightOver": 0,
+      "pageScroll": 0,
+      "textInsideField": false,
+      "sizes": "44,44,44"
+    }
+  },
+  "approx1280": {
+    "player": 1232,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "≈00:00:02:04 of 00:00:56:02",
+    "linkLeft": 190,
+    "html": "<span class=\"pro-timecode-approx\">≈</span>00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "axName": "≈00:00:02:04 of 00:00:56:02 Time in seconds"
+  },
+  "approx390": {
+    "player": 390,
+    "font": "14px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "92x44",
+    "lead": null,
+    "text": "≈00:00:02:04 of 00:00:56:02",
+    "linkLeft": 166.5,
+    "html": "<span class=\"pro-timecode-approx\">≈</span>00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>",
+    "axName": "≈00:00:02:04 of 00:00:56:02 Time in seconds"
+  },
+  "more": {
+    "player": 1232,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "00:00:02:04 of 00:00:56:02",
+    "linkLeft": 190,
+    "html": "00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>"
+  },
+  "forced": {
+    "player": 1232,
+    "font": "17px",
+    "weight": "500",
+    "spacing": "normal",
+    "field": "150x34",
+    "lead": null,
+    "text": "00:00:02:04 of 00:00:56:02",
+    "linkLeft": 190,
+    "html": "00:00:02:04<span class=\"pro-visually-hidden\"> of 00:00:56:02</span>"
+  }
+}

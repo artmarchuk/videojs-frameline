@@ -222,6 +222,27 @@ export function parseLinkPosition(value: string | null, fps: number, options: Ti
 }
 
 /** `frame_00-00-12-05.png`: the title (or "frame"), then the timecode with dashes. */
+/**
+ * Where the quiet leading part of a timecode ends: the run of `0`, `:` and `;` before the first digit that is not
+ * zero. It never reaches into the last two characters (the frames), and it never splits the first field, so a run
+ * that stops before the first separator is no lead at all. `00:00:02:04` gives 7 (`00:00:0`), `00:00:00:00` gives 9,
+ * `01:00:00:00` gives 0. Seconds (`2.167`) have no lead. A plain scan: it runs on every frame.
+ */
+export function timecodeLeadLength(value: string, seconds = false): number {
+  if (seconds) return 0;
+  const limit = value.length - 2;
+  let index = 0;
+  let pastFirstField = false;
+  while (index < limit) {
+    const char = value.charCodeAt(index);
+    // "0" is 48, ":" 58, ";" 59.
+    if (char === 58 || char === 59) pastFirstField = true;
+    else if (char !== 48) break;
+    index++;
+  }
+  return pastFirstField ? index : 0;
+}
+
 export function grabFileName(title: string | null | undefined, timecode: string): string {
   const base = (title ?? '').trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'frame';
   return `${base}_${timecode.replace(/[:;]/g, '-')}.png`;

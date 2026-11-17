@@ -20,7 +20,7 @@ import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecod
 import { AnnouncerProvider, useAnnounce } from './announcer';
 import { useStudioController, type CopyLinkInfo, type FrameGrabInfo, type StudioController } from './controller';
 import { GrabFrameIcon, LinkCopiedIcon, LinkIcon, LoopIcon, MarkerIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
-import { isNarrowDock, narrowDockRows } from './logic';
+import { isNarrowDock, narrowDockRows, timecodeLeadLength } from './logic';
 import { studioStrings as t } from './strings';
 import { Timeline, type TimelineProps } from './timeline';
 import { snapFrame, validMarkers } from './timeline/logic';
@@ -395,6 +395,8 @@ function TimecodeField({ controller, fps, dropFrame, link }: { controller: Studi
 
   const current = seconds ? secondsFromFrames(frame, fps).toFixed(3) : controller.timecode(frame);
   // The total is a length, so the start-timecode offset does not apply to it.
+  // The display dims the leading zeros of a timecode (never of seconds), so the digits that change carry the reading.
+  const lead = timecodeLeadLength(current, seconds);
   const total = seconds ? `${duration.toFixed(3)} s` : formatTimecode(framesFromSeconds(duration, fps), fps, { dropFrame });
 
   const tip = (
@@ -412,7 +414,9 @@ function TimecodeField({ controller, fps, dropFrame, link }: { controller: Studi
           <button type="button" className={'pro-timecode'} aria-labelledby={`${valueId} ${labelId}`} aria-pressed={seconds} onClick={() => store.toggleTimeDisplay()}>
             <span id={valueId} className={'pro-timecode-values'} data-pro-timecode>
               {approximate && <span className={'pro-timecode-approx'}>≈</span>}
-              {current}
+              {/* Two adjacent spans with nothing between them: the text, and so the accessible name, is the same string. */}
+              {lead > 0 && <span className={'pro-timecode-lead'}>{current.slice(0, lead)}</span>}
+              <span>{current.slice(lead)}</span>
               <span className={'pro-visually-hidden'}> {t.of(total)}</span>
             </span>
             <span id={labelId} className={'pro-visually-hidden'}>

@@ -356,6 +356,8 @@ Its own tokens are `--fl-*`, all defined in `src/styles/tokens.css`. The ones a 
 | `--fl-menu-edge` | `#424242` | The border of a menu in the dock layout |
 | `--fl-legend` | `#d0d0d0` | Icons and words on the dock's keys at rest; full `--fl-text` on hover, focus, pressed and on |
 | `--fl-text`, `--fl-text-dim` | `#f2f2f2`, `#9c9c9c` | Text and secondary text |
+| `--fl-text-timecode`, `--fl-timecode-weight` | `calc(var(--media-spacing) * 5.5)` (22 px), `400` | The size and weight of the timecode display's digits on the wide dock (18 px under 900 px, 14 px on the narrow dock) |
+| `--fl-timecode-lead` | `#7a7a7a` | The leading zeros and separators of the timecode, which step back so the digits that change carry the reading (`--fl-text-dim` under `prefers-contrast: more`, no dimming in forced colours) |
 | `--fl-bevel` | `1` | Strength of the tactile treatment in the dock; `0` is flat |
 | `--fl-stage-ratio` | `16 / 9` | The picture's stage in the dock layout |
 | `--fl-frame-border` | `0` | `1` draws a hairline and a 10 px radius around the player |

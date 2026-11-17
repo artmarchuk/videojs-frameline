@@ -10,6 +10,7 @@ import {
   isNarrowDock,
   narrowDockRows,
   lastFrameOf,
+  timecodeLeadLength,
   outsideRange,
   playbackDecision,
   parseLinkPosition,
@@ -250,5 +251,41 @@ describe('dock arrangement', () => {
     expect(narrowDockRows(500)).toBe('keys');
     expect(narrowDockRows(796)).toBe('keys'); // a phone on its side
     expect(narrowDockRows(320)).toBe('compact');
+  });
+});
+
+describe('timecodeLeadLength', () => {
+  const split = (value: string) => [value.slice(0, timecodeLeadLength(value)), value.slice(timecodeLeadLength(value))];
+
+  it('dims the leading zeros and separators up to the first digit that is not zero', () => {
+    expect(split('00:00:02:04')).toEqual(['00:00:0', '2:04']);
+    expect(split('00:12:02:04')).toEqual(['00:', '12:02:04']);
+  });
+
+  it('never dims the frames', () => {
+    expect(split('00:00:00:00')).toEqual(['00:00:00:', '00']);
+    expect(split('00:00:00:07')).toEqual(['00:00:00:', '07']);
+  });
+
+  it('dims nothing when the hours are not zero, and never splits the first field', () => {
+    expect(split('01:00:00:00')).toEqual(['', '01:00:00:00']);
+    expect(split('10:00:00:00')).toEqual(['', '10:00:00:00']);
+    expect(split('100:00:00:00')).toEqual(['', '100:00:00:00']);
+    expect(split('001:00:00:00')).toEqual(['', '001:00:00:00']);
+  });
+
+  it('dims nothing in seconds mode', () => {
+    expect(timecodeLeadLength('0.083', true)).toBe(0);
+    expect(timecodeLeadLength('00:00:02:04', true)).toBe(0);
+  });
+
+  it('treats the drop-frame separator like a colon', () => {
+    expect(split('00:00:00;12')).toEqual(['00:00:00;', '12']);
+    expect(split('00:01:00;02')).toEqual(['00:0', '1:00;02']);
+  });
+
+  it('leaves a string of two characters or fewer alone', () => {
+    expect(timecodeLeadLength('00')).toBe(0);
+    expect(timecodeLeadLength('')).toBe(0);
   });
 });

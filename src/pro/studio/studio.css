@@ -317,7 +317,8 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: calc(var(--media-spacing) * 37.5);
+    /* 160px: "00:00:14:20" at 22px, weight 400, measures 124.9px (the same with ";"), "≈00:00:14:20" 142.4px. */
+    width: calc(var(--media-spacing) * 40);
     height: var(--fl-control-size);
     border-radius: var(--fl-radius-group);
     background-color: var(--fl-surface-0);
@@ -326,7 +327,8 @@
     direction: ltr;
     font-size: var(--fl-text-timecode);
     font-variant-numeric: tabular-nums;
-    font-weight: 500;
+    font-weight: var(--fl-timecode-weight);
+    letter-spacing: 0.01em;
     line-height: 1;
     outline: none;
     white-space: nowrap;
@@ -346,6 +348,11 @@
     outline: var(--fl-focus-width) solid var(--fl-accent);
     outline-offset: var(--fl-focus-offset);
     box-shadow: var(--fl-focus-halo), var(--fl-shade);
+  }
+
+  /* The leading zeros and separators step back; no transition, the split moves with the frame. */
+  .pro-skin .pro-timecode-lead {
+    color: var(--fl-timecode-lead);
   }
 
   .pro-skin .pro-timecode-approx {
@@ -565,9 +572,10 @@
       display: none;
     }
 
+    /* 132px: "00:00:14:20" at 18px measures 103.5px, "≈00:00:14:20" 118.6px. */
     .pro-skin .pro-timecode {
-      width: calc(var(--media-spacing) * 29);
-      font-size: calc(var(--media-spacing) * 3.75);
+      width: calc(var(--media-spacing) * 33);
+      font-size: calc(var(--media-spacing) * 4.5);
     }
   }
 
@@ -647,7 +655,7 @@
    * Row one holds the whole transport, as on the wide dock: previous cut, step back, Play, step forward, next cut.
    * The four tool buttons are fluid: 44px wide where the row has room, down to 36px (always 44px tall) where it has
    * not, so a 360px phone with 16px page margins (a 328px player) shows every button. Play stays 44px. The row
-   * needs 320px in all: 15 + 92 + 6 + 4 × 36 + 44 + 4 × 1 + 15; the fold stays at 324px; under that the cut pair folds away, see below.
+   * needs 324px in all: 15 + 96 + 6 + 4 × 36 + 44 + 4 × 1 + 15; under that the cut pair folds away, see below.
    */
   /* A descendant, not a child: the group is portalled into a `display: contents` slot inside the transport. */
   .pro-skin[data-dock-size="narrow"] .pro-transport .pro-seg {
@@ -667,9 +675,13 @@
     width: var(--fl-control-size);
   }
 
-  /* 92px: "00:00:14:20" at 14px measures 84px (tabular figures and colons), "≈00:00:14:20" 92px. */
+  /*
+   * 96px: "00:00:14:20" at 14px, weight 400, measures 82.9px (tabular figures and colons), "≈00:00:14:20" 95.7px.
+   * It stays 14px: at 16px the "≈" value needs a 108px field, and row one then needs 336px with every key at its
+   * 36px minimum, so a 324 to 335px player (a 360px phone) would not fit.
+   */
   .pro-skin[data-dock-size="narrow"] .pro-timecode {
-    width: calc(var(--media-spacing) * 23);
+    width: calc(var(--media-spacing) * 24);
     font-size: calc(var(--media-spacing) * 3.5);
   }
 

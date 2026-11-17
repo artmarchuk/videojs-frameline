@@ -1826,3 +1826,39 @@ Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel pre
 - The shots not opened before B.8 were opened: the hovered tile, the focused tile, the timeline with both handles set, and the two Viewer pairs. Nothing wrong found. In the downscaled both-handles pair the grip line looks stronger on Theme B; at pixel level the handles are identical.
 - typecheck, tests (219), build, contrast, `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352): pass.
 - Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo).
+
+## Theme C: the timecode as a display (18 Nov 2026, branch `theme-c`, not merged)
+
+Spec: `specs/theme-c-timecode-display.md`. CSS, tokens and one markup change (C.3). Screenshots, site root, 2x, each paired with `main`: `design/screenshots/theme-c/` (`main-*`, `c-*`, `pair-*`, and the two `*-report.json` with computed styles and accessible names).
+
+### C.2 Sizes and widths (measured in Chrome on macOS, SF)
+| Dock | Font | Weight | `00:00:14:20` | `≈00:00:14:20` | Field (was) |
+| --- | --- | --- | --- | --- | --- |
+| Wide, 900px and up | 22px (`--fl-text-timecode`; was 17px) | 400 (`--fl-timecode-weight`; was 500) | 124.9px | 142.4px | 160px (150px) |
+| Wide, under 900px | 18px (was 15px) | 400 | 103.5px | 118.6px | 132px (116px) |
+| Narrow | 14px (unchanged) | 400 | 82.9px | 95.7px | 96px (92px) |
+
+- The drop-frame `;` measures the same as `:`. Seconds values are narrower. Letter spacing `0.01em`; the colons do not crowd the digits at 22px (`pair-1-timecode-0204.png`).
+- The link cell moves right by the width change and no more: 10px on the wide dock, 16px under 900px. Row one does not overflow or wrap at players of 1280, 1100, 1040, 900, 899, 852, 741 and 740px.
+- The field keeps the row's height (34px; 44px on the narrow dock).
+- **Narrow dock: it stays 14px.** At 16px the value measures 93.2px and the `≈` value 107.1px, so the field would need 108px. Row one would then need 336px with every key at its 36px minimum (15 + 108 + 6 + 4 × 36 + 44 + 4 + 15), and the cut pair only folds away under 324px, so a 324 to 335px player (a 360px phone is 328px) would not fit. At 390 and 320 alone it would fit; the widths between them decide it.
+- The narrow field grew from 92 to 96px because the lighter weight with letter spacing made the `≈` value 95.7px. Row one now needs exactly 324px, the fold point. On `main` the `≈` already stuck out of the 92px field on the left (`pair-4-approx-390.png`); now it is inside.
+- Weight trial (screenshot only, `pair-6-weight-400-300.png`): at 300 the strokes are visibly thinner and the dimmed zeros get faint. On macOS Chrome draws a real 300 from the SF variable font (`.SFNS-Regular…wght12C`, 0x12C = 300), not a synthesised one. Windows (Segoe UI Variable) was not checked. Shipped: 400.
+
+### C.3 Leading zeros
+- Rule, in `timecodeLeadLength` (`src/pro/studio/logic.ts`, a char-code scan): the leading run of `0`, `:` and `;` up to the first digit that is not zero; never the last two characters; nothing in seconds mode.
+- **One addition to the spec's rule:** the run never splits the first field. By the rule as written, `01:00:00:00` would dim its first `0`, but the spec's own example says it dims nothing. A lead that stops before the first separator is therefore no lead. All four examples hold: `00:00:00:00` → `00:00:00:` + `00`; `00:00:02:04` → `00:00:0` + `2:04`; `01:00:00:00` → nothing; `00:00:00;12` → `00:00:00;` + `12`.
+- Markup: inside the value span, `<span class="pro-timecode-lead">` (omitted when empty) and a plain `<span>` with the rest, no whitespace between; the `≈` span stays before them.
+- Colour: `--fl-timecode-lead` `#7a7a7a` (4.56:1 on the well); `--fl-text-dim` under more contrast (12.18:1); `CanvasText` in forced colours. No transition.
+- **Accessible name** (Chrome's accessibility tree), before and after, identical: `00:00:00:00 of 00:00:56:02 Time in seconds`, `00:00:02:04 of 00:00:56:02 Time in seconds`, `2.167 of 56.044 s Time in seconds`, and with the marker `≈00:00:02:04 of 00:00:56:02 Time in seconds`. `textContent` is identical too.
+- The `≈` marker was shown by removing `HTMLVideoElement.prototype.requestVideoFrameCallback` before the page loads.
+
+### C checks
+- typecheck, tests (225: 6 new for the split), build, `node scripts/contrast.mjs` (82 rows, all pass in both columns; new row: the lead on the well, 4.56 / 12.18).
+- Browser checks on the local build, monitor page: `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352), `phone-transport` (430 to 320 touch, 1440 mouse), `range-playback`: all pass, no assertion changed.
+
+### Unverified (Theme C)
+- Windows: Segoe UI Variable at 400 and 300, and the measured widths with that font. Firefox, Safari, real devices.
+- `00:00:56:01`: the demo's last frame reads `00:00:56:00`, so that is the shot.
+- Drop-frame and a start timecode with hours: unit tests only; the demo has neither.
+- Under more contrast the lead (`#cccccc`) is close to the digits (`#f2f2f2`), as the spec sets it: the dimming is slight there.

@@ -28,6 +28,7 @@
     --fl-text: #f2f2f2; /* primary text and icons; the playhead */
     --fl-text-dim: #9c9c9c; /* secondary text on surface-0 to surface-2 */
     --fl-text-dim-raised: #b4b4b4; /* secondary text on surface-3: tooltips, hovered controls (4.5:1 there) */
+    --fl-timecode-lead: #7a7a7a; /* the leading zeros and separators of the timecode: 4.56:1 on the well (surface-0) */
     --fl-legend: #d0d0d0; /* icons and word labels printed on the dock's keys at rest; full --fl-text on hover, focus, pressed, on */
     --fl-accent: var(--media-accent-color, #5b9dff);
     --fl-accent-ink: var(--media-accent-text-color, #0b1220); /* text and icons placed on the accent */
@@ -74,7 +75,8 @@
     --fl-text-sm: calc(var(--media-spacing) * 3); /* 12px */
     --fl-text-md: calc(var(--media-spacing) * 3.25); /* 13px */
     --fl-text-lg: calc(var(--media-spacing) * 4); /* 16px */
-    --fl-text-timecode: calc(var(--media-spacing) * 4.25); /* 17px */
+    --fl-text-timecode: calc(var(--media-spacing) * 5.5); /* 22px: the display's digits */
+    --fl-timecode-weight: 400;
     --fl-icon-size: calc(var(--media-spacing) * 4.5); /* 18px */
     --fl-stroke: 1.5; /* icon stroke width on the 24px grid */
 
@@ -236,6 +238,7 @@
       --fl-divider: rgb(255 255 255 / 0.38);
       --fl-text-dim: #cccccc;
       --fl-legend: var(--fl-text);
+      --fl-timecode-lead: var(--fl-text-dim);
       --fl-range: #7b7b7b;
       --fl-text-dim-raised: #d9d9d9;
       --fl-tick-minor: #8d8d8d;
@@ -301,6 +304,7 @@
       --fl-led-glow: none;
       --fl-menu-edge: CanvasText;
       --fl-legend: CanvasText;
+      --fl-timecode-lead: CanvasText;
       --fl-ink: Canvas;
       --fl-tick-minor: CanvasText;
       --fl-tick-mid: CanvasText;

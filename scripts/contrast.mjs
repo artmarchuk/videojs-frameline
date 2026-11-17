@@ -7,11 +7,11 @@ const BASE = {
   text: '#F2F2F2', dim: '#9C9C9C', dimRaised: '#B4B4B4', legend: '#D0D0D0', accent: '#5B9DFF', accentInk: '#0B1220',
   range: '#606060', ink: '#1C1C1C',
   tickMinor: '#565656', tickMid: '#787878', tickMajor: '#8F8F8F', buffer: '#4A4A4A', white: '#FFFFFF',
-  handleIdle: '#A0A0A0', menuEdge: '#424242', rulerLabel: '#B8B8B8',
+  timecodeLead: '#7A7A7A', handleIdle: '#A0A0A0', menuEdge: '#424242', rulerLabel: '#B8B8B8',
 };
 const MORE = {
   ...BASE, line: '#7B7B7B', seam: '#7B7B7B', dim: '#CCCCCC', dimRaised: '#D9D9D9', legend: '#F2F2F2', tickMinor: '#8D8D8D', tickMid: '#A7A7A7', tickMajor: '#BDBDBD',
-  buffer: '#6F6F6F', handleIdle: '#B7B7B7', menuEdge: '#7B7B7B', rulerLabel: '#D3D3D3', range: '#7B7B7B',
+  buffer: '#6F6F6F', timecodeLead: '#CCCCCC', handleIdle: '#B7B7B7', menuEdge: '#7B7B7B', rulerLabel: '#D3D3D3', range: '#7B7B7B',
 };
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
@@ -27,6 +27,7 @@ const c = (name) => rgb(T[name]);
 const rows = [
   // Text
   ['text on surface-0 (timecode field)', c('text'), c('s0'), 4.5],
+  ['timecode leading zeros (--fl-timecode-lead) on the well (surface-0); --fl-text-dim under more contrast', c('timecodeLead'), c('s0'), 4.5, 7],
   ['text on surface-1 (dock, every menu, dialogs)', c('text'), c('s1'), 4.5],
   ['text on surface-2 (controls)', c('text'), c('s2'), 4.5],
   ['text on surface-3 (hover, tooltips, badges)', c('text'), c('s3'), 4.5],

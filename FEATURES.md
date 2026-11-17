@@ -59,7 +59,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 
 | Feature | Tier | How to try |
 | --- | --- | --- |
-| Timecode `HH:MM:SS:FF` of the current frame, with the duration beside it | Studio | Left of the main row |
+| Timecode `HH:MM:SS:FF` of the current frame as a display (large digits; the leading zeros and separators are dimmed, never the frames, and nothing in seconds mode), with the duration beside it | Studio | Left of the main row |
 | A link button joined to the timecode field: it copies a link to the frame the field shows, then shows a check for a moment | Studio | `S`; the link button beside the timecode |
 | Timecode or seconds | Studio | Press the timecode field |
 | Start timecode offset and drop-frame counting | Studio | `startTimecode="01:00:00:00"`, `dropFrame` |
