@@ -71,3 +71,14 @@ At 2x, each paired with the Theme A shot:
 7. `prefers-contrast: more` and `forced-colors`: the dock with a range and a menu open.
 
 Report the preview URL, the pairs, the contrast output and what you could not verify.
+
+## A1.8 Follow-up: the landing page's `kbd` style leaks into the player
+
+A1.4 was not visible on the site. The skin's rule is right, but `apps/preview/src/page/landing.css` has a global, unlayered `kbd { … }` rule (the landing page's key caps). The skin's CSS sits in cascade layers, and unlayered styles beat layered ones whatever their specificity, so on the landing page every shortcut in the player's tooltips and menus is drawn as the landing page's key cap. The workbench has no such rule, which is why the A.1 screenshots showed plain text.
+
+1. **Scope the landing rule** to the page's own key groups: `kbd` becomes `:where(.cue-keys, .feature-keys) > kbd` (check `index.html` for any other `kbd` outside the player and include its container). Nothing else on the landing page changes.
+2. **Make the skin's shortcut rule complete**, so a host rule that sets only some properties cannot add a box: `.pro-kbd` and `.media-tooltip-shortcut` in tooltips and menus also set `display: inline; min-width: 0; height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; filter: none`. The dialog caps (`.pro-shortcuts .pro-kbd`) keep their own rule.
+3. **Document the limit** in the README section for hosts and in `NOTES.md`: the skin's styles live in cascade layers, so an unlayered element selector on the host page (`kbd`, `button`, `dialog`) overrides them; hosts should scope such rules or put them in a layer.
+4. **Screenshots on the landing page itself** (`index.html`, the site root), not the workbench: the capture menu, the Guides tooltip, the Studio settings menu with its `?` item, the narrow-dock menu. Each paired with the current production site.
+
+Commit on `theme-industrial`, preview deploy, no merge.

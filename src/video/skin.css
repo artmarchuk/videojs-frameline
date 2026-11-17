@@ -985,8 +985,21 @@
    * In tooltips and menus a shortcut is plain text in a quieter colour, as in a macOS menu: no fill, border or box,
    * the label's font and size, regular weight. The shortcuts dialog draws its keys as flat caps (Dialogs, below).
    */
+  /*
+   * Every box property is reset, so a host rule that styles `kbd` (if it is in a layer, or less specific) cannot add
+   * a box. An unlayered host rule still wins over these layered styles: README, "Host page styles".
+   */
   .pro-skin .media-tooltip-shortcut,
   .pro-skin .pro-kbd {
+    display: inline;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    filter: none;
     color: var(--fl-text-dim);
     font: inherit;
     font-weight: 400;
@@ -1004,7 +1017,8 @@
   .pro-skin .media-menu-popup {
     z-index: var(--fl-z-controls);
     width: var(--media-menu-width);
-    min-width: calc(var(--media-spacing) * 52);
+    /* 224px: the measured width left the Quality value ("Auto (1080p)") 2px short and cut it with an ellipsis. */
+    min-width: calc(var(--media-spacing) * 56);
     max-width: var(--media-menu-available-width);
     height: var(--media-menu-height);
     max-height: min(var(--media-menu-available-height, calc(var(--media-spacing) * 72)), calc(var(--media-spacing) * 72));

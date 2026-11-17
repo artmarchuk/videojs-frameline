@@ -1,0 +1,73 @@
+{
+  "dock": "wide",
+  "captureKbd": {
+    "text": "G",
+    "display": "flex",
+    "minWidth": "30px",
+    "height": "30px",
+    "padding": "0px 8px",
+    "border": "1px solid rgb(69, 69, 69)",
+    "radius": "6px",
+    "bg": "rgb(44, 44, 44)",
+    "filter": "drop-shadow(rgb(0, 0, 0) 0px 1px 0px)",
+    "color": "rgb(242, 242, 242)"
+  },
+  "tooltipKbd": {
+    "text": "Shift+V",
+    "display": "flex",
+    "minWidth": "30px",
+    "height": "30px",
+    "padding": "0px 8px",
+    "border": "1px solid rgb(69, 69, 69)",
+    "radius": "6px",
+    "bg": "rgb(44, 44, 44)",
+    "filter": "drop-shadow(rgb(0, 0, 0) 0px 1px 0px)",
+    "color": "rgb(242, 242, 242)"
+  },
+  "settingsKbd": {
+    "text": "?",
+    "display": "flex",
+    "minWidth": "30px",
+    "height": "30px",
+    "padding": "0px 8px",
+    "border": "1px solid rgb(69, 69, 69)",
+    "radius": "6px",
+    "bg": "rgb(44, 44, 44)",
+    "filter": "drop-shadow(rgb(0, 0, 0) 0px 1px 0px)",
+    "color": "rgb(242, 242, 242)"
+  },
+  "cueKbd": {
+    "text": "I",
+    "display": "flex",
+    "minWidth": "30px",
+    "height": "30px",
+    "padding": "0px 8px",
+    "border": "1px solid rgb(69, 69, 69)",
+    "radius": "6px",
+    "bg": "rgb(44, 44, 44)",
+    "filter": "drop-shadow(rgb(0, 0, 0) 0px 1px 0px)",
+    "color": "rgb(242, 242, 242)"
+  },
+  "featureKbd": {
+    "text": "I",
+    "display": "flex",
+    "minWidth": "30px",
+    "height": "30px",
+    "padding": "0px 8px",
+    "border": "1px solid rgb(69, 69, 69)",
+    "radius": "6px",
+    "bg": "rgb(44, 44, 44)",
+    "filter": "drop-shadow(rgb(0, 0, 0) 0px 1px 0px)",
+    "color": "rgb(242, 242, 242)"
+  },
+  "focusRing": {
+    "label": null,
+    "outline": "2px solid rgb(91, 157, 255)",
+    "offset": "2px"
+  },
+  "narrowDock": "narrow",
+  "narrowKbd": [
+    "M: flex pad 0px 8px bg rgb(44, 44, 44) border 1px",
+    "?: flex pad 0px 8px bg rgb(44, 44, 44) border 1px"
+  ]
+}

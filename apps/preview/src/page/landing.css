@@ -110,8 +110,11 @@ button:focus-visible,
 
 /* ---------- Components ---------- */
 
-/* Key */
-kbd {
+/*
+ * Key: the page's own key groups only (the cue sheet, the feature list). A bare `kbd` rule here is unlayered and
+ * would beat the player's layered styles, boxing every shortcut in its tooltips and menus.
+ */
+:where(.cue-keys, .feature-keys) > kbd {
   display: inline-flex;
   flex: none;
   align-items: center;
