@@ -656,6 +656,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 ## Deployed URL
 
 - https://frameline.artmarchuk.me is the canonical URL (a custom domain on the Vercel project `videojs-pro`). `videojs-frameline.vercel.app` stays as a secondary domain (it redirects to the canonical one). The "public-URL checks" sections below ran on the earlier vercel.app domains. Deploy: `npm run deploy vercel`. Since step 8 the root is the configurator page (`?tier=viewer|studio`, `?layout=`, one parameter per flag) and the CLI's workbench is at `/workbench.html`. The monitor page: `/preview.html` (opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?debug`).
+- 18 Nov 2026: Theme A, A.1 and A.2 (branch `theme-industrial`, fast-forwarded into `main` at 03712d4) deployed to production with `npm run deploy vercel` (deployment `videojs-frameline-7dvs4kql8`). Checked on https://frameline.artmarchuk.me: the site root and `/preview.html` answer 200 and load the same skin stylesheet as the local build (`demo-video-CeGZDIde.css`); on both, the dock is `#171717`, `--fl-range` is `#606060`, there is no played band, and the Capture menu is `surface-1` with plain-text shortcuts.
 - Vercel's "Deployment Protection" is on for preview deployments only; the production domain answers 200 with no login (checked with curl and in Chrome).
 
 ## Decisions
@@ -1518,7 +1519,7 @@ The trial is merged into `main` (fast-forward, with the tooltip fix `9c87df3` th
 - Firefox and Safari were not run; the change is SVG `fill` on a path.
 - Forced colours and more contrast were emulated in Chrome.
 
-## Theme A: edge lighting, a darker body, a neutral range (17 Nov 2026, branch `theme-industrial`, not merged, not in production)
+## Theme A: edge lighting, a darker body, a neutral range (17 Nov 2026, branch `theme-industrial`, merged into `main` and deployed to production 18 Nov 2026)
 
 Requirements: `specs/theme-a-edge-lighting-and-neutral-range.md`. The first of three theme steps. **Tokens and a few CSS rules only**: `src/styles/tokens.css`, the dock's seam, press travel and legend rules in `skin.css`, the divider and two comments in `studio.css`, the track, the played band and the handle's grip layers in `timeline.css`. No markup, component, behaviour or layout change. Preview deployment (behind Vercel's login, as every preview of this project is): https://videojs-frameline-ademw07s0-artmarchuk.vercel.app. **Theme A.1 (below) supersedes parts of this section:** the played band, `--fl-range-played` and the printed edge (`--fl-legend-shadow*`) are gone. Production was not deployed, no tag, not merged.
 
@@ -1653,7 +1654,7 @@ Theme A added `s0`, `s1`, `legend` and `seam` and reproduced its spec's numbers 
 - The browser-check scripts in `scripts/browser-checks/` were not run for Theme A; they were run in A.1 (below).
 - `prefers-contrast: more` and forced colours were emulated in Chromium.
 
-## Theme A.1: review fixes (17 Nov 2026, branch `theme-industrial`, not merged, not in production)
+## Theme A.1: review fixes (17 Nov 2026, branch `theme-industrial`, merged into `main` and deployed to production 18 Nov 2026)
 
 Requirements: `specs/theme-a1-review-fixes.md`. Styling only, plus the removal of the played band's element from the timeline component. Preview deployment (behind Vercel's login): https://videojs-frameline-ieffn7m3g-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
 
@@ -1722,7 +1723,7 @@ Run with `playwright-core` in Google Chrome against the local production build, 
 - Preview deployment (behind Vercel's login): https://videojs-frameline-du992ala4-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
 - Unverified: Firefox and Safari; the preview URL itself (Vercel login); the dialog and tooltips on the site root under forced colours.
 
-## Theme A.2: one menu surface, and the last landing-page leaks (18 Nov 2026, branch `theme-industrial`, not merged, not in production)
+## Theme A.2: one menu surface, and the last landing-page leaks (18 Nov 2026, branch `theme-industrial`, merged into `main` and deployed to production 18 Nov 2026)
 
 Requirements: `specs/theme-a2-menus.md`. Styling only. Preview deployment (behind Vercel's login): https://videojs-frameline-3ogkn8j91-artmarchuk.vercel.app. Production was not deployed, no tag, not merged. Screenshots: `design/screenshots/theme-a2/`, headless Google Chrome at 2x, all on the **site root** (`/?tier=studio`): `a18-*` from a build of the A1.8 commit (afddc60), `a2-*` from this step, `pair-*` the two together. Computed styles in `a18-report.json` and `a2-report.json`.
 
