@@ -1862,3 +1862,14 @@ Spec: `specs/theme-c-timecode-display.md`. CSS, tokens and one markup change (C.
 - `00:00:56:01`: the demo's last frame reads `00:00:56:00`, so that is the shot.
 - Drop-frame and a start timecode with hours: unit tests only; the demo has neither.
 - Under more contrast the lead (`#cccccc`) is close to the digits (`#f2f2f2`), as the spec sets it: the dimming is slight there.
+
+### C.6 Follow-up after review (18 Nov 2026)
+
+Screenshots: `design/screenshots/theme-c6/` (`c-*` is `theme-c` before C.6, `c6-*` after, `pair-*` both; site root, 2x, players of 324, 330 and 390px, with the `≈` marker shown).
+
+- **Narrow-dock margin.** On the narrow dock the timecode has letter spacing `0`, and the gap after the `≈` marker is 2px (4px elsewhere). `00:00:14:20` measures 81.4px and `≈00:00:14:20` 92.1px; the field is the widest value plus 2px, **94px** (was 96px). **Row one needs 322px** (15 + 94 + 6 + 4 × 36 + 44 + 4 × 1 + 15), 2px under the 324px fold.
+- The spec asked for letter spacing `0` and "widest plus 2px" only. That alone gives 94.05 + 2 = 96px and a row of exactly 324px again, so the marker's gap was trimmed as well to get under the fold. This supersedes the 96px row in the C.2 table above.
+- The margin is 2px in all: enough for a font whose eleven characters are up to 2px wider in total, not for a much wider one. A larger user default font scales the whole skin only if the host sets `--media-scale-unit`; the skin's sizes are in px steps, not `rem`.
+- **The split rule, as built and accepted:** (1) the lead is the run of `0`, `:` and `;` before the first digit that is not zero; (2) it never reaches the last two characters (the frames); (3) it never splits the hours field, so `01:00:00:00` is drawn whole; nothing is dimmed in seconds mode. The helper's comment states the three points.
+- Checks: typecheck, tests (225), build, contrast (82 rows pass), `dock-polish` and `phone-transport` at every width: pass.
+- Unverified: Windows (Segoe UI Variable) widths, which is the case the margin is for.

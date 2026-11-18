@@ -223,9 +223,12 @@ export function parseLinkPosition(value: string | null, fps: number, options: Ti
 
 /** `frame_00-00-12-05.png`: the title (or "frame"), then the timecode with dashes. */
 /**
- * Where the quiet leading part of a timecode ends: the run of `0`, `:` and `;` before the first digit that is not
- * zero. It never reaches into the last two characters (the frames), and it never splits the first field, so a run
- * that stops before the first separator is no lead at all. `00:00:02:04` gives 7 (`00:00:0`), `00:00:00:00` gives 9,
+ * Where the quiet leading part of a timecode ends. The rule:
+ * 1. The lead is the run of `0`, `:` and `;` before the first digit that is not zero.
+ * 2. It never reaches into the last two characters (the frames).
+ * 3. It never splits the hours field: a run that stops before the first separator is no lead at all, so
+ *    `01:00:00:00` and `09:59:00:00` are drawn whole.
+ * Examples: `00:00:02:04` gives 7 (`00:00:0`), `00:00:00:00` gives 9,
  * `01:00:00:00` gives 0. Seconds (`2.167`) have no lead. A plain scan: it runs on every frame.
  */
 export function timecodeLeadLength(value: string, seconds = false): number {

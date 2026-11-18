@@ -655,7 +655,7 @@
    * Row one holds the whole transport, as on the wide dock: previous cut, step back, Play, step forward, next cut.
    * The four tool buttons are fluid: 44px wide where the row has room, down to 36px (always 44px tall) where it has
    * not, so a 360px phone with 16px page margins (a 328px player) shows every button. Play stays 44px. The row
-   * needs 324px in all: 15 + 96 + 6 + 4 × 36 + 44 + 4 × 1 + 15; under that the cut pair folds away, see below.
+   * needs 322px in all: 15 + 94 + 6 + 4 × 36 + 44 + 4 × 1 + 15; the fold is at 324px; under that the cut pair folds away, see below.
    */
   /* A descendant, not a child: the group is portalled into a `display: contents` slot inside the transport. */
   .pro-skin[data-dock-size="narrow"] .pro-transport .pro-seg {
@@ -676,12 +676,19 @@
   }
 
   /*
-   * 96px: "00:00:14:20" at 14px, weight 400, measures 82.9px (tabular figures and colons), "≈00:00:14:20" 95.7px.
+   * 94px: the widest value plus 2px. With no letter spacing and 2px after the "≈" (4px elsewhere), "00:00:14:20" at
+   * 14px, weight 400, measures 81.4px (tabular figures and colons) and "≈00:00:14:20" 92.1px. Row one then needs
+   * 322px, 2px under the 324px fold, which is the margin for a wider font.
    * It stays 14px: at 16px the "≈" value needs a 108px field, and row one then needs 336px with every key at its
    * 36px minimum, so a 324 to 335px player (a 360px phone) would not fit.
    */
+  .pro-skin[data-dock-size="narrow"] .pro-timecode-approx {
+    margin-inline-end: calc(var(--media-spacing) * 0.5);
+  }
+
   .pro-skin[data-dock-size="narrow"] .pro-timecode {
-    width: calc(var(--media-spacing) * 24);
+    letter-spacing: 0;
+    width: calc(var(--media-spacing) * 23.5);
     font-size: calc(var(--media-spacing) * 3.5);
   }
 
