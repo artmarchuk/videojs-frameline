@@ -1,0 +1,145 @@
+{
+  "engine": "webkit",
+  "version": "27.2",
+  "base": "https://frameline.artmarchuk.me",
+  "wide": {
+    "player": 1129.734375,
+    "dock": "wide",
+    "rows": null,
+    "timecode": "00:00:02:04",
+    "field": {
+      "x": 91.13,
+      "w": 160,
+      "h": 34
+    },
+    "text": 124.83,
+    "font": "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI Var",
+    "fontSize": "22px",
+    "weight": "400",
+    "lead": "00:00:0 rgb(122, 122, 122)",
+    "transport": {
+      "x": 437.94,
+      "w": 186,
+      "h": 34
+    },
+    "keys": "34,34,46,34,34",
+    "keyGaps": "1,1,1,1",
+    "housingRadius": "0px",
+    "housingShadow": "none",
+    "loop": {
+      "pressed": "true",
+      "bg": "rgb(44, 44, 44)",
+      "light": "rgb(91, 157, 255)",
+      "lightOpacity": "1",
+      "lightShadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "lightSize": "4px x 4px"
+    },
+    "barOverflow": 0,
+    "barHeight": 117,
+    "pageScroll": 0
+  },
+  "focused": {
+    "label": "Step forward one frame",
+    "visible": true,
+    "outline": "2px solid rgb(91, 157, 255)",
+    "shadow": "rgb(12, 12, 12) 0px 0px 0px 6px, rgba(255, 255, 255, 0.07) 0px 1px 0px 0px inset"
+  },
+  "zoom": {
+    "label": "200%",
+    "bg": "rgba(0, 0, 0, 0)",
+    "light": "rgb(91, 157, 255)",
+    "lightOpacity": "1",
+    "lightShadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px"
+  },
+  "menuWide": {
+    "w": 562,
+    "h": 506,
+    "insideSkin": true,
+    "bottomAboveDock": -48,
+    "border": "1px solid rgb(66, 66, 66)",
+    "shadow": "rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.45) 0px 4px 14px 0px",
+    "bg": "rgb(23, 23, 23)"
+  },
+  "narrow390": {
+    "player": 390,
+    "dock": "narrow",
+    "rows": "compact",
+    "timecode": "00:00:02:04",
+    "field": {
+      "x": 31,
+      "w": 94,
+      "h": 44
+    },
+    "text": 81.36,
+    "font": "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI Var",
+    "fontSize": "14px",
+    "weight": "400",
+    "lead": "00:00:0 rgb(122, 122, 122)",
+    "transport": {
+      "x": 149,
+      "w": 224,
+      "h": 44
+    },
+    "keys": "44,44,44,44,44",
+    "keyGaps": "1,1,1,1",
+    "housingRadius": "0px",
+    "housingShadow": "none",
+    "loop": {
+      "pressed": "true",
+      "bg": "rgba(0, 0, 0, 0)",
+      "light": "rgb(91, 157, 255)",
+      "lightOpacity": "1",
+      "lightShadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "lightSize": "4px x 4px"
+    },
+    "barOverflow": 0,
+    "barHeight": 181,
+    "pageScroll": 0
+  },
+  "menuNarrow": {
+    "w": 290,
+    "h": 326.75,
+    "insideSkin": true,
+    "overDockBy": 115,
+    "border": "1px solid rgb(66, 66, 66)",
+    "shadow": "rgba(255, 255, 255, 0.06) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.45) 0px 4px 14px 0px",
+    "bg": "rgb(23, 23, 23)",
+    "scrolls": false
+  },
+  "narrow324": {
+    "player": 324,
+    "dock": "narrow",
+    "rows": "compact",
+    "timecode": "00:00:02:04",
+    "field": {
+      "x": 31,
+      "w": 94,
+      "h": 44
+    },
+    "text": 81.36,
+    "font": "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI Var",
+    "fontSize": "14px",
+    "weight": "400",
+    "lead": "00:00:0 rgb(122, 122, 122)",
+    "transport": {
+      "x": 131,
+      "w": 194,
+      "h": 44
+    },
+    "keys": "36.5,36.5,44,36.5,36.5",
+    "keyGaps": "1,1,1,1",
+    "housingRadius": "0px",
+    "housingShadow": "none",
+    "loop": {
+      "pressed": "true",
+      "bg": "rgba(0, 0, 0, 0)",
+      "light": "rgb(91, 157, 255)",
+      "lightOpacity": "1",
+      "lightShadow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+      "lightSize": "4px x 4px"
+    },
+    "barOverflow": 0,
+    "barHeight": 181,
+    "pageScroll": 0
+  }
+}

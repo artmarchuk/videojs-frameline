@@ -30,6 +30,11 @@ const focusPlayer = () => page.focus('.pro-skin .pro-transport .media-play-butto
 const copied = () => page.evaluate(() => document.querySelector('.pro-tool-link')?.hasAttribute('data-copied') ?? false);
 out.player = await page.evaluate(() => document.querySelector('.pro-skin').getBoundingClientRect().width);
 out.narrow = (await page.getAttribute('.pro-skin', 'data-dock-size')) === 'narrow';
+// Forced colours: the keys draw a 1px system-colour border and share it (each key overlaps its neighbour, and the
+// housing's edge, by exactly that 1px), and a pressed or checked control is filled with Highlight. The assertions
+// below allow that 1px and no more, check that the border is drawn, and look for Highlight instead of the default fills.
+out.forced = await page.evaluate(() => matchMedia('(forced-colors: active)').matches);
+const edge = out.forced ? 1.05 : 0.5;
 const checks = {};
 
 if (!out.narrow) {
@@ -97,7 +102,7 @@ if (!out.narrow) {
     ? ['Markers', 'Capture', 'Guides', 'Zoom', 'More', 'Enter fullscreen']
     : ['Markers', 'Loop', 'Capture', ...(out.player >= 340 ? ['Copy link at timecode'] : []), 'Guides', ...(out.player >= 382 ? ['Zoom'] : []), 'More', 'Enter fullscreen'];
   // Row one, in source order (which is the focus order), with each control's place on screen.
-  out.rowOne = await page.evaluate(() => {
+  out.rowOne = await page.evaluate((edge) => {
     const box = (e) => e.getBoundingClientRect();
     const bar = document.querySelector('.pro-bar'), pad = parseFloat(getComputedStyle(bar).paddingRight);
     const items = [...document.querySelectorAll('.pro-main-left .pro-timecode, .pro-main-left button, .pro-main-centre button')].filter((e) => e.getClientRects().length);
@@ -105,7 +110,7 @@ if (!out.narrow) {
     const play = box(document.querySelector('.pro-transport .media-play-button'));
     return {
       order: items.map((e) => (e.matches('.pro-timecode') ? 'Timecode' : e.getAttribute('aria-label') || '').replace(/,.*$/, '')),
-      leftToRight: items.every((e, i) => i === 0 || box(e).left >= box(items[i - 1]).right - 0.5),
+      leftToRight: items.every((e, i) => i === 0 || box(e).left >= box(items[i - 1]).right - edge),
       oneLine: new Set(items.map((e) => Math.round(box(e).top + box(e).height / 2))).size === 1,
       targets: items.every((e) => box(e).width >= 36 && box(e).height >= 44),
       loopInRowOne: !!loop?.closest('.pro-main-centre'),
@@ -118,7 +123,7 @@ if (!out.narrow) {
       playOffCentre: +(play.left + play.width / 2 - (box(bar).left + box(bar).width / 2)).toFixed(1),
       dockHeight: box(bar).height,
     };
-  });
+  }, edge);
   const transport = ['Previous cut', 'Step back one frame', 'Play', 'Step forward one frame', 'Next cut'].filter((n) => out.player >= 324 || !/cut/.test(n));
   checks.rowOneOrder = out.rowOne.order.join() === ['Timecode', ...(keys ? ['Copy link at timecode'] : []), ...transport, ...(keys ? ['Loop'] : [])].join();
   checks.rowOneFits = out.rowOne.leftToRight && out.rowOne.oneLine && out.rowOne.targets;
@@ -139,8 +144,11 @@ if (!out.narrow) {
   };
   out.loopOn = await loopLook(true); out.loopOff = await loopLook(false);
   const clear = (colour) => /rgba\(.*, 0\)$/.test(colour) || colour === 'transparent';
-  // On: a key (row one, from 500px) keeps its fill; a flat cell (compact) has none, the light carries it.
-  checks.loopOn = out.loopOn.pressed === 'true' && (keys ? !clear(out.loopOn.fill) : clear(out.loopOn.fill));
+  // On: a key (row one, from 500px) keeps its fill; a flat cell (compact) has none, the light carries it. In forced
+  // colours both are filled with Highlight (the colour channels of the system colour; the alpha may differ).
+  const rgb = (colour) => (colour.match(/[\d.]+/g) ?? []).slice(0, 3).join();
+  if (out.forced) out.highlight = await page.evaluate(() => { const p = document.createElement('div'); p.style.cssText = 'forced-color-adjust:none;background:Highlight'; document.body.append(p); const c = getComputedStyle(p).backgroundColor; p.remove(); return c; });
+  checks.loopOn = out.loopOn.pressed === 'true' && (out.forced ? rgb(out.loopOn.fill) === rgb(out.highlight) : keys ? !clear(out.loopOn.fill) : clear(out.loopOn.fill));
   checks.loopOff = out.loopOff.pressed === 'false' && (keys ? !clear(out.loopOff.fill) : clear(out.loopOff.fill));
   // Loop is a mode: on, it shows the light (the ::after dot); off, the dot is there but clear.
   checks.loopLight = out.loopOn.light === '1' && out.loopOff.light === '0';
@@ -181,11 +189,13 @@ if (!out.narrow) {
 out.checks = checks;
 // The keybed, every width: the transport is one housing, its keys butted together (1px seams; in forced colours they
 // share a border), and the housing does not clip, so a key's focus ring can draw over its neighbours.
-out.keybed = await page.evaluate(() => {
+out.keybed = await page.evaluate((edge) => {
   const t = document.querySelector('.pro-transport'), keys = [...t.querySelectorAll('.media-button')].filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect());
-  return { overflow: getComputedStyle(t).overflow, gaps: keys.slice(1).map((r, i) => +(r.left - keys[i].right).toFixed(2)), hugs: Math.abs(t.getBoundingClientRect().left - keys[0].left) < 1 && Math.abs(t.getBoundingClientRect().right - keys.at(-1).right) < 1 };
-});
-checks.keybed = out.keybed.overflow === 'visible' && out.keybed.hugs && out.keybed.gaps.every((g) => g >= -1 && g <= 1);
+  const h = t.getBoundingClientRect(), near = Math.max(edge, 0.99);
+  const borders = [...t.querySelectorAll('.media-button')].filter((e) => e.getClientRects().length).map((e) => { const c = getComputedStyle(e); return ['Top', 'Right', 'Bottom', 'Left'].every((s) => c[`border${s}Style`] !== 'none' && parseFloat(c[`border${s}Width`]) >= 1); });
+  return { overflow: getComputedStyle(t).overflow, gaps: keys.slice(1).map((r, i) => +(r.left - keys[i].right).toFixed(2)), hugs: Math.abs(h.left - keys[0].left) <= near && Math.abs(h.right - keys.at(-1).right) <= near, bordered: borders.every(Boolean) };
+}, edge);
+checks.keybed = out.keybed.overflow === 'visible' && out.keybed.hugs && out.keybed.gaps.every((g) => g >= -1 && g <= 1) && (!out.forced || out.keybed.bordered);
 
 out.pass = Object.values(checks).every(Boolean);
 return out;

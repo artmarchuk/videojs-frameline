@@ -1,0 +1,482 @@
+{
+  "engine": "chromium",
+  "version": "157.0.8103.79",
+  "features": {
+    "all-1280": {
+      "player": 1129.734375,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 186,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Previous cut",
+          "w": 34,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step back one frame",
+          "w": 34,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 46,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step forward one frame",
+          "w": 34,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Next cut",
+          "w": 34,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "all-390": {
+      "player": 390,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 224,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Previous cut",
+          "w": 44,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step back one frame",
+          "w": 44,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step forward one frame",
+          "w": 44,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Next cut",
+          "w": 44,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "all-320": {
+      "player": 320,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 134,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Step back one frame",
+          "w": 44,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step forward one frame",
+          "w": 44,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-shotnav-1280": {
+      "player": 1129.734375,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 116,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Step back one frame",
+          "w": 34,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 46,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step forward one frame",
+          "w": 34,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-shotnav-390": {
+      "player": 390,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 134,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Step back one frame",
+          "w": 44,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step forward one frame",
+          "w": 44,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-shotnav-320": {
+      "player": 320,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 134,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Step back one frame",
+          "w": 44,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Step forward one frame",
+          "w": 44,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-framestep-1280": {
+      "player": 1129.734375,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 116,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Previous cut",
+          "w": 34,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 46,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Next cut",
+          "w": 34,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-framestep-390": {
+      "player": 390,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 134,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Previous cut",
+          "w": 44,
+          "radius": "8px 2px 2px 8px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "2px 2px 2px 2px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        },
+        {
+          "name": "Next cut",
+          "w": 44,
+          "radius": "2px 8px 8px 2px",
+          "disabled": null,
+          "bg": "rgb(44, 44, 44)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [
+        1,
+        1
+      ],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-framestep-320": {
+      "player": 320,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 44,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "8px 8px 8px 8px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-both-1280": {
+      "player": 1129.734375,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 46,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Play",
+          "w": 46,
+          "radius": "8px 8px 8px 8px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-both-390": {
+      "player": 390,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 44,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "8px 8px 8px 8px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [],
+      "hugs": [
+        0,
+        0
+      ]
+    },
+    "no-both-320": {
+      "player": 320,
+      "housing": {
+        "radius": "8px",
+        "bg": "rgb(5, 5, 5)",
+        "w": 44,
+        "overflow": "visible"
+      },
+      "keys": [
+        {
+          "name": "Play",
+          "w": 44,
+          "radius": "8px 8px 8px 8px",
+          "disabled": null,
+          "bg": "rgb(242, 242, 242)",
+          "legendOpacity": "1"
+        }
+      ],
+      "gaps": [],
+      "hugs": [
+        0,
+        0
+      ]
+    }
+  }
+}

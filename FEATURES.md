@@ -108,7 +108,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Crop masks: 2.39:1, 1.85:1, 1:1, 4:5, 9:16 | Studio | Guides menu, Crop |
 | Platform zones for YouTube Shorts, Instagram Reels and TikTok, labelled approximate | Studio | Guides menu, Platform zones |
 | Hide every guide and bring the same set back | Studio | `Shift+V`; the menu's footer |
-| Guides are drawn on the picture only, white with a dark edge, and follow it at any size | Studio | Resize the window with guides on |
+| Guides are drawn on the picture only, white with a dark edge, and follow it at any size. They are drawn over the captions on purpose, so a creator can check that captions sit inside title safe | Studio | Resize the window with guides on |
 | A badge on the Guides button counts what is on | Studio | Switch two guides on |
 | The Guides menu has its own button | Studio | The frame icon |
 
