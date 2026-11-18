@@ -2187,6 +2187,8 @@ The intermittent WebKit `zoom.js` 2x grab did not fail this time.
 
 Checks: typecheck, tests (225), build, `node scripts/contrast.mjs` (all rows pass): pass.
 
+**Merged and deployed (19 Nov 2026).** `theme-wrap` fast-forwarded into `main` at `ec5fddb`; production deployed from a clean clone of `origin/main` through the deploy guard ("this folder is origin/main (ec5fddb) with nothing uncommitted"), https://videojs-frameline-dpo5c2yat-artmarchuk.vercel.app, aliased to https://frameline.artmarchuk.me. No tag. Live check in Chromium, Firefox and WebKit: the site serves `studio-UiuNzyD8.css` and `demo-video-BSsQZFBm.css`; at `/?tier=studio&frameStep=0` on a 320px player the transport is Play alone, 44px in a 44px housing, 8px corners, no group shown (`w6/live-*-keybed-320-no-framestep.png`); on `/preview.html?tier=studio&media=plain` the disabled next-cut key hovered stays `rgb(44, 44, 44)`; the landing page from main's last landing merge (`ab5371f`) is there ("A monitor, not just a player.", 8 sections, 11 images). The landing branch has two later commits not on `main` (its own session's). This NOTES entry was committed to `main` after the deploy (docs only). The landing page's screenshots are not affected: both changes show only with frame stepping off under 324px, or on a source with no cuts.
+
 ### Unverified after the theme refresh (one list; it replaces the lists under Themes A, A.1, A1.8, A.2, B, B.8, C and C.6)
 
 - **Safari itself and iOS Safari.** Playwright's WebKit (a Safari 27.2 build) stood in; Safari 16.4, Chrome 111 and Firefox 121 (the floor) were not run. The fix uses `:has()` with `:not()` inside it, which is inside the floor on paper.
