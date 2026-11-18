@@ -683,7 +683,6 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Backlog
 
-- **High priority:** define the Open Graph and Twitter card tags and a share image for the landing page (title, description, `og:image` at 1200x630, alt text). Take the words from the Brand content doc (title "Frameline", description = the category line "A Video.js skin for the tools people make video with."); design the image from Frameline's own material, not a generic player shot.
 - Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
 - On a narrow player (390 and 320 px) the Markers menu cuts long marker names with an ellipsis, and the times too. The times should never be cut: give the time column a fixed, unshrinkable width.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
@@ -2075,3 +2074,12 @@ Screenshots: `design/screenshots/theme-c6/` (`c-*` is `theme-c` before C.6, `c6-
 - **The split rule, as built and accepted:** (1) the lead is the run of `0`, `:` and `;` before the first digit that is not zero; (2) it never reaches the last two characters (the frames); (3) it never splits the hours field, so `01:00:00:00` is drawn whole; nothing is dimmed in seconds mode. The helper's comment states the three points.
 - Checks: typecheck, tests (225), build, contrast (82 rows pass), `dock-polish` and `phone-transport` at every width: pass.
 - Unverified: Windows (Segoe UI Variable) widths, which is the case the margin is for.
+
+## Landing page: catch up with Theme C, re-shoot, the social card (18 Nov 2026, branch `landing-visuals`, preview only)
+
+- **Merge:** `origin/main` (8f5c149) into `landing-visuals` (0d99e50): a fast-forward, no conflicts. It brings Theme C (the timecode as a display), C.6, the Theme C notes and the Backlog item for the social card.
+- **Re-shot from the merged build** (`scripts/landing-shots.mjs`, same states as before): `range`, `frame-step`, `markers`, `guides`, `tier-studio` show Theme C's timecode (22px, weight 400, the leading `00:00:0` dimmed). `grab-screen` changed too although it shows no dock (a slightly different decode of the same frame). `grab-file`, `zoom` and `tier-viewer` came out byte-identical: no timecode field in them.
+- **The social card** (the high-priority Backlog item, now done and removed from the Backlog): `scripts/og-image.mjs` now composes `og.png` (1200x630) instead of screenshotting the monitor: the lockup "Video.js • [mark] Frameline" and the site on top, the tagline "A monitor, not just a player." (Google Sans Flex 800, 68px), the category line "A Video.js skin for the tools people make video with." in dim, and a crop of the real hero player at 1440: the lower 196px of the picture (Action safe, Title safe) and the 117px dock with the staged range, 00:00:03:02 and Loop on, with the page's rim and shadow tokens. Colours and type come from `tokens.css`; the script fails if the web font did not load.
+- **Tags:** `og:title` and `twitter:title` "Frameline"; `og:description` and `twitter:description` the category line; `og:image:alt` describes the card, and `twitter:image:alt` is new with the same text. Words from the Brand content doc ("Social preview (Open Graph): Title: Frameline. Description: the category line"); the doc and the Backlog item agree.
+- **Not changed, and the doc disagrees:** the doc's placement for the page title and meta description is "Frameline — A Video.js skin for the tools people make video with." (status "Check"). The page has `<title>Frameline — a Video.js skin for video creators</title>` and a meta description built on the descriptor (set on 18 Nov at the author's request). Left for the author.
+

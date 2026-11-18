@@ -1,67 +1,91 @@
-// Generates the social image (og:image, twitter:image): the Studio monitor with a range and guides on, 1200x630.
+// Generates the social card (og:image, twitter:image), 1200x630: the Video.js • Frameline lockup, the tagline and the
+// category line from the Brand content doc, over a crop of the real Studio dock as the landing page's hero opens it.
 //
 //   npm run build && npm run preview            # serves dist/ on http://localhost:4173
 //   node scripts/og-image.mjs [url] [out]       # default url: http://localhost:4173, out: apps/preview/public/og.png
 //
-// It drives the installed Google Chrome (for H.264) through playwright-core, which is not a dependency of this
-// project: install it without saving (`npm i --no-save playwright-core`), or point PLAYWRIGHT at a copy of it.
+// Words: the Brand content doc (lockup "Video.js • [icon] Frameline", tagline, category line, site). Colours, type,
+// radius and the player's rim and shadow: the landing page's tokens (apps/preview/src/page/tokens.css), read here so
+// the card follows them. It drives the installed Google Chrome (for H.264) through playwright-core.
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const { chromium } = await import(process.env.PLAYWRIGHT ?? 'playwright-core');
 
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
 const out = process.argv[3] ?? fileURLToPath(new URL('../apps/preview/public/og.png', import.meta.url));
+const tokens = readFileSync(new URL('../apps/preview/src/page/tokens.css', import.meta.url), 'utf8');
+const mark = readFileSync(new URL('../apps/preview/src/page/assets/mark.svg', import.meta.url), 'utf8');
 
-/** The moment shown, and the range marked around it, in seconds of the active demo source. */
-const SHOT = { time: 13, in: 10.125, out: 17.083 }; // the reel: the Driver section, 00:00:10:03 to 00:00:17:02
-
-const browser = await chromium.launch({ channel: 'chrome', headless: true });
-const context = await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1, colorScheme: 'dark' });
-const page = await context.newPage();
-
-// The guides are the end user's remembered choice: set it before the player starts.
-await page.addInitScript(() => {
-  try {
-    localStorage.setItem('frameline:v1', JSON.stringify({ v: 1, guides: ['title-safe', 'thirds'], crop: null, zones: null, timeDisplay: 'timecode' }));
-  } catch {
-    // Without storage the image has no guides.
-  }
-});
-await page.goto(`${base}/preview.html?tier=studio`, { waitUntil: 'load' });
-// The monitor page without its top bar, the player sized so that stage and dock fit the image with an even margin.
-await page.addStyleTag({
-  content: `
-    .monitor-bar { display: none !important; }
-    body { background: #151517 !important; }
-    .preview-page { display: grid; place-items: center; padding: 0 !important; }
-    .preview-player { max-width: 880px !important; }
-    .monitor-stage .media-skin[data-layout] { max-height: none !important; }
-  `,
-});
-await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
-
-const seek = async (time) => {
-  await page.evaluate((t) => {
-    const video = document.querySelector('video');
-    video.pause();
-    video.currentTime = t;
-  }, time);
-  await page.waitForFunction(() => !document.querySelector('video').seeking, null, { timeout: 15000 });
-  // The skin marks In and Out at the frame its clock reports, which follows the seek by a frame or two.
-  await page.waitForFunction((t) => (document.querySelector('.pro-skin [class*="timecode"]')?.textContent ?? '').includes(t), new Date(time * 1000).toISOString().slice(11, 19), { timeout: 15000 });
-  await page.waitForTimeout(300);
+/** The card's words, from the Brand content doc. */
+const WORDS = {
+  tagline: 'A monitor, not just a player.',
+  category: 'A Video.js skin for the tools people make video with.',
+  site: 'frameline.artmarchuk.me',
 };
 
-await page.focus('.pro-skin');
-await seek(SHOT.in);
-await page.keyboard.press('i');
-await seek(SHOT.out);
-await page.keyboard.press('o');
-await seek(SHOT.time);
-// Let the best rendition for this size arrive, and the toast of the last key leave.
+const CARD = { width: 1200, height: 630 };
+/** The crop of the hero player: its left part, the lower edge of the picture and the whole dock, in CSS px. */
+const CROP = { width: 1100, picture: 196 };
+
+const browser = await chromium.launch({ channel: 'chrome', headless: true });
+
+// 1. The dock, as the hero opens it: staged range, playhead, guides. Shot at 2x for a sharp card.
+const site = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, colorScheme: 'dark' });
+const page = await site.newPage();
+await page.goto(`${base}/`, { waitUntil: 'load' });
+await page.waitForFunction(
+  () => document.querySelector('#player [data-dock-size]') && !document.querySelector('#player[data-staging]') && document.querySelector('#player video')?.duration > 0,
+  null,
+  { timeout: 30000 }
+);
+// Let the best rendition arrive.
 await page.waitForTimeout(4000);
 await page.mouse.move(0, 0);
+const player = await page.evaluate(() => {
+  const box = document.querySelector('#player').getBoundingClientRect();
+  return { x: box.x + scrollX, y: box.y + scrollY, width: box.width, height: box.height };
+});
+const dock = await page.evaluate(() => document.querySelector('#player .pro-bar').getBoundingClientRect().height);
+const width = Math.min(CROP.width, player.width);
+const height = CROP.picture + dock;
+const crop = await page.screenshot({ fullPage: true, clip: { x: player.x, y: player.y + player.height - height, width, height } });
+await site.close();
 
-await page.screenshot({ path: out, type: 'png' });
+// 2. The card.
+const card = await browser.newContext({ viewport: CARD, deviceScaleFactor: 1, colorScheme: 'dark' });
+const sheet = await card.newPage();
+await sheet.setContent(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;800&display=block" />
+<style>
+${tokens}
+* { box-sizing: border-box; margin: 0; }
+body { width: ${CARD.width}px; height: ${CARD.height}px; overflow: hidden; background: var(--bg); color: var(--text); font: var(--type-body); -webkit-font-smoothing: antialiased; }
+.card { position: relative; height: 100%; padding: 48px 50px 0; }
+.top { display: flex; align-items: center; justify-content: space-between; }
+.lockup { display: flex; align-items: center; gap: 12px; font: 400 24px / 1 var(--family-ui); letter-spacing: -0.01em; }
+.lockup .muted { color: var(--dim); }
+.lockup svg { width: 30px; height: 30px; }
+.site { color: var(--dim); font: 400 20px / 1 var(--family-ui); }
+h1 { margin-top: 52px; font: 800 68px / 1.04 var(--family-ui); letter-spacing: var(--type-h1-tracking); }
+p.category { margin-top: 18px; color: var(--dim); font: 400 28px / 1.25 var(--family-ui); letter-spacing: var(--type-claim-small-tracking); }
+.dock { position: absolute; left: 50px; bottom: 0; width: ${width}px; height: ${height}px; overflow: hidden; border-radius: var(--radius-player) var(--radius-player) 0 0; box-shadow: var(--elevation-player-shadow); }
+.dock img { display: block; width: 100%; height: 100%; }
+.dock::after { position: absolute; inset: 0 0 -2px; border-radius: inherit; box-shadow: var(--elevation-player-rim); content: ""; }
+</style></head>
+<body><div class="card">
+  <div class="top">
+    <div class="lockup"><span class="muted">Video.js</span><span class="muted">•</span>${mark}<span>Frameline</span></div>
+    <div class="site">${WORDS.site}</div>
+  </div>
+  <h1>${WORDS.tagline}</h1>
+  <p class="category">${WORDS.category}</p>
+  <div class="dock"><img alt="" src="data:image/png;base64,${crop.toString('base64')}" /></div>
+</div></body></html>`);
+await sheet.evaluate(() => document.fonts.ready);
+if (!(await sheet.evaluate(() => document.fonts.check('800 68px "Google Sans Flex"'))))
+  throw new Error('Google Sans Flex did not load; the card would fall back to a system font');
+await sheet.screenshot({ path: out, type: 'png' });
 await browser.close();
-console.log(`Wrote ${out}`);
+console.log(`Wrote ${out} (${CARD.width}x${CARD.height}): a ${width}x${height} px crop, the picture's lower ${CROP.picture} px and the ${dock} px dock`);
