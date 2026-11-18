@@ -64,3 +64,13 @@ Screenshots at 2x on the site root, each paired with `main`:
 6. The weight trial (300) next to the shipped 400.
 
 Report: the preview URL, the pairs, the final sizes and widths, the narrow-dock decision, the accessible name before and after, the test and contrast output, and what you could not verify. Describe what the screenshots show.
+
+## C.6 Follow-up after review
+
+Same branch, same rules.
+
+1. **Narrow-dock margin.** Row one now needs exactly 324px, the fold point, so any wider font (Segoe UI Variable on Windows, a user's larger default) overflows. On the narrow dock only, set the timecode's letter spacing to `0` and size the field to the widest value plus 2px. Report the new field width and the width row one needs; it must be below 324px.
+2. **The split rule as built** (never split the hours field) is accepted; make sure the comment on the helper states it, and NOTES records it as the rule.
+3. Report the preview URL and confirm the push, no merge, no tag. The last report left these out.
+
+Screenshots: the narrow dock at 324, 330 and 390, with the `≈` marker shown, paired with the current `theme-c` shots.
