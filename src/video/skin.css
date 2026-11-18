@@ -291,9 +291,10 @@
     --fl-shade: inset 1px 0 0 var(--fl-hi), var(--fl-well-shadow);
   }
 
-  /* Hover on a key and on the display's link. :where keeps both at the pressed rule's weight; it comes later and wins. */
+  /* Hover on a key and on the display's link. :where keeps both at the pressed rule's weight; it comes later and wins.
+     A disabled key (a cut key with no cuts to go to) takes no hover fill. */
   @media (hover: hover) {
-    .pro-skin[data-layout="dock"] .pro-bar :where(.pro-transport .pro-seg) > .media-button:where(:hover) {
+    .pro-skin[data-layout="dock"] .pro-bar :where(.pro-transport .pro-seg) > .media-button:where(:hover:not([aria-disabled="true"])) {
       background-color: var(--fl-surface-3);
     }
 

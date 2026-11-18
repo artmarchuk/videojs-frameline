@@ -686,13 +686,10 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - **High priority:** define the Open Graph and Twitter card tags and a share image for the landing page (title, description, `og:image` at 1200x630, alt text). Take the words from the Brand content doc (title "Frameline", description = the category line "A Video.js skin for the tools people make video with."); design the image from Frameline's own material, not a generic player shot.
 - Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
 - On a narrow player (390 and 320 px) the Markers menu cuts long marker names with an ellipsis, and the times too. The times should never be cut: give the time column a fixed, unshrinkable width.
-- Narrow dock, a wider font: with Verdana the timecode with its `≈` marker is 103.75px in the 94px field and runs 5px past the well on each side; the row itself does not overflow. Folding the cut pair at 330px instead of 324px is not enough alone: the field would need 106px, a 334px row (measured in the theme wrap-up, W.3).
+- Narrow dock, a wider font: with Verdana the timecode with its `≈` marker is 103.75px in the 94px field and runs 5px past the well on each side; the row itself does not overflow. Folding the cut pair at 330px instead of 324px is not enough alone: the field would need 106px, a 334px row (measured in the theme wrap-up, W.3). The marker shows only where the browser has no `requestVideoFrameCallback`; Playwright's Firefox 159, Chromium and WebKit all have it on the live site (W.6), so none shows it. Firefox versions from the 121 floor up to the one that added it would (Firefox 132, from its release notes; not run here).
 - Guides menu: cut at its bottom edge on a 760px player ("Hide guides" half hidden, seen during the landing work), and on a 390px player it ends in the middle of a row with nothing to show that it scrolls.
 - Viewer overlay: a toggle that is on still uses the lighter `--fl-on` fill; the light is dock-only by decision. Revisit if the Viewer is restyled.
-- `dock-polish.js` under forced colours on the narrow dock: make `rowOneFits` allow the keys' shared 1px border, `loopOn` expect the `Highlight` fill, and decide whether the first key sitting 1px outside the housing under 324px (the `keybed` assertion) is worth a rule.
 - `phone-transport.js` drags with a Chromium-only CDP call; give it a touch drag that Firefox and WebKit can run.
-- Guides over captions: the safe-area lines are drawn across the caption text when captions sit on the lower safe-area line.
-- A disabled transport key still takes the hover fill.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -2083,7 +2080,7 @@ Screenshots: `design/screenshots/theme-c6/` (`c-*` is `theme-c` before C.6, `c6-
 - Checks: typecheck, tests (225), build, contrast (82 rows pass), `dock-polish` and `phone-transport` at every width: pass.
 - Unverified: Windows (Segoe UI Variable) widths, which is the case the margin is for. Wrap-up, W.3: measured with Verdana as a stand-in; the row holds, the text with `≈` passes the field. Segoe itself is still open.
 
-## Theme refresh: wrap-up (18 Nov 2026, branch `theme-wrap`, preview only)
+## Theme refresh: wrap-up (18 and 19 Nov 2026, branch `theme-wrap`, merged into `main` after review, W.6)
 
 Spec: `specs/theme-wrap-up.md`. The last step of the theme refresh (Themes A, A.1, A.2, B, B.8, C, C.6): no new look. One regression was found and fixed (W.3, the keybed), so this step ends on a preview, not on `main`. Preview: https://videojs-frameline-j65r7c7qn-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login, not opened in a browser; production is unchanged). Screenshots and reports: `design/screenshots/theme-wrap/` (`w1/`, `w2/`, `w3/`).
 
@@ -2148,9 +2145,9 @@ In the second run WebKit's `configurator.js` also failed `stepOk` once; alone it
 
 Local production build, site root, 2x (`w3/`). Chromium for the screenshots; the keybed, disabled and captions states were also measured in Firefox and WebKit, with the same numbers.
 
-- **Captions on.** A one-cue WebVTT `<track kind="captions">` added to the video by the check only. Wide dock: the captions button appears between the divider and More; on, it has no fill and no press shade, the light at full opacity with its glow, and the icon at `--fl-text` (`captions-off-1280.png`, `captions-on-1280.png`). Narrow dock: there is no captions button in the dock (by the narrow dock's rules); Captions is a row of the More menu (`captions-narrow-390-menu.png`), so there is no light to check there. Seen in `captions-on-1280-player.png`: the Title safe and Action safe lines are drawn over the caption text, which sits on the lower safe-area line (Backlog).
+- **Captions on.** A one-cue WebVTT `<track kind="captions">` added to the video by the check only. Wide dock: the captions button appears between the divider and More; on, it has no fill and no press shade, the light at full opacity with its glow, and the icon at `--fl-text` (`captions-off-1280.png`, `captions-on-1280.png`). Narrow dock: there is no captions button in the dock (by the narrow dock's rules); Captions is a row of the More menu (`captions-narrow-390-menu.png`), so there is no light to check there. Seen in `captions-on-1280-player.png`: the Title safe and Action safe lines are drawn over the caption text, which sits on the lower safe-area line. W.6: intended, so a creator can check that captions sit inside title safe (`FEATURES.md`, Guides).
 - **A transport with features off** (`shotNav=0`, `frameStep=0`, both; players of 1280, 390 and 320px; `sheet-keybed.png`). Eleven of twelve cases were right. **One regression, fixed:** with frame stepping off on a player under 324px, the cut keys fold away and Play is the only key, but it kept its inner 2px corners and the housing showed 1px beside it on each side (two empty groups, each with a seam and no key). Now the empty group is not drawn and Play takes the housing's 8px corners (`pair-keybed-no-framestep-320.png`). The change is three rules in `src/pro/studio/studio.css`, inside the existing `width < 324px` container query; no new token. After it, in all twelve cases and all three engines: the first and last key carry the 8px outer corners, every seam is 1px, and the housing hugs its keys.
-- **A disabled tile.** The two cut keys are `aria-disabled` when the source has no chapters and no markers (`?media=plain`); no other transport key can be disabled. They keep the tile's face (`rgb(44, 44, 44)`) and the legend dims to 45% (`keybed-disabled-1280.png`, `-390.png`). A disabled key still takes the hover fill (`keybed-disabled-1280-hover.png`); it stays focusable and its tooltip says why it is off. Not changed.
+- **A disabled tile.** The two cut keys are `aria-disabled` when the source has no chapters and no markers (`?media=plain`); no other transport key can be disabled. They keep the tile's face (`rgb(44, 44, 44)`) and the legend dims to 45% (`keybed-disabled-1280.png`, `-390.png`). A disabled key still took the hover fill (`keybed-disabled-1280-hover.png`); it stays focusable and its tooltip says why it is off. W.6: it no longer takes the hover fill.
 - **A wider font.** `--media-font-family: Verdana, sans-serif`, the `≈` marker shown, players of 324, 330 and 390px (`sheet-font.png`):
 
 | | System font | Verdana |
@@ -2162,10 +2159,33 @@ Local production build, site root, 2x (`w3/`). Chromium for the screenshots; the
 | Row one at 324, 330, 390 | 294 of 294, 300 of 300, 342 of 360px | the same: the row does not grow |
 | Overflow of the row or the page | none | none |
 
-  The row never overflows, because the field does not grow with its text. What a wider face breaks is the field: with the `≈` marker the text runs 5px past the well on both sides, up to the keybed's edge. It is readable and nothing is cut. Without the marker (every engine run here has `requestVideoFrameCallback`) Verdana fits. Folding the cut pair at 330px instead of 324px would not help by itself: the field would have to be 106px for Verdana with the marker, which makes the row 334px. Not fixed, as the spec says (Backlog).
+  The row never overflows, because the field does not grow with its text. What a wider face breaks is the field: with the `≈` marker the text runs 5px past the well on both sides, up to the keybed's edge. It is readable and nothing is cut. Without the marker (every engine run here has `requestVideoFrameCallback`; W.6 confirmed it for Firefox on the live site) Verdana fits. Folding the cut pair at 330px instead of 324px would not help by itself: the field would have to be 106px for Verdana with the marker, which makes the row 334px. Not fixed, as the spec says (Backlog).
 
 ### Checks
 typecheck, tests (225), build, `node scripts/contrast.mjs` (82 rows, all pass in both columns): pass. Studio CSS 28,449 B raw (was 27,745).
+
+### W.6 Close-out after review (19 Nov 2026)
+
+- **The fix is kept:** Play alone in the housing under 324px (W.3).
+- **`dock-polish.js` under forced colours** (test code only). The three assertions now know the mode. In forced colours: row one allows each key to overlap the one before by the shared 1px border and no more (`rowOneFits`); a Loop that is on must be filled with the system `Highlight` colour, read from a probe element and compared channel for channel (`loopOn`); the keybed's outer keys must sit within that 1px of the housing's edge, and every key must draw a border of at least 1px on all four sides (`keybed`). The default and more-contrast assertions are unchanged. Measured: every seam -1px, `bordered` true, Loop on equal to Highlight in all three engines (Chromium `rgba(55, 0, 110, 0.8)` at 422px, Firefox `rgb(51, 153, 255)`, WebKit `rgba(63, 99, 139, 0.8)`). All 45 `dock-polish` runs (three engines, three modes, five widths) pass; two failed once under load, on `keys` (the In and Out announcements, read 150ms after the key; not a forced-colours assertion), and passed three times out of three alone.
+- **No hover fill on a disabled key:** the keybed's hover selector is now `:where(:hover:not([aria-disabled="true"]))` in `src/video/skin.css` (same specificity). On `?media=plain`, the disabled next-cut key stays `rgb(44, 44, 44)` hovered, and an enabled step key still turns `rgb(58, 58, 58)`, in all three engines (`design/screenshots/theme-wrap/w6/`).
+- **Guides over captions is intended:** the Backlog line is gone; the Guides row of `FEATURES.md` says so.
+- **The `≈` marker in Firefox:** on https://frameline.artmarchuk.me, Playwright's Firefox 159 has `requestVideoFrameCallback` and the field shows no `≈` (1280 and 422px windows); Chromium 157 and WebKit 27.2 the same. So the Verdana overflow does not reach current Firefox; it would reach Firefox from the 121 floor until the version that added the callback (132, from Firefox's release notes; not run). The Backlog item says so.
+- The Backlog lines for the `dock-polish` assertions and the disabled hover are removed (done here).
+
+**The full W.1 suite**, run again on the build with these changes (`dock-polish` before its last tightening, then rerun alone, above): 216 runs, 169 full passes. Every failure is a known check limit or intermittent:
+
+| Failure | Engines | Runs | Why |
+| --- | --- | --- | --- |
+| `phone-transport.js`, touch windows, every mode | Firefox, WebKit | 7 of 8 per mode fail | The touch drag uses a Chromium-only CDP call (known limit) |
+| `configurator.js` | WebKit | 1 | `copied` (headless WebKit clipboard) and `clickFocuses` (WebKit does not focus a button on click). Both fail the same way on `f42957d`; the W.1 run above had `clickFocuses` failing too, and the table listed only `copied` |
+| `zoom-rendition-note.js` | Firefox, and now Chromium | 1 each | `bestOk`: Video.js keeps reporting the previous rendition after a manual switch. New in Chromium today (it passed on 18 Nov); it fails three times out of three alone and also against the live site, which runs the older build, so it is not from this branch. Likely the stream or timing; not investigated further |
+| `phone-transport.js` touch 352, more contrast | Chromium | 1 | Intermittent: passed two times out of three alone |
+| `handle-focus-ring.js`, forced colours | WebKit | 1 | Intermittent: passed three times out of three alone |
+
+The intermittent WebKit `zoom.js` 2x grab did not fail this time.
+
+Checks: typecheck, tests (225), build, `node scripts/contrast.mjs` (all rows pass): pass.
 
 ### Unverified after the theme refresh (one list; it replaces the lists under Themes A, A.1, A1.8, A.2, B, B.8, C and C.6)
 
@@ -2174,6 +2194,8 @@ typecheck, tests (225), build, `node scripts/contrast.mjs` (82 rows, all pass in
 - **Windows.** Segoe UI Variable and the timecode's widths with it (Verdana was measured as a stand-in), and Windows High Contrast itself (forced colours were emulated, now in three engines).
 - **A real display and a real pointer.** The 1px legend shadow and the groove's rim on a 1x screen, the 1px press travel, the link's hover, how the darker body reads next to the picture.
 - **The light's fade in motion.** Only its end states were captured.
+- **The `≈` marker in a real browser without `requestVideoFrameCallback`** (Firefox before 132 by its release notes): shown only by removing the callback in a test page; with a wider font it runs past the field (W.3).
+- **Why Chromium's rendition note lagged on 19 Nov** (W.6): not investigated.
 - **Drop-frame and a start timecode with hours:** unit tests only; the demo has neither.
 - **The help dialog and tooltips on the site root under forced colours** (from A1.8): the forced-colours runs were on the monitor page.
 - **Captions from a real stream.** The light was checked with a test track added in the browser.

@@ -369,20 +369,20 @@ The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectan
 
 The floor the code is written for: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4.
 
-Checked with scripted browser checks (the Viewer gate, every script in `scripts/browser-checks/`, the configurator page checks and an axe audit) in Playwright's three engines on macOS, last on 18 Nov 2026 with the current theme: 72 runs in each engine, 216 in all. WebKit in Playwright is close to Safari but not the same build, and Safari 16.4 cannot be emulated. iOS Safari, real touch devices and Windows were not run.
+Checked with scripted browser checks (the Viewer gate, every script in `scripts/browser-checks/`, the configurator page checks and an axe audit) in Playwright's three engines on macOS, last on 19 Nov 2026 with the current theme: 72 runs in each engine, 216 in all. WebKit in Playwright is close to Safari but not the same build, and Safari 16.4 cannot be emulated. iOS Safari, real touch devices and Windows were not run.
 
 | | Chrome 157 (headless) | Firefox 159 (Playwright) | WebKit (Playwright, Safari 27.2 build) |
 | --- | --- | --- | --- |
 | The current theme, on screenshots of the live site at 2x: the dock at 1280, the transport keybed (rest, hover, focus), the light under Loop and Zoom, the timecode with its dimmed leading zeros, a menu over the picture and over the narrow dock, the narrow dock at 390 and 324 px | Reference | The same; the timecode is 0.04 px wider | The same; the timecode is 0.05 px narrower |
-| The theme's other states, on the local build: the captions light (a test track), the keybed with shot navigation or frame stepping off, disabled cut keys | Pass | Pass | Pass |
+| The theme's other states, on the local build: the captions light (a test track), the keybed with shot navigation or frame stepping off, disabled cut keys (no hover fill) | Pass | Pass | Pass |
 | `prefers-contrast: more` (emulated): `dock-polish`, `phone-transport`, `handle-focus-ring`, `guides-menu-focus`, `range-playback` | Pass | Pass, with the touch limit below | Pass, with the touch limit below |
-| `forced-colors: active` (emulated), the same five | Pass, except `dock-polish` on the narrow dock: three of its assertions were written for the default colours (the keys share a 1 px border there, and Loop on keeps its Highlight fill). The dock was looked at and nothing is missing or cut | The same | The same |
+| `forced-colors: active` (emulated), the same five | Pass (`dock-polish` checks the keys' shared 1 px system-colour border and Loop's Highlight fill there) | Pass, with the touch limit below | Pass, with the touch limit below |
 | Touch drags on the narrow dock (`phone-transport`) | Pass | Layout passes. The check drives touch through a Chromium-only interface, so the drag was run with synthetic pointer events: the playhead wins over the In handle; the handle drag was not confirmed | As Firefox |
 | Viewer gate, menus, focus order, help dialog | Pass | Pass. Firefox also puts the `<video>` element itself in the tab order, two stops before the seek bar | Pass |
 | Frame clock | `requestVideoFrameCallback` | `requestVideoFrameCallback`; it reports the seek time rather than the frame's start, which the clock allows for. Ten steps land on frame 10 | `requestVideoFrameCallback`; ten steps land on frame 10 |
 | Zoom: `image-rendering: pixelated` on video, guides counter-scale | Pass | Pass | Pass |
 | Grab frame | Pass | Pass. "Copy frame image" is disabled with a hint where `ClipboardItem` is missing (Firefox before 127) | Pass. Two grabs of the same paused frame can differ in a few pixel values |
-| Rendition note while zoomed | Pass | After a manual switch to the best rendition, Video.js can keep reporting the previous one, so the note can lag | Pass. Playwright's WebKit plays the Mux stream through hls.js, as Chrome does; Safari proper may use native HLS, where the quality list and the note may stay empty |
+| Rendition note while zoomed | Pass until 18 Nov 2026; on 19 Nov it lagged as in Firefox, also on the live site's older build | After a manual switch to the best rendition, Video.js can keep reporting the previous one, so the note can lag | Pass. Playwright's WebKit plays the Mux stream through hls.js, as Chrome does; Safari proper may use native HLS, where the quality list and the note may stay empty |
 | Error dialog: Retry on a broken source | Pass | Pass | Pass |
 | A pointer click on a button | Focuses it | Focuses it | Does not focus it (Safari's convention); keyboard focus is unaffected |
 
