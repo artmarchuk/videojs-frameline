@@ -734,6 +734,24 @@
       border-start-end-radius: var(--fl-radius-group);
       border-end-end-radius: var(--fl-radius-group);
     }
+
+    /*
+     * With frame stepping off, the cut button was its group's only tile: the empty group goes (it would leave a
+     * 1px seam with no key beside it) and Play is the housing's edge on that side.
+     */
+    .pro-skin[data-dock-size="narrow"] .pro-transport .pro-seg:not(:has(> .media-button:not([data-pro-tool="previous-cut"], [data-pro-tool="next-cut"]))) {
+      display: none;
+    }
+
+    .pro-skin[data-dock-size="narrow"][data-layout="dock"] .pro-bar .pro-transport:not(:has(.pro-seg[data-pro-seg="back"] > .media-button:not([data-pro-tool="previous-cut"]))) > .media-play-button {
+      border-start-start-radius: var(--fl-radius-group);
+      border-end-start-radius: var(--fl-radius-group);
+    }
+
+    .pro-skin[data-dock-size="narrow"][data-layout="dock"] .pro-bar .pro-transport:not(:has(.pro-seg[data-pro-seg="forward"] > .media-button:not([data-pro-tool="next-cut"]))) > .media-play-button {
+      border-start-end-radius: var(--fl-radius-group);
+      border-end-end-radius: var(--fl-radius-group);
+    }
   }
 
   /*
