@@ -38,6 +38,7 @@ Several sessions work on this project at the same time (the player theme, the la
 5. **After a deploy, check the live site** for the other workstream's latest work as well as your own, and say what you checked.
 6. **`NOTES.md` is shared.** Add your own sections and lines; do not rewrite another session's. Commit only your own lines: if the file holds someone else's uncommitted change, leave that change uncommitted.
 7. **The landing page's screenshots show the player.** After a theme change reaches `main`, they are stale until the landing session re-shoots them; say so in the report.
+8. **Clean up after the production deploy.** Once your branch is in `main` and production is deployed and checked, stop any local servers you ran from your folder, remove the folder (`git worktree remove <folder>`), and delete the branch locally (`git branch -d <branch>`) and on GitHub (`git push origin --delete <branch>`). First check that the folder has nothing uncommitted or untracked and that the branch is entirely in `main` (`git merge-base --is-ancestor origin/<branch> origin/main`); if either check fails, stop and report instead. Only your own folder and branch, never another session's. Say in the report that it was done.
 
 "Every step ends deployed" (above) means: a preview for a branch, production once it is merged and the author asks.
 
