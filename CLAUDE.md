@@ -25,7 +25,7 @@ Test for every decision: does it help someone make, check, review or deliver a v
 4. **Accessibility:** WCAG 2.2 AA. See `specs/PROJECT-OVERVIEW.md` for targets, contrast and overlay rules.
 5. **Frame accuracy is best effort.** Never claim guaranteed frame accuracy or true reverse playback.
 6. **Say what you could not verify** instead of guessing; list it in `NOTES.md` under "Unverified".
-7. **Do not build anything marked [Backlog].** Put ideas in `NOTES.md` under "Backlog".
+7. **Do not build anything marked [Backlog].** Don't add ideas to the repo. List them in your report under "Backlog proposals"; Artem adds them to the project backlog.
 
 ## Branches and deploys
 
@@ -57,4 +57,4 @@ Several sessions work on this project at the same time (the player theme, the la
 - `apps/preview/`: the site. `index.html` and `src/page/` are the landing page with the configurator (the site root, the submission URL); `src/page/tokens.css` mirrors the Figma variables one to one and `landing.css` uses only those tokens; `preview.html` and `src/frame/` the monitor page; `workbench.html` and `src/shell/` the CLI's workbench, which you don't change. `src/frame/media.ts` is the one place that names the demo media.
 - `FEATURES.md`: every feature, and where to try it. No version or step labels (no "Since" column) until deploys and announcements are organised. Update it in every step.
 - `specs/`: the project overview and per-step requirements.
-- `NOTES.md`: versions, deployed URL, decisions, Backlog, Unverified.
+- `NOTES.md`: versions, deployed URL, decisions, Unverified.

@@ -681,33 +681,11 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - Only `@videojs/*` packages are pinned exactly. The other dependencies keep the scaffold's caret ranges, locked by the lockfile.
 - **A set range confines playback (Studio).** Loop is on from the start where the host allows it (`createProStore({ loop })`). Playback starting from outside the range or from the Out frame starts at In; at Out it goes back to In, or pauses on the Out frame with Loop off; a range set or moved past a playing head sends it to In; a seek by the user or the host to outside the range while playing pauses there. The engine tells its own seeks from everyone else's with two flags around `seeking`/`seeked` (`controller.ts`), so a user seek is never pulled back to In. The pure decision is `playbackDecision` in `studio/logic.ts`; `scripts/browser-checks/range-playback.js` exercises it in Chromium, Firefox and WebKit. Out is still reached half a frame early, and the Out frame still shows for an instant at the loop point (Backlog).
 - **Credit (19 Nov 2026):** the landing footer reads "Made by Artem Marchuk, with Claude." (the name links to artmarchuk.me, text only), and the README credits Claude for design thinking, specs and code, with every decision and review Artem's.
+- **Workbench dependencies (19 Nov 2026):** Tailwind, Base UI and Heroicons are devDependencies of the workbench shell only. The skin itself is plain CSS; keep it that way.
 
 ## Backlog
 
-- Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
-- On a narrow player (390 and 320 px) the Markers menu cuts long marker names with an ellipsis, and the times too. The times should never be cut: give the time column a fixed, unshrinkable width.
-- Narrow dock, a wider font: with Verdana the timecode with its `≈` marker is 103.75px in the 94px field and runs 5px past the well on each side; the row itself does not overflow. Folding the cut pair at 330px instead of 324px is not enough alone: the field would need 106px, a 334px row (measured in the theme wrap-up, W.3). The marker shows only where the browser has no `requestVideoFrameCallback`; Playwright's Firefox 159, Chromium and WebKit all have it on the live site (W.6), so none shows it. Firefox versions from the 121 floor up to the one that added it would (Firefox 132, from its release notes; not run here).
-- Guides menu: cut at its bottom edge on a 760px player ("Hide guides" half hidden, seen during the landing work), and on a 390px player it ends in the middle of a row with nothing to show that it scrolls.
-- Viewer overlay: a toggle that is on still uses the lighter `--fl-on` fill; the light is dock-only by decision. Revisit if the Viewer is restyled.
-- `phone-transport.js` drags with a Chromium-only CDP call; give it a touch drag that Firefox and WebKit can run.
-- hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
-- The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
-- A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
-- Give `FramelineSkin` a title for grabbed file names (`<title>_<timecode>.png`).
-- Stop the Out frame flashing at the loop point (jump one frame earlier) if it bothers in use.
-- Translate the Studio strings (`src/pro/studio/strings.ts`).
-- Overlay each platform's current safe-zone template and correct `platform-zones.ts` (step 6b used secondary sources).
-- Open the View menu on its first item rather than on the first checked radio item, if Video.js gains a way to say so.
-- Measure the Viewer skin's own weight against a stock Video.js skin.
-- Redraw the settings icon: it reads a little like a sun.
-- AirPlay and Cast buttons (removed in step 2), with custom icons.
-- Translate `src/video/strings.ts` through Video.js i18n (`Text` tokens) so the help dialog and the More button follow the locale.
-- Soften the top edge of the control-bar scrim.
-
-- Code-split the preview bundle: `preview-*.js` is 972 kB minified, and Vite warns about it. Check whether the Viewer tier stays "as light as a stock skin" in step 2.
-- Tailwind, Base UI and Heroicons are devDependencies of the workbench shell only. The skin itself is plain CSS; keep it that way.
-- Consider pinning the non-Video.js dependencies exactly before submission.
-- Update the deploy script's `vercel@64` if Vercel 64 causes problems; 65 is current.
+The backlog has moved out of the repo (19 Nov 2026). Every item that was here is now tracked there.
 
 ## Unverified
 

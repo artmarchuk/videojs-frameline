@@ -92,7 +92,7 @@ Calm and device-like: neutral dark surfaces (true greys, R = G = B; the dock is 
 5. **Frame accuracy is best effort.** Read `mediaTime` from `requestVideoFrameCallback`; say so in the UI and docs where it matters. Do not claim guaranteed frame accuracy or true reverse playback.
 6. **Unverified is a valid answer.** Tell the author what you could not check.
 7. **Every step ends deployed**, with a working public URL. From step 2, the build is always submittable.
-8. **Do not build anything marked [Backlog].** Put ideas in `NOTES.md` under "Backlog".
+8. **Do not build anything marked [Backlog].** Don't add ideas to the repo. List them in your report under "Backlog proposals"; Artem adds them to the project backlog.
 
 ## Nine steps
 
