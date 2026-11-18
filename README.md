@@ -16,7 +16,8 @@ npm run dev        # http://localhost:5173: the configurator; /preview.html: the
 npm run typecheck
 npm test           # unit tests (Vitest)
 npm run build      # production build into dist/
-npm run deploy vercel   # deploy to Vercel (production URL)
+npm run deploy vercel   # deploy to Vercel (production URL); only from a clean checkout of origin/main
+npm run preview:vercel  # a Vercel preview of the folder as it is
 ```
 
 The skin is the source in `src/`. It is not published to npm: copy `src/` into your app (it imports nothing from `apps/`) and install `@videojs/react` 10.4.0.

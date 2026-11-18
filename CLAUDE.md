@@ -27,6 +27,20 @@ Test for every decision: does it help someone make, check, review or deliver a v
 6. **Say what you could not verify** instead of guessing; list it in `NOTES.md` under "Unverified".
 7. **Do not build anything marked [Backlog].** Put ideas in `NOTES.md` under "Backlog".
 
+## Branches and deploys
+
+Several sessions work on this project at the same time (the player theme, the landing page), each in its own folder. A deploy builds the files of the folder it runs in, so a deploy from a feature folder takes the other sessions' work off the live site. This has happened. The rules:
+
+1. **Work on your own branch, in your own folder** (a git worktree). Never commit to `main` directly, and never touch another session's folder or its uncommitted files.
+2. **To merge:** `git fetch`, merge `origin/main` into your branch, run typecheck, tests and build, then push the branch to `main` as a fast-forward (`git push origin <branch>:main`). If the push is rejected, `main` has moved: fetch, merge and check again. Never force-push `main`.
+3. **Production is deployed only from a clean checkout of `origin/main`,** after the merge, and only when the author asks for a production deploy. `npm run deploy vercel` refuses anything else (`apps/preview/deploy-guard.mjs`). Do not go round the guard with a bare `vercel` command.
+4. **A feature branch gets a preview:** `npm run preview:vercel`. It never changes the live site.
+5. **After a deploy, check the live site** for the other workstream's latest work as well as your own, and say what you checked.
+6. **`NOTES.md` is shared.** Add your own sections and lines; do not rewrite another session's. Commit only your own lines: if the file holds someone else's uncommitted change, leave that change uncommitted.
+7. **The landing page's screenshots show the player.** After a theme change reaches `main`, they are stale until the landing session re-shoots them; say so in the report.
+
+"Every step ends deployed" (above) means: a preview for a branch, production once it is merged and the author asks.
+
 ## Commands
 
 | Task | Command |
@@ -34,7 +48,8 @@ Test for every decision: does it help someone make, check, review or deliver a v
 | Workbench (local preview) | `npm run dev` (http://localhost:5173) |
 | Typecheck | `npm run typecheck` |
 | Build | `npm run build` (output in `dist/`) |
-| Deploy | `npm run deploy vercel` (production; fallback `npm run deploy netlify`) |
+| Preview deploy (any branch) | `npm run preview:vercel` |
+| Production deploy | `npm run deploy vercel`, only from a clean checkout of `origin/main` (fallback `npm run deploy netlify`) |
 
 ## Where things live
 
