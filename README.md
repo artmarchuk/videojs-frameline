@@ -4,7 +4,7 @@ Frameline is a player skin for Video.js v10 (React, plain CSS) built for the too
 
 **Live:** https://frameline.artmarchuk.me is the configurator page: pick a tier, switch features, copy the snippet. The player alone, as a monitor, is at [`/preview.html`](https://frameline.artmarchuk.me/preview.html).
 
-**What it does:** see [FEATURES.md](FEATURES.md) for the full list, with where to find each thing. **Author:** Artem Marchuk, [artmarchuk.me](https://artmarchuk.me). **Licence:** Apache 2.0.
+**What it does:** see [FEATURES.md](FEATURES.md) for the full list, with where to find each thing. **Author:** Frameline is designed, built and maintained by Artem Marchuk. Claude helped with the design thinking, specs and code; every decision and review is Artem's. **Licence:** Apache 2.0.
 
 ## Install and run
 

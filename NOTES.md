@@ -680,10 +680,10 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - Step 2: the skin's own strings are in `src/video/strings.ts` (English only). Video.js control labels come from Video.js i18n and do follow the locale.
 - Only `@videojs/*` packages are pinned exactly. The other dependencies keep the scaffold's caret ranges, locked by the lockfile.
 - **A set range confines playback (Studio).** Loop is on from the start where the host allows it (`createProStore({ loop })`). Playback starting from outside the range or from the Out frame starts at In; at Out it goes back to In, or pauses on the Out frame with Loop off; a range set or moved past a playing head sends it to In; a seek by the user or the host to outside the range while playing pauses there. The engine tells its own seeks from everyone else's with two flags around `seeking`/`seeked` (`controller.ts`), so a user seek is never pulled back to In. The pure decision is `playbackDecision` in `studio/logic.ts`; `scripts/browser-checks/range-playback.js` exercises it in Chromium, Firefox and WebKit. Out is still reached half a frame early, and the Out frame still shows for an instant at the loop point (Backlog).
+- **Credit (19 Nov 2026):** the landing footer reads "Made by Artem Marchuk, with Claude." (the name links to artmarchuk.me, text only), and the README credits Claude for design thinking, specs and code, with every decision and review Artem's.
 
 ## Backlog
 
-- **High priority:** define the Open Graph and Twitter card tags and a share image for the landing page (title, description, `og:image` at 1200x630, alt text). Take the words from the Brand content doc (title "Frameline", description = the category line "A Video.js skin for the tools people make video with."); design the image from Frameline's own material, not a generic player shot.
 - Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
 - On a narrow player (390 and 320 px) the Markers menu cuts long marker names with an ellipsis, and the times too. The times should never be cut: give the time column a fixed, unshrinkable width.
 - Narrow dock, a wider font: with Verdana the timecode with its `≈` marker is 103.75px in the 94px field and runs 5px past the well on each side; the row itself does not overflow. Folding the cut pair at 330px instead of 324px is not enough alone: the field would need 106px, a 334px row (measured in the theme wrap-up, W.3). The marker shows only where the browser has no `requestVideoFrameCallback`; Playwright's Firefox 159, Chromium and WebKit all have it on the live site (W.6), so none shows it. Firefox versions from the 121 floor up to the one that added it would (Firefox 132, from its release notes; not run here).
@@ -2079,6 +2079,31 @@ Screenshots: `design/screenshots/theme-c6/` (`c-*` is `theme-c` before C.6, `c6-
 - **The split rule, as built and accepted:** (1) the lead is the run of `0`, `:` and `;` before the first digit that is not zero; (2) it never reaches the last two characters (the frames); (3) it never splits the hours field, so `01:00:00:00` is drawn whole; nothing is dimmed in seconds mode. The helper's comment states the three points.
 - Checks: typecheck, tests (225), build, contrast (82 rows pass), `dock-polish` and `phone-transport` at every width: pass.
 - Unverified: Windows (Segoe UI Variable) widths, which is the case the margin is for. Wrap-up, W.3: measured with Verdana as a stand-in; the row holds, the text with `≈` passes the field. Segoe itself is still open.
+
+## Landing page: catch up with Theme C, re-shoot, the social card (18 Nov 2026, branch `landing-visuals`, preview only)
+
+- **Merge:** `origin/main` (8f5c149) into `landing-visuals` (0d99e50): a fast-forward, no conflicts. It brings Theme C (the timecode as a display), C.6, the Theme C notes and the Backlog item for the social card.
+- **Re-shot from the merged build** (`scripts/landing-shots.mjs`, same states as before): `range`, `frame-step`, `markers`, `guides`, `tier-studio` show Theme C's timecode (22px, weight 400, the leading `00:00:0` dimmed). `grab-screen` changed too although it shows no dock (a slightly different decode of the same frame). `grab-file`, `zoom` and `tier-viewer` came out byte-identical: no timecode field in them.
+- **The social card** (the high-priority Backlog item, now done and removed from the Backlog): `scripts/og-image.mjs` now composes `og.png` (1200x630) instead of screenshotting the monitor: the lockup "Video.js • [mark] Frameline" and the site on top, the tagline "A monitor, not just a player." (Google Sans Flex 800, 68px), the category line "A Video.js skin for the tools people make video with." in dim, and a crop of the real hero player at 1440: the lower 196px of the picture (Action safe, Title safe) and the 117px dock with the staged range, 00:00:03:02 and Loop on, with the page's rim and shadow tokens. Colours and type come from `tokens.css`; the script fails if the web font did not load.
+- **Tags:** `og:title` and `twitter:title` "Frameline"; `og:description` and `twitter:description` the category line; `og:image:alt` describes the card, and `twitter:image:alt` is new with the same text. Words from the Brand content doc ("Social preview (Open Graph): Title: Frameline. Description: the category line"); the doc and the Backlog item agree.
+- **Not changed, and the doc disagrees:** the doc's placement for the page title and meta description is "Frameline — A Video.js skin for the tools people make video with." (status "Check"). The page has `<title>Frameline — a Video.js skin for video creators</title>` and a meta description built on the descriptor (set on 18 Nov at the author's request). Left for the author.
+
+
+## Landing page: copy from the Brand content doc (18 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-copy.md`. The page's head tags, social card and footer now follow the doc; no layout or skin changes. This replaces the tag wording in the section above and settles its "Not changed, and the doc disagrees" line.
+
+- **`<title>`:** "Frameline — a Video.js skin for video tools" (43 characters).
+- **Meta description:** "Adds a preview monitor to the player in your editor, AI generator or review tool: timecode, frame stepping, In/Out loops, safe areas, platform crops and zoom." (158 characters; the spec asks for about 155.)
+- **`og:title`, `twitter:title`:** "Frameline — a monitor, not just a player."
+- **`og:description`, `twitter:description`:** "Frameline is an open-source Video.js skin for web video editors, AI video generators and review tools. Viewer is a clean player; Studio is a preview monitor."
+- **`og:image:alt`, `twitter:image:alt`:** "Frameline — A monitor, not just a player. A Video.js skin that adds a preview monitor to the player in your video tool. The Studio dock under a green-screen picture."
+- **`og.png`:** the line under the tagline is now the descriptor, "A Video.js skin that adds a preview monitor to the player in your video tool." It fits on one line at the same 28px size. `scripts/og-image.mjs` now sets `text-wrap: balance` on that line, logs how many lines it took, and stops if the line runs into the dock crop. Everything else on the card is unchanged.
+- **Footer:** "Designed by Artem Marchuk", with the name still linking to artmarchuk.me.
+- **Checks:** typecheck, 225 tests, build, `contrast.mjs` (82 PASS, 0 FAIL), the landing check (`configurator.js`, pass true; the runner must grant clipboard permission or `copied` fails), axe on the site root at 1440 and 390 (0 violations). No script or check tests the changed strings.
+- **Unverified:** the social card in real link previews (X, LinkedIn, Slack). The preview is behind the Vercel login, so external validators can't read it until production.
+- **Test flake, the landing check (`configurator.js`):** one run of six ended with Playwright's "Target page, context or browser has been closed" during the 14-round guides/zoom "Show me" loop (line 146), while `click()` was waiting for the zoom button to stop moving. Five later runs on the same build passed, three of them back to back on 19 Nov 2026. Playwright reported a closed browser, not "Target crashed", so the page itself did not crash. Recorded as a flake; the exact cause is unknown. If it comes back, look first at the button moving during that loop.
+
 
 ## Theme refresh: wrap-up (18 and 19 Nov 2026, branch `theme-wrap`, merged into `main` after review, W.6)
 
