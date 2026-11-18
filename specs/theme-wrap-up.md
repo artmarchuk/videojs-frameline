@@ -53,3 +53,15 @@ Open each one. Report every visible difference between engines (seams, edge line
 ## W.5 Report
 
 The W.1 table, the W.2 differences, the W.3 screenshots and measurements, any fix with its before and after, the consolidated Unverified list, and whether anything was deployed.
+
+## W.6 Close-out after review
+
+Same branch. Then merge and deploy.
+
+1. **Accept the fix** (Play alone in the housing under 324px).
+2. **dock-polish under forced colours:** the three assertions that assume default colours are wrong for that mode. Make them mode-aware (in forced colours, assert the boundary and the Highlight state, not the default fills). Test code only. The suite must be green in all three engines afterwards, except the known check limits (phone-transport touch drags outside Chromium, WebKit clipboard, the Firefox rendition note, the intermittent WebKit zoom grab), which stay listed.
+3. **Hover on a disabled key:** a key with `aria-disabled="true"` takes no hover fill. One rule in the keybed's hover selector.
+4. **Guides over captions is intended:** safe areas are drawn over the captions so a creator can check that captions sit inside title safe. Remove that Backlog line and add one sentence to the Guides row of `FEATURES.md` saying so.
+5. **The `≈` marker in Firefox:** report whether the live site shows `≈` in Playwright's Firefox (that is, whether `requestVideoFrameCallback` is present there). If it does, every Firefox user sees the marker, and the Verdana overflow becomes more likely: say so, and put "verify on Windows Firefox" at the top of that Backlog item.
+
+Run typecheck, tests, build, contrast and the full W.1 suite. Then merge `theme-wrap` into `main`, and deploy production from a clean checkout of `origin/main`, by the deploy guard. Check the live site (the keybed at 320 with frame stepping off) and report. No tag.
