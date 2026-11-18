@@ -683,6 +683,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 
 ## Backlog
 
+- **High priority:** define the Open Graph and Twitter card tags and a share image for the landing page (title, description, `og:image` at 1200x630, alt text). Take the words from the Brand content doc (title "Frameline", description = the category line "A Video.js skin for the tools people make video with."); design the image from Frameline's own material, not a generic player shot.
 - Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
 - On a narrow player (390 and 320 px) the Markers menu cuts long marker names with an ellipsis, and the times too. The times should never be cut: give the time column a fixed, unshrinkable width.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
