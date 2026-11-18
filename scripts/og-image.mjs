@@ -1,10 +1,10 @@
 // Generates the social card (og:image, twitter:image), 1200x630: the Video.js • Frameline lockup, the tagline and the
-// category line from the Brand content doc, over a crop of the real Studio dock as the landing page's hero opens it.
+// descriptor from the Brand content doc, over a crop of the real Studio dock as the landing page's hero opens it.
 //
 //   npm run build && npm run preview            # serves dist/ on http://localhost:4173
 //   node scripts/og-image.mjs [url] [out]       # default url: http://localhost:4173, out: apps/preview/public/og.png
 //
-// Words: the Brand content doc (lockup "Video.js • [icon] Frameline", tagline, category line, site). Colours, type,
+// Words: the Brand content doc (lockup "Video.js • [icon] Frameline", tagline, descriptor, site). Colours, type,
 // radius and the player's rim and shadow: the landing page's tokens (apps/preview/src/page/tokens.css), read here so
 // the card follows them. It drives the installed Google Chrome (for H.264) through playwright-core.
 import { readFileSync } from 'node:fs';
@@ -20,7 +20,7 @@ const mark = readFileSync(new URL('../apps/preview/src/page/assets/mark.svg', im
 /** The card's words, from the Brand content doc. */
 const WORDS = {
   tagline: 'A monitor, not just a player.',
-  category: 'A Video.js skin for the tools people make video with.',
+  descriptor: 'A Video.js skin that adds a preview monitor to the player in your video tool.',
   site: 'frameline.artmarchuk.me',
 };
 
@@ -69,7 +69,7 @@ body { width: ${CARD.width}px; height: ${CARD.height}px; overflow: hidden; backg
 .lockup svg { width: 30px; height: 30px; }
 .site { color: var(--dim); font: 400 20px / 1 var(--family-ui); }
 h1 { margin-top: 52px; font: 800 68px / 1.04 var(--family-ui); letter-spacing: var(--type-h1-tracking); }
-p.category { margin-top: 18px; color: var(--dim); font: 400 28px / 1.25 var(--family-ui); letter-spacing: var(--type-claim-small-tracking); }
+p.descriptor { margin-top: 18px; color: var(--dim); font: 400 28px / 1.25 var(--family-ui); letter-spacing: var(--type-claim-small-tracking); text-wrap: balance; }
 .dock { position: absolute; left: 50px; bottom: 0; width: ${width}px; height: ${height}px; overflow: hidden; border-radius: var(--radius-player) var(--radius-player) 0 0; box-shadow: var(--elevation-player-shadow); }
 .dock img { display: block; width: 100%; height: 100%; }
 .dock::after { position: absolute; inset: 0 0 -2px; border-radius: inherit; box-shadow: var(--elevation-player-rim); content: ""; }
@@ -80,12 +80,19 @@ p.category { margin-top: 18px; color: var(--dim); font: 400 28px / 1.25 var(--fa
     <div class="site">${WORDS.site}</div>
   </div>
   <h1>${WORDS.tagline}</h1>
-  <p class="category">${WORDS.category}</p>
+  <p class="descriptor">${WORDS.descriptor}</p>
   <div class="dock"><img alt="" src="data:image/png;base64,${crop.toString('base64')}" /></div>
 </div></body></html>`);
 await sheet.evaluate(() => document.fonts.ready);
 if (!(await sheet.evaluate(() => document.fonts.check('800 68px "Google Sans Flex"'))))
   throw new Error('Google Sans Flex did not load; the card would fall back to a system font');
+// The descriptor keeps its size: one line if it fits, otherwise two balanced lines (text-wrap: balance).
+const lines = await sheet.evaluate(() => {
+  const p = document.querySelector('p.descriptor');
+  return Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight));
+});
+const overlap = await sheet.evaluate(() => document.querySelector('p.descriptor').getBoundingClientRect().bottom > document.querySelector('.dock').getBoundingClientRect().top);
+if (overlap) throw new Error('The descriptor runs into the dock crop; lower CROP.picture');
 await sheet.screenshot({ path: out, type: 'png' });
 await browser.close();
-console.log(`Wrote ${out} (${CARD.width}x${CARD.height}): a ${width}x${height} px crop, the picture's lower ${CROP.picture} px and the ${dock} px dock`);
+console.log(`Wrote ${out} (${CARD.width}x${CARD.height}), the descriptor on ${lines} line${lines > 1 ? 's' : ''}: a ${width}x${height} px crop, the picture's lower ${CROP.picture} px and the ${dock} px dock`);

@@ -2083,3 +2083,17 @@ Screenshots: `design/screenshots/theme-c6/` (`c-*` is `theme-c` before C.6, `c6-
 - **Tags:** `og:title` and `twitter:title` "Frameline"; `og:description` and `twitter:description` the category line; `og:image:alt` describes the card, and `twitter:image:alt` is new with the same text. Words from the Brand content doc ("Social preview (Open Graph): Title: Frameline. Description: the category line"); the doc and the Backlog item agree.
 - **Not changed, and the doc disagrees:** the doc's placement for the page title and meta description is "Frameline — A Video.js skin for the tools people make video with." (status "Check"). The page has `<title>Frameline — a Video.js skin for video creators</title>` and a meta description built on the descriptor (set on 18 Nov at the author's request). Left for the author.
 
+
+## Landing page: copy from the Brand content doc (18 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-copy.md`. The page's head tags, social card and footer now follow the doc; no layout or skin changes. This replaces the tag wording in the section above and settles its "Not changed, and the doc disagrees" line.
+
+- **`<title>`:** "Frameline — a Video.js skin for video tools" (43 characters).
+- **Meta description:** "Adds a preview monitor to the player in your editor, AI generator or review tool: timecode, frame stepping, In/Out loops, safe areas, platform crops and zoom." (158 characters; the spec asks for about 155.)
+- **`og:title`, `twitter:title`:** "Frameline — a monitor, not just a player."
+- **`og:description`, `twitter:description`:** "Frameline is an open-source Video.js skin for web video editors, AI video generators and review tools. Viewer is a clean player; Studio is a preview monitor."
+- **`og:image:alt`, `twitter:image:alt`:** "Frameline — A monitor, not just a player. A Video.js skin that adds a preview monitor to the player in your video tool. The Studio dock under a green-screen picture."
+- **`og.png`:** the line under the tagline is now the descriptor, "A Video.js skin that adds a preview monitor to the player in your video tool." It fits on one line at the same 28px size. `scripts/og-image.mjs` now sets `text-wrap: balance` on that line, logs how many lines it took, and stops if the line runs into the dock crop. Everything else on the card is unchanged.
+- **Footer:** "Designed by Artem Marchuk", with the name still linking to artmarchuk.me.
+- **Checks:** typecheck, 225 tests, build, `contrast.mjs` (82 PASS, 0 FAIL), the landing check (`configurator.js`, pass true; the runner must grant clipboard permission or `copied` fails), axe on the site root at 1440 and 390 (0 violations). No script or check tests the changed strings.
+- **Unverified:** the social card in real link previews (X, LinkedIn, Slack). The preview is behind the Vercel login, so external validators can't read it until production.
