@@ -80,7 +80,7 @@ Since A.2, a menu opened over the dock has the dock's colour and only a `#333333
 ## B.6 Contrast, docs
 
 - `scripts/contrast.mjs`: the idle handle rows, the light on `surface-2` and on the dock, the menu border (decorative). Both columns pass.
-- NOTES: a Theme B section with the final values, the `--fl-on` decision, the accent inventory, anything added to markup, Backlog, Unverified.
+- NOTES: a Theme B section with the final values, the `--fl-on` decision, the accent inventory, anything added to markup, Unverified. Backlog items go in the report under "Backlog proposals".
 - README token table: `--fl-led`, `--fl-led-glow`, `--fl-handle-idle`, `--fl-on` if removed. The "Tactile" paragraph: the keybed and the light.
 - `specs/PROJECT-OVERVIEW.md`: the sentences about on states and the accent.
 - `FEATURES.md`: no feature changes; fix any sentence about how on states look.

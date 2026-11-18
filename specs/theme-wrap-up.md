@@ -1,13 +1,13 @@
 # Theme wrap-up: the three engines, the untested states, the docs
 
-The last step of the theme refresh (Themes A, A.1, A.2, B, C, C.6). No new look. It closes the gaps the five reports left as Unverified, so the README's browser-support claim is true again for the current theme, and records what the refresh leaves to the Backlog.
+The last step of the theme refresh (Themes A, A.1, A.2, B, C, C.6). No new look. It closes the gaps the five reports left as Unverified, so the README's browser-support claim is true again for the current theme, and lists what the refresh leaves for the backlog in the report.
 
 Read first: `NOTES.md` (the Theme A to C.6 sections, especially every "Unverified" list), the README sections "The look", "Tokens" and "Browser support", this file.
 
 ## W.0 Branch, deploy, rules
 
 - Branch `theme-wrap` from current `main`. Commit this spec first.
-- Fixes only for regressions this pass finds, and each one is the smallest CSS change that fixes it. No new look, no new tokens unless a fix needs one. Anything that is not a regression goes to the Backlog, not into code.
+- Fixes only for regressions this pass finds, and each one is the smallest CSS change that fixes it. No new look, no new tokens unless a fix needs one. Anything that is not a regression goes in the report under "Backlog proposals", not into code.
 - Checks run against the local production build of `main`, then against the live site https://frameline.artmarchuk.me for the screenshots in W.2.
 - If there are no code changes: merge nothing, deploy nothing; commit the docs to `main` directly. If there are code changes: preview deploy, report, and stop for review (no production deploy, no merge).
 
@@ -43,7 +43,7 @@ Open each one. Report every visible difference between engines (seams, edge line
 - README, "Tokens": the `--fl-accent` row lists where the accent appears, and it must include the indicator light (`--fl-led`), as "The look" does.
 - README, "Browser support": update the engine table from W.1 and say which theme states were checked in which engine. Keep it to what was run.
 - `NOTES.md`: a "Theme refresh: wrap-up" section with the W.1 table, the W.2 differences, the W.3 results, and one consolidated list of what is still unverified after the refresh (one list, replacing the need to read five). Mark the earlier per-step Unverified items as resolved where this pass resolved them.
-- Backlog (where the project keeps it; NOTES if that is the rule): add, each with one line,
+- Backlog proposals, in the report (Artem adds them to the project backlog), each with one line:
   - narrow dock: fold the cut pair at 330px instead of 324px if a wider font overflows (W.3's measurement decides);
   - Markers menu: long names and times are cut on a narrow player;
   - Guides menu: cut at its bottom edge on a 760px player (seen during the landing work);
@@ -61,7 +61,7 @@ Same branch. Then merge and deploy.
 1. **Accept the fix** (Play alone in the housing under 324px).
 2. **dock-polish under forced colours:** the three assertions that assume default colours are wrong for that mode. Make them mode-aware (in forced colours, assert the boundary and the Highlight state, not the default fills). Test code only. The suite must be green in all three engines afterwards, except the known check limits (phone-transport touch drags outside Chromium, WebKit clipboard, the Firefox rendition note, the intermittent WebKit zoom grab), which stay listed.
 3. **Hover on a disabled key:** a key with `aria-disabled="true"` takes no hover fill. One rule in the keybed's hover selector.
-4. **Guides over captions is intended:** safe areas are drawn over the captions so a creator can check that captions sit inside title safe. Remove that Backlog line and add one sentence to the Guides row of `FEATURES.md` saying so.
-5. **The `≈` marker in Firefox:** report whether the live site shows `≈` in Playwright's Firefox (that is, whether `requestVideoFrameCallback` is present there). If it does, every Firefox user sees the marker, and the Verdana overflow becomes more likely: say so, and put "verify on Windows Firefox" at the top of that Backlog item.
+4. **Guides over captions is intended:** safe areas are drawn over the captions so a creator can check that captions sit inside title safe. Drop it from the Backlog proposals and add one sentence to the Guides row of `FEATURES.md` saying so.
+5. **The `≈` marker in Firefox:** report whether the live site shows `≈` in Playwright's Firefox (that is, whether `requestVideoFrameCallback` is present there). If it does, every Firefox user sees the marker, and the Verdana overflow becomes more likely: say so, and put "verify on Windows Firefox" at the top of that item in the report's Backlog proposals.
 
 Run typecheck, tests, build, contrast and the full W.1 suite. Then merge `theme-wrap` into `main`, and deploy production from a clean checkout of `origin/main`, by the deploy guard. Check the live site (the keybed at 320 with frame stepping off) and report. No tag.

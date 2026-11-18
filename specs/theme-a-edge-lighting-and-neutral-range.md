@@ -17,7 +17,7 @@ Reference: Figma frame `14:5` in file `WngORSR3hgjWjnTHqVmK3u` (three hardware d
 - Theme B: the transport as one keybed with seams, new radii, lit "on" indicators.
 - Theme C: the larger timecode display.
 - The Viewer tier and the overlay layout: they stay flat (`--fl-bevel: 0`) and must look the same as on `main`.
-- The landing page (`apps/preview/src/page/`): its `--accent` and `--range` mirror Figma variables. Leave them; list the mismatch in `NOTES.md` under Backlog.
+- The landing page (`apps/preview/src/page/`): its `--accent` and `--range` mirror Figma variables. Leave them; list the mismatch in the report under "Backlog proposals".
 - Type: the system UI stack stays. No webfont.
 - The accent stays `#5b9dff`. Only its area shrinks (A.4).
 
@@ -110,7 +110,7 @@ The author is undecided between the blue and a warm signal colour. Produce one e
 - Update `scripts/contrast.mjs`: new `s0`, `s1`, `range`, add `rangePlayed`, change the rows that measured the accent as a band into the pairs in A.4, and keep both columns passing. Paste the new table into `NOTES.md`.
 - README token table (the `--fl-accent` row and any surface or range rows): new values and the new description of where the accent appears.
 - `FEATURES.md`: no feature changes; fix any sentence that says the played range is drawn in the accent.
-- `NOTES.md`: a "Theme A" section with final shadow values, the accent inventory, the buffer decision, Backlog (landing page tokens) and Unverified.
+- `NOTES.md`: a "Theme A" section with final shadow values, the accent inventory, the buffer decision and Unverified. The landing page tokens go in the report under "Backlog proposals".
 
 ## A.7 Checks and report
 

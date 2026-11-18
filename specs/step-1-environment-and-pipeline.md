@@ -80,9 +80,9 @@ Do not restyle anything, add controls, add pro features, write tokens or icons, 
 
 Create these at the repository root:
 
-- **`CLAUDE.md`**: the product context above (what Video.js PRO is, the three tiers, the creator focus), the hard rules above, the commands (`dev`, build, deploy), and this rule: *every later step starts by reading Backlog list in `NOTES.md` and the step's requirements file; every step ends deployed.*
+- **`CLAUDE.md`**: the product context above (what Video.js PRO is, the three tiers, the creator focus), the hard rules above, the commands (`dev`, build, deploy), and this rule: *every later step starts by reading `specs/PROJECT-OVERVIEW.md`, `NOTES.md` and the step's requirements file; every step ends deployed.*
 - **`README.md`**: what the project is in two sentences, how to run it, how to deploy it, and the live URL.
-- **`NOTES.md`**: versions (from 1.5), the deployed URL, a "Decisions" list, a "Backlog" list for things you noticed but did not do, and an "Unverified" list.
+- **`NOTES.md`**: versions (from 1.5), the deployed URL, a "Decisions" list and an "Unverified" list. Things you noticed but did not do go in the report under "Backlog proposals", not in the repo.
 
 ## Acceptance criteria
 

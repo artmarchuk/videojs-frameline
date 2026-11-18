@@ -29,5 +29,5 @@ After a click on the ruler, focus is on the seek slider, and `Space` does nothin
 
 - Screenshots, opened and looked at: the Zoom, Guides, Capture and Markers menus open on the wide dock, and the Zoom menu on the narrow dock.
 - Typecheck, unit tests, build, the browser checks.
-- Update `FEATURES.md` and `NOTES.md` (remove the Space item from the Backlog).
+- Update `FEATURES.md` and `NOTES.md`, and say in the report that the Space item is done so it can be closed in the project backlog.
 - Deploy from `dock-polish`. Report the URL and anything that differs from this file, with the reason.
