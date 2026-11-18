@@ -7,7 +7,12 @@
  * Values are Figma's. Letter spacing is a percentage in Figma and the same fraction of an em here.
  *
  * Modes. Colours have a Light and a Dark mode in Figma; the page ships Dark only, so `:root` holds the Dark values.
- * Sizes and layout have a Desktop and a Phone mode; Phone is the media query at the end of this file.
+ * Sizes and layout (the collections "Frameline page type" and "Frameline page layout") have three modes:
+ *   Phone    under 760 px        the media query at the end of this file
+ *   Desktop  760 to 1199 px      `:root`
+ *   Wide     from 1200 px        the media query after `:root`
+ * Phone and Wide hold only the variables whose value differs from Desktop. Rule for the hero: no value is larger on
+ * a narrower screen.
  */
 :root {
   color-scheme: dark;
@@ -66,11 +71,11 @@
   --radius-small: 3px;
   --radius-key: 6px;
   --radius-control: 8px;
-  --radius-player: 8px;
+  --radius-player: 10px; /* the skin's own frame corner (`--fl-frame-border: 1`) */
   --radius-panel: 10px;
 
   /* ---------- Size (Desktop) ---------- */
-  --size-h1: 72px;
+  --size-h1: 44px;
   --size-h2: 28px;
   --size-h3: 21px;
   --size-claim: 19px;
@@ -86,12 +91,19 @@
   --size-wrap: 1280px;
   --size-header: 64px;
   --size-key-column: 120px;
+  --size-figure: 560px;
+  --size-player-min: 1100px; /* the narrowest hero player in Wide: the dock keeps its full one-row layout */
+  --size-dock: 117px; /* the Studio dock's height on one row (player 740 px and wider), measured in the browser */
+  --size-dock-narrow: 167px; /* two rows, player 500 to 739 px wide */
+  --size-dock-narrow-portrait: 181px; /* two rows, player under 500 px wide */
   --size-target: 44px;
   --size-key: 30px;
 
   /* ---------- Layout (Desktop) ---------- */
   --layout-gutter: 24px;
-  --layout-hero-gap: 48px;
+  --layout-hero-gap: 32px;
+  --layout-hero-top: 40px; /* all the space between the header and the H1 */
+  --layout-hero-text-gap: 16px;
   --layout-hero-bottom: 56px;
   --layout-section-top: 40px;
   --layout-section-bottom: 72px;
@@ -99,6 +111,10 @@
   --layout-row-pad: 22px;
   --layout-column-gap: 48px;
   --layout-card-gap: 24px;
+
+  /* ---------- Elevation: the hero player above the page, like a window above a desktop ---------- */
+  --elevation-player-rim: inset 0 0 0 1px rgb(255 255 255 / 0.11); /* inside the outline, over the player's edge */
+  --elevation-player-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 8px 20px rgb(0 0 0 / 0.35), 0 24px 64px 8px rgb(0 0 0 / 0.55);
 
   /* ---------- Text styles ---------- */
   --type-h1: 800 var(--size-h1) / 1.08 var(--family-ui);
@@ -127,16 +143,25 @@
   --type-code: 400 var(--size-code) / 1.65 var(--family-mono);
 }
 
+/* ---------- Wide mode: the variables whose Wide value differs from Desktop ---------- */
+@media (width >= 1200px) {
+  :root {
+    --size-h1: 56px;
+  }
+}
+
 /* ---------- Phone mode: the variables whose Phone value differs from Desktop ---------- */
 @media (width < 760px) {
   :root {
-    --size-h1: 30px;
+    --size-h1: 32px;
     --size-h2: 24px;
     --size-lead: 16px;
     --size-timecode: 15px;
     --size-header: 56px;
     --layout-gutter: 16px;
-    --layout-hero-gap: 20px;
+    --layout-hero-gap: 24px;
+    --layout-hero-top: 24px;
+    --layout-hero-text-gap: 12px;
     --layout-hero-bottom: 40px;
     --layout-section-top: 28px;
     --layout-section-bottom: 48px;
@@ -150,5 +175,8 @@
     --dim: #d2d2d2;
     --line: #7f7f7f;
     --control: #a4a4a4;
+    /* No shadow; the rim is a solid hairline at 3:1. */
+    --elevation-player-rim: inset 0 0 0 1px var(--line);
+    --elevation-player-shadow: 0 0 #0000;
   }
 }

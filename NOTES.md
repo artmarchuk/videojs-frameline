@@ -1762,6 +1762,203 @@ After the fixes the two pages differ in 0 properties, in both colour modes. The 
 - Whether the faint menu edge over the dock is enough for the author: it is decorative by the rules and visible at 2x, but quieter than before.
 - On a narrow player the Markers menu cuts long names and also the times with an ellipsis (at 390 and 320). This was already so at A1.8 and is not changed here (Backlog).
 
+## Landing page visuals: a staged hero, six feature rows, screenshots (17 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals.md`. Nothing under `src/` changed.
+
+### Decisions: the staged hero
+- **The staged state is the source's data**: `staged` on the reel's entry in `media.ts`, as frame numbers (In 74, Out 178, playhead 90, guides `title-safe`: 00:00:03:02 to 00:00:07:10, playhead 00:00:03:18; round one staged 108, 242 and 144); `stagedSeconds` converts it. A source without `staged` loads as before.
+- **Applied once, by the page, through `apiRef`**: when the Studio player first has a handle and the video has a duration, the page calls `setRange`, `setGuides` and `seek`. It is decided on load: a page opened in Studio. Not repeated after a tier switch or a change of the range; a page opened with `?tier=viewer` stages nothing, also after a switch to Studio.
+- **A frame link wins the playhead**: with `t=` in the hash the page does not seek (the skin does, to the link); the range and the guide are still set.
+- **Remembered guides win**: if `localStorage` has the skin's `frameline:v1` record, the page does not call `setGuides` and the skin restores what is stored. Any record counts, an empty set too: a visitor who switched every guide off does not get Title safe back. A visitor with no record gets Title safe, and the skin then stores it, so the next visit restores the same.
+- **The poster is the staged frame**: `posterTime` is the middle of the frame's interval, `(playhead + 0.5) / 24`. Mux's thumbnail at a frame's own start time is the frame before it (`time=6` shows 00:00:05:23, `time=6.02` shows 00:00:06:00; the old `posterTime: 3` showed 00:00:02:23).
+- **Out of the event log**: the skin fires `onInOutChange` and `onGuidesChange` for the staged calls as for any other; the page drops them while it stages.
+- **Announcements**: `setRange` and `setGuides` say nothing. The seek does: Video.js's status announcer said "Seeked to 6 seconds" on load with the first staged playhead (00:00:06:00; the text for 00:00:03:18 was not read), as it already did for an opened `#t=` link. Video.js has no start-time option (its docs: seek on `loadedmetadata`), and the skin was not silenced.
+- **Fixed: the Configure button** stopped toggling after any configuration change. Its click listener sat inside `render()` and was added again on every change; two listeners open and close in one click. Wired once now; `configurator.js` checks it.
+
+### Decisions: rows and figures
+- Six rows; row 3 is new (`review`: to the marker `hold`, read from the loaded markers, paused; no clipboard write). Row 6 is "A frame grab is the frame as encoded."
+- From 1100 px a row is `120px minmax(0, 1fr) 560px`, text at the top of the figure; under 1100 px one column: claim, detail, figure, then keys and Show me. A figure is an 8:5 box (`.shot`) with the image as `object-fit: cover`, so a clip can replace the image later.
+- **One new token: `--size-figure: 560px`** (Figma: `size/figure`). The 8:5 ratio and the 1100 and 900 px breakpoints are written where they are used. The figure's radius is `--radius-panel` (10 px), the value of the real player's frame; Figma's `radius/player` is 8 px and does not match the skin.
+- The tier pair's images are whole players and carry the player's own hairline, so the page adds a radius only.
+- **The hero player fits the reel's picture, not its file.** Every frame of the reel carries 4 black rows at the top and 4 at the bottom (read from Mux frames at 4.9, 20 and 40 s: rows 0–3 and 1076–1079 are black): the picture is 1920 × 1072 inside 1920 × 1080. A 16:9 stage showed them as thin strips above and below the picture. The reel's entry in `media.ts` now has `picture: { width: 1920, height: 1072 }`, and the landing page sets two documented properties on the player's holder: `--fl-stage-ratio: 1920 / 1072` (the skin's stage shape) and `--media-object-fit: cover` (Video.js: video and poster). The bars fall outside the stage, 4 source rows each side. The skin is unchanged: guides and zoom already place themselves on the `cover` picture rectangle, so Title safe and the other guides stay on the file's 1920 × 1080 frame, the frame a delivery is checked against. A frame grab is still the whole file, bars included. The monitor page (`/preview.html`) and the screenshots, which were made there, still show the strips.
+
+### Decisions: screenshots (`scripts/landing-shots.mjs`)
+- One dev dependency, pinned: **`sharp` 0.35.5** (AVIF and WebP). `playwright-core` was already one.
+- States are reached with frame links, keys, clicks and hover on `/preview.html`; no hook was added to the monitor page. The best rendition is picked in the settings menu and played until it is on screen (a paused player keeps the rendition it has), then the keys walk back to the frame.
+- Crops are an element's box plus a region, clipped to the player less its 1 px hairline, on `#0f0f0f` where the region passes the player.
+- **Where the spec and the player did not fit, and what was done:**
+  - **Shot 1 (range): an 1100 px player, not 1280.** At 1280 a 700 px region holding the In handle and the Loop button cuts the timecode field in two.
+  - **Shot 2 (frame-step): a 560 px tall window and 150% zoom.** At Fit on a 1280 px player the burned-in timecode and the dock's field are 755 px apart; the region is 437.5 px. 560 px is the shortest window in which the monitor page still letterboxes the stage.
+  - **Shot 4 (guides): no "approximate" in the picture.** The skin says it in the Guides menu and to screen readers (`zonesSet`), not on the overlay, and the open menu covers the picture of a 760 px player. The shot shows the zones with their own labels.
+  - **Shot 5 (zoom): a 560 × 350 region exported one to one**, not 700 px at 80%: a source pixel is four device pixels at 400%, and scaling turns the squares uneven. The reel is soft at pixel level, so the squares show along the edge of the sole, not everywhere.
+  - **Shot 6 `grab-screen`: the whole picture**, fitted like the file beside it, not a 700 px crop, so the pair has one framing.
+  - **Shot 7 (tiers): 00:00:05:00.** Viewer has no frame link and no frame step, and the monitor's tier switch starts the video again; Right (5 s) from the start is the frame Viewer can reach exactly. Both images show 00:00:05:00.
+- Shot 2's stop condition: the captured frame reads 00:00:27:15 in the picture and in the field. Other frames looked at: 06:00, 21:08, 05:00 (both tiers) and 27:15 agree; 10:03 is the known missing frame (see the landing page section).
+
+### Checks (headless Chrome, local production build)
+- Hero: first load, `#t=00:00:27:15`, `?tier=viewer`, `?media=plain`, a remembered `thirds`, a remembered empty set: as specified, no console errors. Poster and staged frame are the same picture.
+- Page at 1440, 1100, 900 and 390 px (`design/screenshots/landing-visuals/`): no horizontal overflow; each row and the tier pair has the same height with the images blocked and loaded (no layout shift).
+- All six Show me buttons and the three cue rows, in Studio and from a page opened in Viewer.
+- `configurator.js` (now also: the staged state, the `review` task, Configure toggling after changes), `axe-audit.js` (zero violations at 1440 and 390, and on `/preview.html` in both tiers), `viewer-gate.js` (three runs): pass. Typecheck, 218 unit tests, build: pass.
+
+### Unverified (landing visuals)
+- Firefox, Safari and a real phone were not run on the new rows. AVIF with a WebP fallback is inside the browser floor on paper (Safari 16.4 has AVIF); Chrome picked AVIF.
+- "Seeked to 6 seconds" on load is accepted for now (round two). What was read: the text Video.js's status announcer puts in its live region after the staged seek. What was not heard: a screen reader speaking it, and whether it interrupts the page title.
+- **Seen, not touched (skin):** on a 760 px player the open Guides menu is cut at its bottom edge ("Hide guides" is half hidden).
+- The page's "zero violations in six states" line is unchanged and still not re-counted.
+
+## Landing page visuals, round two: new icons, three better shots, a compact hero (17 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-2.md`. Nothing under `src/` changed. The branch was rebased onto `main` (new icons, narrow dock rows, tooltips); the one conflict was this file, both sides kept.
+
+### Decisions: the compact hero (from 1200 px wide; narrower layouts unchanged)
+- **A third token mode, Wide** (`@media (width >= 1200px)` in `tokens.css`): `--size-h1` 56 px (72), `--layout-hero-gap` 24 px (48), and two new tokens, `--layout-hero-top` 24 px (48: the space above the H1) and `--layout-hero-text-gap` 12 px (20: the gap inside the positioning block). Two more new tokens, not moded: `--size-player-min` 1100 px and `--size-dock` 117 px (the one-row Studio dock, measured in the browser at 1100 and 1280 px).
+- **Where the spec's values and its targets disagreed.** The spec's table (hero gap 32 px, 24 px above the H1) puts the picture's top at 343.8 px; its targets need 320 or less (and a dock bottom of 1064 or less at 1920 × 1080). The 24 px missing are the hero's own 16 px top padding and the 8 px between the tier bar and the player. Done on the page: in Wide the hero has no top padding (the 24 px above the H1 is all of it), and the hero gap is 24 px, not 32. No skin change was needed.
+- **The player's width follows the screen's height**: `.stage` is `clamp(--size-player-min, (100svh − what is above − --size-dock − 16 px) × the picture's shape, 100%)`, centred. What is above is a `calc()` of the same tokens that lay it out (header, hero top, the three text lines with the line heights of their text styles, the gap, the tier bar and its gap); it matched the browser to the pixel. The shape is `--fl-stage-ratio`, which `main.tsx` now sets on `.stage` from `media.ts` (it was on `#player`). The tier bar and Configure are inside `.stage`, so they keep the width.
+- Measured, staged state: 1440 × 900: top 319.8, width 1100, dock bottom 1051 (not whole). 1536 × 864: 319.8, 1100, 1051 (not whole). 1920 × 1080: 319.8, 1123.3, 1063.97 (whole). 1440 × 1200: 319.8, 1280, 1151.5 (whole). The H1 is one line at 1200 px.
+
+### Decisions: screenshots and row 6
+- All nine files regenerated on the rebased build, so every shot has the new icons.
+- **Shot 5 (zoom): the burned-in timecode at 400%, whole, not two or three digits.** At 400% on a 2x screen a source pixel is 2 CSS px, and the figure's picture area is 560 × 233 px: 280 × 116 source pixels. The burn-in is 245 × 58 px, so all of it fits and it fills the width; two or three digits filling the area would need about 1200%. The squares are 4 × 4 device pixels, checked in the exported file at 8x.
+- **How shot 5 gets the timecode beside the Zoom button.** The timecode is in the picture's top left corner, the button in the dock's right half, and a pan stops at the picture's edge. The script sizes the player (909 px wide, a 391 px stage in a 570 px window) so that, with the picture panned to its corner by `Shift` `Alt` and the arrows, the timecode is in the middle of the region's picture area. A pan key moves a tenth of the stage, so the corner takes more presses at 400% than at 150% (30 are sent; the pan stops at the edge).
+- **Shot 4 (guides): the 2.39:1 crop and the rule of thirds on 00:00:49:12**, Snow peak. The skin draws the thirds inside the crop; the summit is by their upper right crossing. The section runs 00:00:48:11 to 00:00:50:17 and the peak moves little in it.
+- **Shot 6**: "On screen" is the Dancer on 00:00:21:08 with Title safe, thirds and centre, no zones; the PNG is the file `G` saved (1920 × 1080).
+- **Row 6**: from 1100 px the pair sits under the text, from the claim's left edge to the row's right edge, with the row gap between (548 px each at 1440; another row's figure is 560). Under 1100 px the pair stacks. It did not stack before, whatever round one's notes implied: the pair was two columns at every width.
+- The monitor page still shows the reel's 4 black rows above and below the picture, so they are in the shots that reach the picture's top or bottom edge (guides, the grab pair, the tier pair).
+
+### The duration: 00:00:56:02 on the page, 00:00:56:01 in the shots
+Both come from `video.duration`; nothing was changed. On load the duration is the playlist's, 56.0833 s: 1346 frames, shown as 00:00:56:02. Once the player has played, the browser reports 56.0437 s (1345.05 frames, shown as 00:00:56:01), at every quality. The shots read 56:01 because the script plays the video to bring the best rendition on screen. 56:02 matches the reel's 1346 frames. Why the browser's figure shrinks was not traced; a shorter audio track at the end of the stream is the likely cause.
+
+### Checks (headless Chrome, local production build)
+- The hero at the four viewports and at 1100, 900 and 390 px; "What Studio checks" at 1440, 1100 and 390 px (`design/screenshots/landing-visuals-2/`). No horizontal overflow; row and tier-pair heights are the same with the images blocked and loaded.
+- Each of the nine files opened: new icons, no cursor, no tooltip but the marker's label.
+- `configurator.js` passes; `axe-audit.js` finds zero violations at 1440 and 390 px. Typecheck, 219 unit tests, build: pass.
+
+### Unverified (round two)
+- Firefox, Safari and a real phone were not run. `svh` is inside the browser floor on paper (Chrome 108, Firefox 101, Safari 15.4).
+- Before the script runs, the stage's shape falls back to 16:9, so between the width limits the player can be up to about 9 px narrower for a moment on load. Not seen in a capture; not measured as a shift.
+
+## Landing page visuals, round three: a headline scale, clean crops, no black rows (17 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-3.md`. Nothing under `src/` changed. The hero opens on 00:00:03:18 with the range 00:00:03:02 to 00:00:07:10 (changed before this round, in `media.ts`).
+
+### Decisions: the headline scale
+- Rule: no hero value is larger on a narrower screen. `:root` (Desktop, 760 to 1199 px) has H1 44, hero top 24, text gap 12, hero gap 24; Wide (from 1200) overrides only the H1 (56); Phone (under 760) has H1 32, top 16, text gap 8, gap 20. The header comment in `tokens.css` names the three modes and the Figma collections.
+- `--layout-hero-top` is now all the space above the H1 at every width: the hero's own top padding (16 px; 8 on Phone; 0 in Wide) and Phone's own text gap (14) and zero top padding are gone from `landing.css`, so the tokens alone set the hero.
+- H1 lines: 2 at 390, 1 at 760, 900, 1100 and 1200. Wide is as in round two: picture top 319.8 at 1200, 1440 and 1920.
+
+### Decisions: the monitor page covers the black rows
+- `preview.html` now shapes the player as the landing does, from `media.ts`: the stage takes the picture's shape (1920 / 1072) while the ratio option is its default 16:9, and the video covers it.
+- Only while the video's box has the picture's shape (within 0.3 %): on a short window the monitor makes the stage shorter and letterboxes the picture, and covering it there would crop the picture. There it stays `contain`. A ResizeObserver on the video decides; it follows the video when the tier switch mounts a new one.
+- With `cover`, the zoom check's model (the picture is the video element's box) does not hold on the reel: a full pan stops at the file's edge, rows included, so at 200% the element's top is 9 px inside the stage and its bottom 6.69 px. The check passes in full on `&media=cosmicDawn`; its header says so. The same is true of the landing page since round one: zoomed in and panned to the top or bottom edge, the reel's rows show. Skin behaviour, not changed.
+
+### Decisions: screenshots
+- The range shot reads the staged state from `media.ts` (Node strips the types and imports it), so it follows the hero.
+- No control cut by a crop's side edge. `clearOfControls` moves a region left or right, never resizes it, to the nearest position where no button (the timecode field and menu buttons with their chevrons among them), In or Out handle, or volume slider comes within 4 px of a side edge, and the shot's own condition still holds; `assertNoControlCut` fails the shot otherwise. An edge on the player's own edge cuts nothing.
+- Moving alone could not clear the edges at the old player widths: the dock's middle and right groups are placed from the player's right edge, so the edge always fell on the same control. Each dock shot now has a player width that puts a gap under the edge: range 1196 (right edge between Reset range and Markers; with a range set, the dock has Reset range and Guides reads "1 guide on"), frame-step and markers 1250 (between Next cut and Loop), zoom 1040 (left edge between Copy link and Previous cut, right edge between Zoom and Settings; the region moved 125 px left).
+- Guides on an 800 px player, not 760: the 760 player's picture (424 px) was shorter than the region (437.5 px) and showed the surround as thin dark strips.
+- `grab-file` is the PNG the skin saves, rows included: about 2 px of near-black at the top and bottom of the picture in the 1120 × 700 image, against the surround's #0f0f0f. `grab-screen` beside it has none.
+
+### Checks (headless Chrome, local production build)
+- Typecheck, 219 tests, build. `configurator.js` passes; axe: 0 violations at 1440 and 390. Monitor checks: `range-playback`, `dock-polish`, `viewer-gate`, `guides-menu-focus`, `zoom-rendition-note`, `reduced-motion` (both pages) pass; `zoom.js` passes on `&media=cosmicDawn` (see above).
+- Pure-black rows in the nine images: none, except the burned-in timecode's own box in the zoom shot.
+
+### Layout shift on load (fixed in round four, below)
+- Studio's dock arrives after the page has laid out: the player first has a 34 px bar, which grows to the dock (181, 167 or 117 px, by the skin's arrangement from the player's width and pointer). Configure and the section under it move down. CLS: 0.112 at 390, 0.122 at 760, 0.049 at 900, 0.001 to 0.014 from 1100. The live site: 0.111 at 390, 0.053 at 760; the shorter hero brings more of what moves into the first screen.
+- A page-only fix: reserve the player's final height (stage plus dock) until the Studio handle arrives. It needs the narrow docks' heights (167 and 181 px, and their touch-pointer heights, not measured) as tokens, and those are not in Figma.
+
+### Unverified (round three)
+- Firefox, Safari and a real phone were not run. The dock heights under a touch pointer were not measured.
+
+## Landing page visuals, round four: the tier switch under the player, a floating player, no jump on load (18 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-4.md`. Page code only: nothing under `src/` changed, the skin gained no rim, shadow or token, and the screenshots were not re-shot.
+
+### Decisions: the row under the player
+- The tier switch and its hint left the bar above the player and joined Configure in the row under it (`.configure-bar` in `index.html`). Tab order: the player, the switch, Configure. The switch keeps its fieldset, hidden legend "Tier" and arrow keys.
+- From 760 px: a grid, the switch and the hint on the left (the hint fills), Configure on the right, the summary under it aligned to its right edge. The summary is now the button's accessible description (`aria-describedby="configure-summary"`); it was not before, although the spec said "stays".
+- Under 760 px: a wrapping flex row. The switch and Configure share line one when both fit at full size (from about 450 px); otherwise Configure goes to line two and, alone there, starts at the left. The hint sits under the switch and has `contain: inline-size`, so its length never decides the wrap. The hint was hidden under 760 px before; it is shown now, as the spec asks.
+- Gap between the player and the row: `--space-24`. The Wide player-width formula no longer subtracts the tier bar (44 + 8 px). Player top and dock bottom: 1920 × 1080: 267.8 and 1064 (top was 319.8); 1440 × 900: 267.8 and 999. At 1440 the player is at its minimum width (1100 px), so the dock still ends below the window, as before.
+
+### Decisions: the switch stays where the pointer is (`holdInPlace` in `main.tsx`; the author decides after trying it)
+- Native scroll anchoring does not keep the control in place in Chrome, Firefox or WebKit: the player above the control is the anchor's own box, so the control moved by the dock's height (117 px at 1440; 181 to 199 px at 390) in all three. The code is needed in every engine tested.
+- The function notes the control's position, runs the tier change, and on each change of the player's size scrolls by the difference, instantly (`behavior: 'auto'`; the page has no smooth scrolling). It stops 800 ms after the last change of size, after 6 s with none, or on the visitor's wheel, touch or key. At the top of the page, or where the page cannot scroll far enough, the control moves.
+- Measured (control top before → after, px), hero switch and Configure's Tier radios, by mouse and by keyboard: Chrome, Firefox and WebKit at 1440: 0 in every case. At 390: 0 to 0.8, except hero → Viewer from 176 px down the page, where the page could only scroll 176 of 181 px: 5 to 6 px. At the top of the page: the control moves (-117 at 1440, -181 at 390) and nothing scrolls.
+- To remove it: delete `holdInPlace` and `setTier`'s wrapper and call `setConfig(tierConfig(...))` directly, as before.
+
+### Decisions: the player floats above the page
+- Page CSS on `#player`, the page's box around the skin. Tokens (new, for Figma): `--elevation-player-rim: inset 0 0 0 1px rgb(255 255 255 / 0.11)` and `--elevation-player-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 0 8px 20px rgb(0 0 0 / 0.35), 0 24px 64px 8px rgb(0 0 0 / 0.55)`: the spec's values.
+- The rim is drawn inside the outline, by a `::after` layer over the player (no pointer events). As an outer ring it lay on top of the dark contact edge and could not be seen (about #1f1f1f against #161616). Inside, it is a light line on the dock and the picture, with the dark contact edge just outside: one light line and one dark, as on a macOS window.
+- The skin's own frame hairline would have been a second line beside the rim, so the page sets the public `--media-border-color: transparent`. It also sets `--media-border-radius: var(--radius-player)` (8 px): the skin's frame was 10 px, the page's box 8, and the rim and shadow have to follow one corner. The placeholder before the script lost its own border for the same reason.
+- `prefers-contrast: more`: no shadow; the rim is `var(--line)` (#7f7f7f, 3:1). Forced colours: the browser drops both shadows; the box gets `outline: 1px solid CanvasText`. Checked by screenshot: one line in each.
+- The shadow ends about 90 px under the player, within the row under it and short of the next section's text at 1440 and 390.
+
+### Decisions: no jump on load
+- New tokens: `--size-dock-narrow: 167px` and `--size-dock-narrow-portrait: 181px`, next to `--size-dock: 117px`. The phone `--layout-hero-text-gap` is 12 px (Figma), so the Phone override is gone.
+- `.player-column` is a size container (`hero-player`); the reserved height is the stage (100cqw over the stage's shape) plus the dock chosen with the skin's rules: 117 from 740 px, 167 under it, 181 under 500 px, and 167 on a touch pointer at any width (181 under 500). It is a registered `--player-reserve` length, so the check reads it in pixels.
+- Kept while `data-reserve` (Studio in the dock layout, set by `main.tsx` and in the HTML for the default) and until the Studio module has written its arrangement (`data-dock-size`). The skin's `data-bar="pro"` was the first signal tried; it is set before the Studio code arrives, with a one-row bar, so the room went too early.
+- That one-row bar would still move twice inside the kept room (its Play button grows, then the row drops 53 px); it is `visibility: hidden` while the room is kept, and an animation shows it after 4 s in case the Studio code never arrives.
+- Layout shift on first load, staged Studio, headless Chrome, the same three-run script on both builds (identical runs):
+
+  | Window | Round three | Round four |
+  |---|---|---|
+  | 390 | 0.107 | 0.002 |
+  | 760 | 0.100 | 0.002 |
+  | 900 | 0.048 | 0.006 |
+  | 1100 | 0.001 | 0.002 |
+  | 1440 | 0.002 | 0.002 |
+
+  What is left is the H1 moving 2 px when the web font arrives, and the timeline's handles settling.
+- `configurator.js` checks reserved against rendered: 1440 731.17 / 731.16, 900 592.70 / 592.69, 760 564.53 / 564.53, 390 380.88 / 380.88, touch at 820 598.03 / 598.03 (dock 167 px, as the token).
+
+### Checks (headless Chrome, Firefox and WebKit from Playwright, local production build)
+- Typecheck, tests, build. `configurator.js` passes (with the reserve check); axe: 0 violations at 1440 and 390; `reduced-motion` on the landing page passes.
+- Screenshots: `design/screenshots/landing-visuals-4/` (the hero in Studio and Viewer at 1440 × 900, 1920 × 1080, 760 × 1000, 390 × 844; the player's edge at 1440 and 390; the rim under more contrast and forced colours).
+
+### Unverified (round four)
+- Safari itself and a real phone: the scroll compensation was run in Playwright's WebKit, not Safari. The touch dock height was measured with Chrome's touch emulation, not a device.
+- The rim and shadow were tuned on screenshots; not looked at on a real display at 1×.
+
+## Landing page visuals, round five: a Studio-first hero, Configure as a quiet row (18 Nov 2026, branch `landing-visuals`, preview only)
+
+Spec: `specs/landing-visuals-5.md`. Page code only: nothing under `src/` changed, and the screenshots were not re-shot.
+
+### Decisions
+- 18 Nov 2026: the line under the H1 is now "A Video.js skin that adds a preview monitor to the player in your video tool." The meta description and the Open Graph and Twitter descriptions follow it; the title tags and the image alt are unchanged.
+- Hero copy: the descriptor reads "A Video.js skin for checking timing and framing, in the tools people make video with."; the two tier lines and their styles are gone. Spacing tokens: hero top 24 / 40 / 40, text gap 12 / 16 / 16, hero gap 24 / 32 / 32 (Phone / Desktop / Wide). The Wide player-width formula subtracts the H1 and the descriptor only.
+- Player top and dock bottom: 1920 × 1080: 236.2 and 1064 (the player is 1273 px wide, was 1216); 1440 × 900: 236.2 and 967.4 (player at its 1100 px minimum).
+- Descriptor lines: 2 at 390, 1 at 760, 1100 and 1440. At Claim Small's 19 px it took three lines at 390, so on Phone it is set in Lead (16 px there): an existing text style, but not what Figma's Phone frame names, if it names one.
+- The hero's tier switch and hint are gone; the tier is chosen in Configure. The hint is the line under Configure's Tier switch and that fieldset's description (`aria-describedby`). It makes the Tier group wider, so Layout sits further right in the panel.
+- `holdInPlace` now serves the Tier and the Layout radios (Studio's overlay has no dock either). Radio positions before and after, mouse and keyboard, in Chrome: 1440: 0 px for both; 390: 0 px for Tier, 0.2 px for Layout.
+- The Configure row: the summary on the left (dim, `--type-small`, still the button's description), the button on the right: outlined, 1 px `--control`, no fill, `--radius-control`, text colour, `--type-button`, 44 px. Hover fills it with `--surface`; open and closed look the same apart from the chevron. The turning light on its edge (the `@property` angle and its animation) is gone. Under 760 px: the summary, then the button at full width.
+- The player's corner: the page no longer sets `--media-border-radius`, so the skin shows its own 10 px frame corner; `--radius-player` is 10 px (Figma `radius/player`), and the page's box, the rim and the shadow follow it. `--media-border-color: transparent` stays.
+
+### Checks (headless Chrome, local production build)
+- Layout shift on first load: 0.002 at 390, 0.003 at 760, 0.004 at 1100, 0.002 at 1440.
+- Typecheck, 219 tests, build. `configurator.js` passes (the hero switch is gone, the hint follows the tier, the reserve check holds); axe: 0 violations at 1440 and 390; heading order H1, H2 Player, H2 Configure the player, H3 Code, H3 Event log, H2 Try it in the player; `reduced-motion` passes.
+- Screenshots: `design/screenshots/landing-visuals-5/` (the hero at 1920 × 1080, 1440 × 900, 1100, 760 and 390; the Configure row closed and open at 1440 and 390; the player's top and bottom corners at 1440).
+
+### Unverified (round five)
+- Firefox, Safari and a real phone were not run this round; `holdInPlace` was checked in all three engines in round four.
+
+### Section 5: a wider staged range
+- `media.ts`: In 66 (00:00:02:18), Out 1216 (00:00:50:16), playhead 108 (00:00:04:12). Checked against the files: the chapter "Courier greenscreen comp" starts at 2.750 s = frame 66; "Titles" starts at 50.708 s = frame 1217, so 1216 is the last frame before it; the marker `spill` is at 4.5 s = frame 108. All three match the spec. The poster follows the playhead, `(108 + 0.5) / 24` s.
+- Read on the page after load (Chrome, 1440 and 390): In 00:00:02:18, Out 00:00:50:16, timecode 00:00:04:12.
+- The range shot has its own range in `scripts/landing-shots.mjs` (`RANGE_SHOT`: 00:00:03:02 to 00:00:07:10, playhead 00:00:03:18), no longer read from `media.ts`; its alt text says "a short range" and no longer claims to be the state the player opens in. Re-shot alone: same state, region moved 3 px right to clear the controls, no control cut, 17,546 / 19,598 bytes (AVIF / WebP).
+- The landing check and `FEATURES.md` name the new values.
+- The staged range lands about 400 ms after the dock is drawn. With the long range, the Out handle travels about 900 px and Reset range pushes the transport aside: layout shift 0.015 at 1100. The page now keeps the dock's controls hidden while it stages (`data-staging` on `#player`, removed two frames after the staged state is set, or after 4 s by the same CSS fallback as the reserve), so they appear once, in place. Layout shift after: 0.006 at 390, 0.002 at 760, 0.002 at 1100, 0.002 at 1440. The dock's room is empty for that moment on first load.
+
+### Section 6: the tier hint on its own line
+- The hint left the Tier fieldset and is a line of its own under the row of switches, across the panel (8 px under the switches); the Tier fieldset keeps it as its description. The Layout switch's left edge in Studio and in Viewer: 411 and 411 px at 1440, 33 and 33 px at 390 (stacked there).
+- Screenshots: `design/screenshots/landing-visuals-5/staged-1440.png`, `staged-390.png` (the hero with the wide range), `configure-hint-viewer-1440.png`, `configure-hint-viewer-390.png`.
+
+### Merged and deployed (18 Nov 2026)
+- `landing-visuals` merged into `main` (merge `ab5371f`) on top of Theme A, A.1 and A.2. Conflicts: `landing.css` keeps main's reset scoped out of the player (`:not(:where(.media-skin *))`) and adds `figure` to it; `NOTES.md` keeps both branches' sections. On the merged build: typecheck, 219 tests, build, `configurator.js` and axe (0 violations at 1440 and 390) pass.
+- Deployed to production: https://frameline.artmarchuk.me (deployment https://videojs-frameline-m9q4oesyy-artmarchuk.vercel.app). The live page serves the new descriptor and the re-shot `og.png`.
+- The nine feature screenshots and `og.png` re-shot from `main` (Theme A): the range band is the neutral grey of the live player. Same states as before; the range region again moved 3 px right and the zoom region 125 px left to clear the controls.
+- A production deployment from another checkout (`videojs-frameline-m0nntqfod`, 01:34, an older page without this merge) replaced this one seconds later; `main` was deployed again with the new screenshots.
+
 ## Theme B: the keybed, lit "on" states, readable idle handles (18 Nov 2026, branch `theme-b`, merged into `main` and deployed to production 18 Nov 2026)
 
 Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no markup, no behaviour. Preview: https://videojs-frameline-1q93pt97s-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login; production is unchanged). Screenshots, all on the site root and each paired with `main`: `design/screenshots/theme-b/` (`main-*`, `b-*`, `pair-*`, and `b-report.json` / `main-report.json` with the computed styles).
@@ -1826,6 +2023,9 @@ Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel pre
 - The shots not opened before B.8 were opened: the hovered tile, the focused tile, the timeline with both handles set, and the two Viewer pairs. Nothing wrong found. In the downscaled both-handles pair the grip line looks stronger on Theme B; at pixel level the handles are identical.
 - typecheck, tests (219), build, contrast, `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352): pass.
 - Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo).
+- 18 Nov 2026: the staged playhead is 00:00:03:02 (frame 74), inside the range 00:00:02:18 to 00:00:50:16; it was 00:00:04:12 on the green-spill marker. The poster follows it. `origin/main` had Theme B merged and deployed meanwhile (that was the 01:34 production deployment); local `main` merged it, then went to production with this change.
+- 18 Nov 2026: the staged guides are Title safe, Action safe and the centre cross (`['title-safe', 'action-safe', 'centre']`). A visitor with remembered guides still gets their own.
+- 18 Nov 2026: `og.png` and the feature screenshots re-shot from `main` with Theme B (the transport keybed, the lit Loop). `grab-screen`, `grab-file` and `tier-viewer` came out byte-identical: they show none of the dock controls Theme B changed.
 
 ## Theme C: the timecode as a display (18 Nov 2026, branch `theme-c`, not merged)
 
