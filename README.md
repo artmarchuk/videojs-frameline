@@ -348,7 +348,7 @@ Its own tokens are `--fl-*`, all defined in `src/styles/tokens.css`. The ones a 
 
 | Token | Default | What it is |
 | --- | --- | --- |
-| `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent, a signal: set In/Out handles, a selected marker, the focus ring |
+| `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent, a signal: set In/Out handles, a selected marker, the focus ring, and the light of a mode that is on in the dock (through `--fl-led`) |
 | `--fl-surface-0` … `--fl-surface-3` | `#0c0c0c`, `#171717`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture and the timeline groove; the dock, every menu and dialog; control fill and a highlighted menu item; hover, tooltips |
 | `--fl-range` | `#606060` | The range band, one solid band |
 | `--fl-on` | `#474747` | Overlay layout only: the fill of a toggle that is on and of a button whose menu is open. The dock does not use it |
@@ -369,10 +369,15 @@ The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectan
 
 The floor the code is written for: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4.
 
-Checked with scripted browser checks (the Viewer gate, every script in `scripts/browser-checks/`, the configurator page checks and an axe audit) in Playwright's three engines on macOS. WebKit in Playwright is close to Safari but not the same build, and Safari 16.4 cannot be emulated. iOS Safari and real touch devices were not run.
+Checked with scripted browser checks (the Viewer gate, every script in `scripts/browser-checks/`, the configurator page checks and an axe audit) in Playwright's three engines on macOS, last on 18 Nov 2026 with the current theme: 72 runs in each engine, 216 in all. WebKit in Playwright is close to Safari but not the same build, and Safari 16.4 cannot be emulated. iOS Safari, real touch devices and Windows were not run.
 
-| | Chrome 157 (headless) | Firefox 159 (Playwright) | WebKit (Playwright, Safari 27 build) |
+| | Chrome 157 (headless) | Firefox 159 (Playwright) | WebKit (Playwright, Safari 27.2 build) |
 | --- | --- | --- | --- |
+| The current theme, on screenshots of the live site at 2x: the dock at 1280, the transport keybed (rest, hover, focus), the light under Loop and Zoom, the timecode with its dimmed leading zeros, a menu over the picture and over the narrow dock, the narrow dock at 390 and 324 px | Reference | The same; the timecode is 0.04 px wider | The same; the timecode is 0.05 px narrower |
+| The theme's other states, on the local build: the captions light (a test track), the keybed with shot navigation or frame stepping off, disabled cut keys | Pass | Pass | Pass |
+| `prefers-contrast: more` (emulated): `dock-polish`, `phone-transport`, `handle-focus-ring`, `guides-menu-focus`, `range-playback` | Pass | Pass, with the touch limit below | Pass, with the touch limit below |
+| `forced-colors: active` (emulated), the same five | Pass, except `dock-polish` on the narrow dock: three of its assertions were written for the default colours (the keys share a 1 px border there, and Loop on keeps its Highlight fill). The dock was looked at and nothing is missing or cut | The same | The same |
+| Touch drags on the narrow dock (`phone-transport`) | Pass | Layout passes. The check drives touch through a Chromium-only interface, so the drag was run with synthetic pointer events: the playhead wins over the In handle; the handle drag was not confirmed | As Firefox |
 | Viewer gate, menus, focus order, help dialog | Pass | Pass. Firefox also puts the `<video>` element itself in the tab order, two stops before the seek bar | Pass |
 | Frame clock | `requestVideoFrameCallback` | `requestVideoFrameCallback`; it reports the seek time rather than the frame's start, which the clock allows for. Ten steps land on frame 10 | `requestVideoFrameCallback`; ten steps land on frame 10 |
 | Zoom: `image-rendering: pixelated` on video, guides counter-scale | Pass | Pass | Pass |
@@ -389,7 +394,7 @@ Accessibility, in short:
 - `forced-colors` (Windows High Contrast): system colours, bordered buttons and menu items, Highlight for checked states and the range band.
 - `prefers-reduced-motion`: no transitions or animations in the skin or on the page.
 - Targets at least 24 px, 44 px on touch.
-- axe-core (`@axe-core/playwright`): zero violations on the page (dark only, at desktop and phone width), in Studio with the Guides menu, the Zoom menu and the help dialog open, and in the Viewer.
+- axe-core (`@axe-core/playwright`): zero violations on the page (dark only, at desktop and phone width), in Studio with the Guides menu, the Zoom menu and the help dialog open, and in the Viewer; in all three engines.
 
 **Language:** the skin's own strings (Studio controls, tooltips, announcements, the help dialog) are English only. Video.js's own components follow the player's locale.
 

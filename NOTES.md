@@ -686,6 +686,13 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - **High priority:** define the Open Graph and Twitter card tags and a share image for the landing page (title, description, `og:image` at 1200x630, alt text). Take the words from the Brand content doc (title "Frameline", description = the category line "A Video.js skin for the tools people make video with."); design the image from Frameline's own material, not a generic player shot.
 - Landing page tokens (`apps/preview/src/page/tokens.css`, mirrored from Figma): `--range: #4d7bc1` and the dock greys no longer match the player after Theme A and A.1 (range `#606060`, one band; dock `#171717`). Update Figma and the page together.
 - On a narrow player (390 and 320 px) the Markers menu cuts long marker names with an ellipsis, and the times too. The times should never be cut: give the time column a fixed, unshrinkable width.
+- Narrow dock, a wider font: with Verdana the timecode with its `≈` marker is 103.75px in the 94px field and runs 5px past the well on each side; the row itself does not overflow. Folding the cut pair at 330px instead of 324px is not enough alone: the field would need 106px, a 334px row (measured in the theme wrap-up, W.3).
+- Guides menu: cut at its bottom edge on a 760px player ("Hide guides" half hidden, seen during the landing work), and on a 390px player it ends in the middle of a row with nothing to show that it scrolls.
+- Viewer overlay: a toggle that is on still uses the lighter `--fl-on` fill; the light is dock-only by decision. Revisit if the Viewer is restyled.
+- `dock-polish.js` under forced colours on the narrow dock: make `rowOneFits` allow the keys' shared 1px border, `loopOn` expect the `Highlight` fill, and decide whether the first key sitting 1px outside the housing under 324px (the `keybed` assertion) is worth a rule.
+- `phone-transport.js` drags with a Chromium-only CDP call; give it a touch drag that Firefox and WebKit can run.
+- Guides over captions: the safe-area lines are drawn across the caption text when captions sit on the lower safe-area line.
+- A disabled transport key still takes the hover fill.
 - hls.js can skip forward about 2 s right after the range engine starts playback at In (see "Section 6" under "Dock polish, follow-up").
 - The configurator page's dark palette still has the old blue-cast greys; make it neutral like the player.
 - A `layout="overlay"` Studio bar still covers a small player; consider a compact overlay variant if a host needs it.
@@ -1653,9 +1660,9 @@ Theme A added `s0`, `s1`, `legend` and `seam` and reproduced its spec's numbers 
 ### Unverified (Theme A)
 - **The preview URL was not opened**: it answers with a redirect to Vercel's login. Every check and screenshot ran on the local production build of the same commit.
 - **A real display and pointer:** the 1px legend shadow on a 1x screen (the link icon above), the 1px press travel, and how the darker body reads next to the picture.
-- Firefox and Safari were not run. `filter: drop-shadow()` on an inline SVG inside a button and the three-layer `box-shadow` lists are inside the browser floor on paper.
-- The browser-check scripts in `scripts/browser-checks/` were not run for Theme A; they were run in A.1 (below).
-- `prefers-contrast: more` and forced colours were emulated in Chromium.
+- Firefox and Safari were not run. `filter: drop-shadow()` on an inline SVG inside a button and the three-layer `box-shadow` lists are inside the browser floor on paper. **Resolved in the wrap-up** for Playwright's Firefox and WebKit (W.1, W.2); Safari itself is still open.
+- The browser-check scripts in `scripts/browser-checks/` were not run for Theme A; they were run in A.1 (below). **Resolved in the wrap-up** (W.1: every script, three engines).
+- `prefers-contrast: more` and forced colours were emulated in Chromium. **Resolved in the wrap-up** (W.1: both modes emulated in three engines).
 
 ## Theme A.1: review fixes (17 Nov 2026, branch `theme-industrial`, merged into `main` and deployed to production 18 Nov 2026)
 
@@ -1710,7 +1717,7 @@ Run with `playwright-core` in Google Chrome against the local production build, 
 ### Unverified (Theme A.1)
 - The preview URL was not opened (Vercel login); everything ran on the local build of the same tree.
 - Firefox and Safari, a real 1x display and a real pointer: how the groove's rim and the link's hover read on a real screen.
-- `prefers-contrast: more` and forced colours were emulated in Chromium. The compact dock, `phone-transport.js`, `range-playback.js` and `guides-menu-focus.js` were not run in those two modes.
+- `prefers-contrast: more` and forced colours were emulated in Chromium. The compact dock, `phone-transport.js`, `range-playback.js` and `guides-menu-focus.js` were not run in those two modes. **Resolved in the wrap-up** (W.1: both modes in three engines, those scripts included; `dock-polish` on the narrow dock fails three of its own assertions in forced colours, see there).
 - The landing page still uses the old range blue (Backlog).
 
 ### A1.8 The landing page's `kbd` rule leaked into the player (18 Nov 2026)
@@ -1724,7 +1731,7 @@ Run with `playwright-core` in Google Chrome against the local production build, 
 - **Another leak of the same kind, not fixed (Backlog):** the page's unlayered `button:focus-visible { outline: 2px solid var(--link) }` also reaches the player's buttons. By default it matches the player's ring (2 px, `#5b9dff`, 2 px offset), so nothing shows. Under `prefers-contrast: more` it cuts the player's 3 px ring to 2 px on the site root (3 px on the monitor page).
 - Checks: typecheck, tests (219), build, `node scripts/contrast.mjs` pass. The settings menu (surface-1) shows its shortcuts in `--fl-text-dim`, 6.53:1. Skin CSS 39,780 / 6,997 B raw / gzip (A.1: 39,663 / 6,942).
 - Preview deployment (behind Vercel's login): https://videojs-frameline-du992ala4-artmarchuk.vercel.app. Production was not deployed, no tag, not merged.
-- Unverified: Firefox and Safari; the preview URL itself (Vercel login); the dialog and tooltips on the site root under forced colours.
+- Unverified: Firefox and Safari; the preview URL itself (Vercel login); the dialog and tooltips on the site root under forced colours. Wrap-up: Firefox and WebKit are resolved (W.1, W.2); the other two are still open.
 
 ## Theme A.2: one menu surface, and the last landing-page leaks (18 Nov 2026, branch `theme-industrial`, merged into `main` and deployed to production 18 Nov 2026)
 
@@ -1760,8 +1767,8 @@ After the fixes the two pages differ in 0 properties, in both colour modes. The 
 - CSS sizes (raw / gzip): skin 39,803 / 7,007 B; Studio 27,191 / 4,819 B (28,422 / 5,003 before A.1); landing page 29,533 / 5,887 B.
 
 ### Unverified (Theme A.2)
-- The preview URL itself (Vercel login), Firefox and Safari, a real display.
-- Whether the faint menu edge over the dock is enough for the author: it is decorative by the rules and visible at 2x, but quieter than before.
+- The preview URL itself (Vercel login), Firefox and Safari, a real display. Wrap-up: Firefox and WebKit are resolved (W.1, W.2); the rest is still open.
+- Whether the faint menu edge over the dock is enough for the author: it is decorative by the rules and visible at 2x, but quieter than before. **Resolved** by B.8 (the solid `#424242` edge).
 - On a narrow player the Markers menu cuts long names and also the times with an ellipsis (at 390 and 320). This was already so at A1.8 and is not changed here (Backlog).
 
 ## Landing page visuals: a staged hero, six feature rows, screenshots (17 Nov 2026, branch `landing-visuals`, preview only)
@@ -2007,10 +2014,10 @@ Spec: `specs/theme-b-keybed-and-lit-states.md`. Styling only: CSS and tokens, no
 
 ### Unverified (Theme B)
 - The preview URL in a browser: it answers 302 to the Vercel login. The deployment reports READY and holds the build the screenshots were taken from.
-- Firefox and Safari; a real display; real touch devices.
-- The captions light (no captions on the demo), a disabled tile, and a transport with a feature turned off.
+- Firefox and Safari; a real display; real touch devices. Wrap-up: Firefox and WebKit are resolved (W.1, W.2); the rest is still open.
+- The captions light (no captions on the demo), a disabled tile, and a transport with a feature turned off. **Resolved in the wrap-up** (W.3); the transport with frame stepping off under 324px was wrong and is fixed.
 - The fade of the light in motion: only its end states were captured.
-- Windows High Contrast itself: forced colours were emulated in Chrome.
+- Windows High Contrast itself: forced colours were emulated in Chrome. Wrap-up: now emulated in three engines; Windows itself is still open.
 
 ### B.8 Follow-up after review (18 Nov 2026)
 
@@ -2024,7 +2031,7 @@ Preview: https://videojs-frameline-cfavmkxjf-artmarchuk.vercel.app (a Vercel pre
 - Contrast: the menu-edge row is `#424242` (1.78 / 4.24); the two light rows are relabelled (on `surface-2`: Loop as a key; on the dock: a flat button that is on). 81 rows pass in both columns.
 - The shots not opened before B.8 were opened: the hovered tile, the focused tile, the timeline with both handles set, and the two Viewer pairs. Nothing wrong found. In the downscaled both-handles pair the grip line looks stronger on Theme B; at pixel level the handles are identical.
 - typecheck, tests (219), build, contrast, `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352): pass.
-- Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo).
+- Unverified: as for Theme B. Also the captions button with no fill (no captions on the demo). **Resolved in the wrap-up** (W.3) for the captions button.
 - 18 Nov 2026: the staged playhead is 00:00:03:02 (frame 74), inside the range 00:00:02:18 to 00:00:50:16; it was 00:00:04:12 on the green-spill marker. The poster follows it. `origin/main` had Theme B merged and deployed meanwhile (that was the 01:34 production deployment); local `main` merged it, then went to production with this change.
 - 18 Nov 2026: the staged guides are Title safe, Action safe and the centre cross (`['title-safe', 'action-safe', 'centre']`). A visitor with remembered guides still gets their own.
 - 18 Nov 2026: `og.png` and the feature screenshots re-shot from `main` with Theme B (the transport keybed, the lit Loop). `grab-screen`, `grab-file` and `tier-viewer` came out byte-identical: they show none of the dock controls Theme B changed.
@@ -2060,7 +2067,7 @@ Spec: `specs/theme-c-timecode-display.md`. CSS, tokens and one markup change (C.
 - Browser checks on the local build, monitor page: `dock-polish` (1440 default, more, forced; 724x375 touch; 422, 392, 352), `phone-transport` (430 to 320 touch, 1440 mouse), `range-playback`: all pass, no assertion changed.
 
 ### Unverified (Theme C)
-- Windows: Segoe UI Variable at 400 and 300, and the measured widths with that font. Firefox, Safari, real devices.
+- Windows: Segoe UI Variable at 400 and 300, and the measured widths with that font. Firefox, Safari, real devices. Wrap-up: Firefox and WebKit are resolved (W.2: the timecode is within 0.05px of Chromium's); Windows and real devices are still open.
 - `00:00:56:01`: the demo's last frame reads `00:00:56:00`, so that is the shot.
 - Drop-frame and a start timecode with hours: unit tests only; the demo has neither.
 - Under more contrast the lead (`#cccccc`) is close to the digits (`#f2f2f2`), as the spec sets it: the dimming is slight there.
@@ -2074,4 +2081,102 @@ Screenshots: `design/screenshots/theme-c6/` (`c-*` is `theme-c` before C.6, `c6-
 - The margin is 2px in all: enough for a font whose eleven characters are up to 2px wider in total, not for a much wider one. A larger user default font scales the whole skin only if the host sets `--media-scale-unit`; the skin's sizes are in px steps, not `rem`.
 - **The split rule, as built and accepted:** (1) the lead is the run of `0`, `:` and `;` before the first digit that is not zero; (2) it never reaches the last two characters (the frames); (3) it never splits the hours field, so `01:00:00:00` is drawn whole; nothing is dimmed in seconds mode. The helper's comment states the three points.
 - Checks: typecheck, tests (225), build, contrast (82 rows pass), `dock-polish` and `phone-transport` at every width: pass.
-- Unverified: Windows (Segoe UI Variable) widths, which is the case the margin is for.
+- Unverified: Windows (Segoe UI Variable) widths, which is the case the margin is for. Wrap-up, W.3: measured with Verdana as a stand-in; the row holds, the text with `≈` passes the field. Segoe itself is still open.
+
+## Theme refresh: wrap-up (18 Nov 2026, branch `theme-wrap`, preview only)
+
+Spec: `specs/theme-wrap-up.md`. The last step of the theme refresh (Themes A, A.1, A.2, B, B.8, C, C.6): no new look. One regression was found and fixed (W.3, the keybed), so this step ends on a preview, not on `main`. Preview: https://videojs-frameline-j65r7c7qn-artmarchuk.vercel.app (a Vercel preview, behind the Vercel login, not opened in a browser; production is unchanged). Screenshots and reports: `design/screenshots/theme-wrap/` (`w1/`, `w2/`, `w3/`).
+
+Everything ran in Playwright 1.65.1 on macOS: Chromium as the installed Google Chrome (headless, 157.0.8103.79), Playwright's Firefox 159.0 and Playwright's WebKit (a Safari 27.2 build). W.1 and W.3 ran on the local production build (port 4173), W.2 on https://frameline.artmarchuk.me.
+
+### W.1 Every check in three engines
+
+Every script in `scripts/browser-checks/`, at the widths its header names: 72 runs in each engine, 216 in all, run twice (before and after the W.3 fix); the table is the second run. `prefers-contrast: more` and `forced-colors: active` were emulated in **all three** engines (`matchMedia` confirmed both in each run), so forced colours is no longer Chromium only. "n of m" counts runs.
+
+| Check (runs) | Mode | Chromium | Firefox | WebKit |
+| --- | --- | --- | --- | --- |
+| `viewer-gate.js` (4) | default | Pass | Pass | Pass |
+| `dock-polish.js` (5) | default | Pass | Pass | Pass |
+| `phone-transport.js` (8) | default | Pass | 1 of 8 | 1 of 8 |
+| `error-retry.js` (2) | default | Pass | Pass | Pass |
+| `configurator.js` (1) | default | Pass | Pass | 0 of 1 |
+| `fullscreen-focus.js` (2) | default | Pass | Pass | Pass |
+| `handle-focus-ring.js` (1) | default | Pass | Pass | Pass |
+| `guides-menu-focus.js` (1) | default | Pass | Pass | Pass |
+| `reduced-motion.js` (3) | default | Pass | Pass | Pass |
+| `two-players.js` (1) | default | Pass | Pass | Pass |
+| `range-playback.js` (1) | default | Pass | Pass | Pass |
+| `zoom.js` (2) | default | Pass | Pass | 1 of 2 |
+| `zoom-rendition-cap.js` (1) | default | Pass | Pass | Pass |
+| `axe-audit.js` (7) | default | Pass | Pass | Pass |
+| `zoom-rendition-note.js` (1) | default | Pass | Pass | Pass |
+| `dock-polish.js` (5) | more | Pass | Pass | Pass |
+| `phone-transport.js` (8) | more | Pass | 1 of 8 | 1 of 8 |
+| `guides-menu-focus.js` (1) | more | Pass | Pass | Pass |
+| `handle-focus-ring.js` (1) | more | Pass | Pass | Pass |
+| `dock-polish.js` (5) | forced | 1 of 5 | 1 of 5 | 1 of 5 |
+| `range-playback.js` (1) | more | Pass | Pass | Pass |
+| `phone-transport.js` (8) | forced | Pass | 1 of 8 | 1 of 8 |
+| `guides-menu-focus.js` (1) | forced | Pass | Pass | Pass |
+| `handle-focus-ring.js` (1) | forced | Pass | Pass | Pass |
+| `range-playback.js` (1) | forced | Pass | Pass | Pass |
+
+The rows that are not "Pass", each compared with `f42957d` (the commit before Theme A, built in a scratch worktree and run with its own copy of the scripts):
+
+| Failure | What fails | On `f42957d` | Verdict |
+| --- | --- | --- | --- |
+| `dock-polish.js`, forced colours, narrow dock (422, 392, 352 and the 724x375 touch window), all three engines | `rowOneFits` at all four: it asks each item to start no more than 0.5px before the one before it ends, and in forced colours the keybed's keys share a 1px border (`margin-left: -1px`). `loopOn` at 422, 392 and 352: it asserts no fill on a flat Loop that is on, and in forced colours Loop keeps its `Highlight` fill by decision (B.8). `keybed` at 352: with the cut keys folded away the first key sits 1px outside the housing's box | 422, 392 and 352 pass; the touch window fails there too, on another assertion (`loopOff`) | New with Theme B, in the **check**, not in the skin: the three assertions were written for the default colours and the narrow dock was not run in forced colours in Theme B. The dock was looked at (`w1/now-forced-422.png`, `-352`, `-724`): every key is there, bordered and readable, nothing is cut or overlaps beyond the shared border. Not changed here (Backlog) |
+| `phone-transport.js`, the touch windows, Firefox and WebKit, every mode | The script drags with `Input.dispatchTouchEvent` over a CDP session, which only Chromium has | The same (the script used CDP there too) | A limit of the check, older than the refresh. Run here with a stand-in in the runner (synthetic `pointerdown`/`pointermove`/`pointerup` with `pointerType: 'touch'`): the row layout passes in all 21 runs in each engine, and in all 21 the playhead wins over the In handle (the time moves, In stays). The last part, the handle drag, ends with the time at 0 where Chromium keeps it; with untrusted events and no pointer capture that proves nothing either way (Unverified) |
+| `configurator.js`, WebKit | `copied`: headless WebKit refuses clipboard writes | Fails the same way | Older than the refresh, a limit of headless WebKit (step 9) |
+| `zoom-rendition-note.js`, Firefox | `bestOk`: after a manual switch to the best rendition Video.js keeps reporting the previous one | Fails the same way | Older than the refresh, Video.js's (step 9) |
+| `zoom.js` at 2x, WebKit | `grabSame`: two grabs of one paused frame differ in a few pixel values | Known from step 9 | Intermittent: it passed in the first run and three times out of three run alone; it failed once in the second run, with three engines running at once |
+
+In the second run WebKit's `configurator.js` also failed `stepOk` once; alone it passed three times out of three (only `copied` fails). Firefox blocks port 4190, so the old build was served on 4175.
+
+### W.2 Firefox and WebKit next to Chromium, on the live site
+
+`w2/`: one file per engine (`chromium-*`, `firefox-*`, `webkit-*`) and the three together (`trio-*`), 2x, on https://frameline.artmarchuk.me/?tier=studio (stylesheet `demo-video-BOwppttG.css`), all opened. The dock at 1280 with the staged range and Loop on; the keybed at rest, with step forward hovered and with it focused; Loop on next to Zoom at 200%; the timecode at `00:00:02:04`; the Guides menu over the picture at 1280 and over the dock on a 390px player; the narrow dock at 390 and 324.
+
+- **Measured, the same in all three:** the timecode field 160 x 34 (94 x 44 narrow), the keys 34, 34, 46, 34, 34 (44 each narrow) with 1px seams, the dock 117px tall (181 narrow), the lead `00:00:0` in `rgb(122, 122, 122)`, the light 4 x 4px with its 4px glow, Loop's fill `rgb(44, 44, 44)` as a key and none on the compact dock, Zoom at 200% with no fill and the light on, the focus ring 2px `rgb(91, 157, 255)`, the menu 562 x 506 (290 x 326.75 narrow) with its `1px solid rgb(66, 66, 66)` edge. No overflow, no page scroll.
+- **Differences:** the timecode's text is 124.88px wide in Chromium, 124.92 in Firefox, 124.83 in WebKit (81.38, 81.33 and 81.36 on the narrow dock). Firefox draws the colons a touch heavier, and in the WebKit crops everything sits one device pixel lower (the same offset for every element; not measured further). The seams, the housing's edge, the light and its glow, the hovered and the focused tile and the menu edge look the same.
+- **Not an engine difference:** the thin buffered line under the track shows in some shots and not in others; it follows how much had buffered when the shot was taken (Chromium has it in one shot and not in another).
+- **No regression:** nothing is missing, clipped, overlapping or unreadable in either engine.
+- **Seen, the same in all three, older than this step:** on the 390px player the open Guides menu ends in the middle of the `2.39:1` row with nothing to show that it scrolls (Backlog, with the 760px case).
+- The first hovered-tile shot in WebKit showed no hover: the script took it 500ms after the pointer moved. Retaken in all three with a longer wait; the computed fill is `rgb(58, 58, 58)` in each.
+
+### W.3 The states nobody had seen
+
+Local production build, site root, 2x (`w3/`). Chromium for the screenshots; the keybed, disabled and captions states were also measured in Firefox and WebKit, with the same numbers.
+
+- **Captions on.** A one-cue WebVTT `<track kind="captions">` added to the video by the check only. Wide dock: the captions button appears between the divider and More; on, it has no fill and no press shade, the light at full opacity with its glow, and the icon at `--fl-text` (`captions-off-1280.png`, `captions-on-1280.png`). Narrow dock: there is no captions button in the dock (by the narrow dock's rules); Captions is a row of the More menu (`captions-narrow-390-menu.png`), so there is no light to check there. Seen in `captions-on-1280-player.png`: the Title safe and Action safe lines are drawn over the caption text, which sits on the lower safe-area line (Backlog).
+- **A transport with features off** (`shotNav=0`, `frameStep=0`, both; players of 1280, 390 and 320px; `sheet-keybed.png`). Eleven of twelve cases were right. **One regression, fixed:** with frame stepping off on a player under 324px, the cut keys fold away and Play is the only key, but it kept its inner 2px corners and the housing showed 1px beside it on each side (two empty groups, each with a seam and no key). Now the empty group is not drawn and Play takes the housing's 8px corners (`pair-keybed-no-framestep-320.png`). The change is three rules in `src/pro/studio/studio.css`, inside the existing `width < 324px` container query; no new token. After it, in all twelve cases and all three engines: the first and last key carry the 8px outer corners, every seam is 1px, and the housing hugs its keys.
+- **A disabled tile.** The two cut keys are `aria-disabled` when the source has no chapters and no markers (`?media=plain`); no other transport key can be disabled. They keep the tile's face (`rgb(44, 44, 44)`) and the legend dims to 45% (`keybed-disabled-1280.png`, `-390.png`). A disabled key still takes the hover fill (`keybed-disabled-1280-hover.png`); it stays focusable and its tooltip says why it is off. Not changed.
+- **A wider font.** `--media-font-family: Verdana, sans-serif`, the `≈` marker shown, players of 324, 330 and 390px (`sheet-font.png`):
+
+| | System font | Verdana |
+| --- | --- | --- |
+| `00:00:14:20` | 81.38px | 90.28px |
+| `≈00:00:14:20` | 92.05px | 103.75px |
+| The field | 94px | 94px (it is a fixed width) |
+| Text beyond the field | none (0.98px to spare each side) | 4.89px on each side with the marker; without it the text fits with 1.86px each side |
+| Row one at 324, 330, 390 | 294 of 294, 300 of 300, 342 of 360px | the same: the row does not grow |
+| Overflow of the row or the page | none | none |
+
+  The row never overflows, because the field does not grow with its text. What a wider face breaks is the field: with the `≈` marker the text runs 5px past the well on both sides, up to the keybed's edge. It is readable and nothing is cut. Without the marker (every engine run here has `requestVideoFrameCallback`) Verdana fits. Folding the cut pair at 330px instead of 324px would not help by itself: the field would have to be 106px for Verdana with the marker, which makes the row 334px. Not fixed, as the spec says (Backlog).
+
+### Checks
+typecheck, tests (225), build, `node scripts/contrast.mjs` (82 rows, all pass in both columns): pass. Studio CSS 28,449 B raw (was 27,745).
+
+### Unverified after the theme refresh (one list; it replaces the lists under Themes A, A.1, A1.8, A.2, B, B.8, C and C.6)
+
+- **Safari itself and iOS Safari.** Playwright's WebKit (a Safari 27.2 build) stood in; Safari 16.4, Chrome 111 and Firefox 121 (the floor) were not run. The fix uses `:has()` with `:not()` inside it, which is inside the floor on paper.
+- **Real touch devices.** Touch was emulated. The touch drag of the playhead and the handles is confirmed in Chromium only (see W.1).
+- **Windows.** Segoe UI Variable and the timecode's widths with it (Verdana was measured as a stand-in), and Windows High Contrast itself (forced colours were emulated, now in three engines).
+- **A real display and a real pointer.** The 1px legend shadow and the groove's rim on a 1x screen, the 1px press travel, the link's hover, how the darker body reads next to the picture.
+- **The light's fade in motion.** Only its end states were captured.
+- **Drop-frame and a start timecode with hours:** unit tests only; the demo has neither.
+- **The help dialog and tooltips on the site root under forced colours** (from A1.8): the forced-colours runs were on the monitor page.
+- **Captions from a real stream.** The light was checked with a test track added in the browser.
+- **The preview URLs in a browser.** They answer with a redirect to the Vercel login; each deployment reports READY.
+- Accepted, not open: under more contrast the timecode's lead (`#cccccc`) is close to the digits (`#f2f2f2`), as Theme C's spec sets it.
+

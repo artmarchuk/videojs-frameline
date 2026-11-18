@@ -1,0 +1,60 @@
+{
+  "engine": "chromium",
+  "version": "157.0.8103.79",
+  "captions": {
+    "390": {
+      "before": {
+        "exists": false,
+        "visible": false
+      },
+      "off": {
+        "visible": false,
+        "exists": true
+      },
+      "on": {
+        "menu": [
+          "Speed1×",
+          "QualityAuto (1080p)",
+          "CaptionsOff",
+          "MuteM",
+          "Picture-in-picture",
+          "Keyboard shortcuts?"
+        ]
+      }
+    },
+    "1280": {
+      "before": {
+        "exists": false,
+        "visible": false
+      },
+      "off": {
+        "visible": true,
+        "pressed": null,
+        "active": false,
+        "label": "Enable captions",
+        "fill": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "light": "rgb(91, 157, 255)",
+        "lightOpacity": "0",
+        "lightGlow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+        "color": "rgb(208, 208, 208)",
+        "modes": "metadata:hidden,chapters:hidden,captions:disabled"
+      },
+      "on": {
+        "visible": true,
+        "pressed": null,
+        "active": true,
+        "label": "Disable captions",
+        "fill": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+        "light": "rgb(91, 157, 255)",
+        "lightOpacity": "1",
+        "lightGlow": "color(srgb 0.356863 0.615686 1 / 0.6) 0px 0px 4px 0px",
+        "color": "rgb(242, 242, 242)",
+        "modes": "metadata:hidden,chapters:hidden,captions:showing"
+      }
+    }
+  }
+}
