@@ -639,9 +639,13 @@ video-player {
   max-width: 680px;
   color: var(--dim);
   font: var(--type-lead);
+  text-wrap: pretty;
 }
 
+/* The answer starts on its own line. */
 .motivation span {
+  display: block;
+  margin-top: var(--space-8);
   color: var(--text);
 }
 

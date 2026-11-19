@@ -2213,4 +2213,4 @@ Checks: typecheck, tests (225), build, `node scripts/contrast.mjs` (all rows pas
 
 ## Landing page: the motivation section (19 Nov 2026, branch `landing-motivation`, preview only)
 
-- A "Why" section (`#why`, visually hidden h2 "Why Frameline exists") between the hero block and "What Studio checks" holds the Brand content doc's Motivation paragraph verbatim: the problem in `--dim`, the last sentence in `--text` (`.motivation`, 680 px, `--type-lead`). The copy keeps the doc's straight apostrophe in "editor's", although the rest of the page uses curly ones.
+- A "Why" section (`#why`, visually hidden h2 "Why Frameline exists") between the hero block and "What Studio checks" holds the Brand content doc's Motivation paragraph verbatim: the problem in `--dim`, the last sentence in `--text` (`.motivation`, 680 px, `--type-lead`). The last sentence is a block 8 px below the rest, so the answer starts on its own line. "editor’s" takes a curly apostrophe, like the rest of the page (the doc has a straight one; the author's call). `text-wrap: pretty` is progressive: browsers without it (Firefox at the floor, Safari before 26) wrap normally.
