@@ -634,6 +634,17 @@ video-player {
   color: var(--dim);
 }
 
+/* The motivation paragraph: the problem in --dim, the answer (its last sentence) in --text. */
+.motivation {
+  max-width: 680px;
+  color: var(--dim);
+  font: var(--type-lead);
+}
+
+.motivation span {
+  color: var(--text);
+}
+
 /* ---------- Configure: collapsed under the player; its button opens the whole section ---------- */
 
 /*

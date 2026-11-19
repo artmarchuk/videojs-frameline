@@ -2210,3 +2210,7 @@ Checks: typecheck, tests (225), build, `node scripts/contrast.mjs` (all rows pas
 - **The preview URLs in a browser.** They answer with a redirect to the Vercel login; each deployment reports READY.
 - Accepted, not open: under more contrast the timecode's lead (`#cccccc`) is close to the digits (`#f2f2f2`), as Theme C's spec sets it.
 
+
+## Landing page: the motivation section (19 Nov 2026, branch `landing-motivation`, preview only)
+
+- A "Why" section (`#why`, visually hidden h2 "Why Frameline exists") between the hero block and "What Studio checks" holds the Brand content doc's Motivation paragraph verbatim: the problem in `--dim`, the last sentence in `--text` (`.motivation`, 680 px, `--type-lead`). The copy keeps the doc's straight apostrophe in "editor's", although the rest of the page uses curly ones.
