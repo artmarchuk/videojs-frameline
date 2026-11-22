@@ -38,16 +38,16 @@ describe('pro store', () => {
 
   it('unsets a point that is moved back to its end', () => {
     const store = createProStore();
-    const onInOutChange = vi.fn();
+    const onRangeChange = vi.fn();
     store.setDuration(60);
-    store.setCallbacks({ onInOutChange });
+    store.setCallbacks({ onRangeChange });
     store.setIn(10);
     store.setOut(20);
     store.setIn(0);
     expect(store.getState()).toMatchObject({ inPoint: null, outPoint: 20 });
     store.setOut(60);
     expect(store.getState()).toMatchObject({ inPoint: null, outPoint: null });
-    expect(onInOutChange).toHaveBeenLastCalledWith({ in: null, out: null });
+    expect(onRangeChange).toHaveBeenLastCalledWith({ in: null, out: null });
   });
 
   it('re-clamps when the duration arrives late', () => {
@@ -83,10 +83,10 @@ describe('pro store', () => {
     expect(store.getState().loopMode).toBe('range');
   });
 
-  it('fires onInOutChange only when the range changes', () => {
+  it('fires onRangeChange only when the range changes', () => {
     const store = createProStore();
-    const onInOutChange = vi.fn();
-    store.setCallbacks({ onInOutChange });
+    const onRangeChange = vi.fn();
+    store.setCallbacks({ onRangeChange });
     store.setIn(1);
     store.setIn(1);
     store.toggleTimeDisplay();
@@ -94,7 +94,7 @@ describe('pro store', () => {
     store.setOut(4);
     store.clearInOut();
     store.clearInOut();
-    expect(onInOutChange.mock.calls).toEqual([[{ in: 1, out: null }], [{ in: 1, out: 4 }], [{ in: null, out: null }]]);
+    expect(onRangeChange.mock.calls).toEqual([[{ in: 1, out: null }], [{ in: 1, out: 4 }], [{ in: null, out: null }]]);
   });
 
   it('fires onFrameChange only when the frame number changes', () => {
@@ -271,16 +271,16 @@ describe('the host handle: setRange, setGuides, onZoomChange', () => {
 
   it('sets both points in one change and tells the host once', () => {
     const store = createProStore();
-    const onInOutChange = vi.fn();
-    store.setCallbacks({ onInOutChange });
+    const onRangeChange = vi.fn();
+    store.setCallbacks({ onRangeChange });
     store.setDuration(60);
     store.setRange(10, 20);
     expect(store.getState()).toMatchObject({ inPoint: 10, outPoint: 20 });
-    expect(onInOutChange).toHaveBeenCalledTimes(1);
-    expect(onInOutChange).toHaveBeenLastCalledWith({ in: 10, out: 20 });
+    expect(onRangeChange).toHaveBeenCalledTimes(1);
+    expect(onRangeChange).toHaveBeenLastCalledWith({ in: 10, out: 20 });
     // The same range again: nothing to tell.
     store.setRange(10, 20);
-    expect(onInOutChange).toHaveBeenCalledTimes(1);
+    expect(onRangeChange).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the range rules: swap, clamp, ends are not set, no zero length', () => {
@@ -323,7 +323,7 @@ describe('the host handle: setRange, setGuides, onZoomChange', () => {
   });
 
   it('shows hidden guides again, and ignores what the host does not allow or does not know', () => {
-    const store = createProStore({ allowedView: allowedView(resolveFeatures('studio', { guides: ['title-safe'], platformZones: false })) });
+    const store = createProStore({ allowedView: allowedView(resolveFeatures('studio', { guides: ['title-safe'], zones: false })) });
     store.setGuides({ guides: ['title-safe'] });
     store.toggleGuidesHidden();
     expect(store.getState().view.hidden).toBe(true);

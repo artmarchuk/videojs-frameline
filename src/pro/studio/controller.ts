@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { useProStoreApi } from '../context';
 import { warnOnce } from '../dev';
-import type { FrameInfo, Marker, ProStore } from '../store';
+import type { FramelineLinkUrl } from '../api';
+import type { FramelineFrameInfo, FramelineMarker, ProStore } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import type { AnnounceOptions } from './announcer';
 import {
@@ -10,38 +11,48 @@ import {
   findCut,
   formatLinkPosition,
   grabFileName,
+  linkFragment,
   JUMP_FRAMES,
   lastFrameOf,
   outsideRange,
   playbackDecision,
   readLinkPosition,
   resolveLinkPosition,
+  resolveLinkUrl,
   seekTimeForFrame,
   stepTarget,
-  withLinkPosition,
   type Cut,
 } from './logic';
 import { studioStrings as t } from './strings';
 import { isAtOwnEnd, snapFrame } from './timeline/logic';
 
-export interface CopyLinkInfo {
+/** What `onCopyLink` reports: the link the skin copied, and the frame it names. */
+export interface FramelineCopyLinkInfo {
+  /** The URL that went to the clipboard. */
   url: string;
+  /** The frame index, from 0. */
   frame: number;
+  /** The frame's start time in seconds. */
   time: number;
+  /** The timecode as shown in the player. */
+  timecode: string;
 }
 
 /** What `onFrameGrab` reports: the frame that was grabbed and where it went. */
-export interface FrameGrabInfo {
+export interface FramelineFrameGrabInfo {
+  /** The frame index, from 0. */
   frame: number;
   /** Media time of the frame, in seconds. */
   time: number;
   /** The timecode as shown in the player. */
   timecode: string;
-  /** The image's size: the playing rendition's own pixels. */
+  /** The image's width: the playing rendition's own pixels. */
   width: number;
+  /** The image's height, in the same pixels. */
   height: number;
   /** `'file'`: downloaded as a PNG named `fileName`. `'clipboard'`: copied as an image. */
   target: 'file' | 'clipboard';
+  /** The name of the downloaded file; only with `target: 'file'`. */
   fileName?: string;
 }
 
@@ -52,8 +63,10 @@ export interface StudioOptions {
   dropFrame: boolean;
   cuts: readonly Cut[];
   announce: (message: string, options?: AnnounceOptions) => void;
-  onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
-  onFrameGrab?: ((info: FrameGrabInfo) => void) | undefined;
+  /** What Copy link copies; see `resolveLinkUrl`. */
+  linkUrl?: FramelineLinkUrl | undefined;
+  onCopyLink?: ((info: FramelineCopyLinkInfo) => void) | undefined;
+  onFrameGrab?: ((info: FramelineFrameGrabInfo) => void) | undefined;
 }
 
 export interface StudioController {
@@ -73,6 +86,8 @@ export interface StudioController {
   /**
    * Copies a link to the current frame and announces it with the timecode. Resolves to whether the clipboard took
    * it. `quiet`: no on-screen message for a success (the link button shows a check instead); a failure always shows.
+   * When the host's `linkUrl` function returns `null` the host has handled it: nothing is copied or announced, and
+   * this resolves to `false`.
    */
   copyLink(options?: { quiet?: boolean }): Promise<boolean>;
   /** The frame the user is on: the one just asked for while that seek is fresh, otherwise the clock's. */
@@ -82,7 +97,7 @@ export interface StudioController {
   /** Seeks `seconds` from the current position, snapped to a frame. */
   seekBy(seconds: number): void;
   /** Seeks to a marker and reports it as selected. */
-  goToMarker(marker: Marker): void;
+  goToMarker(marker: FramelineMarker): void;
   /** Seeks to a time (a chapter start) and announces the frame. */
   goToTime(time: number): void;
 }
@@ -438,7 +453,7 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     return state.inPoint === null && state.outPoint === null;
   };
 
-  const withCapture = async (target: FrameGrabInfo['target'], work: (blob: Promise<Blob>, name: string) => Promise<string>) => {
+  const withCapture = async (target: FramelineFrameGrabInfo['target'], work: (blob: Promise<Blob>, name: string) => Promise<string>) => {
     const { video, announce, fps } = opts();
     if (!video || !video.videoWidth || !video.videoHeight) {
       announce(t.noFrame, { toast: true });
@@ -568,14 +583,22 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     },
 
     copyLink({ quiet = false } = {}) {
-      const { fps, startFrames, dropFrame, announce, onCopyLink } = opts();
+      const { fps, startFrames, dropFrame, announce, linkUrl, onCopyLink } = opts();
       const frame = currentFrame();
       const value = formatLinkPosition(frame, fps, { startFrames, dropFrame });
-      const { origin, pathname, search, hash } = window.location;
-      const url = `${origin}${pathname}${search}${withLinkPosition(hash, value)}`;
+      const time = secondsFromFrames(frame, fps);
+      // Everything up to the clipboard write is synchronous: the write has to stay inside the user's gesture.
+      const resolved = resolveLinkUrl(linkUrl, { fragment: linkFragment(value), frame, time, timecode: value.tc }, value, window.location.href);
+      if (resolved.action !== 'handled' && resolved.warning) warnOnce(resolved.warning);
+      if (resolved.action === 'handled') return Promise.resolve(false);
+      if (resolved.action === 'fail') {
+        announce(t.copyFailed, { toast: true });
+        return Promise.resolve(false);
+      }
+      const { url } = resolved;
       return copyText(url).then((ok) => {
-        announce(ok ? t.linkCopiedAt(timecode(frame)) : t.copyFailed, { toast: !ok || !quiet });
-        if (ok) onCopyLink?.({ url, frame, time: secondsFromFrames(frame, fps) });
+        announce(ok ? t.linkCopiedAt(value.tc) : t.copyFailed, { toast: !ok || !quiet });
+        if (ok) onCopyLink?.({ url, frame, time, timecode: value.tc });
         return ok;
       });
     },

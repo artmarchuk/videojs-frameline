@@ -10,7 +10,7 @@ import { ButtonTooltip } from '../../video/shared/tooltip';
 
 import { useProStore, useProStoreApi } from '../context';
 import type { ProStore } from '../store';
-import { panCentre, PAN_STEP, PICTURE_CENTRE, sourceWidth, ZOOM_LEVELS, zoomTransform, type Box, type Centre, type RenditionSize, type ZoomLevel } from '../zoom';
+import { panCentre, PAN_STEP, PICTURE_CENTRE, sourceWidth, ZOOM_LEVELS, zoomTransform, type Box, type Centre, type RenditionSize, type FramelineZoomLevel } from '../zoom';
 import { useAnnounce } from './announcer';
 import { studioStrings as t } from './strings';
 
@@ -215,7 +215,7 @@ export function useZoom(
 type Announce = ReturnType<typeof useAnnounce>;
 
 /** "Zoom 100%", "Zoom fit"; with the rendition note while a lower rendition than the best one is playing. */
-export function zoomMessage(level: ZoomLevel, note: string | null): string {
+export function zoomMessage(level: FramelineZoomLevel, note: string | null): string {
   const message = t.zoomSet(t.zoomNames[level]);
   return level !== 'fit' && note ? `${message} · ${note}` : message;
 }
@@ -227,7 +227,7 @@ export function createZoomActions(store: ProStore, announce: Announce, note: Ref
     announce(zoomMessage(level, note.current), { toast: true });
   };
   return {
-    set(level: ZoomLevel) {
+    set(level: FramelineZoomLevel) {
       if (store.getState().zoom === level) return;
       store.setZoom(level);
       say();
@@ -292,7 +292,7 @@ export function ZoomMenu({ actions, note }: { actions: ZoomActions; note: string
             </p>
             <Menu.Separator className={'pro-menu-separator'} />
           </div>
-          <Menu.RadioGroup className={'pro-menu-group'} aria-label={t.zoom} value={level} onValueChange={(value) => actions.set(value as ZoomLevel)}>
+          <Menu.RadioGroup className={'pro-menu-group'} aria-label={t.zoom} value={level} onValueChange={(value) => actions.set(value as FramelineZoomLevel)}>
             {ZOOM_LEVELS.map((value) => (
               <Menu.RadioItem key={value} className={'media-menu-item'} value={value} data-zoom-item={value}>
                 <span className={'pro-menu-mark'} aria-hidden="true">

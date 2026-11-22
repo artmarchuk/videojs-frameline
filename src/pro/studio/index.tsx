@@ -2,7 +2,7 @@
 
 import './studio.css';
 import { Menu, selectPlayback, selectQuality, useHotkey, useMedia, usePlayer } from '@videojs/react';
-import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode, type Ref, type RefObject } from 'react';
+import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactElement, type ReactNode, type Ref, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/resolve-class-name';
@@ -12,13 +12,13 @@ import { useProSlot, useProThumbnailRenderer, useSetProSettingsItems } from '../
 import { Button } from '../../video/shared/button';
 import { useShortcutsDialog, type ShortcutRow } from '../../video/shared/shortcuts-dialog';
 import { ButtonTooltip } from '../../video/shared/tooltip';
-import type { FramelineApi } from '../api';
+import type { FramelineApi, FramelineLinkUrl } from '../api';
 import { useProStore, useProStoreApi } from '../context';
-import type { FeatureFlags } from '../features';
-import type { Marker } from '../store';
+import type { FramelineFeatureFlags } from '../features';
+import type { FramelineMarker } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import { AnnouncerProvider, useAnnounce } from './announcer';
-import { useStudioController, type CopyLinkInfo, type FrameGrabInfo, type StudioController } from './controller';
+import { useStudioController, type FramelineCopyLinkInfo, type FramelineFrameGrabInfo, type StudioController } from './controller';
 import { GrabFrameIcon, LinkCopiedIcon, LinkIcon, LoopIcon, MarkerIcon, NextCutIcon, PreviousCutIcon, StepBackIcon, StepForwardIcon } from './icons';
 import { isNarrowDock, narrowDockRows, timecodeLeadLength } from './logic';
 import { studioStrings as t } from './strings';
@@ -29,19 +29,21 @@ import { Guides } from './guides';
 import { usePictureRect } from './guides/use-picture-rect';
 import { useChapters, useCuts, type Chapter } from './use-cuts';
 import { useGuidesActions, GuidesMenu, type GuidesActions } from './guides-menu';
+import { shownRenditionHeight } from '../zoom';
 import { useZoom, useZoomActions, ZoomMenu, type ZoomActions, type ZoomController } from './zoom';
 
 export interface StudioLayerProps {
-  features: Readonly<FeatureFlags>;
+  features: Readonly<FramelineFeatureFlags>;
   fps: number;
   startFrames: number;
   dropFrame: boolean;
-  markers: readonly Marker[];
+  markers: readonly FramelineMarker[];
   video: HTMLVideoElement | null;
   /** An element inside the player, used to find and measure the player container. */
   anchor: RefObject<HTMLElement | null>;
-  onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
-  onFrameGrab?: ((info: FrameGrabInfo) => void) | undefined;
+  linkUrl?: FramelineLinkUrl | undefined;
+  onCopyLink?: ((info: FramelineCopyLinkInfo) => void) | undefined;
+  onFrameGrab?: ((info: FramelineFrameGrabInfo) => void) | undefined;
   /** The host's handle on the Studio tools. */
   apiRef?: Ref<FramelineApi> | undefined;
 }
@@ -144,11 +146,11 @@ function useCopyLink(controller: StudioController, anchor: RefObject<HTMLElement
   return { copied, copy };
 }
 
-function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor, onCopyLink, onFrameGrab, apiRef }: StudioLayerProps) {
+function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor, linkUrl, onCopyLink, onFrameGrab, apiRef }: StudioLayerProps) {
   const announce = useAnnounce();
   const chapters = useChapters(video);
-  const cuts = useCuts(chapters, features.shotNav ? markers : NO_MARKERS, fps);
-  const controller = useStudioController({ video, fps, startFrames, dropFrame, cuts, announce, onCopyLink, onFrameGrab });
+  const cuts = useCuts(chapters, features.cuts ? markers : NO_MARKERS, fps);
+  const controller = useStudioController({ video, fps, startFrames, dropFrame, cuts, announce, linkUrl, onCopyLink, onFrameGrab });
   const paused = usePlayer(selectPlayback)?.paused ?? true;
   const arrangement = useDockArrangement(anchor);
   const narrow = arrangement !== 'wide';
@@ -163,7 +165,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const guidesActions = useGuidesActions();
 
   // Zoom: the picture wrapper is scaled and moved; the guides are inside it and follow.
-  const renditionNote = useRenditionNote();
+  const renditionNote = useRenditionNote(video);
   const zoom = useZoom(video, picture.rect, picture.layer, allowed.zoom, usePlayer(selectQuality)?.videoRenditionList ?? null);
   const zoomActions = useZoomActions(renditionNote);
   const zoomed = useProStore((state) => state.zoom !== 'fit');
@@ -179,7 +181,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
         if (features.frameStep && Number.isFinite(frames) && frames !== 0) controller.step(Math.trunc(frames));
       },
       setRange: (next) => {
-        if (features.inOut) store.setRange(next.in, next.out);
+        if (features.range) store.setRange(next.in, next.out);
       },
       setLoop: (on) => {
         if (features.loop) store.setLoop(on);
@@ -208,13 +210,13 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   const hasCuts = cuts.length > 0;
   const link = useCopyLink(controller, anchor);
   const copyLink = link.copy;
-  const linkButton = features.copyTimecodeLink && <LinkButton copied={link.copied} onCopy={copyLink} />;
+  const linkButton = features.copyLink && <LinkButton copied={link.copied} onCopy={copyLink} />;
 
   // Under 340px the narrow row has no cell for the link button: the action is an item of the settings menu there
   // (shown by the styles at that width only). It is rendered inside the settings menu's own tree.
   const setSettingsItems = useSetProSettingsItems();
   useEffect(() => {
-    if (!compact || !features.copyTimecodeLink) return;
+    if (!compact || !features.copyLink) return;
     setSettingsItems(
       <Menu.Item className={'media-menu-item pro-menu-item-dock-narrow pro-menu-item-link'} onSelect={copyLink}>
         <span className={'media-menu-icon pro-tool-icon'}>
@@ -227,13 +229,13 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
       </Menu.Item>
     );
     return () => setSettingsItems(null);
-  }, [compact, features.copyTimecodeLink, copyLink, setSettingsItems]);
+  }, [compact, features.copyLink, copyLink, setSettingsItems]);
 
   // Named, so the narrow dock's styles can fold the two cut buttons away under 324px.
-  const previousCut = features.shotNav && (
+  const previousCut = features.cuts && (
     <ToolButton name="previous-cut" label={t.previousCut} shortcut="[" icon={<PreviousCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('previous')} />
   );
-  const nextCut = features.shotNav && (
+  const nextCut = features.cuts && (
     <ToolButton name="next-cut" label={t.nextCut} shortcut="]" icon={<NextCutIcon />} disabled={!hasCuts} disabledReason={t.noCuts} onClick={() => controller.goToCut('next')} />
   );
   const stepBack = features.frameStep && <ToolButton label={t.stepBack} shortcut="," icon={<StepBackIcon />} onClick={() => controller.step(-1)} />;
@@ -248,7 +250,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
 
       {timeline &&
         createPortal(
-          <Timeline controller={controller} fps={fps} markers={shownMarkers} range={features.inOut} video={video} renderThumbnail={renderThumbnail} />,
+          <Timeline controller={controller} fps={fps} markers={shownMarkers} range={features.range} video={video} renderThumbnail={renderThumbnail} />,
           timeline
         )}
 
@@ -278,7 +280,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
         )}
 
       {/* Wide: Loop and Reset range after the transport. Narrow from 500px: Loop alone, at the end of row one. */}
-      {!narrow && rangeSlot && (features.inOut || features.loop) && createPortal(<RangeControls controller={controller} features={features} />, rangeSlot)}
+      {!narrow && rangeSlot && (features.range || features.loop) && createPortal(<RangeControls controller={controller} features={features} />, rangeSlot)}
       {arrangement === 'keys' && rangeSlot && features.loop && createPortal(<LoopButton controller={controller} />, rangeSlot)}
 
       {/*
@@ -303,20 +305,33 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   );
 }
 
-const NO_MARKERS: readonly Marker[] = [];
+const NO_MARKERS: readonly FramelineMarker[] = [];
+
+/** The video element fires `resize` when its decoded size changes: a rendition switch, or a new source. */
+const SIZE_EVENTS = ['resize', 'loadedmetadata', 'emptied'] as const;
 
 /**
- * "showing 540p" while the rendition that is playing is smaller than the best one the stream offers, otherwise
+ * "showing 540p" while the picture that is decoded is smaller than the best rendition the stream offers, otherwise
  * `null`. Adaptive streams pick a rendition for the connection and the player's size, so a 100% view is not always a
- * view of the source. From Video.js's quality feature: `activeVideoRendition` is the rendition the engine reports as
- * playing (also under automatic selection) and `videoRenditionList` what the manifest offers.
+ * view of the source. The playing size is the element's own `videoHeight`; Video.js's `activeVideoRendition` is not
+ * used, because it can keep the previous rendition after a manual quality switch. `videoRenditionList` (what the
+ * manifest offers) is from Video.js's quality feature.
  */
-function useRenditionNote(): string | null {
-  const quality = usePlayer(selectQuality);
-  const playing = quality?.activeVideoRendition?.height;
-  if (!playing || !quality) return null;
-  const best = Math.max(0, ...quality.videoRenditionList.map((rendition) => rendition.height ?? 0));
-  return playing < best ? t.showing(playing) : null;
+function useRenditionNote(video: HTMLVideoElement | null): string | null {
+  const renditions = usePlayer(selectQuality)?.videoRenditionList ?? null;
+  const subscribe = useCallback(
+    (notify: () => void) => {
+      if (!video) return () => {};
+      for (const type of SIZE_EVENTS) video.addEventListener(type, notify);
+      return () => {
+        for (const type of SIZE_EVENTS) video.removeEventListener(type, notify);
+      };
+    },
+    [video]
+  );
+  const videoHeight = useSyncExternalStore(subscribe, () => video?.videoHeight ?? 0, () => 0);
+  const height = shownRenditionHeight(renditions, videoHeight);
+  return height === null ? null : t.showing(height);
 }
 const NO_CHAPTERS: readonly Chapter[] = [];
 
@@ -469,7 +484,7 @@ function LoopButton({ controller }: { controller: StudioController }) {
 }
 
 /** Wide dock: the Loop toggle and, only while a range is set, a small Reset range button. */
-function RangeControls({ controller, features }: { controller: StudioController; features: Readonly<FeatureFlags> }) {
+function RangeControls({ controller, features }: { controller: StudioController; features: Readonly<FramelineFeatureFlags> }) {
   const hasRange = useProStore((state) => state.inPoint !== null || state.outPoint !== null);
 
   const reset = (event: { currentTarget: HTMLElement }) => {
@@ -482,7 +497,7 @@ function RangeControls({ controller, features }: { controller: StudioController;
   return (
     <div className={'pro-range'} role="group" aria-label={t.range}>
       {features.loop && <LoopButton controller={controller} />}
-      {features.inOut && hasRange && (
+      {features.range && hasRange && (
         <ButtonTooltip label={<span>{t.resetRange}</span>}>
           <Button type="button" className={'pro-tool pro-tool-reset'} aria-label={t.resetRange} onClick={reset}>
             <span className={'media-button-icon pro-tool-icon'}>
@@ -538,7 +553,7 @@ function ToolMenu({
 }
 
 interface MarkerListProps {
-  markers: readonly Marker[];
+  markers: readonly FramelineMarker[];
   chapters: readonly Chapter[];
   controller: StudioController;
   fps: number;
@@ -628,14 +643,14 @@ function StudioHotkeys({
   copyLink,
 }: {
   controller: StudioController;
-  features: Readonly<FeatureFlags>;
+  features: Readonly<FramelineFeatureFlags>;
   paused: boolean;
   guidesActions: GuidesActions | null;
   copyLink: () => void;
 }) {
   const noStep = !features.frameStep;
-  const noInOut = !features.inOut;
-  const noCuts = !features.shotNav;
+  const noInOut = !features.range;
+  const noCuts = !features.cuts;
 
   useHotkey({ keys: ',', action: 'frameStep', disabled: noStep, onActivate: () => controller.step(-1) });
   useHotkey({ keys: '.', action: 'frameStep', disabled: noStep, onActivate: () => controller.step(1) });
@@ -653,7 +668,7 @@ function StudioHotkeys({
   // The G family: `G` saves the frame, `Shift+G` copies it. `S` ("share") copies the link at the timecode.
   useHotkey({ keys: 'g', action: 'grabFrame', repeatable: false, disabled: !features.grabFrame, onActivate: controller.grabFrame });
   useHotkey({ keys: 'Shift+g', action: 'copyFrameImage', repeatable: false, disabled: !features.grabFrame, onActivate: controller.copyFrameImage });
-  useHotkey({ keys: 's', action: 'copyLink', repeatable: false, disabled: !features.copyTimecodeLink, onActivate: copyLink });
+  useHotkey({ keys: 's', action: 'copyLink', repeatable: false, disabled: !features.copyLink, onActivate: copyLink });
   // Shift alone with V; the hotkey layer ignores keys typed into text fields and matches modifiers exactly.
   useHotkey({ keys: 'Shift+v', action: 'toggleGuides', repeatable: false, disabled: !guidesActions, onActivate: () => guidesActions?.toggleHidden() });
 
@@ -715,7 +730,7 @@ function ZoomHotkeys({ zoom, actions }: { zoom: ZoomController; actions: ZoomAct
 }
 
 /** Adds the live Studio shortcuts to the `Shift+?` help dialog, and removes them when the tier goes away. */
-function HelpRows({ features, guides, zoom }: { features: Readonly<FeatureFlags>; guides: boolean; zoom: boolean }) {
+function HelpRows({ features, guides, zoom }: { features: Readonly<FramelineFeatureFlags>; guides: boolean; zoom: boolean }) {
   const { setExtraRows } = useShortcutsDialog();
 
   const rows = useMemo(() => {
@@ -725,18 +740,18 @@ function HelpRows({ features, guides, zoom }: { features: Readonly<FeatureFlags>
       list.push({ keys: ['←', '→'], label: t.help.stepPaused });
       list.push({ keys: ['Shift', '←', '→'], label: t.help.jump });
     }
-    if (features.copyTimecodeLink) list.push({ keys: ['S'], label: t.help.link });
-    if (features.inOut) {
+    if (features.copyLink) list.push({ keys: ['S'], label: t.help.link });
+    if (features.range) {
       list.push({ keys: ['I', 'O'], label: t.help.setInOut });
       list.push({ keys: ['Shift', 'I', 'O'], label: t.help.clearInOut });
     }
     if (features.loop) list.push({ keys: ['R'], label: t.help.loop });
-    if (features.shotNav) list.push({ keys: ['[', ']'], label: features.markers ? t.help.cutsMarkers : t.help.cuts });
+    if (features.cuts) list.push({ keys: ['[', ']'], label: features.markers ? t.help.cutsMarkers : t.help.cuts });
     if (features.grabFrame) {
       list.push({ keys: ['G'], label: t.help.grab });
       list.push({ keys: ['Shift', 'G'], label: t.help.copyImage });
     }
-    if (features.inOut) {
+    if (features.range) {
       list.push({ keys: ['←', '→'], label: t.help.handles });
       list.push({ keys: ['Shift', '←', '→'], label: t.help.handlesJump });
       list.push({ keys: ['Delete'], label: t.help.handlesClear });

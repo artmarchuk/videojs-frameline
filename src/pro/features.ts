@@ -10,107 +10,106 @@ import { warnOnce } from './dev';
  * The two tiers of the skin. Viewer is the clean player a creator's client or audience gets; Studio is the creator's
  * monitor with the full tool set. Anything in between is a tier plus feature flags.
  */
-export type Tier = 'viewer' | 'studio';
+export type FramelineTier = 'viewer' | 'studio';
 
-export const TIERS: readonly Tier[] = ['viewer', 'studio'];
+/** Every tier, in order: for a host that builds its own tier switch. */
+export const TIERS: readonly FramelineTier[] = ['viewer', 'studio'];
 
 /** Where the controls sit: over the picture, or in a dock below it. */
-export type Layout = 'overlay' | 'dock';
+export type FramelineLayout = 'overlay' | 'dock';
 
 /**
  * The layout for a tier. Viewer is the audience's player, so its controls overlay the picture. Studio is a tool,
  * where nothing may cover the picture, so it docks. A host can override either way; anything else is ignored.
  */
-export function resolveLayout(tier: Tier, layout?: unknown): Layout {
+export function resolveLayout(tier: FramelineTier, layout?: unknown): FramelineLayout {
   if (layout === 'overlay' || layout === 'dock') return layout;
   return tier === 'viewer' ? 'overlay' : 'dock';
 }
 
-/** Guides and masks that can be drawn over the picture. */
-export const GUIDE_IDS = ['title-safe', 'action-safe', 'thirds', 'centre', '9:16', '4:5', '1:1', '2.39', '1.85'] as const;
+/** Every guide and crop mask id that `features.guides` accepts, in canonical order. */
+export const GUIDE_IDS = ['title-safe', 'action-safe', 'thirds', 'center', '9:16', '4:5', '1:1', '2.39', '1.85'] as const;
 
-export type GuideId = (typeof GUIDE_IDS)[number];
+/** The id of a guide or a crop mask. */
+export type FramelineGuideId = (typeof GUIDE_IDS)[number];
 
 /** Every feature the skin can show. `false` removes the feature and its code from rendering. */
-export interface FeatureFlags {
+export interface FramelineFeatureFlags {
   /** `HH:MM:SS:FF` time display with a frames/seconds toggle. */
   timecode: boolean;
   /** Step one frame back or forward, and jump ±N frames. */
   frameStep: boolean;
-  /** In and out points. */
-  inOut: boolean;
+  /** The range: In and Out points, with handles on the timeline. A set range confines playback. */
+  range: boolean;
   /** Loop the in-to-out range or the whole clip. */
   loop: boolean;
   /** Markers and range markers on the timeline. */
   markers: boolean;
   /** Previous and next cut, from markers or chapters. */
-  shotNav: boolean;
+  cuts: boolean;
   /** Grab the current frame as a PNG. */
   grabFrame: boolean;
-  /** Copy a link to the current timecode. */
-  copyTimecodeLink: boolean;
+  /** Copy a link to the current frame. What is copied is the host's to decide: see the `linkUrl` prop. */
+  copyLink: boolean;
   /** Guides and masks: `false`, or the list of guide ids the end user may switch on. */
-  guides: false | readonly GuideId[];
+  guides: false | readonly FramelineGuideId[];
   /** Approximate platform UI zones for Shorts, Reels and TikTok. */
-  platformZones: boolean;
+  zones: boolean;
   /** Zoom the picture to 100% of the source's pixels and its multiples, and pan it. Never changes what a grabbed frame holds. */
   zoom: boolean;
-  /** Debug readout. */
-  debug: boolean;
 }
 
 /** What a host may pass: any subset of the flags. `guides: true` means every guide. */
-export type FeatureOverrides = Partial<Omit<FeatureFlags, 'guides'>> & { guides?: boolean | readonly string[] };
+export type FramelineFeatureOverrides = Partial<Omit<FramelineFeatureFlags, 'guides'>> & { guides?: boolean | readonly string[] };
 
-const ALL_GUIDES: readonly GuideId[] = Object.freeze([...GUIDE_IDS]);
+const ALL_GUIDES: readonly FramelineGuideId[] = Object.freeze([...GUIDE_IDS]);
 
-const OFF: FeatureFlags = {
+const OFF: FramelineFeatureFlags = {
   timecode: false,
   frameStep: false,
-  inOut: false,
+  range: false,
   loop: false,
   markers: false,
-  shotNav: false,
+  cuts: false,
   grabFrame: false,
-  copyTimecodeLink: false,
+  copyLink: false,
   guides: false,
-  platformZones: false,
+  zones: false,
   zoom: false,
-  debug: false,
 };
 
-const STUDIO: FeatureFlags = {
+const STUDIO: FramelineFeatureFlags = {
   ...OFF,
   timecode: true,
   frameStep: true,
-  inOut: true,
+  range: true,
   loop: true,
   markers: true,
-  shotNav: true,
+  cuts: true,
   grabFrame: true,
-  copyTimecodeLink: true,
+  copyLink: true,
   guides: ALL_GUIDES,
-  platformZones: true,
+  zones: true,
   zoom: true,
 };
 
-/** The default bundle of each tier. */
-export const TIER_DEFAULTS: Readonly<Record<Tier, Readonly<FeatureFlags>>> = Object.freeze({
+/** The default bundle of each tier. Internal: not part of the public entry. */
+export const TIER_DEFAULTS: Readonly<Record<FramelineTier, Readonly<FramelineFeatureFlags>>> = Object.freeze({
   viewer: Object.freeze(OFF),
   studio: Object.freeze(STUDIO),
 });
 
-const FLAG_NAMES = Object.keys(OFF) as (keyof FeatureFlags)[];
+const FLAG_NAMES = Object.keys(OFF) as (keyof FramelineFeatureFlags)[];
 
-export function isTier(value: unknown): value is Tier {
+export function isTier(value: unknown): value is FramelineTier {
   return typeof value === 'string' && (TIERS as readonly string[]).includes(value);
 }
 
-export function isGuideId(value: unknown): value is GuideId {
+export function isGuideId(value: unknown): value is FramelineGuideId {
   return typeof value === 'string' && (GUIDE_IDS as readonly string[]).includes(value);
 }
 
-function resolveGuides(value: unknown, fallback: FeatureFlags['guides']): FeatureFlags['guides'] {
+function resolveGuides(value: unknown, fallback: FramelineFeatureFlags['guides']): FramelineFeatureFlags['guides'] {
   if (value === false) return false;
   if (value === true) return ALL_GUIDES;
   if (!Array.isArray(value)) {
@@ -118,7 +117,7 @@ function resolveGuides(value: unknown, fallback: FeatureFlags['guides']): Featur
     return fallback;
   }
 
-  const known: GuideId[] = [];
+  const known: FramelineGuideId[] = [];
   for (const id of value) {
     if (isGuideId(id)) {
       if (!known.includes(id)) known.push(id);
@@ -131,7 +130,7 @@ function resolveGuides(value: unknown, fallback: FeatureFlags['guides']): Featur
   return ordered.length ? Object.freeze(ordered) : false;
 }
 
-const cache = new Map<string, Readonly<FeatureFlags>>();
+const cache = new Map<string, Readonly<FramelineFeatureFlags>>();
 
 /**
  * Resolves the feature flags for a tier with the host's overrides applied on top.
@@ -140,15 +139,15 @@ const cache = new Map<string, Readonly<FeatureFlags>>();
  * - Unknown flag names and unknown guide ids are ignored with one development warning each; nothing throws.
  * - The result is frozen and memoised: the same tier and equivalent overrides return the same object.
  */
-export function resolveFeatures(tier: Tier = 'viewer', overrides: FeatureOverrides = {}): Readonly<FeatureFlags> {
-  let safeTier: Tier = tier;
+export function resolveFeatures(tier: FramelineTier = 'viewer', overrides: FramelineFeatureOverrides = {}): Readonly<FramelineFeatureFlags> {
+  let safeTier: FramelineTier = tier;
   if (!isTier(tier)) {
     warnOnce(`Unknown tier "${String(tier)}"; using "viewer".`);
     safeTier = 'viewer';
   }
 
   const defaults = TIER_DEFAULTS[safeTier];
-  const resolved: FeatureFlags = { ...defaults };
+  const resolved: FramelineFeatureFlags = { ...defaults };
 
   for (const [name, value] of Object.entries(overrides ?? {})) {
     if (value === undefined) continue;
@@ -180,7 +179,7 @@ export function resolveFeatures(tier: Tier = 'viewer', overrides: FeatureOverrid
   return frozen;
 }
 
-/** True when at least one pro feature is on, which is when the pro code needs to load. */
-export function hasProFeatures(features: Readonly<FeatureFlags>): boolean {
+/** True when at least one pro feature is on, which is when the pro code needs to load (the `debug` prop loads it too). */
+export function hasProFeatures(features: Readonly<FramelineFeatureFlags>): boolean {
   return FLAG_NAMES.some((name) => features[name] !== false);
 }

@@ -25,7 +25,9 @@ import { BufferingIndicator, Poster } from './shared/video-feedback';
 export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children'> {
   /** The media element, for example `<MuxVideo />`. */
   children?: ReactNode;
+  /** Draws the poster image in place of the one the skin renders (the Video.js `Poster` image's `render` prop). */
   renderPoster?: PosterPrimitive.ImageProps['render'];
+  /** Draws the storyboard frame in the seek preview in place of the one the skin renders. */
   renderThumbnail?: SliderPrimitive.Thumbnail.ImageProps['render'];
   /** Host controls in the control bar, after play and volume. */
   toolbarStart?: ReactNode;
@@ -85,6 +87,22 @@ export function VideoSkin({
     };
     document.addEventListener('pointerdown', onDown, true);
     return () => document.removeEventListener('pointerdown', onDown, true);
+  }, []);
+
+  // The media element is not a Tab stop: Firefox makes a `<video>` focusable by keyboard (two stops, one of them
+  // its own controls host), and nothing happens there that the bar does not offer. The player's hotkeys listen on the
+  // container, so they work wherever focus is inside it. A `tabindex` the host set itself is left alone. The element
+  // comes from the host and can be replaced, so the container is watched.
+  useEffect(() => {
+    const root = container.current;
+    if (!root) return;
+    const apply = () => {
+      for (const media of root.querySelectorAll('video:not([tabindex]), audio:not([tabindex])')) media.setAttribute('tabindex', '-1');
+    };
+    apply();
+    const observer = new MutationObserver(apply);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   // Everything that belongs to the picture. In the dock layout it lives in the stage, so nothing covers the dock.

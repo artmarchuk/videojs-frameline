@@ -111,22 +111,22 @@
                           <label class="checkbox"><input type="checkbox" name="timecode" /><span>Timecode</span></label>
                           <label class="checkbox"><input type="checkbox" name="frameStep" /><span>Frame step</span></label>
                           <label class="checkbox"><input type="checkbox" name="loop" /><span>Loop</span></label>
-                          <label class="checkbox"><input type="checkbox" name="shotNav" /><span>Previous and next cut</span></label>
+                          <label class="checkbox"><input type="checkbox" name="cuts" /><span>Previous and next cut</span></label>
                         </fieldset>
                         <fieldset class="feature-group">
                           <legend class="label">Range</legend>
-                          <label class="checkbox"><input type="checkbox" name="inOut" /><span>In and Out points</span></label>
+                          <label class="checkbox"><input type="checkbox" name="range" /><span>In and Out points</span></label>
                           <label class="checkbox"><input type="checkbox" name="markers" /><span>Markers</span></label>
                         </fieldset>
                         <fieldset class="feature-group">
                           <legend class="label">Capture</legend>
                           <label class="checkbox"><input type="checkbox" name="grabFrame" /><span>Grab frame</span></label>
-                          <label class="checkbox"><input type="checkbox" name="copyTimecodeLink" /><span>Copy link at timecode</span></label>
+                          <label class="checkbox"><input type="checkbox" name="copyLink" /><span>Copy link at timecode</span></label>
                         </fieldset>
                         <fieldset class="feature-group">
                           <legend class="label">Guides</legend>
                           <label class="checkbox"><input type="checkbox" name="guides" /><span>Guides and crop masks</span></label>
-                          <label class="checkbox"><input type="checkbox" name="platformZones" aria-describedby="zones-hint" /><span>Platform zones</span></label>
+                          <label class="checkbox"><input type="checkbox" name="zones" aria-describedby="zones-hint" /><span>Platform zones</span></label>
                           <p class="visually-hidden" id="zones-hint">Platform zones need guides.</p>
                         </fieldset>
                         <fieldset class="feature-group">
@@ -360,7 +360,7 @@
   tier="studio"
   fps={24}
   features={{ zoom: false }}
-  onInOutChange={(range) =&gt; saveRange(range)}
+  onRangeChange={(range) =&gt; saveRange(range)}
   apiRef={frameline}
 /&gt;
 

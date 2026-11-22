@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetWarnings } from './dev';
-import { GUIDE_IDS, hasProFeatures, resolveFeatures, resolveLayout, TIERS, isTier, type FeatureOverrides } from './features';
+import { GUIDE_IDS, hasProFeatures, resolveFeatures, resolveLayout, TIERS, isTier, type FramelineFeatureOverrides } from './features';
 
 describe('resolveFeatures', () => {
   let warn: ReturnType<typeof vi.spyOn>;
@@ -22,10 +22,9 @@ describe('resolveFeatures', () => {
 
   it('gives Studio the full set', () => {
     const studio = resolveFeatures('studio');
-    expect(studio).toMatchObject({ timecode: true, frameStep: true, inOut: true, loop: true, markers: true });
-    expect(studio).toMatchObject({ shotNav: true, grabFrame: true, copyTimecodeLink: true });
-    expect(studio).toMatchObject({ platformZones: true, zoom: true });
-    expect(studio.debug).toBe(false);
+    expect(studio).toMatchObject({ timecode: true, frameStep: true, range: true, loop: true, markers: true });
+    expect(studio).toMatchObject({ cuts: true, grabFrame: true, copyLink: true });
+    expect(studio).toMatchObject({ zones: true, zoom: true });
     expect(studio.guides).toEqual([...GUIDE_IDS]);
     expect(studio.guides).toContain('1.85');
     expect(resolveFeatures('studio', { grabFrame: false }).grabFrame).toBe(false);
@@ -42,7 +41,7 @@ describe('resolveFeatures', () => {
   it('lets overrides win over the tier', () => {
     expect(resolveFeatures('viewer', { timecode: true }).timecode).toBe(true);
     expect(resolveFeatures('studio', { zoom: false, grabFrame: false })).toMatchObject({ zoom: false, grabFrame: false });
-    expect(hasProFeatures(resolveFeatures('viewer', { debug: true }))).toBe(true);
+    expect(hasProFeatures(resolveFeatures('viewer', { zoom: true }))).toBe(true);
   });
 
   it('filters the guides list', () => {
@@ -55,7 +54,7 @@ describe('resolveFeatures', () => {
   });
 
   it('ignores unknown flags with one warning and never throws', () => {
-    const overrides = { scopes: true, timecode: 'yes' } as unknown as FeatureOverrides;
+    const overrides = { scopes: true, timecode: 'yes' } as unknown as FramelineFeatureOverrides;
     expect(() => resolveFeatures('studio', overrides)).not.toThrow();
     const first = resolveFeatures('studio', overrides);
     resolveFeatures('studio', overrides);
@@ -65,8 +64,8 @@ describe('resolveFeatures', () => {
   });
 
   it('returns a frozen, memoised object', () => {
-    const a = resolveFeatures('studio', { guides: ['thirds', 'centre'], zoom: true });
-    const b = resolveFeatures('studio', { zoom: true, guides: ['centre', 'thirds'] });
+    const a = resolveFeatures('studio', { guides: ['thirds', 'center'], zoom: true });
+    const b = resolveFeatures('studio', { zoom: true, guides: ['center', 'thirds'] });
     expect(a).toBe(b);
     expect(Object.isFrozen(a)).toBe(true);
     expect(Object.isFrozen(a.guides)).toBe(true);

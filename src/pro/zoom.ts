@@ -8,27 +8,28 @@
 
 export const ZOOM_LEVELS = ['fit', '100', '150', '200', '400'] as const;
 
-export type ZoomLevel = (typeof ZOOM_LEVELS)[number];
+/** A zoom level: `'fit'`, or a percentage of the source's own pixels (`'100'`, `'150'`, `'200'`, `'400'`). */
+export type FramelineZoomLevel = (typeof ZOOM_LEVELS)[number];
 
-export const isZoomLevel = (value: unknown): value is ZoomLevel => typeof value === 'string' && (ZOOM_LEVELS as readonly string[]).includes(value);
+export const isZoomLevel = (value: unknown): value is FramelineZoomLevel => typeof value === 'string' && (ZOOM_LEVELS as readonly string[]).includes(value);
 
 /** `Z` walks Fit, 100%, 150%, 200%, 400% and back to Fit. */
-export function nextZoom(level: ZoomLevel): ZoomLevel {
+export function nextZoom(level: FramelineZoomLevel): FramelineZoomLevel {
   return ZOOM_LEVELS[(ZOOM_LEVELS.indexOf(level) + 1) % ZOOM_LEVELS.length]!;
 }
 
 /** `Shift+Z` walks the other way: from Fit to 400%, then down. */
-export function previousZoom(level: ZoomLevel): ZoomLevel {
+export function previousZoom(level: FramelineZoomLevel): FramelineZoomLevel {
   return ZOOM_LEVELS[(ZOOM_LEVELS.indexOf(level) + ZOOM_LEVELS.length - 1) % ZOOM_LEVELS.length]!;
 }
 
 /** From this multiple of 100% up a video pixel covers four device pixels or more, and is drawn as a square. */
 export const PIXELATED_FROM = 2;
 
-export const isPixelated = (level: ZoomLevel): boolean => FACTOR[level] >= PIXELATED_FROM;
+export const isPixelated = (level: FramelineZoomLevel): boolean => FACTOR[level] >= PIXELATED_FROM;
 
 /** Device pixels drawn for one video pixel, along one side: every level is a multiple of 100%. Fit has none. */
-const FACTOR: Record<ZoomLevel, number> = { fit: 0, '100': 1, '150': 1.5, '200': 2, '400': 4 };
+const FACTOR: Record<FramelineZoomLevel, number> = { fit: 0, '100': 1, '150': 1.5, '200': 2, '400': 4 };
 
 /** One arrow press with Alt moves the view by this share of what is visible. */
 export const PAN_STEP = 0.1;
@@ -57,13 +58,27 @@ export function sourceWidth(renditions: readonly RenditionSize[] | null | undefi
   return best || decoded;
 }
 
+/** A decoded height this close under the best rendition's is the best rendition (1080 coded as 1072 or 1088). */
+const SAME_RENDITION_PX = 16;
+
+/**
+ * The height to name in "showing 540p": the decoded picture's height while it is smaller than the best rendition
+ * the stream offers, otherwise `null`. From the decoded picture (`videoHeight`), not from what the engine reports as
+ * its active rendition, which can trail a quality switch. `null` without a rendition list or a decoded picture.
+ */
+export function shownRenditionHeight(renditions: readonly RenditionSize[] | null | undefined, videoHeight: number): number | null {
+  if (!(videoHeight > 0)) return null;
+  const best = Math.max(0, ...(renditions ?? []).map((rendition) => rendition.height ?? 0));
+  return videoHeight < best - SAME_RENDITION_PX ? videoHeight : null;
+}
+
 /**
  * The scale to apply to the fitted picture. At 100% one source pixel covers one device pixel:
  * `(source width / picture width in CSS px) / devicePixelRatio`; 150%, 200% and 400% are multiples of that. A small
  * video on a large screen gives a scale below 1, and it is applied as it is, so the label stays true. Fit, or sizes
  * not known yet, is 1. `sourceWidth` comes from the function of that name.
  */
-export function zoomScale(level: ZoomLevel, sourceWidth: number, pictureWidth: number, devicePixelRatio: number): number {
+export function zoomScale(level: FramelineZoomLevel, sourceWidth: number, pictureWidth: number, devicePixelRatio: number): number {
   if (level === 'fit') return 1;
   if (!(sourceWidth > 0) || !(pictureWidth > 0)) return 1;
   const ratio = devicePixelRatio > 0 ? devicePixelRatio : 1;
@@ -98,7 +113,7 @@ export interface Box {
 }
 
 export interface ZoomInput {
-  level: ZoomLevel;
+  level: FramelineZoomLevel;
   /** The unzoomed picture inside the wrapper, in CSS pixels. */
   picture: Box;
   /** The stage: what clips the picture. The wrapper fills it. */

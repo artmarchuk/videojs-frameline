@@ -26,16 +26,16 @@ const view = (patch: Partial<ViewState> = {}): ViewState => ({ ...EMPTY_VIEW, ..
 
 describe('allowedView', () => {
   it('allows everything in Studio and nothing in Viewer', () => {
-    expect(ALL.guides).toEqual(['title-safe', 'action-safe', 'thirds', 'centre']);
+    expect(ALL.guides).toEqual(['title-safe', 'action-safe', 'thirds', 'center']);
     expect(ALL.crops).toEqual(['2.39', '1.85', '1:1', '4:5', '9:16']);
     expect(ALL.zones).toEqual(['shorts', 'reels', 'tiktok']);
     expect(hasViewMenu(allowedView(resolveFeatures('viewer')))).toBe(false);
   });
 
-  it('follows the host list and the platformZones flag', () => {
+  it('follows the host list and the zones flag', () => {
     const some = allowedView(resolveFeatures('studio', { guides: ['title-safe', '9:16'] }));
     expect(some).toEqual({ guides: ['title-safe'], crops: ['9:16'], zones: ['shorts', 'reels', 'tiktok'], zoom: true });
-    expect(allowedView(resolveFeatures('studio', { platformZones: false })).zones).toEqual([]);
+    expect(allowedView(resolveFeatures('studio', { zones: false })).zones).toEqual([]);
     expect(hasViewMenu(allowedView(resolveFeatures('studio', { guides: false })))).toBe(false);
     expect(hasViewMenu(allowedView(resolveFeatures('studio', { zoom: false })))).toBe(true);
   });
@@ -70,7 +70,7 @@ describe('the Guides menu model', () => {
   });
 
   it('removes what the host does not allow, and whole sections that are left empty', () => {
-    const allowed = allowedView(resolveFeatures('studio', { guides: ['title-safe', '9:16'], platformZones: false }));
+    const allowed = allowedView(resolveFeatures('studio', { guides: ['title-safe', '9:16'], zones: false }));
     const sections = viewMenuModel(EMPTY_VIEW, allowed);
     expect(sections.map((section) => section.id)).toEqual(['safe', 'crop']);
     expect(sections[0]!.items.map((item) => item.id)).toEqual(['title-safe']);
@@ -98,11 +98,11 @@ describe('the Guides menu model', () => {
 
 describe('choosing', () => {
   it('toggles independent guides and keeps them in canonical order', () => {
-    let state = toggleGuide(EMPTY_VIEW, 'centre', ALL);
+    let state = toggleGuide(EMPTY_VIEW, 'center', ALL);
     state = toggleGuide(state, 'title-safe', ALL);
-    expect(state.guides).toEqual(['title-safe', 'centre']);
-    expect(toggleGuide(state, 'centre', ALL).guides).toEqual(['title-safe']);
-    expect(toggleGuide(state, 'centre', ALL, true)).toBe(state);
+    expect(state.guides).toEqual(['title-safe', 'center']);
+    expect(toggleGuide(state, 'center', ALL).guides).toEqual(['title-safe']);
+    expect(toggleGuide(state, 'center', ALL, true)).toBe(state);
     expect(toggleGuide(state, 'nope', ALL)).toBe(state);
   });
 
@@ -126,7 +126,7 @@ describe('choosing', () => {
   });
 
   it('refuses what is not allowed', () => {
-    const allowed = allowedView(resolveFeatures('studio', { guides: ['thirds'], platformZones: false }));
+    const allowed = allowedView(resolveFeatures('studio', { guides: ['thirds'], zones: false }));
     expect(setCrop(EMPTY_VIEW, '1:1', allowed)).toBe(EMPTY_VIEW);
     expect(setZones(EMPTY_VIEW, 'tiktok', allowed)).toBe(EMPTY_VIEW);
     expect(toggleGuide(EMPTY_VIEW, 'title-safe', allowed)).toBe(EMPTY_VIEW);
@@ -143,7 +143,7 @@ describe('choosing', () => {
 
   it('shows the guides again when a choice is made while they are hidden', () => {
     const hidden = toggleHidden(view({ guides: ['thirds'] }));
-    expect(toggleGuide(hidden, 'centre', ALL)).toMatchObject({ guides: ['thirds', 'centre'], hidden: false });
+    expect(toggleGuide(hidden, 'center', ALL)).toMatchObject({ guides: ['thirds', 'center'], hidden: false });
     expect(setCrop(hidden, '1:1', ALL).hidden).toBe(false);
   });
 });
@@ -171,8 +171,15 @@ describe('badge count and attributes', () => {
 
 describe('remembered choices', () => {
   it('round-trips a view and the time display', () => {
-    const state = view({ guides: ['title-safe', 'centre'], crop: '9:16', zones: 'reels' });
+    const state = view({ guides: ['title-safe', 'center'], crop: '9:16', zones: 'reels' });
     expect(parseStored(serializeView(state, 'seconds'), ALL)).toEqual({ view: state, timeDisplay: 'seconds' });
+  });
+
+  it('reads the centre cross under its id from before API 0.1', () => {
+    // The old id is spelled out on purpose: it is what a browser may still hold.
+    const stored = JSON.stringify({ v: 1, guides: ['thirds', 'centre'], crop: null, zones: null, timeDisplay: 'timecode' });
+    expect(parseStored(stored, ALL).view.guides).toEqual(['thirds', 'center']);
+    expect(serializeView(parseStored(stored, ALL).view, 'timecode')).not.toContain('centre');
   });
 
   it('does not remember that the guides were hidden', () => {
@@ -194,7 +201,7 @@ describe('remembered choices', () => {
   });
 
   it('lets the host win: ids the features do not allow are dropped', () => {
-    const allowed = allowedView(resolveFeatures('studio', { guides: ['title-safe', '1:1'], platformZones: false }));
+    const allowed = allowedView(resolveFeatures('studio', { guides: ['title-safe', '1:1'], zones: false }));
     const raw = serializeView(view({ guides: ['title-safe', 'thirds'], crop: '9:16', zones: 'tiktok' }), 'timecode');
     expect(parseStored(raw, allowed).view).toEqual(view({ guides: ['title-safe'] }));
     expect(parseStored(raw, allowedView(resolveFeatures('viewer'))).view).toBe(EMPTY_VIEW);
@@ -209,7 +216,7 @@ describe('remembered choices', () => {
   it('sanitizes a live view when the allowed set shrinks', () => {
     const state = view({ guides: ['title-safe', 'thirds'], crop: '9:16', zones: 'tiktok' });
     expect(sanitizeView(state, ALL)).toBe(state);
-    expect(sanitizeView(state, allowedView(resolveFeatures('studio', { guides: ['thirds'], platformZones: false })))).toEqual(view({ guides: ['thirds'] }));
+    expect(sanitizeView(state, allowedView(resolveFeatures('studio', { guides: ['thirds'], zones: false })))).toEqual(view({ guides: ['thirds'] }));
   });
 
   it('resolves the storage key from the persist prop', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import type { Marker } from '../store';
+import type { FramelineMarker } from '../store';
 import { buildCutList, type Cut } from './logic';
 
 /** A chapter of the media: where it starts, and its title (may be empty). */
@@ -73,7 +73,7 @@ export function useChapters(video: HTMLVideoElement | null): readonly Chapter[] 
 }
 
 /** The cut list for previous/next cut: chapter starts when the media has chapters, otherwise the `markers` prop. */
-export function useCuts(chapters: readonly Chapter[], markers: readonly Marker[], fps: number): Cut[] {
+export function useCuts(chapters: readonly Chapter[], markers: readonly FramelineMarker[], fps: number): Cut[] {
   return useMemo(
     () =>
       buildCutList(

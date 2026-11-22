@@ -1,7 +1,7 @@
 // The one place that names the demo media. Both pages read it: the configurator (`/`) and the monitor
 // (`/preview.html`). To switch the demo to another source, change the one line marked ACTIVE below.
 
-import type { Marker } from '@/pro';
+import type { FramelineMarker } from '@/pro';
 
 /** One demo source. Files are paths under `apps/preview/public`, written relative to the page (`./demo/…`). */
 export interface DemoSource {
@@ -59,7 +59,7 @@ export interface StagedState {
  * (50.708 s, frame 1217). Playhead 00:00:03:02 (frame 74), in the Courier section. Guides: Title safe, Action safe and
  * the centre cross.
  */
-const REEL_STAGED: StagedState = { in: 66, out: 1216, playhead: 74, guides: ['title-safe', 'action-safe', 'centre'] };
+const REEL_STAGED: StagedState = { in: 66, out: 1216, playhead: 74, guides: ['title-safe', 'action-safe', 'center'] };
 const REEL_FPS = 24;
 
 export const SOURCES = {
@@ -151,14 +151,14 @@ export function posterUrl(source: DemoSource): string | undefined {
 }
 
 /** Reads a markers file. Anything that is not a list of `{ time, label }` gives no markers; it never throws. */
-export async function loadMarkers(url: string | undefined, signal?: AbortSignal): Promise<Marker[]> {
+export async function loadMarkers(url: string | undefined, signal?: AbortSignal): Promise<FramelineMarker[]> {
   if (!url) return [];
   try {
     const response = await fetch(url, signal ? { signal } : undefined);
     if (!response.ok) return [];
     const data: unknown = await response.json();
     if (!Array.isArray(data)) return [];
-    return data.filter((item): item is Marker => typeof item?.time === 'number' && typeof item?.label === 'string');
+    return data.filter((item): item is FramelineMarker => typeof item?.time === 'number' && typeof item?.label === 'string');
   } catch {
     return [];
   }

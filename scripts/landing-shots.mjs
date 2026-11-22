@@ -159,7 +159,7 @@ async function playerBox(page) {
   return { x: skin.x + 1, y: skin.y + 1, width: skin.width - 2, height: skin.height - 2 };
 }
 
-/** A region of `size`, placed against an element's box: `x` and `y` are 'start', 'centre' or 'end'. */
+/** A region of `size`, placed against an element's box: `x` and `y` are 'start', 'center' or 'end'. */
 function regionAt(anchor, { x = 'start', y = 'end' }, size = REGION) {
   const place = (start, length, own, where) => (where === 'start' ? start : where === 'end' ? start + length - own : start + (length - own) / 2);
   return { x: place(anchor.x, anchor.width, size.width, x), y: place(anchor.y, anchor.height, size.height, y), ...size };
@@ -421,7 +421,7 @@ const SHOTS = {
     await settle(page);
     notes.push(`guides: the 2.39:1 crop and the rule of thirds on ${await timecode(page)}`);
     const picture = await box(page, '.pro-picture');
-    await save('guides', await clip(page, regionAt(picture, { x: 'centre', y: 'centre' }), picture), EXPORT);
+    await save('guides', await clip(page, regionAt(picture, { x: 'center', y: 'center' }), picture), EXPORT);
     await page.context().close();
   },
 
@@ -435,7 +435,7 @@ const SHOTS = {
     const at = `00:00:${String(Math.floor(hold.time)).padStart(2, '0')}:${String(Math.round((hold.time % 1) * FPS)).padStart(2, '0')}`;
     const page = await monitor({ width: 760, at, viewport: { width: 1100, height: 1000 } });
     await bestRendition(page);
-    await guidesOn(page, ['Title safe', 'Rule of thirds', 'Centre cross'], ['title-safe', 'thirds', 'centre']);
+    await guidesOn(page, ['Title safe', 'Rule of thirds', 'Centre cross'], ['title-safe', 'thirds', 'center']);
     await page.focus('.pro-skin');
     await settle(page);
     const picture = await box(page, '.pro-picture');

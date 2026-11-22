@@ -1,7 +1,7 @@
 import { VideoPlayer } from '@videojs/react/video';
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
-import { FramelineSkin, TIERS, type Density, type Tier } from '@/pro';
+import { FramelineSkin, TIERS, type FramelineDensity, type FramelineTier } from '@/pro';
 
 import type { PlaybackProps } from '../shell/params';
 
@@ -23,14 +23,14 @@ const LAYOUT = QUERY.get('layout') === 'dock' ? 'dock' : QUERY.get('layout') ===
 const GUIDES = QUERY.get('guides');
 const FEATURES = {
   ...(GUIDES === null ? {} : { guides: GUIDES === '0' ? false : GUIDES.split(',') }),
-  ...(QUERY.get('zones') === '0' ? { platformZones: false } : {}),
+  ...(QUERY.get('zones') === '0' ? { zones: false } : {}),
   ...(QUERY.get('zoom') === '0' ? { zoom: false } : QUERY.get('zoom') === '1' ? { zoom: true } : {}),
 };
 
-const START_DENSITY: Density = QUERY.get('density') === 'compact' ? 'compact' : 'comfortable';
+const START_DENSITY: FramelineDensity = QUERY.get('density') === 'compact' ? 'compact' : 'comfortable';
 
-const TIER_LABELS: Record<Tier, string> = { viewer: 'Viewer', studio: 'Studio' };
-const DENSITIES: { value: Density; label: string }[] = [
+const TIER_LABELS: Record<FramelineTier, string> = { viewer: 'Viewer', studio: 'Studio' };
+const DENSITIES: { value: FramelineDensity; label: string }[] = [
   { value: 'comfortable', label: 'Comfortable' },
   { value: 'compact', label: 'Compact' },
 ];
@@ -63,8 +63,8 @@ function Segmented<T extends string>({
  * debug readout and the event log. `media` carries the workbench's playback options.
  */
 export function Player({ media }: { media?: PlaybackProps }) {
-  const [tier, setTier] = useState<Tier>(START_TIER);
-  const [density, setDensity] = useState<Density>(START_DENSITY);
+  const [tier, setTier] = useState<FramelineTier>(START_TIER);
+  const [density, setDensity] = useState<FramelineDensity>(START_DENSITY);
   const [events, setEvents] = useState<string[]>([]);
   const markers = useDemoMarkers(MEDIA);
 
@@ -78,7 +78,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
     () =>
       DEBUG
         ? {
-            onInOutChange: (range: unknown) => log('inout:change', range),
+            onRangeChange: (range: unknown) => log('range:change', range),
             onMarkerSelect: (marker: unknown) => log('marker:select', marker),
             onCopyLink: (info: unknown) => log('link:copy', info),
             onFrameChange: (frame: unknown) => log('frame:change', frame),

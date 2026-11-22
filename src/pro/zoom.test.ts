@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { clampCentre, isPixelated, nextZoom, panCentre, PAN_STEP, PICTURE_CENTRE, previousZoom, sourceWidth, ZOOM_LEVELS, zoomScale, zoomTransform, type ZoomInput, type ZoomLevel } from './zoom';
+import { clampCentre, isPixelated, nextZoom, panCentre, PAN_STEP, PICTURE_CENTRE, previousZoom, shownRenditionHeight, sourceWidth, ZOOM_LEVELS, zoomScale, zoomTransform, type ZoomInput, type FramelineZoomLevel } from './zoom';
 
 describe('zoomScale', () => {
   it('is 1 at Fit and while sizes are unknown', () => {
@@ -44,15 +44,15 @@ describe('the level list and the Z cycle', () => {
   });
 
   it('Z goes up a level and from 400% back to Fit', () => {
-    const walk: ZoomLevel[] = [];
-    let level: ZoomLevel = 'fit';
+    const walk: FramelineZoomLevel[] = [];
+    let level: FramelineZoomLevel = 'fit';
     for (let i = 0; i < 6; i++) walk.push((level = nextZoom(level)));
     expect(walk).toEqual(['100', '150', '200', '400', 'fit', '100']);
   });
 
   it('Shift+Z goes down a level and from Fit to 400%', () => {
-    const walk: ZoomLevel[] = [];
-    let level: ZoomLevel = 'fit';
+    const walk: FramelineZoomLevel[] = [];
+    let level: FramelineZoomLevel = 'fit';
     for (let i = 0; i < 6; i++) walk.push((level = previousZoom(level)));
     expect(walk).toEqual(['400', '200', '150', '100', 'fit', '400']);
   });
@@ -189,5 +189,27 @@ describe('sourceWidth: what 100% is measured against', () => {
     // The multiples follow the same source.
     expect(zoomScale('200', sourceWidth(ladder, 640, 360), 1280, 1)).toBe(6);
     expect(zoomScale('150', sourceWidth(ladder, 640, 360), 1280, 2)).toBe(2.25);
+  });
+});
+
+describe('the rendition note', () => {
+  const ladder = [{ height: 360 }, { height: 720 }, { height: 1080 }];
+
+  it('names the decoded height while it is below the best rendition', () => {
+    expect(shownRenditionHeight(ladder, 720)).toBe(720);
+    expect(shownRenditionHeight(ladder, 360)).toBe(360);
+  });
+
+  it('says nothing on the best rendition, also when it is coded a few lines short', () => {
+    expect(shownRenditionHeight(ladder, 1080)).toBeNull();
+    expect(shownRenditionHeight(ladder, 1072)).toBeNull();
+    expect(shownRenditionHeight(ladder, 1088)).toBeNull();
+  });
+
+  it('says nothing without a rendition list or a decoded picture', () => {
+    expect(shownRenditionHeight(null, 720)).toBeNull();
+    expect(shownRenditionHeight([], 720)).toBeNull();
+    expect(shownRenditionHeight(ladder, 0)).toBeNull();
+    expect(shownRenditionHeight([{ width: 1920 }], 720)).toBeNull();
   });
 });

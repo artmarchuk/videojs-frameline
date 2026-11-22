@@ -23,9 +23,21 @@ describe('configurator state', () => {
   });
 
   it('round-trips through the query string', () => {
-    for (const query of ['tier=studio', 'tier=viewer', 'tier=studio&zoom=0', 'tier=viewer&layout=dock&timecode=1&guides=1', 'tier=studio&layout=overlay&inOut=0&platformZones=0']) {
+    for (const query of ['tier=studio', 'tier=viewer', 'tier=studio&zoom=0', 'tier=viewer&layout=dock&timecode=1&guides=1', 'tier=studio&layout=overlay&range=0&zones=0']) {
       expect(writeQuery(readQuery(query))).toBe(query);
     }
+  });
+
+  it('reads a flag name from before API 0.1 as its new name, and writes only the new names', () => {
+    // The old names are spelled out here on purpose: these are the URLs that were shared.
+    const shared = '?tier=studio&inOut=0&shotNav=0&copyTimecodeLink=0&platformZones=0';
+    const config = readQuery(shared);
+    expect(config.flags).toMatchObject({ range: false, cuts: false, copyLink: false, zones: false, markers: true });
+    expect(writeQuery(config, `${shared}&media=reel`)).toBe('tier=studio&cuts=0&range=0&copyLink=0&zones=0&media=reel');
+    // On over Viewer, and a new name beside an old one wins.
+    expect(overrides(readQuery('?tier=viewer&copyTimecodeLink=1'))).toEqual({ copyLink: true });
+    expect(readQuery('?tier=studio&inOut=0&range=1').flags.range).toBe(true);
+    expect(readQuery('?tier=studio&inOut=maybe').flags.range).toBe(true);
   });
 
   it('writes only what differs from the tier, and keeps parameters that are not its own', () => {

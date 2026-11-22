@@ -25,7 +25,7 @@
 
   .pro-skin .pro-debug dt {
     flex: none;
-    width: 9ch;
+    width: 12ch;
     color: var(--fl-text-dim);
   }
 

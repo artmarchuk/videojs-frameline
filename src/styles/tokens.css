@@ -9,6 +9,34 @@
 @layer base.theme {
   .media-skin[data-theme="pro"] {
     /*
+     * ===== Public tokens =====
+     * The tokens a host may set, and that keep their names and meaning between releases: the nine below
+     * (--fl-frame-border has no declaration here; it is read with a default of 0, see further down), and the
+     * Video.js tokens the skin reads (--media-accent-color, --media-accent-text-color, --media-border-color,
+     * --media-border-radius, --media-spacing, --media-object-fit, --media-object-position,
+     * --media-controls-before-start). Every other --fl-* token is internal and can change without notice.
+     */
+    --fl-surface-0: #0c0c0c; /* behind the picture; the recessed timecode field; the timeline groove; scrim colour */
+    --fl-surface-1: #171717; /* the dock, every menu (settings and Studio alike), dialogs */
+    --fl-surface-2: #2c2c2c; /* control fill, segmented controls, a highlighted menu item */
+    --fl-surface-3: #3a3a3a; /* hover, tooltips, small badges */
+    --fl-text: #f2f2f2; /* primary text and icons; the playhead */
+    --fl-text-dim: #9c9c9c; /* secondary text on surface-0 to surface-2 */
+    --fl-font-ui: var(
+      --media-font-family,
+      -apple-system,
+      BlinkMacSystemFont,
+      "SF Pro Text",
+      "Segoe UI Variable",
+      "Segoe UI",
+      system-ui,
+      sans-serif
+    );
+    --fl-radius: 6px; /* buttons; see "Shape" below */
+    /* --fl-frame-border: 0;   set it to 1 for a 1px hairline and a 10px radius around the player */
+    /* ===== Internal tokens: everything below ===== */
+
+    /*
      * Colour. Dark only: Video.js v10 video skins are dark-only. True neutral surfaces (R = G = B), so the surround
      * adds no cast to the picture, and one soft blue accent. The dock is a dark matte body; the display and the track
      * groove (surface-0) sit clearly below it, the keys (surface-2) stand above it.
@@ -17,16 +45,10 @@
      * Fit, captions) shows a small light in the accent (--fl-led); a key (Loop) also stays pressed in. --fl-on is the "on" fill of the
      * overlay layout only, where the controls sit flat over the picture. Never put white text on the accent (2.7:1).
      */
-    --fl-surface-0: #0c0c0c; /* behind the picture; the recessed timecode field; the timeline groove; scrim colour */
-    --fl-surface-1: #171717; /* the dock, every menu (settings and Studio alike), dialogs */
-    --fl-surface-2: #2c2c2c; /* control fill, segmented controls, a highlighted menu item */
-    --fl-surface-3: #3a3a3a; /* hover, tooltips, small badges */
     --fl-on: #474747; /* overlay layout only: a toggle that is on, a button whose menu is open. The dock uses the light. */
     --fl-line: #333333; /* hairlines, dividers */
     --fl-seam: #050505; /* the dark half of a seam between two parts of the body (the picture and the dock, the dividers) */
     --fl-track: #888888; /* unfilled slider track over footage (Viewer overlay): 3:1 on the scrim over a white frame */
-    --fl-text: #f2f2f2; /* primary text and icons; the playhead */
-    --fl-text-dim: #9c9c9c; /* secondary text on surface-0 to surface-2 */
     --fl-text-dim-raised: #b4b4b4; /* secondary text on surface-3: tooltips, hovered controls (4.5:1 there) */
     --fl-timecode-lead: #7a7a7a; /* the leading zeros and separators of the timecode: 4.56:1 on the well (surface-0) */
     --fl-legend: #d0d0d0; /* icons and word labels printed on the dock's keys at rest; full --fl-text on hover, focus, pressed, on */
@@ -55,18 +77,8 @@
 
     /*
      * Type. The system UI stack only: no webfont, no monospace, no slashed zeros. Every changing number sets
-     * `font-variant-numeric: tabular-nums` so digits do not shift.
+     * `font-variant-numeric: tabular-nums` so digits do not shift. The stack is --fl-font-ui, in the public block above.
      */
-    --fl-font-ui: var(
-      --media-font-family,
-      -apple-system,
-      BlinkMacSystemFont,
-      "SF Pro Text",
-      "Segoe UI Variable",
-      "Segoe UI",
-      system-ui,
-      sans-serif
-    );
 
     /* Scale. Everything is a multiple of this 4px step, so --media-scale-unit (default 16px) scales the skin. */
     --media-spacing: calc(var(--media-scale-unit, 16px) / 4);
@@ -81,7 +93,6 @@
     --fl-stroke: 1.5; /* icon stroke width on the 24px grid */
 
     /* Shape. 6px buttons, 8px groups and fields, hairlines and surface steps; the only shadow is on popups. */
-    --fl-radius: 6px;
     --fl-radius-group: 8px;
     --fl-radius-sm: 3px;
     --fl-shadow-popup: inset 0 1px 0 rgb(255 255 255 / calc(0.06 * var(--fl-bevel))), 0 4px 14px rgb(0 0 0 / 0.45);

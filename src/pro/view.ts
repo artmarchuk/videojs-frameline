@@ -5,30 +5,32 @@
  * from that in the Guides menu (`ViewState`); and the choice is remembered per browser (`serializeView`, `parseStored`).
  * The host always wins: a remembered value the host no longer allows is dropped.
  */
-import type { FeatureFlags } from './features';
-import type { TimeDisplay } from './store';
+import type { FramelineFeatureFlags } from './features';
+import type { FramelineTimeDisplay } from './store';
 
 /** Guides that are independent checkboxes. */
 export const SAFE_IDS = ['title-safe', 'action-safe'] as const;
-export const COMPOSITION_IDS = ['thirds', 'centre'] as const;
+export const COMPOSITION_IDS = ['thirds', 'center'] as const;
 /** Crop masks, one at a time, in menu order. */
 export const CROP_IDS = ['2.39', '1.85', '1:1', '4:5', '9:16'] as const;
 /** Platform zone sets, one at a time. */
 export const ZONE_IDS = ['shorts', 'reels', 'tiktok'] as const;
 
-export type CropId = (typeof CROP_IDS)[number];
-export type ZoneId = (typeof ZONE_IDS)[number];
+/** A crop mask: `'2.39'`, `'1.85'`, `'1:1'`, `'4:5'` or `'9:16'`. */
+export type FramelineCropId = (typeof CROP_IDS)[number];
+/** A platform whose interface zones can be drawn: `'shorts'`, `'reels'` or `'tiktok'`. */
+export type FramelineZoneId = (typeof ZONE_IDS)[number];
 
 /** The crop every platform zone is drawn in. */
-export const ZONE_CROP: CropId = '9:16';
+export const ZONE_CROP: FramelineCropId = '9:16';
 
 const CHECK_IDS: readonly string[] = [...SAFE_IDS, ...COMPOSITION_IDS];
 
 export interface ViewState {
   /** Checkbox guides that are on, in canonical order. */
   guides: readonly string[];
-  crop: CropId | null;
-  zones: ZoneId | null;
+  crop: FramelineCropId | null;
+  zones: FramelineZoneId | null;
   /** Everything is switched off for the moment (`Shift+V`); the set above is kept and comes back. */
   hidden: boolean;
 }
@@ -38,8 +40,8 @@ export const EMPTY_VIEW: Readonly<ViewState> = Object.freeze({ guides: Object.fr
 /** What the host lets the end user switch on. */
 export interface AllowedView {
   guides: readonly string[];
-  crops: readonly CropId[];
-  zones: readonly ZoneId[];
+  crops: readonly FramelineCropId[];
+  zones: readonly FramelineZoneId[];
   /** Zoom (Fit, 100%, 200%) is offered. It has nothing to do with the guides: it works with `guides: false` too. */
   zoom: boolean;
 }
@@ -48,23 +50,23 @@ export const NOTHING_ALLOWED: Readonly<AllowedView> = Object.freeze({ guides: []
 
 /**
  * What the feature flags allow. `guides: false` allows nothing (and removes the Guides button). A list restricts the
- * checkbox guides and the crops to the ids in it. Platform zones need `platformZones` and some guides to be on; they
+ * checkbox guides and the crops to the ids in it. Platform zones need `zones` and some guides to be on; they
  * always bring the 9:16 crop with them, whether or not `9:16` is in the host's list.
  */
-export function allowedView(features: Pick<FeatureFlags, 'guides' | 'platformZones'> & Partial<Pick<FeatureFlags, 'zoom'>>): AllowedView {
+export function allowedView(features: Pick<FramelineFeatureFlags, 'guides' | 'zones'> & Partial<Pick<FramelineFeatureFlags, 'zoom'>>): AllowedView {
   const zoom = features.zoom === true;
   if (features.guides === false) return zoom ? { ...NOTHING_ALLOWED, zoom } : NOTHING_ALLOWED;
   const list = features.guides as readonly string[];
   return {
     guides: CHECK_IDS.filter((id) => list.includes(id)),
     crops: CROP_IDS.filter((id) => list.includes(id)),
-    zones: features.platformZones ? [...ZONE_IDS] : [],
+    zones: features.zones ? [...ZONE_IDS] : [],
     zoom,
   };
 }
 
-const isCrop = (value: unknown): value is CropId => typeof value === 'string' && (CROP_IDS as readonly string[]).includes(value);
-const isZone = (value: unknown): value is ZoneId => typeof value === 'string' && (ZONE_IDS as readonly string[]).includes(value);
+const isCrop = (value: unknown): value is FramelineCropId => typeof value === 'string' && (CROP_IDS as readonly string[]).includes(value);
+const isZone = (value: unknown): value is FramelineZoneId => typeof value === 'string' && (ZONE_IDS as readonly string[]).includes(value);
 
 const sameList = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((id, i) => id === b[i]);
 
@@ -96,14 +98,14 @@ export function toggleGuide(view: ViewState, id: string, allowed: AllowedView, o
 }
 
 /** Picks a crop, or none. Platform zones live in the 9:16 frame, so any other choice clears them. */
-export function setCrop(view: ViewState, crop: CropId | null, allowed: AllowedView): ViewState {
+export function setCrop(view: ViewState, crop: FramelineCropId | null, allowed: AllowedView): ViewState {
   if (crop !== null && !(allowed.crops.includes(crop) || (crop === ZONE_CROP && view.zones !== null))) return view;
   if (crop === view.crop) return view;
   return shown({ ...view, crop, zones: crop === ZONE_CROP ? view.zones : null });
 }
 
 /** Picks a platform, or none. Picking one turns on the 9:16 crop, the frame the zones are drawn in. */
-export function setZones(view: ViewState, zones: ZoneId | null, allowed: AllowedView): ViewState {
+export function setZones(view: ViewState, zones: FramelineZoneId | null, allowed: AllowedView): ViewState {
   if (zones !== null && !allowed.zones.includes(zones)) return view;
   if (zones === view.zones) return view;
   if (zones === null) {
@@ -138,18 +140,21 @@ export function toggleHidden(view: ViewState): ViewState {
 }
 
 /** What is actually drawn: the chosen set, or nothing while hidden. This is also what `onGuidesChange` reports. */
-export interface EffectiveGuides {
+export interface FramelineEffectiveGuides {
+  /** The checkbox guides that are drawn (`'title-safe'`, `'action-safe'`, `'thirds'`, `'center'`). */
   guides: string[];
+  /** The crop mask that is drawn, or `null`. */
   crop: string | null;
+  /** The platform whose zones are drawn (`'shorts'`, `'reels'`, `'tiktok'`), or `null`. */
   zones: string | null;
 }
 
-export function effectiveView(view: ViewState): EffectiveGuides {
+export function effectiveView(view: ViewState): FramelineEffectiveGuides {
   if (view.hidden) return { guides: [], crop: null, zones: null };
   return { guides: [...view.guides], crop: view.crop, zones: view.zones };
 }
 
-export function sameEffective(a: EffectiveGuides, b: EffectiveGuides): boolean {
+export function sameEffective(a: FramelineEffectiveGuides, b: FramelineEffectiveGuides): boolean {
   return a.crop === b.crop && a.zones === b.zones && sameList(a.guides, b.guides);
 }
 
@@ -237,11 +242,11 @@ export function storageKey(persist: boolean | string | undefined): string | null
 
 export interface Remembered {
   view: ViewState;
-  timeDisplay: TimeDisplay | null;
+  timeDisplay: FramelineTimeDisplay | null;
 }
 
 /** What is written: the guides, the crop, the zone and the time display. Not the range, the loop, the playhead or the zoom. */
-export function serializeView(view: ViewState, timeDisplay: TimeDisplay): string {
+export function serializeView(view: ViewState, timeDisplay: FramelineTimeDisplay): string {
   return JSON.stringify({ v: 1, guides: [...view.guides], crop: view.crop, zones: view.zones, timeDisplay });
 }
 
@@ -263,7 +268,9 @@ export function parseStored(raw: string | null | undefined, allowed: AllowedView
   if (!data || typeof data !== 'object' || Array.isArray(data)) return empty;
   const record = data as Record<string, unknown>;
 
-  const guides = Array.isArray(record.guides) ? CHECK_IDS.filter((id) => (record.guides as unknown[]).includes(id)) : [];
+  // Compatibility: before API 0.1 the centre cross had the id `centre`. A value stored then reads as `center`.
+  const stored = Array.isArray(record.guides) ? (record.guides as unknown[]).map((id) => (id === 'centre' ? 'center' : id)) : [];
+  const guides = CHECK_IDS.filter((id) => stored.includes(id));
   const view = sanitizeView({ guides, crop: isCrop(record.crop) ? record.crop : null, zones: isZone(record.zones) ? record.zones : null, hidden: false }, allowed);
   const timeDisplay = record.timeDisplay === 'timecode' || record.timeDisplay === 'seconds' ? record.timeDisplay : null;
   return { view: sameView(view, EMPTY_VIEW) ? EMPTY_VIEW : view, timeDisplay };
@@ -279,7 +286,7 @@ export function readRemembered(key: string | null, allowed: AllowedView): Rememb
   }
 }
 
-export function writeRemembered(key: string | null, view: ViewState, timeDisplay: TimeDisplay): void {
+export function writeRemembered(key: string | null, view: ViewState, timeDisplay: FramelineTimeDisplay): void {
   if (!key) return;
   try {
     globalThis.localStorage?.setItem(key, serializeView(view, timeDisplay));

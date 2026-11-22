@@ -8,7 +8,7 @@ import { StrictMode, useMemo, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import '@/skin.css';
-import { FramelineSkin, type CopyLinkInfo, type EffectiveGuides, type FrameGrabInfo, type FramelineApi, type InOutRange, type Marker, type ZoomLevel } from '@/pro';
+import { FramelineSkin, type FramelineCopyLinkInfo, type FramelineEffectiveGuides, type FramelineFrameGrabInfo, type FramelineApi, type FramelineRange, type FramelineMarker, type FramelineZoomLevel } from '@/pro';
 import { formatTimecode, framesFromSeconds } from '@/pro/timecode';
 
 import { DemoVideo, useDemoMarkers } from '../frame/demo-video';
@@ -53,7 +53,7 @@ function render() {
     else input.checked = config.flags[input.name as FlagName];
   }
   // Platform zones are drawn inside the guides layer: without guides the flag has nothing to switch.
-  form.querySelector<HTMLInputElement>('input[name="platformZones"]')!.disabled = !config.flags.guides;
+  form.querySelector<HTMLInputElement>('input[name="zones"]')!.disabled = !config.flags.guides;
   tierHint.textContent = hint(config);
   // The room for the dock, kept until the Studio code draws it (landing.css). Viewer and the overlay have no dock.
   $('#player').toggleAttribute('data-reserve', config.tier === 'studio' && config.layout === 'dock');
@@ -203,21 +203,21 @@ $('#log-clear').addEventListener('click', () => {
 
 // The skin's events are callback props. `onFrameChange` fires on every frame and is left out of the log.
 const handlers = {
-  onInOutChange: (range: InOutRange) =>
-    logEvent('onInOutChange', `in ${range.in === null ? 'not set' : seconds(range.in)} · out ${range.out === null ? 'not set' : seconds(range.out)}`),
-  onGuidesChange: (view: EffectiveGuides) =>
+  onRangeChange: (range: FramelineRange) =>
+    logEvent('onRangeChange', `in ${range.in === null ? 'not set' : seconds(range.in)} · out ${range.out === null ? 'not set' : seconds(range.out)}`),
+  onGuidesChange: (view: FramelineEffectiveGuides) =>
     logEvent(
       'onGuidesChange',
       [view.guides.length ? `guides ${view.guides.join(', ')}` : '', view.crop ? `crop ${view.crop}` : '', view.zones ? `zones ${view.zones}` : ''].filter(Boolean).join(' · ') ||
         'nothing drawn'
     ),
-  onMarkerSelect: (marker: Marker) => logEvent('onMarkerSelect', `"${marker.label}" at ${seconds(marker.time)}`),
-  onFrameGrab: (info: FrameGrabInfo) => {
+  onMarkerSelect: (marker: FramelineMarker) => logEvent('onMarkerSelect', `"${marker.label}" at ${seconds(marker.time)}`),
+  onFrameGrab: (info: FramelineFrameGrabInfo) => {
     logEvent('onFrameGrab', `frame ${info.frame} · ${info.width}×${info.height} · ${info.target === 'file' ? info.fileName : 'clipboard'}`);
     grabbed?.();
   },
-  onCopyLink: (info: CopyLinkInfo) => logEvent('onCopyLink', `frame ${info.frame} · ${info.url.slice(info.url.indexOf('#'))}`),
-  onZoomChange: (level: ZoomLevel) => logEvent('onZoomChange', level === 'fit' ? 'fit' : `${level}%`),
+  onCopyLink: (info: FramelineCopyLinkInfo) => logEvent('onCopyLink', `frame ${info.frame} · ${info.url.slice(info.url.indexOf('#'))}`),
+  onZoomChange: (level: FramelineZoomLevel) => logEvent('onZoomChange', level === 'fit' ? 'fit' : `${level}%`),
 };
 
 /* ---------- Try this ---------- */
@@ -228,18 +228,18 @@ const FLAG_LABELS: Record<FlagName, string> = {
   timecode: 'Timecode',
   frameStep: 'Frame step',
   loop: 'Loop',
-  shotNav: 'Previous and next cut',
-  inOut: 'In and Out points',
+  cuts: 'Previous and next cut',
+  range: 'In and Out points',
   markers: 'Markers',
   grabFrame: 'Grab frame',
-  copyTimecodeLink: 'Copy link at timecode',
+  copyLink: 'Copy link at timecode',
   guides: 'Guides and crop masks',
-  platformZones: 'Platform zones',
+  zones: 'Platform zones',
   zoom: 'Zoom and pan',
 };
 
 /** The demo's markers as last loaded by the player, for the `review` task. */
-let demoMarkers: Marker[] = [];
+let demoMarkers: FramelineMarker[] = [];
 /** The marker the `review` task goes to: a note that names a single frame. */
 const REVIEW_MARKER = 'hold';
 
@@ -268,7 +268,7 @@ const TASKS: Record<string, Task> = {
     },
   },
   range: {
-    needs: ['inOut'],
+    needs: ['range'],
     run(handle, media) {
       const duration = media.duration;
       const start = duration > 12 ? Math.round(duration * 0.25) : duration * 0.25;
@@ -298,7 +298,7 @@ const TASKS: Record<string, Task> = {
     needs: ['guides'],
     run(handle) {
       handle.setZoom('fit');
-      if (config.flags.platformZones) {
+      if (config.flags.zones) {
         handle.setGuides({ guides: [], crop: '9:16', zones: 'tiktok' });
         return 'The 9:16 mask and the TikTok zones are on. Shift+V hides the guides and shows them again.';
       }

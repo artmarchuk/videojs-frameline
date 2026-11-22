@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 
 import '@/skin.css';
 import './embed.css';
-import { FramelineSkin, TIERS, type Tier } from '@/pro';
+import { FramelineSkin, TIERS, type FramelineTier } from '@/pro';
 
 import { DemoVideo, useDemoMarkers } from '../frame/demo-video';
 import { MEDIA, posterUrl, SOURCES, type DemoSource } from '../frame/media';
@@ -32,7 +32,7 @@ function httpUrl(value: string | null): string | undefined {
   }
 }
 
-const TIER: Tier = TIERS.find((tier) => tier === QUERY.get('tier')) ?? 'studio';
+const TIER: FramelineTier = TIERS.find((tier) => tier === QUERY.get('tier')) ?? 'studio';
 const FPS = Number(QUERY.get('fps'));
 const SRC = httpUrl(QUERY.get('src'));
 const MUX = QUERY.get('mux')?.match(/^[A-Za-z0-9]+$/)?.[0];

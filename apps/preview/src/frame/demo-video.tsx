@@ -1,7 +1,7 @@
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { useEffect, useMemo, useState } from 'react';
 
-import type { Marker } from '@/pro';
+import type { FramelineMarker } from '@/pro';
 
 import type { PlaybackProps } from '../shell/params';
 import { loadMarkers, streamUrl, type DemoSource } from './media';
@@ -29,11 +29,11 @@ export function DemoVideo({ source, playback }: { source: DemoSource; playback?:
   );
 }
 
-const NONE: Marker[] = [];
+const NONE: FramelineMarker[] = [];
 
 /** The markers of a demo source, read from its markers file. Empty until the file has arrived. */
-export function useDemoMarkers(source: DemoSource): Marker[] {
-  const [markers, setMarkers] = useState<Marker[]>(NONE);
+export function useDemoMarkers(source: DemoSource): FramelineMarker[] {
+  const [markers, setMarkers] = useState<FramelineMarker[]>(NONE);
 
   useEffect(() => {
     const abort = new AbortController();

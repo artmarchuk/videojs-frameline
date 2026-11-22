@@ -63,7 +63,7 @@ export const studioStrings = {
   none: 'None',
   approximate: 'Approximate',
   sections: { safe: 'Safe areas', composition: 'Composition', crop: 'Crop', zones: 'Platform zones' },
-  guideNames: { 'title-safe': 'Title safe', 'action-safe': 'Action safe', thirds: 'Rule of thirds', centre: 'Centre cross' } as Record<string, string>,
+  guideNames: { 'title-safe': 'Title safe', 'action-safe': 'Action safe', thirds: 'Rule of thirds', center: 'Centre cross' } as Record<string, string>,
   guideHints: { 'title-safe': 'Broadcast, 90%', 'action-safe': 'Broadcast, 93%' } as Record<string, string>,
   cropNames: { '2.39': '2.39:1', '1.85': '1.85:1', '1:1': '1:1', '4:5': '4:5', '9:16': '9:16' } as Record<string, string>,
   zoneNames: { shorts: 'YouTube Shorts', reels: 'Instagram Reels', tiktok: 'TikTok' } as Record<string, string>,

@@ -10,7 +10,7 @@ import { Button } from '../../video/shared/button';
 import { ButtonTooltip } from '../../video/shared/tooltip';
 import { useProStore, useProStoreApi } from '../context';
 import type { ProStore } from '../store';
-import { activeCount, viewMenuModel, type AllowedView, type CropId, type ViewMenuSection, type ZoneId } from '../view';
+import { activeCount, viewMenuModel, type AllowedView, type FramelineCropId, type ViewMenuSection, type FramelineZoneId } from '../view';
 import { useAnnounce } from './announcer';
 import { GuidesIcon } from './icons';
 import { studioStrings as t } from './strings';
@@ -29,7 +29,7 @@ export function createGuidesActions(store: ProStore, announce: Announce) {
       announce((on ? t.guideOn : t.guideOff)(t.guideNames[id] ?? id));
     },
 
-    setCrop(crop: CropId | null) {
+    setCrop(crop: FramelineCropId | null) {
       const hadZones = store.getState().view.zones !== null;
       store.setCrop(crop);
       const view = store.getState().view;
@@ -38,7 +38,7 @@ export function createGuidesActions(store: ProStore, announce: Announce) {
       announce(hadZones && view.zones === null ? t.zonesCleared(name) : name);
     },
 
-    setZones(zones: ZoneId | null) {
+    setZones(zones: FramelineZoneId | null) {
       store.setZones(zones);
       const view = store.getState().view;
       announce(view.zones ? t.zonesSet(t.zoneNames[view.zones] ?? view.zones) : t.zonesOff);
@@ -87,8 +87,8 @@ function Section({ section, actions }: { section: ViewMenuSection; actions: Guid
   const value = section.items.find((item) => item.checked)?.id ?? '';
   const choose = (id: string) => {
     const next = id === 'none' ? null : id;
-    if (zones) actions.setZones(next as ZoneId | null);
-    else actions.setCrop(next as CropId | null);
+    if (zones) actions.setZones(next as FramelineZoneId | null);
+    else actions.setCrop(next as FramelineCropId | null);
   };
   // A radio item closes the menu when it is selected. Here the menu stays open, so several things can be switched
   // in one visit: the click is handled and prevented, which skips the stock select-and-close.

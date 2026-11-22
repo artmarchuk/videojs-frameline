@@ -18,7 +18,7 @@ import {
 import { useProStore, useProStoreApi } from '../../context';
 import { warnOnce } from '../../dev';
 import { passSpaceToPlayer } from '../../../video/shared/slider-space';
-import type { Marker } from '../../store';
+import type { FramelineMarker } from '../../store';
 import { secondsFromFrames } from '../../timecode';
 import { useAnnounce } from '../announcer';
 import type { StudioController } from '../controller';
@@ -50,7 +50,7 @@ export interface TimelineProps {
   controller: StudioController;
   fps: number;
   /** Markers to draw; pass an empty list when the `markers` feature is off. */
-  markers: readonly Marker[];
+  markers: readonly FramelineMarker[];
   /** Draw the In/Out band and the two handles. */
   range: boolean;
   video: HTMLVideoElement | null;
@@ -121,7 +121,7 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
     [controller, duration, fps, seconds]
   );
 
-  // While a handle is dragged the range is previewed here; the store (and `onInOutChange`) hears of it on release.
+  // While a handle is dragged the range is previewed here; the store (and `onRangeChange`) hears of it on release.
   const [draft, setDraft] = useState<RangePoints | null>(null);
   const points: RangePoints = range ? (draft ?? { in: storeIn, out: storeOut }) : { in: null, out: null };
   const band = rangeBand(points, 0, duration);
@@ -272,7 +272,7 @@ const MarkerPins = memo(function MarkerPins({
   format,
   controller,
 }: {
-  markers: readonly Marker[];
+  markers: readonly FramelineMarker[];
   duration: number;
   width: number;
   format: (time: number) => string;
@@ -386,7 +386,7 @@ const HANDLE_ANNOUNCE_MS = 400;
  * An In or Out handle: a tab at its end of the range, and a real slider for the keyboard and assistive technology.
  * It is always there. While its point is not set it rests at its own end of the track, in a neutral colour; moved
  * anywhere else it sets the point and takes the accent. Dragging previews the move and commits on release, so
- * `onInOutChange` fires once; the drag snaps to frames, and magnetically to the playhead and to markers. Dragging it
+ * `onRangeChange` fires once; the drag snaps to frames, and magnetically to the playhead and to markers. Dragging it
  * back to its end, a double click, `Delete` or `Backspace` unsets the point. With focus on it: `←` `→` one frame,
  * `Shift` ten, `Home` `End` its limits.
  *
@@ -416,7 +416,7 @@ function RangeHandle({
   format: (time: number) => string;
   setDraft: (draft: RangePoints | null) => void;
   controller: StudioController;
-  markers: readonly Marker[];
+  markers: readonly FramelineMarker[];
   renderThumbnail?: TimelineProps['renderThumbnail'];
 }) {
   const store = useProStoreApi();

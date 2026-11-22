@@ -26,65 +26,91 @@ import {
   toggleGuide as guideView,
   toggleHidden as hiddenView,
   type AllowedView,
-  type CropId,
-  type EffectiveGuides,
+  type FramelineCropId,
+  type FramelineEffectiveGuides,
   type ViewState,
-  type ZoneId,
+  type FramelineZoneId,
 } from './view';
-import { isZoomLevel, nextZoom, previousZoom, type ZoomLevel } from './zoom';
+import { isZoomLevel, nextZoom, previousZoom, type FramelineZoomLevel } from './zoom';
 
 /** A marker on the timeline. With `end` it is a range marker. Times are in seconds. */
-export interface Marker {
+export interface FramelineMarker {
+  /** Where the marker is, in seconds. */
   time: number;
+  /** The name shown in the Markers menu and announced when the marker is selected. */
   label: string;
+  /** The end of a range marker, in seconds. Left out: a point. */
   end?: number;
+  /** The host's own id. It comes back unchanged in `onMarkerSelect`. */
   id?: string;
 }
 
-export type LoopMode = 'off' | 'range' | 'whole';
-export type TimeDisplay = 'timecode' | 'seconds';
-export type FrameClockSource = 'rvfc' | 'raf';
-export type FrameClockPrecision = 'frame' | 'approximate';
+/** What loops: nothing, the In-to-Out range, or the whole video. */
+export type FramelineLoopMode = 'off' | 'range' | 'whole';
+/** What the time field shows: timecode (`HH:MM:SS:FF`) or seconds. */
+export type FramelineTimeDisplay = 'timecode' | 'seconds';
+/** Where frame times come from: `requestVideoFrameCallback` (`'rvfc'`), or animation frames and `currentTime` (`'raf'`). */
+export type FramelineFrameClockSource = 'rvfc' | 'raf';
+/** `'frame'`: the browser reported the presented frame. `'approximate'`: computed from `currentTime`. Best effort either way. */
+export type FramelineFrameClockPrecision = 'frame' | 'approximate';
 
-export interface InOutRange {
+/** The In and Out points, as `onRangeChange` reports them. */
+export interface FramelineRange {
+  /** The In point in seconds; `null` when it is not set (the range starts at the start). */
   in: number | null;
+  /** The Out point in seconds; `null` when it is not set (the range runs to the end). */
   out: number | null;
 }
 
-export interface FrameInfo {
+/** What `onFrameChange` reports. Best effort: see the README on frame accuracy. */
+export interface FramelineFrameInfo {
+  /** The frame index, from 0. */
   frame: number;
+  /** The media time of the frame, in seconds. */
   time: number;
 }
 
 export interface ProState {
   inPoint: number | null;
   outPoint: number | null;
-  loopMode: LoopMode;
-  timeDisplay: TimeDisplay;
+  loopMode: FramelineLoopMode;
+  timeDisplay: FramelineTimeDisplay;
   /** Guides, crop mask and platform zones: what the end user chose in the Guides menu. Replaced on every change. */
   view: Readonly<ViewState>;
   /** How closely the picture is looked at. Always starts at Fit: it is not remembered. */
-  zoom: ZoomLevel;
+  zoom: FramelineZoomLevel;
   /** Current frame number, from the frame clock. Best effort. */
   frame: number;
   /** Media time of the current frame, in seconds. */
   mediaTime: number;
-  clockSource: FrameClockSource | null;
-  clockPrecision: FrameClockPrecision | null;
+  clockSource: FramelineFrameClockSource | null;
+  clockPrecision: FramelineFrameClockPrecision | null;
   /** Media duration in seconds; 0 while unknown. */
   duration: number;
   /** The marker the user last selected (timeline, Markers list, or previous/next cut); drawn in the accent. */
-  selectedMarker: Marker | null;
+  selectedMarker: FramelineMarker | null;
+  /** Playback statistics for the debug readout; `null` until the readout samples them. */
+  stats: Readonly<PlaybackStats> | null;
+}
+
+/** What the debug readout shows about playback. A field is `null` where the browser lacks the API behind it. */
+export interface PlaybackStats {
+  /** Frames the decoder dropped, from `getVideoPlaybackQuality()`. */
+  droppedFrames: number | null;
+  /** Frames decoded and dropped in total, from the same call. */
+  totalFrames: number | null;
+  /** Frames presented over the last second, from `requestVideoFrameCallback`. */
+  measuredFps: number | null;
 }
 
 export interface ProCallbacks {
-  onInOutChange?: ((range: InOutRange) => void) | undefined;
-  onMarkerSelect?: ((marker: Marker) => void) | undefined;
-  onFrameChange?: ((frame: FrameInfo) => void) | undefined;
+  onRangeChange?: ((range: FramelineRange) => void) | undefined;
+  onMarkerSelect?: ((marker: FramelineMarker) => void) | undefined;
+  onFrameChange?: ((frame: FramelineFrameInfo) => void) | undefined;
   /** The set of guides that is drawn changed. Not fired for the set the store starts with. */
-  onGuidesChange?: ((view: EffectiveGuides) => void) | undefined;
+  onGuidesChange?: ((view: FramelineEffectiveGuides) => void) | undefined;
   /** The zoom level changed, by the user, by the host's handle, or because the host switched zoom off. */
-  onZoomChange?: ((level: ZoomLevel) => void) | undefined;
+  onZoomChange?: ((level: FramelineZoomLevel) => void) | undefined;
 }
 
 export interface ProStore {
@@ -97,37 +123,43 @@ export interface ProStore {
   clearInOut(): void;
   /** Sets both points at once, with the same rules as `setIn` and `setOut`, and tells the host once. */
   setRange(inPoint: number | null, outPoint: number | null): void;
-  setLoopMode(mode: LoopMode): void;
+  setLoopMode(mode: FramelineLoopMode): void;
   toggleTimeDisplay(): void;
   /** Loop on or off; with no argument, toggles. On loops the range when a point is set, otherwise the whole video. */
   setLoop(on?: boolean): void;
   /** Switches one checkbox guide on or off; with no `on`, toggles it. */
   toggleGuide(id: string, on?: boolean): void;
   /** Picks a crop mask, or `null` for none. Any crop but 9:16 clears the platform zones. */
-  setCrop(crop: CropId | null): void;
+  setCrop(crop: FramelineCropId | null): void;
   /** Picks a platform's zones, or `null` for none. Picking one turns on the 9:16 crop. */
-  setZones(zones: ZoneId | null): void;
+  setZones(zones: FramelineZoneId | null): void;
   /** Hides every guide, or shows the hidden set again. */
   toggleGuidesHidden(): void;
   /** Sets guides, crop and zones in one change; fields left out stay as they are. */
   setGuides(next: { guides?: readonly string[]; crop?: string | null; zones?: string | null }): void;
   /** Picks a zoom level. Ignored while the host does not allow zoom. */
-  setZoom(level: ZoomLevel): void;
+  setZoom(level: FramelineZoomLevel): void;
   /** `Z`: the next level, and Fit again after the last. `-1` (`Shift+Z`) goes the other way. */
   cycleZoom(direction?: 1 | -1): void;
-  selectMarker(marker: Marker): void;
+  selectMarker(marker: FramelineMarker): void;
   /** Drops the selection without telling the host: the playhead moved away from the marker. */
   deselectMarker(): void;
   /** Called by the frame clock. Notifies only when the frame or the media time changed. */
   setFrame(frame: number, mediaTime: number): void;
-  setClock(source: FrameClockSource | null, precision: FrameClockPrecision | null): void;
+  setClock(source: FramelineFrameClockSource | null, precision: FramelineFrameClockPrecision | null): void;
+  /** Called by the frame clock for every presented frame. Only counts: it notifies nobody, so nothing re-renders. */
+  countPresentedFrame(): void;
+  /** How many frames the clock has seen presented since the store was created. */
+  presentedFrames(): number;
+  /** Called by the debug readout, at most twice a second. Notifies only when a number changed. */
+  setStats(stats: PlaybackStats): void;
   setDuration(duration: number): void;
   /** What the host allows. Guides, crops and zones that are no longer allowed are switched off. */
   setAllowedView(allowed: AllowedView): void;
   setCallbacks(callbacks: ProCallbacks): void;
 }
 
-const LOOP_MODES: readonly LoopMode[] = ['off', 'range', 'whole'];
+const LOOP_MODES: readonly FramelineLoopMode[] = ['off', 'range', 'whole'];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -135,7 +167,7 @@ export interface ProStoreOptions {
   allowedView?: AllowedView;
   /** The view to start with, for example the remembered one. It is checked against `allowedView`. */
   view?: ViewState;
-  timeDisplay?: TimeDisplay;
+  timeDisplay?: FramelineTimeDisplay;
   /** Loop on from the start (the host allows the loop feature). Off: it stays off until switched on. */
   loop?: boolean;
 }
@@ -154,7 +186,9 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     clockPrecision: null,
     duration: 0,
     selectedMarker: null,
+    stats: null,
   };
+  let presented = 0;
   let allowed: AllowedView = options.allowedView ?? NOTHING_ALLOWED;
   let callbacks: ProCallbacks = {};
   const listeners = new Set<() => void>();
@@ -172,7 +206,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     if (!sameEffective(before, after)) callbacks.onGuidesChange?.(after);
   }
 
-  function commitZoom(level: ZoomLevel) {
+  function commitZoom(level: FramelineZoomLevel) {
     commit({ zoom: level });
     callbacks.onZoomChange?.(level);
   }
@@ -191,7 +225,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
       return;
     }
     commit({ inPoint, outPoint, ...extra });
-    callbacks.onInOutChange?.({ in: inPoint, out: outPoint });
+    callbacks.onRangeChange?.({ in: inPoint, out: outPoint });
   }
 
   function setPoint(which: 'in' | 'out', time: number) {
@@ -260,7 +294,7 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
 
     setLoop(on) {
       const next = typeof on === 'boolean' ? on : state.loopMode === 'off';
-      const mode: LoopMode = !next ? 'off' : state.inPoint !== null || state.outPoint !== null ? 'range' : 'whole';
+      const mode: FramelineLoopMode = !next ? 'off' : state.inPoint !== null || state.outPoint !== null ? 'range' : 'whole';
       if (mode !== state.loopMode) commit({ loopMode: mode });
     },
 
@@ -299,6 +333,18 @@ export function createProStore(options: ProStoreOptions = {}): ProStore {
     setClock(source, precision) {
       if (source === state.clockSource && precision === state.clockPrecision) return;
       commit({ clockSource: source, clockPrecision: precision });
+    },
+
+    countPresentedFrame() {
+      presented += 1;
+    },
+
+    presentedFrames: () => presented,
+
+    setStats(stats) {
+      const last = state.stats;
+      if (last && last.droppedFrames === stats.droppedFrames && last.totalFrames === stats.totalFrames && last.measuredFps === stats.measuredFps) return;
+      commit({ stats: Object.freeze({ ...stats }) });
     },
 
     setDuration(duration) {

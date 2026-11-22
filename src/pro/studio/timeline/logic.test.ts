@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Marker } from '../../store';
+import type { FramelineMarker } from '../../store';
 import { framesFromSeconds } from '../../timecode';
 import { seekTimeForFrame } from '../logic';
 import {
@@ -178,7 +178,7 @@ describe('frame snapping', () => {
 });
 
 describe('layoutMarkers', () => {
-  const m = (time: number, extra: Partial<Marker> = {}): Marker => ({ time, label: `m${time}`, ...extra });
+  const m = (time: number, extra: Partial<FramelineMarker> = {}): FramelineMarker => ({ time, label: `m${time}`, ...extra });
 
   it('gives every marker one pin, and a line to the end time when it has one', () => {
     const pins = layoutMarkers([m(10), m(30, { end: 40 })], 60, 600);

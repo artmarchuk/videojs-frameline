@@ -2,13 +2,13 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type Ref, type RefObject } from 'react';
 
-import type { FramelineApi } from '../api';
+import type { FramelineApi, FramelineLinkUrl } from '../api';
 
 import { ProStoreContext } from '../context';
-import type { FeatureFlags, Tier } from '../features';
+import type { FramelineFeatureFlags, FramelineTier } from '../features';
 import { useFrameClock } from '../frame-clock';
-import type { CopyLinkInfo, FrameGrabInfo } from '../studio/controller';
-import { createProStore, type Marker, type ProCallbacks } from '../store';
+import type { FramelineCopyLinkInfo, FramelineFrameGrabInfo } from '../studio/controller';
+import { createProStore, type FramelineMarker, type ProCallbacks } from '../store';
 import { parseTimecode } from '../timecode';
 import { useVideoElement } from '../use-video-element';
 import { allowedView, readRemembered, storageKey, viewAttributes, writeRemembered } from '../view';
@@ -20,29 +20,32 @@ const DebugReadout = lazy(() => import('../debug'));
 const STUDIO_FLAGS = [
   'timecode',
   'frameStep',
-  'inOut',
+  'range',
   'loop',
   'markers',
-  'shotNav',
+  'cuts',
   'grabFrame',
-  'copyTimecodeLink',
+  'copyLink',
   'guides',
-  'platformZones',
+  'zones',
   'zoom',
-] as const satisfies readonly (keyof FeatureFlags)[];
-const NO_MARKERS: readonly Marker[] = [];
+] as const satisfies readonly (keyof FramelineFeatureFlags)[];
+const NO_MARKERS: readonly FramelineMarker[] = [];
 
 export interface ProRuntimeProps extends ProCallbacks {
-  tier: Tier;
+  tier: FramelineTier;
   density: string;
   layout: string;
-  features: Readonly<FeatureFlags>;
+  features: Readonly<FramelineFeatureFlags>;
+  /** Show the debug readout (the `debug` prop or `?debug`). */
+  debug: boolean;
   fps: number;
   startTimecode?: string | undefined;
   dropFrame?: boolean | undefined;
-  markers?: readonly Marker[] | undefined;
-  onCopyLink?: ((info: CopyLinkInfo) => void) | undefined;
-  onFrameGrab?: ((info: FrameGrabInfo) => void) | undefined;
+  markers?: readonly FramelineMarker[] | undefined;
+  linkUrl?: FramelineLinkUrl | undefined;
+  onCopyLink?: ((info: FramelineCopyLinkInfo) => void) | undefined;
+  onFrameGrab?: ((info: FramelineFrameGrabInfo) => void) | undefined;
   apiRef?: Ref<FramelineApi> | undefined;
   /** Counts renders of `FramelineSkin`, shown in the debug readout to prove the skin does not re-render per frame. */
   skinRenders: RefObject<number>;
@@ -61,17 +64,19 @@ export default function ProRuntime({
   density,
   layout,
   features,
+  debug,
   fps,
   startTimecode,
   dropFrame = false,
   markers = NO_MARKERS,
+  linkUrl,
   onCopyLink,
   onFrameGrab,
   apiRef,
   skinRenders,
   onViewAttributes,
   persist,
-  onInOutChange,
+  onRangeChange,
   onMarkerSelect,
   onFrameChange,
   onGuidesChange,
@@ -90,8 +95,8 @@ export default function ProRuntime({
   const video = useVideoElement(anchor);
 
   useEffect(() => {
-    store.setCallbacks({ onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange, onZoomChange });
-  }, [store, onInOutChange, onMarkerSelect, onFrameChange, onGuidesChange, onZoomChange]);
+    store.setCallbacks({ onRangeChange, onMarkerSelect, onFrameChange, onGuidesChange, onZoomChange });
+  }, [store, onRangeChange, onMarkerSelect, onFrameChange, onGuidesChange, onZoomChange]);
 
   // The host's features always win: what is no longer allowed is switched off.
   useEffect(() => {
@@ -152,12 +157,13 @@ export default function ProRuntime({
             markers={markers}
             video={video}
             anchor={anchor}
+            linkUrl={linkUrl}
             onCopyLink={onCopyLink}
             onFrameGrab={onFrameGrab}
             apiRef={apiRef}
           />
         )}
-        {features.debug && (
+        {debug && (
           <DebugReadout
             tier={tier}
             density={density}

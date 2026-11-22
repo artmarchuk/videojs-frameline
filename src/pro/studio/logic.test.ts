@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createProStore } from '../store';
 import {
@@ -6,6 +6,7 @@ import {
   effectiveRange,
   findCut,
   formatLinkPosition,
+  linkFragment,
   grabFileName,
   isNarrowDock,
   narrowDockRows,
@@ -17,6 +18,7 @@ import {
   parseLinkSeconds,
   readLinkPosition,
   resolveLinkPosition,
+  resolveLinkUrl,
   seekTimeForFrame,
   stepTarget,
   withLinkPosition,
@@ -386,5 +388,69 @@ describe('timecodeLeadLength', () => {
   it('leaves a string of two characters or fewer alone', () => {
     expect(timecodeLeadLength('00')).toBe(0);
     expect(timecodeLeadLength('')).toBe(0);
+  });
+});
+
+describe('linkUrl: what Copy link copies', () => {
+  const value = formatLinkPosition(1490, 24);
+  const position = { fragment: linkFragment(value), frame: 1490, time: 1490 / 24, timecode: value.tc };
+  const page = 'https://app.example/review/42?clip=7';
+  const resolve = (linkUrl: unknown, pageUrl = page) => resolveLinkUrl(linkUrl, position, value, pageUrl);
+
+  it('writes the fragment in one place', () => {
+    expect(position.fragment).toBe('t=62.104&tc=00:01:02:02');
+    expect(withLinkPosition('', value)).toBe(`#${position.fragment}`);
+  });
+
+  it('defaults to the page URL plus # plus the fragment', () => {
+    expect(resolve(undefined)).toEqual({ action: 'copy', url: `${page}#${position.fragment}` });
+  });
+
+  it('keeps the other hash keys of the page and replaces an old position', () => {
+    expect(resolve(undefined, `${page}#panel=notes&t=1&tc=00:00:01:00`)).toEqual({ action: 'copy', url: `${page}#panel=notes&${position.fragment}` });
+  });
+
+  it('takes a string as the base URL and keeps its own hash keys', () => {
+    expect(resolve('https://share.example/v/abc')).toEqual({ action: 'copy', url: `https://share.example/v/abc#${position.fragment}` });
+    expect(resolve('https://share.example/v/abc?x=1#tab=cut')).toEqual({ action: 'copy', url: `https://share.example/v/abc?x=1#tab=cut&${position.fragment}` });
+    // The page's own hash does not leak into another base.
+    expect(resolve('https://share.example/v/abc', `${page}#panel=notes`)).toEqual({ action: 'copy', url: `https://share.example/v/abc#${position.fragment}` });
+  });
+
+  it('resolves a relative string against the page', () => {
+    expect(resolve('/share/abc')).toEqual({ action: 'copy', url: `https://app.example/share/abc#${position.fragment}` });
+    expect(resolve('../watch?v=9')).toEqual({ action: 'copy', url: `https://app.example/watch?v=9#${position.fragment}` });
+  });
+
+  it('falls back to the page URL for a string that is not a URL, with a warning', () => {
+    const result = resolve('https://');
+    expect(result).toMatchObject({ action: 'copy', url: `${page}#${position.fragment}` });
+    expect(result).toHaveProperty('warning');
+    expect(resolve(42)).toMatchObject({ action: 'copy', url: `${page}#${position.fragment}`, warning: expect.any(String) });
+  });
+
+  it('calls a function with the position and copies the string it returns as it is', () => {
+    const linkUrl = vi.fn((at: { fragment: string }) => `https://app.example/#/review/42?${at.fragment}`);
+    expect(resolve(linkUrl)).toEqual({ action: 'copy', url: 'https://app.example/#/review/42?t=62.104&tc=00:01:02:02' });
+    expect(linkUrl).toHaveBeenCalledExactlyOnceWith(position);
+  });
+
+  it('copies nothing when the function returns null: the host handled it', () => {
+    expect(resolve(() => null)).toEqual({ action: 'handled' });
+  });
+
+  it('fails, with a warning, when the function throws', () => {
+    const result = resolve(() => {
+      throw new Error('no route');
+    });
+    expect(result).toMatchObject({ action: 'fail' });
+    expect((result as { warning: string }).warning).toContain('no route');
+  });
+
+  it('fails, with a warning, when the function returns anything but a string or null', () => {
+    for (const returned of [undefined, 42, {}, '', Promise.resolve('https://late.example/')]) {
+      expect(resolve(() => returned)).toMatchObject({ action: 'fail', warning: expect.any(String) });
+    }
+    expect((resolve(() => Promise.resolve('x')) as { warning: string }).warning).toContain('synchronous');
   });
 });

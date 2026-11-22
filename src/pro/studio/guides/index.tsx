@@ -101,8 +101,8 @@ const GuideSet = memo(function GuideSet({ width, height, guides, crop, zones }: 
           <Lines lines={thirdsLines(width, height)} ratio={ratio} />
         </GuideSvg>
       )}
-      {on('centre') && (
-        <GuideSvg id="centre" {...layerProps}>
+      {on('center') && (
+        <GuideSvg id="center" {...layerProps}>
           <Lines lines={centreCross(width, height)} ratio={ratio} />
         </GuideSvg>
       )}

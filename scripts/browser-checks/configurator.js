@@ -30,7 +30,7 @@ const state = () => page.evaluate(() => {
 // cross, paused, an empty log.
 out.staged = await page.evaluate(() => ({
   in: document.querySelector('#player [data-handle="in"]')?.getAttribute('aria-valuetext'), out: document.querySelector('#player [data-handle="out"]')?.getAttribute('aria-valuetext'),
-  timecode: (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11), titleSafe: !!document.querySelector('#player [data-guide="title-safe"]'), actionSafe: !!document.querySelector('#player [data-guide="action-safe"]'), centre: !!document.querySelector('#player [data-guide="centre"]'),
+  timecode: (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11), titleSafe: !!document.querySelector('#player [data-guide="title-safe"]'), actionSafe: !!document.querySelector('#player [data-guide="action-safe"]'), centre: !!document.querySelector('#player [data-guide="center"]'),
   paused: document.querySelector('#player video').paused, log: document.querySelectorAll('#log li').length, focus: document.activeElement?.tagName, scroll: window.scrollY,
 }));
 out.stagedOk = out.staged.in === '00:00:02:18' && out.staged.out === '00:00:50:16' && out.staged.timecode === '00:00:03:02' && out.staged.titleSafe && out.staged.actionSafe && out.staged.centre && out.staged.paused && out.staged.log === 0 && out.staged.focus === 'BODY' && out.staged.scroll === 0;
@@ -102,7 +102,7 @@ out.stepOk = stepped.paused && Math.floor(stepped.time * fps + 0.01) === 3 && ke
 await showMe('range'); await page.waitForTimeout(1500);
 const ranged = await state();
 out.range = { log: ranged.log[0], playing: !ranged.paused, loop: await page.locator('#player [aria-label^="Loop"]').first().getAttribute('aria-pressed'), focus: ranged.focus };
-out.rangeOk = /onInOutChange \| in \d+\.\d{3} · out \d+\.\d{3}/.test(ranged.log[0] ?? '') && !ranged.paused && out.range.loop === 'true' && kept(ranged.focus, 'Show me: set a range and loop it');
+out.rangeOk = /onRangeChange \| in \d+\.\d{3} · out \d+\.\d{3}/.test(ranged.log[0] ?? '') && !ranged.paused && out.range.loop === 'true' && kept(ranged.focus, 'Show me: set a range and loop it');
 await page.evaluate(() => document.querySelector('#player video').pause());
 
 // Review: to the marker `hold`, paused; the status names the marker; nothing is written to the clipboard.
@@ -116,11 +116,11 @@ await showMe('guides'); await page.waitForTimeout(500);
 const zones = await state();
 out.zonesOk = zones.crop === '9-16' && zones.zones === 'tiktok' && /onGuidesChange \| crop 9:16 · zones tiktok/.test(zones.log[0] ?? '');
 
-await check('platformZones').uncheck(); await page.waitForTimeout(600);
+await check('zones').uncheck(); await page.waitForTimeout(600);
 await showMe('guides'); await page.waitForTimeout(500);
 const safe = await state();
 out.safeOk = safe.titleSafe && safe.crop === null && safe.zones === null && /onGuidesChange \| guides title-safe$/.test(safe.log[0] ?? '');
-await check('platformZones').check(); await page.waitForTimeout(600);
+await check('zones').check(); await page.waitForTimeout(600);
 
 await showMe('zoom'); await page.waitForTimeout(1800);
 const zoomed = await state();
@@ -139,7 +139,7 @@ out.grabOk = /onFrameGrab \| frame \d+ · \d+×\d+ · .+\.png/.test(grab.log[0] 
 
 // The log: every line starts with the player's timecode; never more than 20; Clear empties it; it is not a live region.
 out.logLines = grab.log.length;
-out.logOk = grab.log.every((line) => /^\d\d:\d\d:\d\d:\d\d \| on[A-Z]/.test(line)) && grab.log.some((line) => line.includes('onInOutChange')) && grab.log.some((line) => line.includes('onFrameGrab'));
+out.logOk = grab.log.every((line) => /^\d\d:\d\d:\d\d:\d\d \| on[A-Z]/.test(line)) && grab.log.some((line) => line.includes('onRangeChange')) && grab.log.some((line) => line.includes('onFrameGrab'));
 // Guides goes back to Fit and Zoom to 100%: one event a click.
 for (let i = 0; i < 14; i++) { await showMe('guides'); await page.waitForTimeout(60); await showMe('zoom'); await page.waitForTimeout(60); }
 out.logCapped = (await state()).log.length === 20;
@@ -153,7 +153,7 @@ out.copied = (await page.evaluate(() => navigator.clipboard.readText().catch(() 
 
 // The query wins on load, and round-trips. (Configure is closed again after each load; the query is read all the same.)
 const url = new URL(page.url());
-for (const query of ['?tier=viewer', '?tier=studio&zoom=0', '?tier=viewer&layout=dock&timecode=1&guides=1', '?tier=studio&layout=overlay&inOut=0&platformZones=0']) {
+for (const query of ['?tier=viewer', '?tier=studio&zoom=0', '?tier=viewer&layout=dock&timecode=1&guides=1', '?tier=studio&layout=overlay&range=0&zones=0']) {
   await page.goto(`${url.origin}${url.pathname}${query}`, { waitUntil: 'load' }); await page.waitForTimeout(1500);
   const loaded = await state();
   (out.roundTrip ??= []).push({ query, back: loaded.query, tier: loaded.tier, layout: loaded.layout, same: loaded.query === query });

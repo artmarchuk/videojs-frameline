@@ -2,7 +2,8 @@
  * Studio transport logic. Pure: no React, no DOM. Everything the Studio controls decide is decided here, so it can be
  * tested without a browser.
  */
-import type { Marker } from '../store';
+import type { FramelineLinkPosition } from '../api';
+import type { FramelineMarker } from '../store';
 import { formatTimecode, framesFromSeconds, parseTimecode, resolveFrameRate, type TimecodeOptions } from '../timecode';
 
 /**
@@ -70,14 +71,14 @@ export function stepTarget(frame: number, delta: number, lastFrame: number): Ste
 /** A place to jump to with previous/next cut. `marker` is set when it came from the host's markers. */
 export interface Cut {
   time: number;
-  marker?: Marker;
+  marker?: FramelineMarker;
 }
 
 /**
  * The cut list: chapter starts when the media has chapters, otherwise the host's markers. Sorted by time, with cuts
  * that fall on the same frame merged (the first one wins).
  */
-export function buildCutList(chapterStarts: readonly number[], markers: readonly Marker[], fps: number): Cut[] {
+export function buildCutList(chapterStarts: readonly number[], markers: readonly FramelineMarker[], fps: number): Cut[] {
   const source: Cut[] = chapterStarts.length
     ? chapterStarts.map((time) => ({ time }))
     : markers.map((marker) => ({ time: marker.time, marker }));
@@ -213,8 +214,69 @@ function keyOf(part: string): string {
 export function withLinkPosition(hash: string, value: LinkValue): string {
   const [keys, directive] = splitDirective(hash);
   const parts = keys.split('&').filter((part) => part && keyOf(part) !== T_KEY && keyOf(part) !== TC_KEY);
-  parts.push(`${T_KEY}=${value.t}`, `${TC_KEY}=${value.tc}`);
+  parts.push(linkFragment(value));
   return `#${parts.join('&')}${directive}`;
+}
+
+/**
+ * The position as it stands in a hash, without `#`: `t=62.104&tc=00:01:02:02`. The one place that writes the pair:
+ * `withLinkPosition` uses it for the skin's own links, and a host's `linkUrl` function receives it as `fragment`.
+ */
+export function linkFragment(value: LinkValue): string {
+  return `${T_KEY}=${value.t}&${TC_KEY}=${value.tc}`;
+}
+
+/** What Copy link does with the host's `linkUrl`. `warning` is for the developer, in development only. */
+export type LinkResolution =
+  | { action: 'copy'; url: string; warning?: string }
+  /** The host's function returned `null`: it handled the action itself. Nothing is copied or announced. */
+  | { action: 'handled' }
+  /** The host's function threw or returned something that is not a URL. Nothing is copied; the failure is announced. */
+  | { action: 'fail'; warning: string };
+
+function baseWithPosition(base: URL, value: LinkValue): string {
+  const { hash } = base;
+  base.hash = '';
+  // `href` keeps a bare `#` in some engines after the hash is cleared.
+  return `${base.href.replace(/#$/, '')}${withLinkPosition(hash, value)}`;
+}
+
+/**
+ * The URL that Copy link copies, from the host's `linkUrl`. Pure: the page URL is passed in.
+ *
+ * - Not given: the page's URL with the position in its hash, keeping the page's other hash keys.
+ * - A string: that URL, resolved against the page (so a relative path works), with the position in its hash beside
+ *   its own hash keys. A string that is not a URL falls back to the page's URL, with a warning.
+ * - A function: called with the position. A string it returns is copied as it is; `null` means the host handled it;
+ *   a throw or any other value is a failure.
+ */
+export function resolveLinkUrl(linkUrl: unknown, position: FramelineLinkPosition, value: LinkValue, pageUrl: string): LinkResolution {
+  const page = () => baseWithPosition(new URL(pageUrl), value);
+
+  if (linkUrl === undefined || linkUrl === null) return { action: 'copy', url: page() };
+
+  if (typeof linkUrl === 'string') {
+    try {
+      return { action: 'copy', url: baseWithPosition(new URL(linkUrl, pageUrl), value) };
+    } catch {
+      return { action: 'copy', url: page(), warning: `linkUrl "${linkUrl}" is not a valid URL; copying the page's URL instead.` };
+    }
+  }
+
+  if (typeof linkUrl !== 'function') {
+    return { action: 'copy', url: page(), warning: `linkUrl must be a string or a function; copying the page's URL instead.` };
+  }
+
+  let result: unknown;
+  try {
+    result = (linkUrl as (position: FramelineLinkPosition) => unknown)(position);
+  } catch (error) {
+    return { action: 'fail', warning: `The linkUrl function threw: ${error instanceof Error ? error.message : String(error)}. Nothing was copied.` };
+  }
+  if (result === null) return { action: 'handled' };
+  if (typeof result === 'string' && result !== '') return { action: 'copy', url: result };
+  const got = result instanceof Promise ? 'a promise (the function must be synchronous)' : result === '' ? 'an empty string' : typeof result;
+  return { action: 'fail', warning: `The linkUrl function must return a URL string or null; it returned ${got}. Nothing was copied.` };
 }
 
 /**

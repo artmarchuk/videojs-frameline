@@ -14,7 +14,7 @@
  * RULE: a safe-zone guide must never promise space that the platform's UI may cover. Where sources disagree, use the
  * LARGEST unsafe margin, not the smallest. Each number below says which source it comes from (percent of 1080x1920). See docs/history/NOTES-2026-11.md, "Platform zones: numbers and sources". The UI says "Approximate" on every platform.
  */
-import type { ZoneId } from '../../view';
+import type { FramelineZoneId } from '../../view';
 import type { PercentRect } from './geometry';
 
 export type ZonePart = 'top' | 'bottom' | 'rail';
@@ -25,7 +25,7 @@ export interface Zone {
 }
 
 export interface PlatformZones {
-  id: ZoneId;
+  id: FramelineZoneId;
   zones: readonly Zone[];
 }
 
@@ -33,7 +33,7 @@ const band = (part: ZonePart, y: number, height: number): Zone => ({ part, rect:
 /** The column of buttons on the right: `width` percent wide, from `from` to `to` percent of the height. */
 const rail = (width: number, from: number, to: number): Zone => ({ part: 'rail', rect: { x: 100 - width, y: from, width, height: to - from } });
 
-export const PLATFORM_ZONES: Readonly<Record<ZoneId, PlatformZones>> = {
+export const PLATFORM_ZONES: Readonly<Record<FramelineZoneId, PlatformZones>> = {
   // Top 380 px = 19.8% (adchecklab.com, measured on organic Shorts; the ad template says 288 px = 15%).
   // Bottom 672 px = 35% (Google's vertical video ad template as quoted by socialync.io and adkit.so; others say 390 to 576 px).
   // Right 201 px = 18% (adchecklab.com; the ad template says 192 px = 17.8%). The rail's vertical extent is our estimate.

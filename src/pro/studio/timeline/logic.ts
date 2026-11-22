@@ -2,7 +2,7 @@
  * Ruler timeline logic. Pure: no React, no DOM. Everything the timeline lays out or decides is computed here, so it
  * can be tested without a browser.
  */
-import type { Marker } from '../../store';
+import type { FramelineMarker } from '../../store';
 import { framesFromSeconds, resolveFrameRate, secondsFromFrames } from '../../timecode';
 import { lastFrameOf, seekTimeForFrame } from '../logic';
 
@@ -200,16 +200,16 @@ export interface MarkerPin {
   x: number;
   /** Where the line from the pin ends, or `null` for a marker without an end time. */
   endX: number | null;
-  marker: Marker;
+  marker: FramelineMarker;
 }
 
-const markerKey = (marker: Marker, index: number) => marker.id ?? `${index}:${marker.time}`;
+const markerKey = (marker: FramelineMarker, index: number) => marker.id ?? `${index}:${marker.time}`;
 
 /**
  * Markers the timeline can place: finite, non-negative times, sorted by time. A marker past the end is kept and
  * drawn at the end, because a host's "last frame" marker is often a few milliseconds past the media's duration.
  */
-export function validMarkers(markers: readonly Marker[]): Marker[] {
+export function validMarkers(markers: readonly FramelineMarker[]): FramelineMarker[] {
   return markers
     .filter((marker) => marker && Number.isFinite(marker.time) && marker.time >= 0)
     .slice()
@@ -220,7 +220,7 @@ export function validMarkers(markers: readonly Marker[]): Marker[] {
  * One pin per marker, in time order, so later markers are drawn on top of earlier ones. There is one visual and no
  * clustering: pins that are close together simply overlap. Pins at 0 and at the duration stay fully inside.
  */
-export function layoutMarkers(markers: readonly Marker[], duration: number, width: number): MarkerPin[] {
+export function layoutMarkers(markers: readonly FramelineMarker[], duration: number, width: number): MarkerPin[] {
   if (!(duration > 0) || !(width > 0)) return [];
   return validMarkers(markers).map((marker, index) => {
     // Exactly on its time: a marker at 0 lines up with the playhead at 0. The gutter around the track holds the pin's half width.

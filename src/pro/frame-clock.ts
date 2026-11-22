@@ -8,7 +8,7 @@
 import { useEffect } from 'react';
 
 import { useProStoreApi } from './context';
-import type { FrameClockPrecision, FrameClockSource } from './store';
+import type { FramelineFrameClockPrecision, FramelineFrameClockSource } from './store';
 import { framesFromSeconds, presentedFrame } from './timecode';
 
 export interface FrameClockReading {
@@ -18,9 +18,9 @@ export interface FrameClockReading {
 
 export interface FrameClockInfo {
   /** `rvfc`: `requestVideoFrameCallback`. `raf`: `requestAnimationFrame` plus media events, reading `currentTime`. */
-  source: FrameClockSource;
+  source: FramelineFrameClockSource;
   /** `frame`: per presented frame. `approximate`: sampled from `currentTime`, which can sit between frames. */
-  precision: FrameClockPrecision;
+  precision: FramelineFrameClockPrecision;
 }
 
 type VideoFrameMeta = { mediaTime: number };
@@ -46,7 +46,9 @@ export function frameClockInfo(video: HTMLVideoElement): FrameClockInfo {
 export function startFrameClock(
   video: HTMLVideoElement,
   fps: number,
-  onReading: (reading: FrameClockReading) => void
+  onReading: (reading: FrameClockReading) => void,
+  /** Called once per frame the browser reports as presented. Never called by the `currentTime` fallback. */
+  onPresented?: () => void
 ): () => void {
   let stopped = false;
   const cleanups: (() => void)[] = [];
@@ -71,6 +73,7 @@ export function startFrameClock(
       if (stopped) return;
       window.clearTimeout(settle);
       settle = 0;
+      onPresented?.();
       // `mediaTime` is the presentation time of the frame on screen: its start in Chrome, the seek time in Firefox.
       onReading({ frame: presentedFrame(metadata.mediaTime, fps), mediaTime: metadata.mediaTime });
       // The API fires once per registration, so register again for the next frame.
@@ -145,7 +148,7 @@ export function useFrameClock(videoEl: HTMLVideoElement | null, fps: number): vo
     videoEl.addEventListener('durationchange', syncDuration);
     syncDuration();
 
-    const stop = startFrameClock(videoEl, fps, ({ frame, mediaTime }) => store.setFrame(frame, mediaTime));
+    const stop = startFrameClock(videoEl, fps, ({ frame, mediaTime }) => store.setFrame(frame, mediaTime), store.countPresentedFrame);
 
     return () => {
       stop();
