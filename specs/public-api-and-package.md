@@ -1,3 +1,5 @@
+> **Superseded (22 Nov 2026). Do not run this file.** Frame links have since shipped in the `#t=<seconds>&tc=<timecode>` format, so section 2's note on the link format is out of date, and the delivery steps predate the branch rules in `CLAUDE.md`. The work is split into two new specs, API 0.1 step A (names and public surface) and step B (library build and package). They reuse section 1 (naming rules) and section 2 (the rename map) from this file.
+
 # Public API 0.1 and the npm package
 
 Frameline becomes installable: `npm install <package>` and one import, with a public API whose names follow one rule. Nobody installs Frameline yet, so names change outright, with no aliases and no deprecation layer. The playback stats join the debug readout.

@@ -7,3 +7,6 @@ dist
 .vercel
 .netlify
 .wrangler
+
+# Claude Code local settings for this machine.
+.claude/settings.local.json
