@@ -2273,6 +2273,7 @@ Found while checking the landing page's frame-link sentence: the link effect's c
 - **No link, or one that names no frame:** nothing changes; autoplay plays. The Viewer does not read links.
 - **`link-open.js`** runs its four links again with autoplay, and three controls that must play (no link, an unreadable one, one past the end).
 - **Limits:** a host that calls `play()` later than that half second plays. A host `play()` that the hold interrupts may reject with `AbortError`, as any interrupted `play()` does. A link pasted into a tab that already shows the page is still read only on load.
+- **Merged and deployed (22 Nov 2026):** fast-forwarded into `main` at 24e44ae and deployed to production (`videojs-frameline-8bx8jvzmn`). On the live site: 107 files equal the build, and `link-open.js` passes in Chrome, Firefox and WebKit.
 
 ### Unverified (frame links pause)
 
@@ -2280,3 +2281,7 @@ Found while checking the landing page's frame-link sentence: the link effect's c
 - Autoplay with sound was tried in Chrome only, with the policy switched off.
 - A slow or stalled network, beyond a Studio chunk that arrives 3 s late.
 - Seen while checking, the same on `main` at aa42a18: in Playwright's WebKit a seek on load sometimes never lands (`seeking`, `readyState` 1 after 15 s, the media had not arrived), so `link-open.js` can fail a case there on an unchanged player (1 of 10 runs on `main`'s dev server).
+
+## Landing page: the frame-link sentence (22 Nov 2026, branch `landing-frame-links-copy`)
+
+- The "Point at an exact moment." detail now carries the Brand content doc's sentence verbatim (`specs/landing-frame-links-copy.md`). It says the link opens paused, so it depends on the fix at 24e44ae: never deploy it, or roll production back, to a build that has the sentence without that fix.
