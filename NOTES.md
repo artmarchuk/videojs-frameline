@@ -2247,7 +2247,13 @@ typecheck, tests (233), build, `node scripts/contrast.mjs` (no FAIL rows): pass.
 
 The `phone-transport.js` touch runs in Firefox and WebKit stop at `newCDPSession` (Chromium only), the known limit from W.1. `link-open.js` saw, in all three engines: `#t=62.104&tc=00:01:02:02` and `#t=00:01:02:02` on `00:01:02:02` (media time 62.0833), `#t=1m2s` on `00:01:02:00`, `#t=10&tc=00:00:20:05` on `00:00:20:05`, each paused.
 
+### Preview
+
+https://videojs-frameline-d7fltprbb-artmarchuk.vercel.app (Vercel preview, READY, behind the Vercel login; production unchanged). The hand check could not be done on that URL: it redirects to the Vercel login and the Chrome extension was not connected. Done instead on the deployed files themselves (`.vercel/output/static`, served locally) in Google Chrome through Playwright: three frame steps from 31.3 s, the link button copied `…#t=31.438&tc=00:00:31:10`; that URL in a new tab opened paused on 00:00:31:10, and the reel's burned-in timecode shows 00:00:31:10 too.
+
 ### Unverified (frame links)
+
+- **The preview URL in a browser** (see Preview).
 
 - **A real start timecode and drop-frame source in the browser.** Unit tests only (29.97 drop-frame from `01:00:00;00`, 59.94 drop-frame); the demo media is 24 and 30 fps with no offset.
 - **Other tools opening our links.** That a browser's own media-fragment handling or a platform reads `t=62.104` is from the specs, not tried; a page URL's fragment does not reach a `<video>` element, so the browser itself does nothing with it.
