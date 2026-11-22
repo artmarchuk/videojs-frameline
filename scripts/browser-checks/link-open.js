@@ -4,6 +4,9 @@
 // the new format (`#t=62.104&tc=00:01:02:02`), the format before `tc` (`#t=00:01:02:02`) and the video platforms'
 // shorthand (`#t=1m2s`), and expects the timecode field to show the frame, the media time to sit inside that frame,
 // and the video to be paused. A link with `tc` and a `t` far from it opens on `tc`.
+// The same holds when the host autoplays (`autoplay=1&muted=1` in the hash, the monitor page's own option): such a
+// player is still paused on the frame 2.5 s later. Autoplay without a link, or with a link that names no frame, must
+// play, which also proves that the autoplay cases really autoplay.
 const out = {};
 const base = new URL('/preview.html?tier=studio&media=cosmicDawn', page.url()).href;
 const cases = [
@@ -12,13 +15,15 @@ const cases = [
   { hash: '#t=1m2s', timecode: '00:01:02:00', frame: 62 * 30 },
   { hash: '#t=10&tc=00:00:20:05', timecode: '00:00:20:05', frame: 20 * 30 + 5 },
 ];
+const autoplay = '#autoplay=1&muted=1';
+for (const linked of [...cases]) cases.push({ ...linked, hash: `${autoplay}&${linked.hash.slice(1)}`, hold: 2500 });
 const checks = {};
-for (const { hash, timecode, frame } of cases) {
+for (const { hash, timecode, frame, hold = 600 } of cases) {
   await page.goto('about:blank');
   await page.goto(base + hash);
   await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
   await page.waitForFunction((tc) => document.querySelector('[data-pro-timecode]')?.textContent.includes(tc), timecode, { timeout: 15000 }).catch(() => {});
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(hold);
   const seen = await page.evaluate(() => {
     const video = document.querySelector('video');
     return { field: document.querySelector('[data-pro-timecode]').textContent.trim().replace(/^≈/, '').slice(0, 11), time: video.currentTime, paused: video.paused, hash: location.hash };
@@ -26,6 +31,15 @@ for (const { hash, timecode, frame } of cases) {
   const inFrame = Math.floor(seen.time * 30 + 0.01) === frame;
   checks[hash] = seen.field === timecode && inFrame && seen.paused && seen.hash === hash;
   out[hash] = { ...seen, expected: timecode, inFrame };
+}
+for (const hash of [autoplay, `${autoplay}&t=banana`, `${autoplay}&t=9999`]) {
+  await page.goto('about:blank');
+  await page.goto(base + hash);
+  const plays = await page
+    .waitForFunction(() => { const video = document.querySelector('video'); return video && !video.paused && video.currentTime > 2; }, null, { timeout: 20000 })
+    .then(() => true, () => false);
+  checks[hash] = plays;
+  out[hash] = { plays };
 }
 out.checks = checks;
 out.pass = Object.values(checks).every(Boolean);

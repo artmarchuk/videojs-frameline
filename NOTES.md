@@ -2262,3 +2262,21 @@ https://videojs-frameline-d7fltprbb-artmarchuk.vercel.app (Vercel preview, READY
 - **A real start timecode and drop-frame source in the browser.** Unit tests only (29.97 drop-frame from `01:00:00;00`, 59.94 drop-frame); the demo media is 24 and 30 fps with no offset.
 - **Other tools opening our links.** That a browser's own media-fragment handling or a platform reads `t=62.104` is from the specs, not tried; a page URL's fragment does not reach a `<video>` element, so the browser itself does nothing with it.
 - **Safari itself, iOS, and the browser floor versions.** Playwright's WebKit stood in.
+
+## Frame links pause an autoplaying host (22 Nov 2026, branch `frame-links-pause`, preview only)
+
+Found while checking the landing page's frame-link sentence: the link effect's comment said "once, paused", but it only seeked, so a host that autoplays played on from the linked frame.
+
+- **The rule:** applying a valid link calls `pause()` (also on a paused video, which cancels an autoplay that has not started) and holds the frame until 500 ms after the seek has landed, so a host's `play()` on mount, `loadstart`, `loadedmetadata` or `canplay` is paused again.
+- **The user wins:** a play within a second of a trusted press or key is never paused. This keeps `preload="none"` at one press of Play: the link is applied when that press loads the metadata.
+- **While the link holds,** the range does not pull the playhead to In and the end of the media does not start the loop. Play afterwards follows the range as before.
+- **No link, or one that names no frame:** nothing changes; autoplay plays. The Viewer does not read links.
+- **`link-open.js`** runs its four links again with autoplay, and three controls that must play (no link, an unreadable one, one past the end).
+- **Limits:** a host that calls `play()` later than that half second plays. A host `play()` that the hold interrupts may reject with `AbortError`, as any interrupted `play()` does. A link pasted into a tab that already shows the page is still read only on load.
+
+### Unverified (frame links pause)
+
+- Safari itself, iOS (autoplay policy, Low Power Mode), real touch and the browser floor versions: Playwright's WebKit stood in.
+- Autoplay with sound was tried in Chrome only, with the policy switched off.
+- A slow or stalled network, beyond a Studio chunk that arrives 3 s late.
+- Seen while checking, the same on `main` at aa42a18: in Playwright's WebKit a seek on load sometimes never lands (`seeking`, `readyState` 1 after 15 s, the media had not arrived), so `link-open.js` can fail a case there on an unchanged player (1 of 10 runs on `main`'s dev server).

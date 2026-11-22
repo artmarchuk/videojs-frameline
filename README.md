@@ -328,7 +328,7 @@ https://example.com/review/42#t=62.104&tc=00:01:02:02
 
 `t` is the position in seconds as [Media Fragments](https://www.w3.org/TR/media-frags/) defines it (the middle of the frame, to the millisecond), so any tool that reads media fragments opens the right second. `tc` is the timecode on screen, with `startTimecode` applied and `;` before the frames in drop-frame, so Frameline opens the exact frame. The button shows a check for a moment and the copy is announced with the timecode; `onCopyLink` reports it. `copyTimecodeLink: false` removes the button and the key.
 
-A page opened with a link seeks to that frame, paused. It reads, in this order, and takes the first value that falls inside the media:
+A page opened with a link seeks to that frame, paused, also when the host autoplays: a `play()` that isn't the user's is paused again until half a second after that seek has landed (a later one plays as usual). With `preload="none"`, pressing Play plays from the linked frame. It reads, in this order, and takes the first value that falls inside the media:
 
 1. `tc`, a timecode (`;` or `.` before the frames means drop-frame);
 2. `t` holding a timecode, `#t=00:01:02:02`: links copied before `tc` existed keep opening;

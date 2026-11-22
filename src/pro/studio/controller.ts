@@ -91,6 +91,13 @@ export interface StudioController {
 const TARGET_FRESH_MS = 350;
 /** How long "previous cut" remembers the cut it just jumped to, so a second press moves on to the one before. */
 const CUT_FRESH_MS = 750;
+/**
+ * A frame link holds its frame until this long after its seek has landed: a host that autoplays calls `play()` on
+ * events that come just before or just after that (`loadedmetadata`, `canplay`).
+ */
+const LINK_SETTLE_MS = 500;
+/** A `play` this soon after a press or a key is the user's, and no frame link overrides it. */
+const USER_PLAY_MS = 1000;
 /** Step announcements wait for the key repeat to stop, so a held key speaks once. */
 const STEP_ANNOUNCE_MS = 400;
 
@@ -155,6 +162,39 @@ export function useStudioController(options: StudioOptions): StudioController {
 
   const { video, fps } = options;
 
+  // A frame link keeps the player paused on its frame until `linkHeldUntil`, against autoplay but not against the
+  // user. With `preload="none"` the link is only applied after Play was pressed: that press wins.
+  const linkHeldUntil = useRef(0);
+  const pressedAt = useRef(-Infinity);
+  const userPlayed = useRef(false);
+  useEffect(() => {
+    if (!video) return;
+    const onPress = (event: Event) => {
+      if (event.isTrusted) pressedAt.current = performance.now();
+    };
+    const onPlay = () => {
+      const now = performance.now();
+      if (now - pressedAt.current < USER_PLAY_MS) {
+        userPlayed.current = true;
+        linkHeldUntil.current = 0;
+      } else if (now < linkHeldUntil.current) {
+        video.pause();
+      }
+    };
+    const onSeeked = () => {
+      if (linkHeldUntil.current === Infinity) linkHeldUntil.current = performance.now() + LINK_SETTLE_MS;
+    };
+    const presses = ['keydown', 'keyup', 'pointerup', 'click'];
+    for (const type of presses) document.addEventListener(type, onPress, true);
+    video.addEventListener('play', onPlay);
+    video.addEventListener('seeked', onSeeked);
+    return () => {
+      for (const type of presses) document.removeEventListener(type, onPress, true);
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('seeked', onSeeked);
+    };
+  }, [video]);
+
   // Coalesce seeks: while one is running only the newest target is kept, and it is applied when the seek ends.
   useEffect(() => {
     if (!video) return;
@@ -191,6 +231,7 @@ export function useStudioController(options: StudioOptions): StudioController {
       };
     };
     const apply = (mediaTime: number, starting = false) => {
+      if (performance.now() < linkHeldUntil.current) return; // a link may open outside the range
       const input = current(mediaTime, starting);
       const decision = playbackDecision(input);
       if (decision === 'continue') return;
@@ -234,6 +275,7 @@ export function useStudioController(options: StudioOptions): StudioController {
     // With loop on, the whole video loops here; so does a range that runs to the very end of the media, where the
     // clock stops before the loop point is seen.
     const onEnded = () => {
+      if (performance.now() < linkHeldUntil.current) return; // a link to the last frame doesn't start the loop
       const state = store.getState();
       if (state.loopMode === 'off') return;
       const range = effectiveRange({ in: state.inPoint, out: state.outPoint }, video.duration || 0);
@@ -254,7 +296,8 @@ export function useStudioController(options: StudioOptions): StudioController {
     };
   }, [video, fps, store]);
 
-  // Open on the frame named in the page URL (`#t=…&tc=…`), once, paused.
+  // Open on the frame named in the page URL (`#t=…&tc=…`), once, paused, also when the host autoplays. The pause is
+  // called on a paused video too: that is what cancels an autoplay that has not started yet.
   const linkApplied = useRef(false);
   const { startFrames, dropFrame } = options;
   useEffect(() => {
@@ -271,6 +314,10 @@ export function useStudioController(options: StudioOptions): StudioController {
           `The link's tc (${fields.tc}) names frame ${link.frame} and its t (${fields.t}) frame ${link.disagreement}. ` +
             'Opening on the tc frame. Check the player\'s fps and startTimecode against the page that wrote the link.',
         );
+      }
+      if (!userPlayed.current) {
+        linkHeldUntil.current = Infinity;
+        video.pause();
       }
       target.current = { frame: link.frame, at: performance.now() };
       video.currentTime = seekTimeForFrame(link.frame, fps);

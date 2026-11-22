@@ -36,7 +36,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Remembered choices per browser (guides, crop, zones, timecode or seconds): `persist` | Studio | Switch a guide on and reload |
 | An iframe embed for any site, no React needed: `/embed.html?src=<video URL>` (or `?mux=<playback ID>`), with `tier`, `fps` and `poster` in the URL | Both | `/embed.html?tier=viewer&src=…` in an `<iframe>` |
 | Tokens: Video.js's public `--media-*` tokens and the skin's `--fl-*` tokens | Both | `--media-accent-color: orange` |
-| The landing page: the Studio player opens staged (a range from 00:00:02:18 to 00:00:50:16, cut to cut, the playhead paused on 00:00:03:02, Title safe, Action safe and the centre cross on, nothing moving while it loads), Configure in one row under it (collapsed; one button opens the tier, flags, layout, live snippet, event log and shareable URL), three things to try, six things Studio checks, each with a screenshot of the real player and a "Show me", the two tiers side by side, the host contract and what the skin leaves out | Both | The site root; `/#t=00:00:27:15` opens on that frame with the range still staged |
+| The landing page: the Studio player opens staged (a range from 00:00:02:18 to 00:00:50:16, cut to cut, the playhead paused on 00:00:03:02, Title safe, Action safe and the centre cross on, nothing moving while it loads), Configure in one row under it (collapsed; one button opens the tier, flags, layout, live snippet, event log and shareable URL), three things to try, six things Studio checks, each with a screenshot of the real player and a "Show me", the two tiers side by side, the host contract and what the skin leaves out | Both | The site root; `/#t=27.646&tc=00:00:27:15` opens on that frame with the range still staged |
 
 ## Viewer
 
@@ -96,7 +96,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Copy frame image to the clipboard | Studio | `Shift+G`; Capture menu |
 | Copy link at timecode: `#t=<seconds>&tc=<timecode>` in the page URL (`t` in Media Fragments seconds for any tool, `tc` for the exact frame), announced with the timecode | Studio | `S`; the link button beside the timecode (on a narrow dock under 500 px, in its second row; under 340 px, in the More menu) |
 | The Capture menu holds the image actions only, and is not shown without `grabFrame` | Studio | `/?grabFrame=0` |
-| A page opened with a link opens on that frame, paused. It reads `tc`, then `t` as a timecode (links copied before `tc`), as Media Fragments seconds (`62.5`, `0:01:02.5`) or as platform shorthand (`1m2s`); a range opens on its start | Studio | Paste a copied link; `/preview.html?media=cosmicDawn#t=1m2s` |
+| A page opened with a link opens on that frame, paused, also when the host autoplays. It reads `tc`, then `t` as a timecode (links copied before `tc`), as Media Fragments seconds (`62.5`, `0:01:02.5`) or as platform shorthand (`1m2s`); a range opens on its start | Studio | Paste a copied link; `/preview.html?media=cosmicDawn#t=1m2s` |
 | A clear message when the browser refuses the grab (media without CORS) | Studio | `/preview.html?media=nocors`, then `G` |
 
 ## Studio: guides
