@@ -1,0 +1,29 @@
+<!doctype html>
+<!--
+  Fixture for scripts/browser-checks/embed-link.js: a page on one origin that holds /embed.html from another origin in
+  an iframe, as a site that embeds the player does. Not part of the site and not in the build: serve this folder on
+  its own port (the check's header has the command). The query names the iframe: ?embed=<the embed URL>&allow=<the iframe's allow attribute>.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embed host (test fixture)</title>
+    <style>
+      body { margin: 0; padding: 24px; background: #111; color: #ddd; font: 14px system-ui, sans-serif; }
+      iframe { display: block; width: 960px; max-width: 100%; height: 657px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <p>A host page on <code id="origin"></code>, embedding:</p>
+    <script>
+      const query = new URLSearchParams(location.search);
+      const frame = document.createElement('iframe');
+      frame.title = 'Frameline embed';
+      frame.setAttribute('allow', query.get('allow') ?? '');
+      frame.src = query.get('embed') ?? 'about:blank';
+      document.getElementById('origin').textContent = location.origin;
+      document.body.appendChild(frame);
+    </script>
+  </body>
+</html>
