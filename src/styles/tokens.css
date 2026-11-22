@@ -1,7 +1,7 @@
 /*
  * Frameline design tokens: the single source for the look.
  * Change a token here and the whole skin follows. Contrast ratios for these values are computed by
- * `node scripts/contrast.mjs` and recorded in NOTES.md.
+ * `node scripts/contrast.mjs`; the tables are in docs/history/NOTES-2026-11.md (the latest under "A.6 Contrast").
  */
 @layer base, components, utilities;
 @layer base.theme, base.preset, base.preferences;

@@ -2,9 +2,10 @@
  * Frameline skin styles. Every colour, size, radius and duration comes from src/styles/tokens.css.
  * No CSS nesting and no @scope, so the rules hold on the browser floor (Chrome 111, Firefox 121, Safari 16.4).
  * Layout responds to the player's own width through container queries on `media-root`:
- *   wide   >= 640px   one row, seek bar between the times
- *   medium 400–639px  seek bar on its own row; volume slider kept
- *   narrow <  400px   volume slider and PiP button hidden (PiP moves into the settings menu)
+ *   the Viewer bar is two rows at every width: the seek bar, then the buttons
+ *   < 480px  the overlay bar's padding and gaps tighten
+ *   < 400px  volume slider, PiP button and the slider thumbnail hidden (PiP moves into the settings menu)
+ *   < 360px  elapsed time only
  */
 @layer components {
   /* ---------- Container ---------- */
@@ -543,7 +544,7 @@
 
   /*
    * The bar sits on a scrim of surface-0. The fade starts above the controls; everything that holds text or icons is
-   * over the full-strength part, which is what the contrast figures in NOTES.md are computed against.
+   * over the full-strength part, which is what the contrast figures are computed against (docs/history/NOTES-2026-11.md, "Contrast").
    */
   .pro-skin .pro-bar {
     position: absolute;

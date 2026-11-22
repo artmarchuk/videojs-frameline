@@ -8,7 +8,7 @@
 
 ## What this is
 
-Frameline is a player skin for the Video.js v10 player, made for **video creators**. It is for the tools people use to make video: web editors, AI video generators, and review and approval platforms. It gives those tools a professional preview monitor with frame-accurate transport, timecode, in/out loops, safe areas, platform crop guides, frame grabs and zoom. It is built for the Video.js Skins Design Challenge (deadline Monday 17 Nov 2026, 09:59 Nicosia time).
+Frameline is a player skin for the Video.js v10 player, made for **video creators**. It is for the tools people use to make video: web editors, AI video generators, and review and approval platforms. It gives those tools a professional preview monitor with frame-accurate transport, timecode, in/out loops, safe areas, platform crop guides, frame grabs and zoom. It started as an entry in the Video.js Skins Design Challenge (submitted 17 Nov 2026) and continues as a side project.
 
 One skin, two tiers:
 
@@ -39,7 +39,7 @@ Several sessions work on this project at the same time (the player theme, the la
 3. **Production is deployed only from a clean checkout of `origin/main`,** after the merge, and only when the author asks for a production deploy. `npm run deploy vercel` refuses anything else (`apps/preview/deploy-guard.mjs`). Do not go round the guard with a bare `vercel` command.
 4. **A feature branch gets a preview:** `npm run preview:vercel`. It never changes the live site.
 5. **After a deploy, check the live site** for the other workstream's latest work as well as your own, and say what you checked.
-6. **`NOTES.md` is shared.** Add your own sections and lines; do not rewrite another session's. Commit only your own lines: if the file holds someone else's uncommitted change, leave that change uncommitted.
+6. **`NOTES.md` is shared.** Add your own sections and lines, and replace any line your own change makes untrue, whoever wrote it. Leave every other session's lines alone, and never commit another session's uncommitted change: if the file holds one, leave it uncommitted.
 7. **The landing page's screenshots show the player.** After a theme change reaches `main`, they are stale until the landing session re-shoots them; say so in the report.
 8. **Clean up after the production deploy.** Once your branch is in `main` and production is deployed and checked, stop any local servers you ran from your folder, remove the folder (`git worktree remove <folder>`), and delete the branch locally (`git branch -d <branch>`) and on GitHub (`git push origin --delete <branch>`). First check that the folder has nothing uncommitted or untracked and that the branch is entirely in `main` (`git merge-base --is-ancestor origin/<branch> origin/main`); if either check fails, stop and report instead. Only your own folder and branch, never another session's. Say in the report that it was done.
 9. **Specs from chat** arrive as untracked files in the main checkout's `specs/`. The session that implements a spec copies it into its own folder and commits it on its branch. After the merge, it removes the untracked copy from the main checkout (only if `origin/main` holds an identical copy) and fast-forwards the main checkout. The main checkout holds no other work.

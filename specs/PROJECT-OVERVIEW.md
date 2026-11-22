@@ -37,7 +37,7 @@ Only enabled modules load. The exact names of flags, events and types are in the
 2. **Dark by design.** The player and the page around it are dark; neutral greys (R = G = B) keep judgements of colour and exposure honest.
 3. **Keyboard first.** Every action works from the keyboard, is announced, and is listed in the help dialog.
 4. **Pay for what you use.** The Viewer ships no pro code; Studio code and CSS load only when a feature needs them.
-5. **Host data, skin draws.** Markers, comments, peaks and links come from the host; the skin shows them and fires events. It stores nothing of the host's.
+5. **Host data, skin draws.** Markers, chapters and the link a host wants shared come from the host; the skin shows them and fires events. It stores nothing of the host's.
 
 ## Look
 
