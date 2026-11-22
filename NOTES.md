@@ -2251,6 +2251,10 @@ The `phone-transport.js` touch runs in Firefox and WebKit stop at `newCDPSession
 
 https://videojs-frameline-d7fltprbb-artmarchuk.vercel.app (Vercel preview, READY, behind the Vercel login; production unchanged). The hand check could not be done on that URL: it redirects to the Vercel login and the Chrome extension was not connected. Done instead on the deployed files themselves (`.vercel/output/static`, served locally) in Google Chrome through Playwright: three frame steps from 31.3 s, the link button copied `…#t=31.438&tc=00:00:31:10`; that URL in a new tab opened paused on 00:00:31:10, and the reel's burned-in timecode shows 00:00:31:10 too.
 
+### Merged and deployed (22 Nov 2026)
+
+`frame-links` fast-forwarded into `main` at `5c30238`; production deployed with `npm run deploy vercel` from a clean clone of `origin/main` (the guard passed), https://videojs-frameline-4y60p1319-artmarchuk.vercel.app, aliased to https://frameline.artmarchuk.me. Live checks in Chromium, Firefox and WebKit: `link-open.js`, `dock-polish.js` (5 widths; the copied link is `…/preview.html?tier=studio#t=14.021&tc=00:00:14:00`) and `viewer-gate.js` (4 runs, no pro chunk) pass; in Chrome a copied link (`#t=31.438&tc=00:00:31:10`) opened in a new tab paused on 00:00:31:10. The landing session's latest work is there: the live `index.html` is byte for byte the build of `main`, with the motivation section. The landing page's screenshots are not affected (no visual change). This entry was committed to `main` after the deploy (docs only).
+
 ### Unverified (frame links)
 
 - **The preview URL in a browser** (see Preview).
