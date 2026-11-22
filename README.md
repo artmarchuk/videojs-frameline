@@ -320,7 +320,22 @@ Zoom changes how closely you look at the picture, never the picture itself. The 
 
 ### Links to a frame
 
-The link button beside the timecode (or `S`) copies the page URL with the position in its hash as `#t=HH:MM:SS:FF`, the timecode on screen, and keeps anything else the host app has in the hash. The button shows a check for a moment and the copy is announced with the timecode; `onCopyLink` reports it. `copyTimecodeLink: false` removes the button and the key. A page opened with such a hash seeks to that frame, paused. Plain seconds (`#t=12.5`) are also read.
+The link button beside the timecode (or `S`) copies the page URL with the position in its hash, and keeps anything else the host app has in the hash:
+
+```
+https://example.com/review/42#t=62.104&tc=00:01:02:02
+```
+
+`t` is the position in seconds as [Media Fragments](https://www.w3.org/TR/media-frags/) defines it (the middle of the frame, to the millisecond), so any tool that reads media fragments opens the right second. `tc` is the timecode on screen, with `startTimecode` applied and `;` before the frames in drop-frame, so Frameline opens the exact frame. The button shows a check for a moment and the copy is announced with the timecode; `onCopyLink` reports it. `copyTimecodeLink: false` removes the button and the key.
+
+A page opened with a link seeks to that frame, paused. It reads, in this order, and takes the first value that falls inside the media:
+
+1. `tc`, a timecode (`;` or `.` before the frames means drop-frame);
+2. `t` holding a timecode, `#t=00:01:02:02`: links copied before `tc` existed keep opening;
+3. `t` in seconds, in any Media Fragments form: `62.5`, `npt:62.5`, `1:02.5`, `0:01:02.5`;
+4. `t` in the shorthand video platforms use: `90s`, `1m42s`, `1h2m3s`.
+
+A range (`t=10,20`) opens on its start. When `tc` and `t` disagree by more than a frame, `tc` wins and a development build logs a warning (usually a wrong `fps` or start offset). Anything it can't read is ignored. The fragment never reaches the server, so a link preview in a chat tool can't show the exact frame.
 
 ### Grabbing frames
 

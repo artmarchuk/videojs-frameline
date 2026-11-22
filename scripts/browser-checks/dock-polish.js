@@ -2,9 +2,11 @@
 // Body of an async function; `page` on /preview.html?tier=studio (local build or the public URL). Run it wide
 // (1440x900) and narrow (a touch context, or a window that makes the player under 740px; for example 422x800, 392x800
 // and 352x800, where the player is 390, 360 and 320px wide). In Chromium, create the context with the
-// `clipboard-read` and `clipboard-write` permissions so the copied link and image can be read back.
+// `clipboard-read` and `clipboard-write` permissions so the copied link and image can be read back (in WebKit,
+// `clipboard-read`; elsewhere the link is read from the text handed to `navigator.clipboard.writeText`).
 // Wide: `Space` plays and pauses after a click on the ruler and with a range handle focused. The timecode field and
-// the link button are one display (one well, no gap, a 1px seam inside the link, same height); `S` copies `#t=<timecode>`,
+// the link button are one display (one well, no gap, a 1px seam inside the link, same height); `S` copies a URL whose hash
+// ends in `t=<seconds>&tc=<timecode>` (`t` the middle of the frame, three decimals at most, inside the same frame),
 // shows the check for about 1.2s and announces "Link copied, <timecode>"; a refused clipboard shows no check;
 // `Shift+G` copies a PNG; the Capture menu holds the two image actions; the help dialog lists both keys.
 // Narrow, 500px and up (`data-dock-rows="keys"`; for example a touch context of 724x375, a 692px player): row one is
@@ -45,12 +47,28 @@ if (!out.narrow) {
     return { gap: +(l.left - f.right).toFixed(2), sameHeight: f.height === l.height, name: document.querySelector('.pro-tool-link').getAttribute('aria-label') };
   });
   checks.pair = out.pair.gap === 0 && out.pair.sameHeight && out.pair.name === 'Copy link at timecode';
+  // Where the clipboard cannot be read back (Playwright's Firefox has no clipboard permission), the check records the
+  // text the skin hands to the clipboard instead.
+  await page.evaluate(() => {
+    const write = navigator.clipboard?.writeText?.bind(navigator.clipboard);
+    if (write) navigator.clipboard.writeText = (text) => { window.__copiedText = text; return write(text); };
+  });
   await page.keyboard.press('s'); await page.waitForTimeout(200);
   out.said = await said();
   checks.announced = out.said.includes(`Link copied, ${timecode}`);
   checks.check = await copied();
   checks.noToast = !(await page.$('.pro-toast'));
-  if (clipboard) { out.link = await page.evaluate(() => navigator.clipboard.readText()); checks.link = out.link.endsWith(`#t=${timecode}`); }
+  {
+    out.link = clipboard ? await page.evaluate(() => navigator.clipboard.readText()) : await page.evaluate(() => window.__copiedText ?? '');
+    out.linkFrom = clipboard ? 'clipboard' : 'writeText';
+    // t is the middle of the frame the field shows, so it falls inside that frame. The rate is the one the monitor
+    // page's top bar names for its source ("· 24 fps").
+    out.linkFps = await page.evaluate(() => Number(/(\d+(?:\.\d+)?) fps/.exec(document.body.textContent)?.[1]) || 24);
+    const [hh, mm, ss, ff] = timecode.split(/[:;]/).map(Number);
+    const frame = ((hh * 60 + mm) * 60 + ss) * Math.round(out.linkFps) + ff;
+    const match = /#t=(\d+(?:\.\d{1,3})?)&tc=([\d:;]+)$/.exec(out.link);
+    checks.link = Boolean(match) && match[2] === timecode && Math.floor(Number(match[1]) * out.linkFps + 0.01) === frame && out.link.startsWith(await page.evaluate(() => location.origin + location.pathname));
+  }
   await page.waitForTimeout(1300);
   checks.checkGone = !(await copied());
   // Shift+G copies the image; G still downloads it.

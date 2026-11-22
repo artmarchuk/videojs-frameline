@@ -13,13 +13,15 @@ import {
   timecodeLeadLength,
   outsideRange,
   playbackDecision,
-  parseLinkPosition,
+  linkSeconds,
+  parseLinkSeconds,
   readLinkPosition,
+  resolveLinkPosition,
   seekTimeForFrame,
   stepTarget,
   withLinkPosition,
 } from './logic';
-import { framesFromSeconds } from '../timecode';
+import { framesFromSeconds, parseTimecode, type TimecodeOptions } from '../timecode';
 
 describe('frame stepping', () => {
   it('steps forward and back at 24 fps', () => {
@@ -193,41 +195,138 @@ describe('playback decision for a range', () => {
 });
 
 describe('links', () => {
-  it('writes the position into the hash and keeps host data', () => {
-    expect(withLinkPosition('', '00:00:12:05')).toBe('#t=00:00:12:05');
-    expect(withLinkPosition('#chapter-2', '00:00:12:05')).toBe('#chapter-2&t=00:00:12:05');
-    expect(withLinkPosition('#width=320&t=00:00:01:00&dir=rtl', '00:00:12:05')).toBe('#width=320&dir=rtl&t=00:00:12:05');
+  const link = (frame: number, fps: number, options: TimecodeOptions = {}) => withLinkPosition('', formatLinkPosition(frame, fps, options));
+  const open = (hash: string, fps: number, options: TimecodeOptions = {}, lastFrame?: number) =>
+    resolveLinkPosition(readLinkPosition(hash), fps, options, lastFrame)?.frame ?? null;
+  const ntscStart = parseTimecode('01:00:00;00', 29.97, { dropFrame: true }) ?? 0;
+
+  it('writes the spec examples', () => {
+    expect(link(1490, 24)).toBe('#t=62.104&tc=00:01:02:02');
+    expect(link(0, 25)).toBe('#t=0.02&tc=00:00:00:00');
+    expect(link(1800, 29.97, { dropFrame: true })).toMatch(/&tc=00:01:00;02$/);
+    expect(link(17982, 29.97, { dropFrame: true })).toBe('#t=600.016&tc=00:10:00;00');
+    expect(link(17982, 30000 / 1001, { dropFrame: true, startFrames: ntscStart })).toBe('#t=600.016&tc=01:10:00;00');
   });
 
-  it('reads the position back', () => {
-    expect(readLinkPosition('#t=00:00:12:05')).toBe('00:00:12:05');
-    expect(readLinkPosition('#chapter-2&t=00:00:12:05')).toBe('00:00:12:05');
-    expect(readLinkPosition('#chapter-2')).toBeNull();
-    expect(readLinkPosition('#t=')).toBeNull();
-    expect(readLinkPosition('#t=%E0%A4%A')).toBeNull();
+  it('writes the middle of the frame, with no trailing zeros', () => {
+    expect(linkSeconds(1490, 24)).toBe('62.104');
+    expect(linkSeconds(1489, 24)).toBe('62.063');
+    expect(linkSeconds(12, 24)).toBe('0.521');
+    expect(linkSeconds(0, 25)).toBe('0.02');
+    expect(linkSeconds(2, 2)).toBe('1.25');
   });
 
-  it('round-trips frames, with a start offset and in drop-frame', () => {
-    const cases = [
+  it('keeps the host data in its order, and replaces an old t and tc', () => {
+    const value = { t: '12.229', tc: '00:00:12:05' };
+    expect(withLinkPosition('', value)).toBe('#t=12.229&tc=00:00:12:05');
+    expect(withLinkPosition('#chapter-2', value)).toBe('#chapter-2&t=12.229&tc=00:00:12:05');
+    expect(withLinkPosition('#width=320&t=00:00:01:00&dir=rtl&tc=00:00:01:00', value)).toBe('#width=320&dir=rtl&t=12.229&tc=00:00:12:05');
+    expect(withLinkPosition('#tcx=1&t&ratio=9:16', value)).toBe('#tcx=1&ratio=9:16&t=12.229&tc=00:00:12:05');
+    expect(withLinkPosition('#a=1:~:text=hello', value)).toBe('#a=1&t=12.229&tc=00:00:12:05:~:text=hello');
+  });
+
+  it('reads the raw values, the last of each key, up to a text fragment directive', () => {
+    expect(readLinkPosition('#t=62.104&tc=00:01:02:02')).toEqual({ t: '62.104', tc: '00:01:02:02' });
+    expect(readLinkPosition('#chapter-2&t=00:00:12:05')).toEqual({ t: '00:00:12:05', tc: null });
+    expect(readLinkPosition('#chapter-2')).toEqual({ t: null, tc: null });
+    expect(readLinkPosition('#t=')).toEqual({ t: null, tc: null });
+    expect(readLinkPosition('#t=%E0%A4%A&tc=00%3A00%3A01%3A00')).toEqual({ t: null, tc: '00:00:01:00' });
+    expect(readLinkPosition('#t=1&t=2')).toEqual({ t: '2', tc: null });
+    expect(readLinkPosition('#a=1:~:text=x&t=5')).toEqual({ t: null, tc: null });
+    expect(readLinkPosition('#t=5:~:t=9')).toEqual({ t: '5', tc: null });
+  });
+
+  it('round-trips frame to link and back, from either key alone and from both', () => {
+    const cases: { fps: number; options: TimecodeOptions }[] = [
+      { fps: 23.976, options: {} },
       { fps: 24, options: {} },
-      { fps: 24, options: { startFrames: 86400 } },
-      { fps: 29.97, options: { dropFrame: true } },
-      { fps: 30, options: {} },
+      { fps: 25, options: {} },
+      { fps: 29.97, options: { dropFrame: true, startFrames: ntscStart } },
+      { fps: 59.94, options: { dropFrame: true } },
     ];
     for (const { fps, options } of cases) {
-      for (const frame of [0, 1, 293, 1799, 1800, 54321]) {
-        const value = formatLinkPosition(frame, fps, options);
-        const hash = withLinkPosition('#host=1', value);
-        expect(parseLinkPosition(readLinkPosition(hash), fps, options)).toBe(frame);
+      const last = lastFrameOf(3 * 3600, fps); // the last frame of a three-hour video
+      for (const frame of [0, 1, 2, 293, 1799, 1800, 1801, 17982, 54321, 107892, last - 1, last]) {
+        const hash = withLinkPosition('#host=1', formatLinkPosition(frame, fps, options));
+        const { t, tc } = readLinkPosition(hash);
+        expect(resolveLinkPosition({ t, tc }, fps, options, last)).toEqual({ frame, from: 'tc', disagreement: null });
+        expect(resolveLinkPosition({ t, tc: null }, fps, options, last)?.frame).toBe(frame);
+        expect(resolveLinkPosition({ t: null, tc }, fps, options, last)?.frame).toBe(frame);
       }
     }
   });
 
-  it('accepts seconds and rejects everything else', () => {
-    expect(parseLinkPosition('12.5', 24)).toBe(300);
-    expect(parseLinkPosition('90', 30)).toBe(2700);
-    for (const bad of ['', null, 'abc', '12:5', '00:00:00:99', '-4', '1e3']) expect(parseLinkPosition(bad, 24)).toBeNull();
-    expect(parseLinkPosition('00:59:59:00', 24, { startFrames: 86400 })).toBeNull();
+  it('reads every form of t', () => {
+    // Old links: a timecode in t, with the start offset and drop-frame.
+    expect(open('#t=00:01:02:02', 24)).toBe(1490);
+    expect(open('#t=00:01:00;02', 29.97)).toBe(1800);
+    expect(open('#t=01:10:00;00', 29.97, { dropFrame: true, startFrames: ntscStart })).toBe(17982);
+    // Media Fragments seconds.
+    expect(open('#t=62.104', 24)).toBe(1490);
+    expect(open('#t=62.5', 24)).toBe(1500);
+    expect(open('#t=62.', 24)).toBe(1488);
+    expect(open('#t=npt:62.5', 24)).toBe(1500);
+    expect(open('#t=1:02.5', 24)).toBe(1500);
+    expect(open('#t=01:02.5', 24)).toBe(1500);
+    expect(open('#t=0:01:02.5', 24)).toBe(1500);
+    expect(open('#t=npt:0:01:02.5', 24)).toBe(1500);
+    expect(open('#t=00:01:02.02', 24)).toBe(1488); // three fields: seconds, not a timecode
+    // Platform shorthand.
+    expect(open('#t=90s', 24)).toBe(2160);
+    expect(open('#t=1m42s', 24)).toBe(2448);
+    expect(open('#t=1h2m3s', 25)).toBe(3723 * 25);
+    expect(open('#t=2m', 24)).toBe(2880);
+    expect(open('#t=1M2S', 24)).toBe(1488);
+    // Seconds land in the frame that contains them, with an allowance for floating point.
+    expect(open('#t=0.041', 24)).toBe(0);
+    expect(open(`#t=${25 / 24}`, 24)).toBe(25);
+  });
+
+  it('reads tc, with a dot or a semicolon for drop-frame', () => {
+    expect(open('#tc=00:01:02:02', 24)).toBe(1490);
+    expect(open('#tc=00:01:00;02', 29.97)).toBe(1800);
+    expect(open('#tc=00:01:00.02', 29.97)).toBe(1800);
+    expect(open('#tc=00:01:00:02', 29.97, { dropFrame: true })).toBe(1800);
+    expect(open('#tc=01:10:00;00', 29.97, { dropFrame: true, startFrames: ntscStart })).toBe(17982);
+    expect(open('#t=00:01:00.02', 29.97)).toBe(1798); // in t, a dot is seconds (60.02 s)
+  });
+
+  it('reads the start of a range', () => {
+    expect(open('#t=10,20', 24)).toBe(240);
+    expect(open('#t=,20', 24)).toBe(0);
+    expect(open('#t=npt:10,20', 24)).toBe(240);
+    expect(open('#t=00:00:10:00,00:00:20:00', 24)).toBe(240);
+    expect(open('#tc=00:00:10:00,00:00:20:00', 24)).toBe(240);
+    expect(open('#tc=,00:00:20:00', 24)).toBe(0);
+  });
+
+  it('stops at a text fragment directive', () => {
+    expect(open('#host=1:~:text=t=10', 24)).toBeNull();
+    expect(open('#t=5:~:text=hello', 24)).toBe(120);
+  });
+
+  it('prefers tc, and reports a t more than one frame away', () => {
+    expect(resolveLinkPosition({ t: '62.104', tc: '00:01:02:02' }, 24)).toEqual({ frame: 1490, from: 'tc', disagreement: null });
+    expect(resolveLinkPosition({ t: '62.063', tc: '00:01:02:02' }, 24)).toEqual({ frame: 1490, from: 'tc', disagreement: null });
+    expect(resolveLinkPosition({ t: '10', tc: '00:01:02:02' }, 24)).toEqual({ frame: 1490, from: 'tc', disagreement: 240 });
+    expect(resolveLinkPosition({ t: 'garbage', tc: '00:01:02:02' }, 24)).toEqual({ frame: 1490, from: 'tc', disagreement: null });
+  });
+
+  it('takes the first value inside the media', () => {
+    // A tc before the start offset, or past the end, gives way to t.
+    expect(resolveLinkPosition({ t: '62.104', tc: '00:01:02:02' }, 24, { startFrames: 86400 })).toEqual({ frame: 1490, from: 't', disagreement: null });
+    expect(resolveLinkPosition({ t: '5', tc: '00:10:00:00' }, 24, {}, 1000)).toEqual({ frame: 120, from: 't', disagreement: null });
+    expect(open('#t=90', 24, {}, 1000)).toBeNull();
+    expect(open('#t=41.666', 24, {}, 1000)).toBe(999);
+  });
+
+  it('ignores anything it cannot read', () => {
+    const bad = ['', '#', '#t', '#t=abc', '#t=12:5', '#t=00:00:00:99', '#t=-4', '#t=1e3', '#t=1:60', '#t=0:60:00', '#t=00:61:00:00',
+      '#t=npt:', '#t=1h2x', '#t=h', '#t=s', '#t=1.5h', '#t=Infinity', '#t=0x10', '#tc=banana', '#tc=00:00:00', '#tc=1:2:3:4',
+      '#tc=00:01:00;00', '#t=%E0%A4%A', '#tc=00:00:01:00.5', '#T=10', '#time=10', '#chapter-2'];
+    for (const hash of bad) expect(open(hash, 29.97), hash).toBeNull();
+    expect(parseLinkSeconds(' 1m ')).toBe(60);
+    expect(parseLinkSeconds('m')).toBeNull();
   });
 
   it('names grabbed frames', () => {

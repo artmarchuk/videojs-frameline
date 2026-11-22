@@ -94,9 +94,9 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | --- | --- | --- |
 | Grab frame: a PNG at the video's own size, with no guides, whatever the zoom | Studio | `G`; Capture menu |
 | Copy frame image to the clipboard | Studio | `Shift+G`; Capture menu |
-| Copy link at timecode: `#t=HH:MM:SS:FF` in the page URL, announced with the timecode | Studio | `S`; the link button beside the timecode (on a narrow dock under 500 px, in its second row; under 340 px, in the More menu) |
+| Copy link at timecode: `#t=<seconds>&tc=<timecode>` in the page URL (`t` in Media Fragments seconds for any tool, `tc` for the exact frame), announced with the timecode | Studio | `S`; the link button beside the timecode (on a narrow dock under 500 px, in its second row; under 340 px, in the More menu) |
 | The Capture menu holds the image actions only, and is not shown without `grabFrame` | Studio | `/?grabFrame=0` |
-| A page opened with `#t=…` opens on that frame, paused | Studio | Paste a copied link |
+| A page opened with a link opens on that frame, paused. It reads `tc`, then `t` as a timecode (links copied before `tc`), as Media Fragments seconds (`62.5`, `0:01:02.5`) or as platform shorthand (`1m2s`); a range opens on its start | Studio | Paste a copied link; `/preview.html?media=cosmicDawn#t=1m2s` |
 | A clear message when the browser refuses the grab (media without CORS) | Studio | `/preview.html?media=nocors`, then `G` |
 
 ## Studio: guides

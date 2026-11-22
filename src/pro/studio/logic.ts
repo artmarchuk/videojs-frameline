@@ -170,55 +170,200 @@ export function playbackDecision(input: PlaybackInput): PlaybackDecision {
   return 'continue';
 }
 
-const LINK_KEY = 't';
-
 /**
- * Puts a position into a URL hash as `t=<value>`, keeping whatever else the host app keeps there.
- * `#chapter-2` becomes `#chapter-2&t=00:00:12:05`; an existing `t=` is replaced.
+ * Links to a frame. A link carries two keys in the URL fragment: `t`, the position in seconds as W3C Media Fragments
+ * URI 1.0 defines it, so any tool that reads media fragments opens the right second, and `tc`, the timecode on
+ * screen, so Frameline opens the exact frame. `#t=62.104&tc=00:01:02:02`. Media Fragments tells players to ignore
+ * keys they do not know, so `tc` is safe beside `t`. Links written before this format (`#t=HH:MM:SS:FF`) still read.
  */
-export function withLinkPosition(hash: string, value: string): string {
-  const body = hash.replace(/^#/, '');
-  const parts = body ? body.split('&').filter((part) => part && !part.startsWith(`${LINK_KEY}=`)) : [];
-  parts.push(`${LINK_KEY}=${value}`);
-  return `#${parts.join('&')}`;
+const T_KEY = 't';
+const TC_KEY = 'tc';
+
+/** A text fragment directive (`:~:text=…`) ends the part of the hash that holds keys. */
+const DIRECTIVE = ':~:';
+
+/** The raw values of the link keys in a hash, percent-decoded. A key that is absent or unreadable is `null`. */
+export interface LinkFields {
+  t: string | null;
+  tc: string | null;
 }
 
-/** The raw `t=` value in a hash, or `null`. */
-export function readLinkPosition(hash: string): string | null {
-  for (const part of hash.replace(/^#/, '').split('&')) {
-    if (part.startsWith(`${LINK_KEY}=`)) {
-      const value = part.slice(LINK_KEY.length + 1);
-      try {
-        return decodeURIComponent(value) || null;
-      } catch {
-        return null;
-      }
+/** What a link names, as `formatLinkPosition` writes it. */
+export interface LinkValue {
+  t: string;
+  tc: string;
+}
+
+function splitDirective(hash: string): [string, string] {
+  const body = hash.replace(/^#/, '');
+  const at = body.indexOf(DIRECTIVE);
+  return at === -1 ? [body, ''] : [body.slice(0, at), body.slice(at)];
+}
+
+function keyOf(part: string): string {
+  const at = part.indexOf('=');
+  return at === -1 ? part : part.slice(0, at);
+}
+
+/**
+ * Puts a position into a URL hash as `t=<seconds>&tc=<timecode>`, keeping whatever else the host app keeps there, in
+ * its order. An existing `t` and `tc` are removed and the new pair goes at the end, before a text fragment directive
+ * if there is one. `#chapter-2` becomes `#chapter-2&t=12.229&tc=00:00:12:05`.
+ */
+export function withLinkPosition(hash: string, value: LinkValue): string {
+  const [keys, directive] = splitDirective(hash);
+  const parts = keys.split('&').filter((part) => part && keyOf(part) !== T_KEY && keyOf(part) !== TC_KEY);
+  parts.push(`${T_KEY}=${value.t}`, `${TC_KEY}=${value.tc}`);
+  return `#${parts.join('&')}${directive}`;
+}
+
+/**
+ * The raw `t` and `tc` values in a hash. Reading stops at a text fragment directive (`:~:`). When a key appears
+ * more than once, the last one counts, as in Media Fragments.
+ */
+export function readLinkPosition(hash: string): LinkFields {
+  const fields: LinkFields = { t: null, tc: null };
+  const [keys] = splitDirective(hash);
+  for (const part of keys.split('&')) {
+    const at = part.indexOf('=');
+    if (at === -1) continue;
+    const key = part.slice(0, at);
+    if (key !== T_KEY && key !== TC_KEY) continue;
+    let value: string | null;
+    try {
+      value = decodeURIComponent(part.slice(at + 1)) || null;
+    } catch {
+      value = null;
     }
+    fields[key] = value;
+  }
+  return fields;
+}
+
+/**
+ * The seconds of a link: the middle of the frame, from the start of the media, at the exact rate, rounded to three
+ * decimals with no trailing zeros. The middle, because the start of a frame rounded to milliseconds can fall into
+ * the frame before (frame 1490 at 24 fps starts at 62.0833 s; 62.083 is frame 1489, its middle 62.104 is 1490).
+ */
+export function linkSeconds(frame: number, fps: number): string {
+  const { exact } = resolveFrameRate(fps);
+  const seconds = (Math.max(0, Math.floor(frame)) + 0.5) / exact;
+  return String(Number(seconds.toFixed(3)));
+}
+
+/** Link value for a frame: `t` in seconds, `tc` the timecode the field shows (start offset and drop-frame included). */
+export function formatLinkPosition(frame: number, fps: number, options: TimecodeOptions = {}): LinkValue {
+  return { t: linkSeconds(frame, fps), tc: formatTimecode(frame, fps, options) };
+}
+
+/** The start of a range (`10,20` is 10, `,20` is 0). A value with no comma is returned as it is. */
+function rangeStart(value: string): string {
+  const at = value.indexOf(',');
+  if (at === -1) return value;
+  return value.slice(0, at) || '0';
+}
+
+const NPT_SECONDS = /^(\d+(?:\.\d*)?)$/;
+const NPT_MMSS = /^(\d{1,2}):(\d{2}(?:\.\d*)?)$/;
+const NPT_HHMMSS = /^(\d+):(\d{2}):(\d{2}(?:\.\d*)?)$/;
+const SHORTHAND = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?$/i;
+
+/**
+ * Seconds in a link's `t`: every Media Fragments form (`62.5`, `npt:62.5`, `1:02.5`, `0:01:02.5`) and the video
+ * platforms' shorthand (`90s`, `1m42s`, `1h2m3s`). `null` for anything else.
+ */
+export function parseLinkSeconds(value: string): number | null {
+  const text = value.trim();
+  const npt = text.replace(/^npt:/, '');
+
+  let match = NPT_SECONDS.exec(npt);
+  if (match) return Number(match[1]);
+
+  match = NPT_MMSS.exec(npt);
+  if (match) {
+    const [mm, ss] = [Number(match[1]), Number(match[2])];
+    return mm < 60 && ss < 60 ? mm * 60 + ss : null;
+  }
+
+  match = NPT_HHMMSS.exec(npt);
+  if (match) {
+    const [hh, mm, ss] = [Number(match[1]), Number(match[2]), Number(match[3])];
+    return mm < 60 && ss < 60 ? hh * 3600 + mm * 60 + ss : null;
+  }
+
+  match = SHORTHAND.exec(text);
+  if (match && (match[1] || match[2] || match[3])) {
+    return Number(match[1] ?? 0) * 3600 + Number(match[2] ?? 0) * 60 + Number(match[3] ?? 0);
   }
   return null;
 }
 
-/**
- * Link format: `#t=HH:MM:SS:FF`, the timecode the user sees (start offset and drop-frame included), because a
- * timecode names an exact frame and seconds do not.
- */
-export function formatLinkPosition(frame: number, fps: number, options: TimecodeOptions = {}): string {
-  return formatTimecode(frame, fps, options);
-}
+const FOUR_FIELDS = /^(\d{1,3}:\d{2}:\d{2})([:;.])(\d{2,3})$/;
 
 /**
- * Reads a link position back into a frame number. Accepts the timecode this skin writes, and plain seconds
- * (`t=12.5`) as other tools write them. Returns `null` for anything else, or for a timecode before the start offset.
+ * A timecode in a link, read with the player's rate, start offset and drop-frame setting, as a frame number from the
+ * start of the media. `;` before the frames means drop-frame; in `tc`, so does `.` (`allowDot`). `null` when the text
+ * is not a timecode, or names a frame before the start offset.
  */
-export function parseLinkPosition(value: string | null, fps: number, options: TimecodeOptions = {}): number | null {
-  if (!value) return null;
-
-  if (/^\d+(\.\d+)?$/.test(value)) return framesFromSeconds(Number(value), fps);
-
-  const frames = parseTimecode(value, fps, options);
+function parseLinkTimecode(value: string, fps: number, options: TimecodeOptions, allowDot: boolean): number | null {
+  const match = FOUR_FIELDS.exec(value.trim());
+  if (!match) return null;
+  if (match[2] === '.' && !allowDot) return null;
+  const frames = parseTimecode(`${match[1]}${match[2] === '.' ? ';' : match[2]}${match[3]}`, fps, options);
   if (frames === null) return null;
   const frame = frames - Math.floor(options.startFrames ?? 0);
   return frame >= 0 ? frame : null;
+}
+
+/** Where a link points, and the frame its other key named when the two disagree. */
+export interface LinkTarget {
+  frame: number;
+  /** Which key gave the frame. */
+  from: 'tc' | 't';
+  /** Set when `tc` and `t` both name a frame inside the media, more than one frame apart: the frame `t` named. */
+  disagreement: number | null;
+}
+
+/**
+ * The frame a link opens on. Reads, in order, and takes the first that gives a frame inside the media
+ * (`0` to `lastFrame`):
+ * 1. `tc`, a timecode;
+ * 2. `t` holding a timecode (`HH:MM:SS:FF` or `HH:MM:SS;FF`, links written before `tc`; a Media Fragments value never
+ *    has four fields);
+ * 3. `t` in seconds, in every Media Fragments form;
+ * 4. `t` in the platforms' shorthand (`1m42s`).
+ * Seconds become the frame that contains them. A range (`t=10,20`, `tc=a,b`) is read from its start. `null` when
+ * nothing can be read.
+ */
+export function resolveLinkPosition(
+  fields: LinkFields,
+  fps: number,
+  options: TimecodeOptions = {},
+  lastFrame = Number.POSITIVE_INFINITY,
+): LinkTarget | null {
+  const inside = (frame: number | null) => (frame !== null && frame >= 0 && frame <= lastFrame ? frame : null);
+
+  let tc: number | null = null;
+  if (fields.tc !== null) {
+    const start = fields.tc.trim();
+    // An empty range start (`tc=,b`) is the start of the media.
+    tc = inside(start.startsWith(',') ? 0 : parseLinkTimecode(rangeStart(start), fps, options, true));
+  }
+
+  let t: number | null = null;
+  if (fields.t !== null) {
+    const start = rangeStart(fields.t.trim());
+    const fromTimecode = parseLinkTimecode(start, fps, options, false);
+    if (fromTimecode !== null) t = inside(fromTimecode);
+    else {
+      const seconds = parseLinkSeconds(start);
+      t = seconds === null ? null : inside(framesFromSeconds(seconds, fps));
+    }
+  }
+
+  if (tc !== null) return { frame: tc, from: 'tc', disagreement: t !== null && Math.abs(tc - t) > 1 ? t : null };
+  if (t !== null) return { frame: t, from: 't', disagreement: null };
+  return null;
 }
 
 /** `frame_00-00-12-05.png`: the title (or "frame"), then the timecode with dashes. */

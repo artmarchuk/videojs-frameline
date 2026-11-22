@@ -682,6 +682,7 @@ Guides, zones and the stored choices work on https://videojs-frameline.vercel.ap
 - **A set range confines playback (Studio).** Loop is on from the start where the host allows it (`createProStore({ loop })`). Playback starting from outside the range or from the Out frame starts at In; at Out it goes back to In, or pauses on the Out frame with Loop off; a range set or moved past a playing head sends it to In; a seek by the user or the host to outside the range while playing pauses there. The engine tells its own seeks from everyone else's with two flags around `seeking`/`seeked` (`controller.ts`), so a user seek is never pulled back to In. The pure decision is `playbackDecision` in `studio/logic.ts`; `scripts/browser-checks/range-playback.js` exercises it in Chromium, Firefox and WebKit. Out is still reached half a frame early, and the Out frame still shows for an instant at the loop point (Backlog).
 - **Credit (19 Nov 2026):** the landing footer reads "Made by Artem Marchuk, with Claude." (the name links to artmarchuk.me, text only), and the README credits Claude for design thinking, specs and code, with every decision and review Artem's.
 - **Workbench dependencies (19 Nov 2026):** Tailwind, Base UI and Heroicons are devDependencies of the workbench shell only. The skin itself is plain CSS; keep it that way.
+- **Frame links carry seconds and a timecode (22 Nov 2026):** `#t=62.104&tc=00:01:02:02`. Media Fragments URI 1.0 defines `t` in seconds only (`62.104`, `npt:62.104`, `0:01:02.104`), and browsers implement only seconds, so the old `#t=HH:MM:SS:FF` gave `t` a meaning no other tool reads. Seconds can't name a frame exactly, so the timecode travels beside them under its own key; the spec tells players to ignore keys they don't know, so `tc` is safe. YouTube, Vimeo, Wistia and Loom link with seconds too, and no tool puts a timecode in a public URL, so there was no timecode format to follow. `t` is the middle of the frame (the start, rounded to milliseconds, can read back as the frame before). Old links still open. See "Frame links" below.
 
 ## Backlog
 
@@ -2214,3 +2215,40 @@ Checks: typecheck, tests (225), build, `node scripts/contrast.mjs` (all rows pas
 ## Landing page: the motivation section (19 Nov 2026, branch `landing-motivation`, preview only)
 
 - A "Why" section (`#why`, visually hidden h2 "Why Frameline exists") between the hero block and "What Studio checks" holds the Brand content doc's Motivation paragraph verbatim: the problem in `--dim`, the last sentence in `--text` (`.motivation`, 680 px, `--type-lead`). The last sentence is a block 8 px below the rest, so the answer starts on its own line. "editor’s" takes a curly apostrophe, like the rest of the page (the doc has a straight one; the author's call). `text-wrap: pretty` is progressive: browsers without it (Firefox at the floor, Safari before 26) wrap normally.
+
+## Frame links: seconds for every tool, timecode for the exact frame (22 Nov 2026, branch `frame-links`)
+
+Spec: `specs/frame-links.md`. A copied link is now `#t=<seconds>&tc=<timecode>`; the reasons are under Decisions. Code: `withLinkPosition`, `readLinkPosition`, `formatLinkPosition`, `linkSeconds`, `parseLinkSeconds` and `resolveLinkPosition` in `src/pro/studio/logic.ts` (pure, unit-tested); the controller only reads the hash once the duration is known and seeks.
+
+### How it works
+
+- **Writing.** `t` is `(frame + 0.5) / rate` at the exact rate, rounded to three decimals with no trailing zeros; `tc` is `formatTimecode` with the start offset and drop-frame. Other keys in the host's hash keep their order; an old `t` or `tc` is dropped, and the pair goes at the end, before a text fragment directive (`:~:`) if the hash has one, so the pair is not swallowed by the directive.
+- **Reading.** `tc`, then `t` as a four-field timecode (the old format), then `t` as Media Fragments seconds (`62.5`, `npt:62.5`, `1:02.5`, `0:01:02.5`), then the platforms' shorthand (`90s`, `1m42s`, `1h2m3s`, case-insensitive). The first value that gives a frame from 0 to the last frame wins. Ranges are read from their start (an empty start is 0). In `tc`, `.` before the frames reads as drop-frame like `;`; in `t`, `00:01:02.02` has three fields and is seconds, as Media Fragments says. A key that appears twice: the last counts (Media Fragments). Reading stops at `:~:`. When `tc` and `t` both land inside the media more than one frame apart, `tc` wins and `warnOnce` logs it (development builds only; seen in Chrome on the dev server).
+- **Video.js does not read the page URL** (spec section 4). In the installed `@videojs/*` 10.4.0 packages nothing touches `location.hash`, `location.search`, `history.replaceState` or `pushState`, or listens for `hashchange`. `URLSearchParams` is only used to build URLs (Mux stream query strings, YouTube/Vimeo embed parameters). The YouTube and SoundCloud sources read a `t` from the **source** URL the host passes as `src`, not from the page; the thumbnail code reads `#xywh=` in thumbnail track URLs.
+
+### Differs from the spec, or worth knowing
+
+- **A link past the end is ignored now.** The old code clamped a position past the end to the last frame; the spec's "first value that gives a frame inside the media" makes such a link open normally (at the start), and lets a `t` inside the media win over a `tc` outside it (a wrong start offset, for example).
+- **The new browser check uses `?media=cosmicDawn`.** The reel (the default demo) is 56 s long, so the spec's `#t=62.104&tc=00:01:02:02` lies past its end. On the 30 fps trailer that link is frame 1862 (`t` alone reads 1863, within one frame, so no warning).
+- **The landing page** (`apps/preview/src/page/main.tsx`) keeps the staged playhead unless the hash has a `t`; it now also checks for `tc`. One regex, no other change there.
+- `dock-polish.js` reads the copied URL back from the clipboard in Chromium; Playwright's Firefox has no clipboard permission and WebKit's `permissions.query` does not report it, so there the check records the text the skin hands to `navigator.clipboard.writeText`.
+
+### Checks
+
+typecheck, tests (233), build, `node scripts/contrast.mjs` (no FAIL rows): pass. Every script in `scripts/browser-checks/` at the widths its header names, default mode, on the local production build, Playwright 1.65.1: Chromium as Google Chrome (headless), Firefox, WebKit. 41 runs per engine.
+
+| Check (runs) | Chromium | Firefox | WebKit |
+| --- | --- | --- | --- |
+| `link-open.js` (1), new | Pass | Pass | Pass |
+| `dock-polish.js` (5), copy-link part updated | Pass | Pass | Pass |
+| `viewer-gate.js` (4), no pro chunk | Pass | Pass | Pass |
+| `phone-transport.js` (8) | Pass | 1 of 8 | 1 of 8 |
+| `error-retry.js` (2), `configurator.js` (1), `fullscreen-focus.js` (2), `handle-focus-ring.js` (1), `guides-menu-focus.js` (1), `reduced-motion.js` (3), `two-players.js` (1), `range-playback.js` (1), `zoom.js` (2), `zoom-rendition-cap.js` (1), `zoom-rendition-note.js` (1), `axe-audit.js` (7) | Pass | Pass | Pass |
+
+The `phone-transport.js` touch runs in Firefox and WebKit stop at `newCDPSession` (Chromium only), the known limit from W.1. `link-open.js` saw, in all three engines: `#t=62.104&tc=00:01:02:02` and `#t=00:01:02:02` on `00:01:02:02` (media time 62.0833), `#t=1m2s` on `00:01:02:00`, `#t=10&tc=00:00:20:05` on `00:00:20:05`, each paused.
+
+### Unverified (frame links)
+
+- **A real start timecode and drop-frame source in the browser.** Unit tests only (29.97 drop-frame from `01:00:00;00`, 59.94 drop-frame); the demo media is 24 and 30 fps with no offset.
+- **Other tools opening our links.** That a browser's own media-fragment handling or a platform reads `t=62.104` is from the specs, not tried; a page URL's fragment does not reach a `<video>` element, so the browser itself does nothing with it.
+- **Safari itself, iOS, and the browser floor versions.** Playwright's WebKit stood in.

@@ -418,7 +418,7 @@ function stage() {
     try {
       handle.setRange({ in: STAGED.in, out: STAGED.out });
       if (!hasRememberedGuides()) handle.setGuides({ guides: STAGED.guides });
-      if (!/(?:^#|&)t=/.test(window.location.hash)) handle.seek(STAGED.playhead);
+      if (!/(?:^#|&)tc?=/.test(window.location.hash)) handle.seek(STAGED.playhead);
     } finally {
       staging = false;
       staged();

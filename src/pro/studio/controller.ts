@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 
 import { useProStoreApi } from '../context';
+import { warnOnce } from '../dev';
 import type { FrameInfo, Marker, ProStore } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import type { AnnounceOptions } from './announcer';
@@ -13,8 +14,8 @@ import {
   lastFrameOf,
   outsideRange,
   playbackDecision,
-  parseLinkPosition,
   readLinkPosition,
+  resolveLinkPosition,
   seekTimeForFrame,
   stepTarget,
   withLinkPosition,
@@ -253,7 +254,7 @@ export function useStudioController(options: StudioOptions): StudioController {
     };
   }, [video, fps, store]);
 
-  // Open on the frame named in the page URL (`#t=…`), once, paused.
+  // Open on the frame named in the page URL (`#t=…&tc=…`), once, paused.
   const linkApplied = useRef(false);
   const { startFrames, dropFrame } = options;
   useEffect(() => {
@@ -262,11 +263,17 @@ export function useStudioController(options: StudioOptions): StudioController {
     const apply = () => {
       if (linkApplied.current || !(video.duration > 0)) return;
       linkApplied.current = true;
-      const frame = parseLinkPosition(readLinkPosition(window.location.hash), fps, { startFrames, dropFrame });
-      if (frame === null) return;
-      const clamped = Math.min(frame, lastFrameOf(video.duration, fps));
-      target.current = { frame: clamped, at: performance.now() };
-      video.currentTime = seekTimeForFrame(clamped, fps);
+      const fields = readLinkPosition(window.location.hash);
+      const link = resolveLinkPosition(fields, fps, { startFrames, dropFrame }, lastFrameOf(video.duration, fps));
+      if (!link) return;
+      if (link.disagreement !== null) {
+        warnOnce(
+          `The link's tc (${fields.tc}) names frame ${link.frame} and its t (${fields.t}) frame ${link.disagreement}. ` +
+            'Opening on the tc frame. Check the player\'s fps and startTimecode against the page that wrote the link.',
+        );
+      }
+      target.current = { frame: link.frame, at: performance.now() };
+      video.currentTime = seekTimeForFrame(link.frame, fps);
     };
 
     apply();
