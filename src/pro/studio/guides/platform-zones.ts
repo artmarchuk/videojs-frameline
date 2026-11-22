@@ -12,7 +12,7 @@
  * themselves.
  *
  * RULE: a safe-zone guide must never promise space that the platform's UI may cover. Where sources disagree, use the
- * LARGEST unsafe margin, not the smallest. Each number below says which source it comes from (percent of 1080x1920). See NOTES.md, "Platform zones: numbers and sources". The UI says "Approximate" on every platform.
+ * LARGEST unsafe margin, not the smallest. Each number below says which source it comes from (percent of 1080x1920). See docs/history/NOTES-2026-11.md, "Platform zones: numbers and sources". The UI says "Approximate" on every platform.
  */
 import type { ZoneId } from '../../view';
 import type { PercentRect } from './geometry';

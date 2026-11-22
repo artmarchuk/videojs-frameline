@@ -130,7 +130,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 
 | Feature | Tier | How to try |
 | --- | --- | --- |
-| The Viewer bar becomes two rows under 640 px | Viewer | Narrow the window |
+| The Viewer bar is two rows at every width: the seek bar, then the buttons. Under 400 px the volume slider and the picture-in-picture button fold away (picture-in-picture moves into the More menu); under 360 px only the elapsed time shows | Viewer | Narrow the window |
 | The Studio row sheds controls in a set order from 1100 px down, and becomes a narrow dock under 740 px | Studio | Narrow the window |
 | The narrow dock has one rule: row one is the instrument (the raised keys, as far as the width allows), row two the flat toolbar. Two arrangements, by the player's width: 500 px and up (a phone on its side), and under 500 px (a phone held upright) | Studio | Turn a phone on its side |
 | Narrow dock, 500 px and up: row one is the timecode joined to the Link button, the whole transport in the centre, and Loop as a raised key at the end edge; row two is six flat buttons in equal cells: Markers, Capture, Guides, Zoom, More, Fullscreen. The dock is lower there (8 px above and below, 6 px between the rows), every target still 44 px | Studio | A phone on its side, or a 500 to 739 px wide player |

@@ -225,4 +225,5 @@ Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not bro
 | 22 Nov | Frame links in seconds with a timecode (branch `frame-links`) | `5c30238` |
 | 22 Nov | Frame links pause an autoplaying host (branch `frame-links-pause`) | `24e44ae` |
 | 22 Nov | Landing: the frame-link sentence (branch `landing-frame-links-copy`) | `f74fe1f` |
-| 22 Nov | Docs and repo clean-up: this file split from the build log, finished specs archived (branch `docs-cleanup`) | |
+| 22 Nov | Docs and repo clean-up: this file split from the build log, finished specs archived (branch `docs-cleanup`) | `44912f1` |
+| 23 Nov | Source comments point at the build log; the Viewer bar's row in `FEATURES.md` matches the code (branch `comment-fixes`) | |

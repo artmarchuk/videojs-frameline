@@ -1,4 +1,5 @@
-// Computes the WCAG contrast ratios recorded in NOTES.md. Run: node scripts/contrast.mjs
+// Computes the WCAG contrast ratios. Run: node scripts/contrast.mjs
+// NOTES.md ("Checks") records the result; the tables as measured during the build are in docs/history/NOTES-2026-11.md.
 // Values mirror src/styles/tokens.css, and for the landing page apps/preview/src/page/tokens.css.
 // Two columns: the default palette, and the palette under `prefers-contrast: more` (MORE and PAGE_MORE below), whose
 // minimums are higher where the step 9 brief asks for it: secondary text 7:1, lines 3:1, idle handles 4.5:1.
