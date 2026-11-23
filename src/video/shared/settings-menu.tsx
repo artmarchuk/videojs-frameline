@@ -7,7 +7,7 @@ import { CaptionsRadioGroup } from '@videojs/react/ui/captions-radio-group';
 import { PlaybackRateRadioGroup } from '@videojs/react/ui/playback-rate-radio-group';
 import { QualityRadioGroup } from '@videojs/react/ui/quality-radio-group';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import {
   AudioTrackIcon,

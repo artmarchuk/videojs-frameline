@@ -2,7 +2,7 @@
 
 import { PlayButton as PlayButtonPrimitive } from '@videojs/react';
 
-import { cn, resolveClassName } from '@/lib/resolve-class-name';
+import { cn, resolveClassName } from '../../lib/resolve-class-name';
 
 import { PauseIcon, PlayIcon, ReplayIcon } from '../icons';
 import { Button } from './button';

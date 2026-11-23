@@ -8,7 +8,7 @@ import './skin.css';
 import { Container as ContainerPrimitive, Poster as PosterPrimitive, Slider as SliderPrimitive } from '@videojs/react';
 import { useEffect, useRef, type ReactNode } from 'react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../lib/resolve-class-name';
 
 import { FullscreenFocus } from './behaviors/fullscreen-focus';
 import { VideoGestures } from './behaviors/gestures';

@@ -2,7 +2,7 @@
 
 import { MuteButton as MuteButtonPrimitive, VolumeSlider } from '@videojs/react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import { VolumeHighIcon, VolumeLowIcon, VolumeMutedIcon } from '../icons';
 import { Button } from './button';

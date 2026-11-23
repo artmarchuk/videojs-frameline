@@ -4,7 +4,7 @@ import { Tooltip } from '@videojs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ComponentProps, ReactElement, ReactNode } from 'react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 type OpenChange = NonNullable<ComponentProps<typeof Tooltip.Root>['onOpenChange']>;
 

@@ -2,7 +2,7 @@
 
 import { SeekIndicator as SeekIndicatorPrimitive } from '@videojs/react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import { ChevronIcon } from '../icons';
 

@@ -2,7 +2,7 @@
 
 import { CaptionsButton as CaptionsButtonPrimitive } from '@videojs/react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import { CaptionsOffIcon, CaptionsOnIcon } from '../icons';
 import { Button } from './button';

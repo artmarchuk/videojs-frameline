@@ -2,7 +2,7 @@
 
 import { FullscreenButton as FullscreenButtonPrimitive, PiPButton as PiPButtonPrimitive } from '@videojs/react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import { FullscreenEnterIcon, FullscreenExitIcon, PipEnterIcon, PipExitIcon } from '../icons';
 import { Button } from './button';

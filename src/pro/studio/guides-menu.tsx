@@ -3,7 +3,7 @@
 import { Menu } from '@videojs/react';
 import { useCallback, useId, useMemo, type MouseEvent } from 'react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import { CheckIcon, ChevronIcon } from '../../video/icons';
 import { Button } from '../../video/shared/button';

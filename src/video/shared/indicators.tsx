@@ -6,7 +6,7 @@ import {
 } from '@videojs/react';
 import type { ReactNode } from 'react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import {
   CaptionsOffIcon,

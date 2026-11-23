@@ -3,7 +3,7 @@
 import { Menu } from '@videojs/react';
 import { useEffect, useId, useMemo, useRef, type RefObject } from 'react';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import { Button } from '../../video/shared/button';
 import { ButtonTooltip } from '../../video/shared/tooltip';

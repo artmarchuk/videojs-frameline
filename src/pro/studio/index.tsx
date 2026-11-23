@@ -5,7 +5,7 @@ import { Menu, selectPlayback, selectQuality, useHotkey, useMedia, usePlayer } f
 import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactElement, type ReactNode, type Ref, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
-import { cn } from '@/lib/resolve-class-name';
+import { cn } from '../../lib/resolve-class-name';
 
 import { ChevronIcon, CloseIcon } from '../../video/icons';
 import { useProSlot, useProThumbnailRenderer, useSetProSettingsItems } from '../../video/pro-slots';
