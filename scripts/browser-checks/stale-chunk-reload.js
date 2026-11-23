@@ -14,7 +14,8 @@
 // player must work in each.
 // Part two, chunks that stay missing: the lazy chunks answer 404 whatever the page does. The page must reload once
 // and no more.
-// Part three: with nothing wrong, the flag in sessionStorage is cleared ten seconds after load.
+// Part three: with nothing wrong, the flag in sessionStorage is cleared as soon as the skin reports its pro code on
+// screen (`data-pro-ready`).
 const out = {};
 const base = (typeof args !== 'undefined' && args?.base) || 'http://127.0.0.1:4179';
 const elsewhere = base.replace(/:(\d+)$/, (_all, port) => `:${Number(port) + 1}`);
@@ -81,11 +82,12 @@ out.noLoop = documents.length === 2 && gone.flag === '1' && gone.preloadErrors =
 await deploy('1');
 await page.goto(elsewhere);
 await page.goto(base + path);
-await page.waitForSelector('.pro-tl', { timeout: 30000 });
-out.flagBefore = (await state()).flag;
-await page.waitForTimeout(11500);
+await page.evaluate((flag) => sessionStorage.setItem(flag, '1'), FLAG);
+await page.reload();
+await page.waitForSelector('.media-skin[data-pro-ready]', { timeout: 30000 });
+await page.waitForTimeout(300);
 out.flagAfter = (await state()).flag;
-out.flagCleared = out.flagBefore === '1' && out.flagAfter === null;
+out.flagCleared = out.flagAfter === null;
 
 if (errors.length) out.errors = errors;
 out.pass = out.backOk && out.plays && out.noLoop && out.flagCleared;

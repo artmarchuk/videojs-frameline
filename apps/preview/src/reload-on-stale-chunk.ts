@@ -8,15 +8,16 @@
  * A reload asks the server for `index.html` again and gets the current build.
  *
  * One reload only. The flag in `sessionStorage` survives the reload: if the import fails again, the error is left to
- * throw, so a chunk that is really missing cannot loop the page. The flag is cleared once the page has been loaded
- * for a while with no failed import, so a later deploy in the same tab gets its own reload. Without `sessionStorage`
- * (blocked storage) nothing reloads: there would be no way to stop a loop.
+ * throw, so a chunk that is really missing cannot loop the page. The flag is cleared when the page has loaded for
+ * good, so a later deploy in the same tab gets its own reload: when the skin reports that its pro code is on screen
+ * (`data-pro-ready` on its root), or, on a page whose player has no pro bar, after ten seconds with no failed import.
+ * Without `sessionStorage` (blocked storage) nothing reloads: there would be no way to stop a loop.
  *
  * Each entry calls `reloadOnStaleChunk()`. An import for its side effect alone would be dropped from the build:
  * `package.json` declares only CSS files as having side effects.
  */
 const FLAG = 'frameline:reloaded-for-stale-chunk';
-/** How long after `load` a page counts as loaded: the lazy chunks of a page are requested well within this. */
+/** On a page without a pro player: how long after `load` it counts as loaded. */
 const SETTLED_MS = 10_000;
 
 export function reloadOnStaleChunk(): void {
@@ -34,14 +35,31 @@ export function reloadOnStaleChunk(): void {
     window.location.reload();
   });
 
+  const clear = () => {
+    if (failed) return;
+    try {
+      sessionStorage.removeItem(FLAG);
+    } catch {
+      // No storage, no flag.
+    }
+  };
+
+  // The skin's signal: every lazy chunk the player needs has arrived and rendered.
+  const ready = () => document.querySelector('.media-skin[data-pro-ready]') !== null;
+  if (ready()) clear();
+  else {
+    const observer = new MutationObserver(() => {
+      if (!ready()) return;
+      observer.disconnect();
+      clear();
+    });
+    observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-pro-ready'] });
+  }
+
+  // The fallback, for a page whose player loads no pro code: there is no signal to wait for.
   const settle = () =>
     window.setTimeout(() => {
-      if (failed) return;
-      try {
-        sessionStorage.removeItem(FLAG);
-      } catch {
-        // No storage, no flag.
-      }
+      if (document.querySelector('.media-skin[data-bar="pro"]') === null) clear();
     }, SETTLED_MS);
 
   if (document.readyState === 'complete') settle();

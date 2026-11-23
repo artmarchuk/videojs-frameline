@@ -33,9 +33,13 @@ function linkUrl(): FramelineLinkUrl | undefined {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <VideoPlayer>
-    <FramelineSkin tier="studio" fps={REEL_FPS} linkUrl={linkUrl()} onCopyLink={(info) => window.__frameline.copied.push(info)}>
-      <Reel />
-    </FramelineSkin>
-  </VideoPlayer>
+  <>
+    {/* The host's own content in the same React root: it must survive a pro chunk that fails to load. */}
+    <p data-host-content>Host content</p>
+    <VideoPlayer>
+      <FramelineSkin tier="studio" fps={REEL_FPS} linkUrl={linkUrl()} onCopyLink={(info) => window.__frameline.copied.push(info)}>
+        <Reel />
+      </FramelineSkin>
+    </VideoPlayer>
+  </>
 );

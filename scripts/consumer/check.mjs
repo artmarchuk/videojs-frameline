@@ -208,6 +208,37 @@ async function studioChecks(browser, engine) {
   await context.close();
 }
 
+/**
+ * A pro chunk answers 404, as after a deploy that removed it: the host's own content in the same React root stays,
+ * and the player is a working Viewer.
+ */
+async function failureChecks(browser, engine) {
+  for (const chunk of ['runtime', 'studio']) {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+    const page = await context.newPage();
+    const file = proChunks.map((item) => item.fileName).find((name) => new RegExp(`(^|/)${chunk}-`).test(name));
+    await page.route(`**/${file}`, (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'NOT_FOUND' }));
+    await open(page, 'studio.html');
+    await ready(page);
+    await page.waitForTimeout(1500);
+    const seen = await page.evaluate(() => ({
+      host: document.querySelector('[data-host-content]')?.textContent ?? null,
+      tier: document.querySelector('.media-skin')?.getAttribute('data-tier') ?? null,
+      studio: Boolean(document.querySelector('.pro-tl')),
+      notice: document.querySelector('[data-pro-notice]')?.textContent ?? null,
+    }));
+    await page.evaluate(() => { document.querySelector('video').muted = true; });
+    await page.locator('.pro-bar .media-play-button').click();
+    const played = await page.waitForFunction(() => document.querySelector('video').currentTime > 0.5, null, { timeout: 20000 }).then(() => true, () => false);
+    record(
+      `${engine} studio, ${chunk} chunk 404: the host's content stays and the player is a working Viewer`,
+      Boolean(file) && seen.host === 'Host content' && seen.tier === 'viewer' && !seen.studio && played && seen.notice === 'Studio tools could not load. The player works without them.',
+      { file, ...seen, played }
+    );
+    await context.close();
+  }
+}
+
 /** linkUrl, read back from the clipboard: Chromium only, where Playwright can grant clipboard access. */
 async function linkChecks(browser) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 860 }, permissions: ['clipboard-read', 'clipboard-write'] });
@@ -307,6 +338,7 @@ try {
     try {
       await viewerChecks(browser, engine);
       await studioChecks(browser, engine);
+      await failureChecks(browser, engine);
       if (engine === 'chromium') {
         await linkChecks(browser);
         for (const name of ['viewer', 'studio', 'stock']) report.weight[name] = await weight(browser, name);
