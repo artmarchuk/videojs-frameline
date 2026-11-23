@@ -58,7 +58,8 @@
     "predeploy:cloudflare": "node apps/preview/deploy-guard.mjs",
     "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy dist --project-name videojs-frameline",
     "test": "vitest run",
-    "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/lib/clean-types.mjs"
+    "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/lib/clean-types.mjs",
+    "check:consumer": "node scripts/consumer/check.mjs"
   },
   "dependencies": {
     "cn": "^0.4.0"

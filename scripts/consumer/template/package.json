@@ -1,0 +1,10 @@
+{
+  "name": "frameline-consumer-check",
+  "private": true,
+  "type": "module",
+  "description": "A host app made from this template by scripts/consumer/check.mjs. The versions are written by the script.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "vite build"
+  }
+}
