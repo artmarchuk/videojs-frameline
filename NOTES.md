@@ -246,4 +246,4 @@ Every page also loads a shared `engine-*.js` (225,136 / 70,813): React DOM (537 
 | 22 Nov | Docs and repo clean-up: this file split from the build log, finished specs archived (branch `docs-cleanup`) | `44912f1` |
 | 23 Nov | Source comments point at the build log; the Viewer bar's row in `FEATURES.md` matches the code (branch `comment-fixes`; the rest of the docs follow-up is on `api-names`) | `35e5e13` |
 | 23 Nov | API 0.1, step A: names, `linkUrl`, the public surface, playback stats, two fixes (branch `api-names`) | `8e901c6` |
-| 23 Nov | API 0.1, step B: the library build, `videojs-frameline` 0.1.0 (not published), exact pins, the consumer check, the Viewer weighed against the stock skin (branch `package`). Video.js 10.6.0 is out; not adopted | |
+| 23 Nov | API 0.1, step B: the library build, `videojs-frameline` 0.1.0 (not published), exact pins, the consumer check, the Viewer weighed against the stock skin (branch `package`). Video.js 10.6.0 is out; not adopted | `24fe256` |
