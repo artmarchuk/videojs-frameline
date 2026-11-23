@@ -62,9 +62,9 @@
     "check:consumer": "node scripts/consumer/check.mjs"
   },
   "peerDependencies": {
-    "@videojs/core": "~10.4.0",
-    "@videojs/react": "~10.4.0",
-    "@videojs/utils": "~10.4.0",
+    "@videojs/core": ">=10.4.0 <10.7.0",
+    "@videojs/react": ">=10.4.0 <10.7.0",
+    "@videojs/utils": ">=10.4.0 <10.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
@@ -76,10 +76,10 @@
     "@tailwindcss/vite": "4.3.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@videojs/core": "10.4.0",
-    "@videojs/mux-video": "10.4.0",
-    "@videojs/react": "10.4.0",
-    "@videojs/utils": "10.4.0",
+    "@videojs/core": "10.6.0",
+    "@videojs/mux-video": "10.6.0",
+    "@videojs/react": "10.6.0",
+    "@videojs/utils": "10.6.0",
     "@vitejs/plugin-react": "6.3.0",
     "class-variance-authority": "0.7.1",
     "cn": "0.4.0",

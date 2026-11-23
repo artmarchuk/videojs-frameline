@@ -7,7 +7,9 @@
 // 4. Drives the pages with Playwright in Chromium (the installed Google Chrome, so H.264 plays), Firefox and WebKit,
 //    and measures what each page loads before its first frame plays.
 //
-// Options: `--engines=chromium,firefox` (default all three), `--keep` (leave the temp folder; its path is printed).
+// Options: `--engines=chromium,firefox` (default all three), `--keep` (leave the temp folder; its path is printed),
+// `--videojs=10.4.0` (the version of the `@videojs/*` packages the app installs; default: the one this repo is built
+// with). The peer range in package.json is tested at both of its ends this way.
 // Writes report.json and screenshots into the temp folder. Exits with 1 if a check fails. Needs the network (npm
 // registry, the Mux stream) and Playwright's browsers (`npx playwright-core install firefox webkit`).
 import { execFileSync, spawn } from 'node:child_process';
@@ -25,6 +27,7 @@ const repoPackage = JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8'))
 const flag = (name) => process.argv.find((arg) => arg.startsWith(`--${name}`));
 const engines = (flag('engines')?.split('=')[1] ?? 'chromium,firefox,webkit').split(',');
 const keep = Boolean(flag('keep'));
+const videojs = flag('videojs')?.split('=')[1] ?? repoPackage.devDependencies['@videojs/react'];
 // Not 4190: browsers refuse the ports on the Fetch standard's "bad ports" list, and 4190 (ManageSieve) is one.
 const port = 4188;
 // An IP address, not `localhost`: Firefox and WebKit may resolve `localhost` to IPv6 where the server listens on IPv4.
@@ -50,28 +53,44 @@ const tested = (name) => repoPackage.devDependencies[name];
 const appPackage = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'));
 appPackage.dependencies = {
   'videojs-frameline': `file:${tarball}`,
-  // The peers, at the versions this repo tests.
+  // The peers: React at the version this repo tests, Video.js at the version asked for.
   react: tested('react'),
   'react-dom': tested('react-dom'),
-  '@videojs/react': tested('@videojs/react'),
-  '@videojs/core': tested('@videojs/core'),
-  '@videojs/utils': tested('@videojs/utils'),
+  '@videojs/react': videojs,
+  '@videojs/core': videojs,
+  '@videojs/utils': videojs,
   // The media element the pages use, as on the site.
-  '@videojs/mux-video': tested('@videojs/mux-video'),
+  '@videojs/mux-video': videojs,
 };
 appPackage.devDependencies = Object.fromEntries(
   ['vite', '@vitejs/plugin-react', 'typescript', '@types/react', '@types/react-dom'].map((name) => [name, tested(name)])
 );
 writeFileSync(join(app, 'package.json'), `${JSON.stringify(appPackage, null, 2)}\n`);
-log('installing the app');
-run('npm', ['install', '--no-audit', '--no-fund', '--loglevel=error'], app);
+log(`installing the app with Video.js ${videojs}`);
+let installError;
+try {
+  run('npm', ['install', '--no-audit', '--no-fund', '--loglevel=error'], app);
+} catch (error) {
+  installError = String(error.stderr || error.message).slice(0, 2000);
+}
 
-const report = { package: { name: packed.name, version: packed.version, files: packed.files.map((file) => file.path), size: packed.size, unpackedSize: packed.unpackedSize }, checks: {}, weight: {} };
+const report = { videojs, package: { name: packed.name, version: packed.version, files: packed.files.map((file) => file.path), size: packed.size, unpackedSize: packed.unpackedSize }, checks: {}, weight: {} };
 const results = report.checks;
 const record = (name, pass, detail) => {
   results[name] = { pass, ...(detail === undefined ? {} : { detail }) };
   log(`${pass ? 'PASS' : 'FAIL'} ${name}${pass || detail === undefined ? '' : `: ${JSON.stringify(detail).slice(0, 400)}`}`);
 };
+
+// npm accepted the package's peer ranges, and one copy of each Video.js package is installed, at the version asked for.
+const installed = installError ? {} : Object.fromEntries(
+  readdirSync(join(app, 'node_modules/@videojs')).map((name) => [name, JSON.parse(readFileSync(join(app, 'node_modules/@videojs', name, 'package.json'), 'utf8')).version])
+);
+const nested = installError ? '' : run('find', ['node_modules', '-path', '*/node_modules/*/node_modules/@videojs/*', '-maxdepth', '7', '-name', 'package.json'], app).trim();
+record(`installs beside Video.js ${videojs}`, !installError && nested === '' && Object.values(installed).every((version) => version === videojs), installError ?? { installed, nested });
+if (installError) {
+  writeFileSync(join(work, 'report.json'), JSON.stringify(report, null, 1));
+  process.exit(1);
+}
 
 // The app imports nothing but the package name: no source path, no alias.
 const appSource = readdirSync(join(app, 'src')).map((file) => readFileSync(join(app, 'src', file), 'utf8')).join('\n');
