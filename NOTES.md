@@ -17,7 +17,7 @@ Names: the skin is **Frameline** (`FramelineSkin`, `--fl-*` tokens, storage key 
 | Vite, TypeScript, Vitest | 8.3.8, 7.0.2, 5.1.0 (Vitest pinned) |
 | `playwright-core`, `@axe-core/playwright` | 1.65.1, 4.14.0 (the browser checks) |
 | `sharp`, `@phosphor-icons/core` | 0.35.5, 2.1.1, both pinned; sharp makes the landing screenshots, Phosphor is only read (path data is copied into the source) |
-| Deploy CLIs | `vercel@64`, `netlify-cli@27`, `wrangler@4`, through `npx` in the package scripts |
+| Deploy CLIs | `vercel@66` (66.6.0 was the latest on 23 Nov 2026), `netlify-cli@27`, `wrangler@4`, through `npx` in the package scripts |
 
 Only `@videojs/*` and the three pinned tools above have exact versions; the rest keep caret ranges, locked by the lockfile. Tailwind, Base UI and Heroicons are devDependencies of the CLI's workbench shell only; the skin is plain CSS.
 
