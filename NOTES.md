@@ -12,14 +12,15 @@ Names: the skin is **Frameline** (`FramelineSkin`, `--fl-*` tokens, storage key 
 | --- | --- |
 | Node.js | 26.3.0 on the author's machine; `engines.node` is `24.x` because Vercel rejected 26 |
 | npm | 11.16.0, `package-lock.json` committed |
-| `@videojs/react`, `@videojs/core`, `@videojs/utils` (dependencies), `@videojs/mux-video` (devDependency) | 10.4.0, pinned exactly; the transitive `@videojs/*` packages and the `video.js` v10 pointer package are 10.4.0 too. hls.js arrives through them at 1.7.3 |
-| React, React DOM | 19.3.1 (`^19.3.0`) |
-| Vite, TypeScript, Vitest | 8.3.8, 7.0.2, 5.1.0 (Vitest pinned) |
+| `@videojs/react`, `@videojs/core`, `@videojs/utils` (peers `~10.4.0`, devDependencies for the site), `@videojs/mux-video` (devDependency) | 10.4.0; the latest on npm was 10.6.0 on 23 Nov 2026, not adopted (see the Log); the transitive `@videojs/*` packages and the `video.js` v10 pointer package are 10.4.0 too. hls.js arrives through them at 1.7.3 |
+| React, React DOM | 19.3.1 (peers `^19.3.0`, devDependencies for the site) |
+| `cn` | 0.4.0, the package's one dependency (`^0.4.0`), used by the skin's class-name helper |
+| Vite, TypeScript, Vitest | 8.3.8, 7.0.2, 5.1.0 |
 | `playwright-core`, `@axe-core/playwright` | 1.65.1, 4.14.0 (the browser checks) |
-| `sharp`, `@phosphor-icons/core` | 0.35.5, 2.1.1, both pinned; sharp makes the landing screenshots, Phosphor is only read (path data is copied into the source) |
+| `sharp`, `@phosphor-icons/core` | 0.35.5, 2.1.1; sharp makes the landing screenshots, Phosphor is only read (path data is copied into the source) |
 | Deploy CLIs | `vercel@66` (66.6.0 was the latest on 23 Nov 2026), `netlify-cli@27`, `wrangler@4`, through `npx` in the package scripts |
 
-Only `@videojs/*` and the three pinned tools above have exact versions; the rest keep caret ranges, locked by the lockfile. Tailwind, Base UI and Heroicons are devDependencies of the CLI's workbench shell only; the skin is plain CSS.
+**Pins and ranges.** In the repo every dependency and devDependency has an exact version, the one the lockfile resolves, and the lockfile is committed. The one exception is `cn`, the package's own dependency, which keeps a caret range so a host can share its copy. The package's peer ranges are a separate thing: they say which versions a host may install beside Frameline, and cover only what was tested (`react` and `react-dom` `^19.3.0`, `@videojs/*` `~10.4.0`, patch releases only, because Video.js 10 has renamed public things between minor versions). Tailwind, Base UI and Heroicons are devDependencies of the CLI's workbench shell only; the skin is plain CSS.
 
 ## URLs and deploys
 
@@ -35,6 +36,8 @@ Only `@videojs/*` and the three pinned tools above have exact versions; the rest
 ## Architecture
 
 - **Public surface.** `src/pro/index.ts` exports only what a host may use: `FramelineSkin`, its props and slots types, `FramelineApi`, the payload, id and level types (all prefixed `Frameline`), `TIERS` and `GUIDE_IDS`. `TIER_DEFAULTS`, `resolveFeatures` and `resolveLayout` are internal; the site imports them from `@/pro/features`. The naming rules are in the README, "API conventions". The package build is step B.
+- **The npm package** (`videojs-frameline`, not published yet): `npm run build:lib` builds `lib/` with `vite.lib.config.ts` (library mode, ESM, ES2022, unminified, no source maps). React, React DOM, every `@videojs/*` import and `cn` stay external. The chunks follow the source: the entry (the Viewer and the flag resolver), a shared Viewer chunk, the pro runtime, Studio and the debug readout, the last three loaded with `import()`. Types come from `tsc -p tsconfig.lib.json` into `lib/types` (80 files, entry `lib/types/pro/index.d.ts`); `scripts/lib/clean-types.mjs` removes the source's CSS imports from them. Inside `src/` all imports are relative; only the site uses the `@/` alias.
+- **CSS in the package.** Each JS chunk imports its own CSS file (`import './studio-….css';`), as each module does in the source. Library mode writes the CSS files but leaves those imports out, so a small plugin in `vite.lib.config.ts` writes them back. Why: every common bundler handles a CSS import in JS, so a host needs no CSS import of its own and the Studio stylesheet loads with the Studio chunk, never on the Viewer path; nothing injects `<style>` at runtime, so a strict Content Security Policy is fine. The same plugin puts `'use client'` back at the top of the entry (bundlers drop module directives) and drops Rolldown's module path labels. `process.env.NODE_ENV` stays in the output, for the host's bundler. `sideEffects: ["**/*.css"]` keeps the CSS imports from being shaken out.
 - **Loading.** `src/video/skin.tsx` is the Viewer skin and the only code a Viewer loads. `src/pro/frameline-skin.tsx` resolves the tier and flags (`features.ts`) and, when any pro feature or the `debug` prop is on, lazy-loads the pro runtime (`src/pro/runtime/`: store, frame clock, timecode) and then the Studio module (`src/pro/studio/`, one JS and one CSS chunk). The Viewer skin renders empty slots in its bar (`src/video/pro-slots.tsx`) and the Studio module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Viewer path. The dock structure itself (stage above, bar below) is in the Viewer skin, so either tier can use either layout.
 - **Pro state** lives in a small store beside the player (`src/pro/store.ts`), one per `FramelineSkin`, read through context and `useSyncExternalStore` selectors. Video.js has no documented custom-feature API and the skin does not own `createPlayer`. The `<video>` element is found by querying the container (`use-video-element.ts`). Guides, crop, zones and the timecode-or-seconds choice persist under one `localStorage` key, read in the store's initialiser; zoom is never stored.
 - **Frame clock** (`src/pro/frame-clock.ts`): `requestVideoFrameCallback` where the browser has it, otherwise an approximate fallback from `currentTime` (the field then shows `≈`). After a seek or pause it waits 120 ms for a presented frame, then falls back. Chrome's `mediaTime` is the frame's start; Firefox reports the seek time, so `presentedFrame` in `timecode.ts` floors with a quarter-frame tolerance. Seeks go to the middle of a frame, `(frame + 0.5) / fps`, and a `seeking` listener snaps every Studio seek there. The skin does not re-render per frame: only the timecode field subscribes to the frame.
@@ -116,7 +119,8 @@ Checked against the installed `@videojs/react`, `@videojs/core` and `@videojs/hl
 
 ## Checks
 
-- `npm run typecheck`, `npm test` (251 unit tests), `npm run build`.
+- `npm run typecheck`, `npm test` (251 unit tests), `npm run build`, `npm run build:lib`.
+- `npm run check:consumer` (`scripts/consumer/`): packs the package, makes a Vite + React app outside the repo from `scripts/consumer/template/`, installs the tarball with the peers at the tested versions, runs `tsc` against the published types (with `skipLibCheck: false`), builds and serves it on 127.0.0.1:4188, and drives it in Chromium, Firefox and WebKit: the Viewer is styled, plays, pauses and seeks, and requests no pro chunk and no Studio CSS; Studio's dock, `.`, `G` and the Guides menu work; in Chromium every form of `linkUrl` is read back from the clipboard. It also measures the weight of `viewer`, `studio` and `stock` (README, "Weight"). 28 checks, all passing on 23 Nov 2026. It needs the network. The port is not 4190: browsers refuse that one (it is on the Fetch standard's list of bad ports).
 - `node scripts/contrast.mjs`: 82 rows, two columns (default and `prefers-contrast: more`); every row passes.
 - **Browser checks** are in `scripts/browser-checks/`. Each file is the body of an async function with a Playwright `page` in scope; its header names the page, the window sizes and any context options. The runner is not in the repo: serve the production build (`npm run build`, `npx vite preview`, port 4173) or use the live site, and run each script with `playwright-core` in Chromium (the installed Google Chrome, so H.264 plays), Firefox and WebKit. Headless Chrome refuses real fullscreen.
 
@@ -160,7 +164,7 @@ Measured on 23 Nov 2026 from the build of `api-names` (raw / `gzip -9`, bytes).
 | Monitor page JS / CSS | 16,382 / 6,236 and 2,926 / 1,138 | `/preview.html` |
 | Embed page JS / CSS | 1,187 / 724 and 378 / 274 | `/embed.html` |
 
-Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not broken down. The Viewer skin's weight alone, against a stock Video.js skin, has not been measured.
+Every page also loads a shared `engine-*.js` (225,136 / 70,813): React DOM (537 KB of its 607 KB before minifying), the scheduler, Vite's modulepreload polyfill, and 30 KB of `cn`, whose `engine.js` module gave the chunk its name. A React host cannot avoid React DOM; the `cn` part goes only if the skin stops using `cn`. The Viewer against the stock Video.js skin, in a host app (`npm run check:consumer`, 23 Nov 2026, gzip -9 of everything loaded before the first frame): stock 351,231 B (JS 340,540, CSS 10,691), Frameline Viewer 365,681 B (JS 358,148, CSS 7,533), Studio 402,401 B. The Viewer adds 14,450 B, 4.1%. Of Frameline's own Viewer chunk (197 KB before minifying), `cn` is 106 KB.
 
 ## Unverified
 
@@ -181,6 +185,7 @@ Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not bro
 - A real pointer and a 1x display: the magnet and the 3 px pan threshold, the press travel, the groove's rim, the link's hover, the landing page's rim and shadow.
 - Windows: Segoe UI Variable and the timecode's widths with it (Verdana stood in), and Windows High Contrast itself.
 - The social card in real link previews.
+- The npm package in hosts other than Vite 8 + React 19 (webpack, Next.js with `'use client'`, Parcel, esbuild), a CSS pipeline that rejects CSS from `node_modules`, `npm publish` itself and an install from the registry rather than a tarball.
 
 **Playback**
 - Frame numbers against the reel's burned-in timecode agree where looked at, except one missing frame at the 10 s segment join; the other joins were not checked one by one.
@@ -241,3 +246,4 @@ Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not bro
 | 22 Nov | Docs and repo clean-up: this file split from the build log, finished specs archived (branch `docs-cleanup`) | `44912f1` |
 | 23 Nov | Source comments point at the build log; the Viewer bar's row in `FEATURES.md` matches the code (branch `comment-fixes`; the rest of the docs follow-up is on `api-names`) | `35e5e13` |
 | 23 Nov | API 0.1, step A: names, `linkUrl`, the public surface, playback stats, two fixes (branch `api-names`) | `8e901c6` |
+| 23 Nov | API 0.1, step B: the library build, `videojs-frameline` 0.1.0 (not published), exact pins, the consumer check, the Viewer weighed against the stock skin (branch `package`). Video.js 10.6.0 is out; not adopted | |

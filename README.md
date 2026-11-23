@@ -6,21 +6,50 @@ Frameline is a player skin for Video.js v10 (React, plain CSS) built for the too
 
 **What it does:** see [FEATURES.md](FEATURES.md) for the full list, with where to find each thing. **Author:** Frameline is designed, built and maintained by Artem Marchuk. Claude helped with the design thinking, specs and code; every decision and review is Artem's. **Licence:** Apache 2.0.
 
-## Install and run
-
-Node 24 (the version the host builds with; newer versions also build) and npm.
+## Install
 
 ```sh
-npm install
-npm run dev        # http://localhost:5173: the configurator; /preview.html: the monitor; /workbench.html: the CLI's workbench
-npm run typecheck
-npm test           # unit tests (Vitest)
-npm run build      # production build into dist/
-npm run deploy vercel   # deploy to Vercel (production URL); only from a clean checkout of origin/main
-npm run preview:vercel  # a Vercel preview of the folder as it is
+npm install videojs-frameline
 ```
 
-The skin is the source in `src/`. It is not published to npm: copy `src/` into your app (it imports nothing from `apps/`) and install `@videojs/react` 10.4.0.
+Frameline is a skin for Video.js v10 in React. It needs these next to it, as peer dependencies:
+
+| Package | Range | Why this range |
+| --- | --- | --- |
+| `react`, `react-dom` | `^19.3.0` | |
+| `@videojs/react`, `@videojs/core`, `@videojs/utils` | `~10.4.0` | Patch releases only. Video.js 10 has renamed public things between minor versions, so a new minor is added after it has been tested |
+
+There is no CSS to import: each part of the skin brings its own stylesheet, and your bundler loads it with that part. The Viewer's stylesheet comes with the skin; the Studio's arrives only when a Studio feature is on.
+
+```tsx
+// Viewer: the clean player for a client or an audience.
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer } from '@videojs/react/video';
+import { FramelineSkin } from 'videojs-frameline';
+
+<VideoPlayer>
+  <FramelineSkin fps={24}>
+    <MuxVideo src="https://stream.mux.com/….m3u8" playsInline />
+  </FramelineSkin>
+</VideoPlayer>;
+```
+
+```tsx
+// Studio: the creator's monitor. Give it the source's frame rate, and CORS so frames can be grabbed.
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer } from '@videojs/react/video';
+import { FramelineSkin } from 'videojs-frameline';
+
+<VideoPlayer>
+  <FramelineSkin tier="studio" fps={24}>
+    <MuxVideo src="https://stream.mux.com/….m3u8" playsInline crossOrigin="" />
+  </FramelineSkin>
+</VideoPlayer>;
+```
+
+`MuxVideo` needs `@videojs/mux-video` (any other Video.js media element works the same way). The package is ESM only, ships its type declarations, and marks its entry `'use client'` for React Server Components hosts such as Next.js.
+
+**Versioning.** 0.x: a breaking change bumps the minor version and is listed in [CHANGELOG.md](CHANGELOG.md). Peer ranges cover only tested versions.
 
 ## Use the skin
 
@@ -29,32 +58,13 @@ The skin is the source in `src/`. It is not published to npm: copy `src/` into y
 ```tsx
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer } from '@videojs/react/video';
-
-import { FramelineSkin } from '@/pro'; // src/pro/index.ts, the public entry
+import { FramelineSkin } from 'videojs-frameline';
 
 <VideoPlayer>
   <FramelineSkin tier="studio" fps={24} features={{ grabFrame: false, guides: ['title-safe', '9:16'] }}>
     <MuxVideo src="https://stream.mux.com/….m3u8" playsInline crossOrigin="" />
   </FramelineSkin>
 </VideoPlayer>;
-```
-
-The two tiers, at their smallest:
-
-```tsx
-// Viewer: the clean player for a client or an audience. Loads no pro code.
-<VideoPlayer>
-  <FramelineSkin>
-    <MuxVideo src="https://stream.mux.com/….m3u8" playsInline />
-  </FramelineSkin>
-</VideoPlayer>
-
-// Studio: the creator's monitor. Give it the source's frame rate, and CORS so frames can be grabbed.
-<VideoPlayer>
-  <FramelineSkin tier="studio" fps={24}>
-    <MuxVideo src="https://stream.mux.com/….m3u8" playsInline crossOrigin="" />
-  </FramelineSkin>
-</VideoPlayer>
 ```
 
 With `tier="viewer"` (the default) and no flags, it is the clean Viewer player and downloads no pro code. Pro code is split into chunks that load only when a feature needs them.
@@ -80,7 +90,7 @@ One rule set decides every public name, now and later:
 6. **Ids use US spelling and plain characters** (`center`). A label on screen may differ from its id ("Centre cross").
 7. **The words on screen stay the same.** "In" and "Out" in the player, "range" in code.
 
-The public surface is what `src/pro/index.ts` exports: `FramelineSkin`, its props and slots types, `FramelineApi`, the event payload types, the id and level types, and the constants `TIERS` and `GUIDE_IDS`. Anything else in `src/` is internal and can change without notice.
+The public surface is what the package exports (`src/pro/index.ts` in this repo): `FramelineSkin`, its props and slots types, `FramelineApi`, the event payload types, the id and level types, and the constants `TIERS` and `GUIDE_IDS`. Anything else in `src/` is internal and can change without notice.
 
 ### Props
 
@@ -440,6 +450,18 @@ The first eight are Video.js's own tokens, so a host that already themes a Video
 
 The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectangle) on the container.
 
+### Weight
+
+Measured by `npm run check:consumer` on 23 Nov 2026: a Vite 8 production build of a React app, the same Mux stream on each page, and everything the page's scripts and stylesheets weigh before the first frame plays (Chromium's network log; gzip -9).
+
+| Page | JS | CSS | Total gzip |
+| --- | --- | --- | --- |
+| Video.js's Default video skin (`VideoSkin`, `@videojs/react/video/skin.css`) | 4 files, 340,540 B gzip | 1 file, 10,691 B gzip | 351,231 B |
+| Frameline, `tier="viewer"` | 5 files, 358,148 B gzip | 1 file, 7,533 B gzip | 365,681 B |
+| Frameline, `tier="studio"` | 7 files, 389,913 B gzip | 2 files, 12,488 B gzip | 402,401 B |
+
+The Viewer adds 14,450 bytes gzip over the stock skin, 4.1%. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,720 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
+
 ### Browser support
 
 The floor the code is written for: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4.
@@ -496,9 +518,21 @@ export const ACTIVE_SOURCE: SourceName = 'cosmicDawn'; // was 'reel'
 
 ## Develop
 
+Node 24 (the version the host builds with; newer versions also build) and npm.
+
 ```sh
-npm run dev
+npm install
+npm run dev              # http://localhost:5173: the configurator; /preview.html: the monitor; /workbench.html: the CLI's workbench
+npm run typecheck
+npm test                 # unit tests (Vitest)
+npm run build            # the site, into dist/
+npm run build:lib        # the npm package, into lib/
+npm run check:consumer   # packs the package, installs it in a new app outside the repo and tests it in three browsers
+npm run deploy vercel    # production; only from a clean checkout of origin/main
+npm run preview:vercel   # a Vercel preview of the folder as it is
 ```
+
+The site imports the skin from `src/` through a path alias, so it never needs `build:lib`. The package is built by `vite.lib.config.ts` and `tsconfig.lib.json`; `scripts/consumer/` holds the consumer check and the app it builds.
 
 The site root (`/`) is the configurator page (`apps/preview/index.html`, `src/page/`). The CLI's workbench is at `/workbench.html`: it opens the skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (the host's guide list; `?guides=0` for none), `?zones=0` and `?debug` (debug readout and event log) set its state. It plays the active demo source (see Demo media). The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/workbench.html?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
 
@@ -534,7 +568,7 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
 
 ## Where things live
 
-- `src/`: the skin.
+- `src/`: the skin, and the source of the npm package. `src/pro/index.ts` is the package's entry.
   - `src/pro/`: `FramelineSkin`, feature flags, the pro store, the frame clock and timecode utilities. The Studio controls load lazily from `studio/`.
   - `src/video/`: the skin component and its parts.
   - `src/styles/`: theme tokens and shared styles the skin imports, when it started from a packaged skin.
@@ -543,6 +577,9 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
   - `src/shell/`: the Shadcn shell.
   - `src/frame/`: the page the shell frames. `player` mounts your skin in a player and sets the media it plays.
   - `public/demo/`: the files of each demo source: chapters, captions, markers.
+- `vite.lib.config.ts`, `tsconfig.lib.json`, `scripts/lib/`: the package build (`npm run build:lib`, output in `lib/`, not committed).
+- `scripts/consumer/`: the consumer check (`npm run check:consumer`) and the host app template it uses.
+- `CHANGELOG.md`: what changed in each published version.
 - `vercel.json`, `netlify.toml`: how those hosts build the workbench.
 - `skin.json`: what this skin is built from. Keep it; it records the Video.js version the skin was created with.
 

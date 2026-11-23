@@ -46,7 +46,7 @@ Calm and device-like: neutral dark surfaces (true greys; the dock is a dark matt
 ## Hard rules
 
 1. **Never invent Video.js APIs.** Check names, props, CSS variables and file paths against the installed package and the official docs. The installed version wins over blog posts and old docs.
-2. **Video.js v10 only** (`@videojs/react`, `@videojs/html`), never v8. Pin versions exactly.
+2. **Video.js v10 only** (`@videojs/react`, `@videojs/html`), never v8. Pin versions exactly in the repo; peer ranges cover only tested versions.
 3. **Browser floor:** Chrome and Edge 111, Firefox 121, Safari and iOS 16.4. Nothing beyond it without a fallback.
 4. **Accessibility:** WCAG 2.2 AA. Targets at least 24 px (44 px on touch); text contrast 4.5:1; UI and focus 3:1; visible focus; reduced motion respected; overlays are `aria-hidden` and `pointer-events: none`, and toggling them is announced.
 5. **Frame accuracy is best effort.** Read `mediaTime` from `requestVideoFrameCallback`; say so in the UI and docs where it matters. Never claim guaranteed frame accuracy or true reverse playback.
@@ -66,7 +66,8 @@ Calm and device-like: neutral dark surfaces (true greys; the dock is a dark matt
 
 - Submitted to the Video.js Skins Design Challenge on 17 Nov 2026. **The winners are announced on 24 Nov 2026.** Until then, production keeps what the judges may have bookmarked: the configurator's URL parameters, the demo media and its Mux playback ID. Work that changes them stays on a preview.
 - In production: both tiers, the Studio dock, ruler timeline and range, frame-accurate transport, markers and cuts, guides and platform zones, Grab frame, Copy link (`#t=<seconds>&tc=<timecode>`), zoom, the configurator landing page, the embed page. `FEATURES.md` has the full list.
-- Not yet: an npm package (hosts copy `src/` today), CI, a measured Viewer weight.
+- The npm package `videojs-frameline` 0.1.0 is built and checked in a separate host app (`npm run check:consumer`), not yet published. The Viewer loads 4.1% more JS and CSS (gzip) than the stock Video.js skin.
+- Not yet: CI.
 
 ## Roadmap
 

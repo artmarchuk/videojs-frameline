@@ -22,6 +22,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 
 | Feature | Tier | How to try |
 | --- | --- | --- |
+| An npm package: `npm install videojs-frameline` and one import, no CSS import; peers React 19 and Video.js 10.4; ESM with type declarations, `'use client'` on the entry | Both | README, "Install" |
 | Two tiers: `tier="viewer"` (default) and `tier="studio"` | Both | Tier switch on the page |
 | Feature flags over a tier: `timecode`, `frameStep`, `range`, `loop`, `markers`, `cuts`, `grabFrame`, `copyLink`, `guides`, `zones`, `zoom` | Both | Features checkboxes on the page; `features={{ zoom: false }}` |
 | `guides` as a list restricts the Guides menu to those ids | Studio | `/preview.html?guides=title-safe,9:16` |
@@ -173,6 +174,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Feature | Tier | How to try |
 | --- | --- | --- |
 | Viewer requests no pro chunk | Viewer | Network panel on `/?tier=viewer` |
+| The Viewer loads 4.1% more JS and CSS than Video.js's stock skin (gzip, measured in a host app), and none of the Studio code or CSS | Viewer | README, "Weight"; `npm run check:consumer` |
 | The pro runtime, the Studio layer and the debug readout are separate lazy chunks | Studio | Network panel on `/` |
 | The skin does not re-render per frame: the frame clock writes to a small store, and only the timecode field subscribes to the frame | Studio | `/?debug` shows the render count (on `/preview.html?debug` the page's own event log re-renders the skin on every frame) |
 | Frame time from `requestVideoFrameCallback` where the browser has it | Studio | `/preview.html?debug` shows the clock source |
