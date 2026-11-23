@@ -16,11 +16,13 @@ import {
   KeyboardIcon,
   PipEnterIcon,
   QualityIcon,
+  ReplayIcon,
   SettingsIcon,
   SpeedIcon,
   VolumeHighIcon,
   VolumeMutedIcon,
 } from '../icons';
+import { useProFallback } from '../pro-fallback';
 import { useProSettingsItems } from '../pro-slots';
 import { strings } from '../strings';
 import { Button } from './button';
@@ -203,6 +205,7 @@ function PiPMenuItem() {
 export function SettingsMenu() {
   const shortcuts = useShortcutsDialog();
   const proItems = useProSettingsItems();
+  const fallback = useProFallback();
 
   return (
     <Menu.Root side="top" align="end">
@@ -220,6 +223,12 @@ export function SettingsMenu() {
           <AudioTrackMenu />
           <MuteMenuItem />
           {proItems}
+          {fallback?.retry && (
+            <Menu.Item className={'media-menu-item'} onSelect={fallback.retry}>
+              <ReplayIcon className={'media-menu-icon'} />
+              <span>{strings.proRetry}</span>
+            </Menu.Item>
+          )}
           <PiPMenuItem />
           <Menu.Item className={'media-menu-item'} onSelect={() => shortcuts.setOpen(true)}>
             <KeyboardIcon className={'media-menu-icon'} />

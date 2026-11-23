@@ -1,8 +1,9 @@
 /** @jsxImportSource react */
 
-import { lazy, Suspense, useEffect, useRef, useState, type Ref, type RefObject } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type Ref, type RefObject } from 'react';
 
 import type { FramelineApi, FramelineLinkUrl } from '../api';
+import { ChunkBoundary } from '../chunk-boundary';
 
 import { ProStoreContext } from '../context';
 import type { FramelineFeatureFlags, FramelineTier } from '../features';
@@ -14,8 +15,24 @@ import { useVideoElement } from '../use-video-element';
 import { allowedView, readRemembered, storageKey, viewAttributes, writeRemembered } from '../view';
 import { warnOnce } from '../dev';
 
-const StudioLayer = lazy(() => import('../studio'));
+const loadStudio = () => import('../studio');
+// `let`: a `lazy()` whose import failed keeps its rejection, so after a failure a retry puts a new one here.
+let StudioLayer = lazy(loadStudio);
+let studioFailed = false;
 const DebugReadout = lazy(() => import('../debug'));
+
+/**
+ * For the skin's retry: imports the Studio chunk again (when the player wants it) and, if the first import had
+ * failed, replaces the component that remembers the failure. Resolves once Studio can render; rejects if it cannot.
+ */
+export function preloadStudio(wanted: boolean): Promise<void> {
+  if (!wanted) return Promise.resolve();
+  return loadStudio().then(() => {
+    if (!studioFailed) return;
+    StudioLayer = lazy(loadStudio);
+    studioFailed = false;
+  });
+}
 
 const STUDIO_FLAGS = [
   'timecode',
@@ -53,6 +70,8 @@ export interface ProRuntimeProps extends ProCallbacks {
   onViewAttributes: (attributes: Record<string, string>) => void;
   /** Remember the View choices and the time display per browser: the default key, a key of the host's, or not at all. */
   persist?: boolean | string | undefined;
+  /** The Studio chunk could not load or render: the skin falls back to the Viewer. */
+  onStudioError: () => void;
 }
 
 /**
@@ -76,6 +95,7 @@ export default function ProRuntime({
   skinRenders,
   onViewAttributes,
   persist,
+  onStudioError,
   onRangeChange,
   onMarkerSelect,
   onFrameChange,
@@ -91,6 +111,7 @@ export default function ProRuntime({
     const remembered = readRemembered(key, allowed);
     return createProStore({ allowedView: allowed, view: remembered.view, timeDisplay: remembered.timeDisplay ?? 'timecode', loop: features.loop });
   });
+  const [ready, setReady] = useState(false);
   const anchor = useRef<HTMLSpanElement>(null);
   const video = useVideoElement(anchor);
 
@@ -120,7 +141,7 @@ export default function ProRuntime({
     // `data-zoom` ("100", "150", "200", "400") is there only while zoomed.
     const attributes = () => {
       const { view, zoom } = store.getState();
-      return zoom === 'fit' ? viewAttributes(view) : { ...viewAttributes(view), 'data-zoom': zoom };
+      return { ...viewAttributes(view), ...(zoom === 'fit' ? null : { 'data-zoom': zoom }), ...(ready ? { 'data-pro-ready': '' } : null) };
     };
     let last = store.getState();
     onViewAttributes(attributes());
@@ -134,7 +155,7 @@ export default function ProRuntime({
       unsubscribe();
       onViewAttributes({});
     };
-  }, [store, onViewAttributes]);
+  }, [store, onViewAttributes, ready]);
 
   // Offset for the displayed timecode, in frames. An unreadable value warns once and counts as zero.
   const parsedStart = startTimecode === undefined ? 0 : parseTimecode(startTimecode, fps);
@@ -142,42 +163,69 @@ export default function ProRuntime({
   const startFrames = parsedStart ?? 0;
 
   const studio = STUDIO_FLAGS.some((name) => features[name] !== false);
+  const onStudioFailed = useCallback(() => {
+    studioFailed = true;
+    onStudioError();
+  }, [onStudioError]);
 
   return (
     <ProStoreContext.Provider value={store}>
       <span ref={anchor} hidden />
       <FrameClock video={video} fps={fps} />
-      <Suspense fallback={null}>
-        {studio && (
-          <StudioLayer
-            features={features}
-            fps={fps}
-            startFrames={startFrames}
-            dropFrame={dropFrame}
-            markers={markers}
-            video={video}
-            anchor={anchor}
-            linkUrl={linkUrl}
-            onCopyLink={onCopyLink}
-            onFrameGrab={onFrameGrab}
-            apiRef={apiRef}
-          />
-        )}
-        {debug && (
-          <DebugReadout
-            tier={tier}
-            density={density}
-            layout={layout}
-            features={features}
-            fps={fps}
-            startFrames={startFrames}
-            video={video}
-            skinRenders={skinRenders}
-          />
-        )}
-      </Suspense>
+      {/* One boundary and one Suspense per chunk: a readout that cannot load does not take Studio with it. */}
+      {studio ? (
+        <ChunkBoundary onError={onStudioFailed}>
+          <Suspense fallback={null}>
+            <StudioLayer
+              features={features}
+              fps={fps}
+              startFrames={startFrames}
+              dropFrame={dropFrame}
+              markers={markers}
+              video={video}
+              anchor={anchor}
+              linkUrl={linkUrl}
+              onCopyLink={onCopyLink}
+              onFrameGrab={onFrameGrab}
+              apiRef={apiRef}
+            />
+            <Ready onReady={setReady} />
+          </Suspense>
+        </ChunkBoundary>
+      ) : (
+        <Ready onReady={setReady} />
+      )}
+      {debug && (
+        <ChunkBoundary>
+          <Suspense fallback={null}>
+            <DebugReadout
+              tier={tier}
+              density={density}
+              layout={layout}
+              features={features}
+              fps={fps}
+              startFrames={startFrames}
+              video={video}
+              skinRenders={skinRenders}
+            />
+          </Suspense>
+        </ChunkBoundary>
+      )}
     </ProStoreContext.Provider>
   );
+}
+
+/**
+ * Reports that the pro code is on screen. Beside Studio it sits in the same Suspense, so it mounts when Studio does.
+ * The skin then carries `data-pro-ready` on its root: an internal signal that every lazy chunk the player needs has
+ * arrived (the site's stale-chunk reload waits for it).
+ */
+function Ready({ onReady }: { onReady: (ready: boolean) => void }) {
+  useEffect(() => {
+    onReady(true);
+    return () => onReady(false);
+  }, [onReady]);
+  return null;
 }
 
 /** Runs the frame clock. A component of its own so it sits inside the store provider. Renders nothing. */

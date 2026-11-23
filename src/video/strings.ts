@@ -14,6 +14,10 @@ export const strings = {
   mute: 'Mute',
   unmute: 'Unmute',
   retry: 'Retry',
+  /** Announced when the pro code (the Studio tools) could not load and the player falls back to the Viewer. */
+  proUnavailable: 'Studio tools could not load. The player works without them.',
+  /** The settings menu's item for one more try. */
+  proRetry: 'Retry loading Studio tools',
   transport: 'Transport',
   playback: 'Playback',
   shortcut: {

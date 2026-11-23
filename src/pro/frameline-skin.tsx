@@ -4,8 +4,11 @@
 
 import { lazy, Suspense, useCallback, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 
+import type { ProFallback } from '../video/pro-fallback';
 import { VideoSkin, type VideoSkinProps } from '../video/skin';
+import { strings } from '../video/strings';
 import type { FramelineApi, FramelineLinkUrl } from './api';
+import { ChunkBoundary } from './chunk-boundary';
 import { warnOnce } from './dev';
 import {
   hasProFeatures,
@@ -23,7 +26,16 @@ import type { FramelineZoomLevel } from './zoom';
 import { DEFAULT_FPS, isValidFps } from './fps';
 
 // The pro runtime (store, frame clock, the Studio layer) is a separate chunk. The Viewer tier never requests it.
-const ProRuntime = lazy(() => import('./runtime'));
+const loadRuntime = () => import('./runtime');
+// `let`: React keeps the rejection of a `lazy()` whose import failed, so a retry needs a new one (see `retry` below).
+let ProRuntime = lazy(loadRuntime);
+let runtimeFailed = false;
+
+/**
+ * How the pro code is doing. `failed`: it could not load, the player is a Viewer and offers one retry.
+ * `retrying`: that retry is under way. `gone`: the retry failed too, or the pro code failed again after it.
+ */
+type ProState = 'ok' | 'failed' | 'retrying' | 'gone';
 
 /** Spacing of the controls. */
 export type FramelineDensity = 'comfortable' | 'compact';
@@ -172,8 +184,21 @@ export function FramelineSkin({
   const renders = useRef(0);
   renders.current += 1;
 
-  const safeTier: FramelineTier = isTier(tier) ? tier : 'viewer';
-  if (safeTier !== tier) warnOnce(`Unknown tier "${String(tier)}"; using "viewer".`);
+  const askedTier: FramelineTier = isTier(tier) ? tier : 'viewer';
+  if (askedTier !== tier) warnOnce(`Unknown tier "${String(tier)}"; using "viewer".`);
+
+  // When a pro chunk cannot load (see `ChunkBoundary`), the player carries on as the plain Viewer: its own tier,
+  // flags and overlay bar, with nothing pro mounted, so there is no dock with empty places in it.
+  const [proState, setProState] = useState<ProState>('ok');
+  const [attempt, setAttempt] = useState(0);
+  const retried = useRef(false);
+  const down = proState !== 'ok';
+  const safeTier: FramelineTier = down ? 'viewer' : askedTier;
+  const onProError = useCallback(() => setProState(retried.current ? 'gone' : 'failed'), []);
+  const onRuntimeError = useCallback(() => {
+    runtimeFailed = true;
+    onProError();
+  }, [onProError]);
 
   let safeFps = fps;
   if (!isValidFps(fps)) {
@@ -182,14 +207,56 @@ export function FramelineSkin({
   }
 
   const safeDensity: FramelineDensity = density === 'compact' ? 'compact' : 'comfortable';
-  const safeLayout = resolveLayout(safeTier, layout);
+  const safeLayout = resolveLayout(safeTier, down ? undefined : layout);
 
   const wantsDebug = debug || debugInUrl();
   // resolveFeatures memoises by value, so a new `features` object with the same content gives the same result.
   const features = useMemo(
-    () => resolveFeatures(safeTier, overrides),
+    () => resolveFeatures(safeTier, down ? undefined : overrides),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [safeTier, JSON.stringify(overrides ?? null)]
+    [safeTier, down, JSON.stringify(overrides ?? null)]
+  );
+  // What the host asked for, whatever is shown: only a player that wanted Studio tools says that they are missing.
+  const wantsStudio = useMemo(
+    () => hasProFeatures(resolveFeatures(askedTier, overrides)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [askedTier, JSON.stringify(overrides ?? null)]
+  );
+
+  /**
+   * One more try, from the settings menu. It imports the chunks again and goes back to the pro tier only when they
+   * arrived, so a retry that fails changes nothing on screen. It rarely helps after a deploy: the old chunk is gone
+   * from the server for good, and only a reload of the page, which gets the new build, brings the tools back. That
+   * reload is the host's to do (the README, "When a chunk fails to load"); the skin never reloads the page. The
+   * retry is for the other case, a request that failed on the way.
+   */
+  const retry = useCallback(() => {
+    if (retried.current) return;
+    retried.current = true;
+    setProState('retrying');
+    const root = document.activeElement?.closest<HTMLElement>('.media-skin') ?? null;
+    loadRuntime()
+      .then((runtime) => runtime.preloadStudio(wantsStudio))
+      .then(
+        () => {
+          if (runtimeFailed) {
+            ProRuntime = lazy(loadRuntime);
+            runtimeFailed = false;
+          }
+          setAttempt((count) => count + 1);
+          setProState('ok');
+          // The bar is rebuilt as the pro bar, and the control that had focus goes with the old one.
+          window.setTimeout(() => {
+            if (!document.activeElement || document.activeElement === document.body) root?.focus({ preventScroll: true });
+          }, 0);
+        },
+        () => setProState('gone')
+      );
+  }, [wantsStudio]);
+
+  const proFallback = useMemo<ProFallback | null>(
+    () => (down && wantsStudio ? { notice: strings.proUnavailable, retry: proState === 'failed' ? retry : undefined } : null),
+    [down, wantsStudio, proState, retry]
   );
 
   const [guideAttributes, setGuideAttributes] = useState<Record<string, string>>({});
@@ -201,7 +268,7 @@ export function FramelineSkin({
   }, []);
 
   // The debug readout lives in the pro runtime, so it loads the runtime even over a plain Viewer.
-  const pro = hasProFeatures(features) || wantsDebug;
+  const pro = !down && (hasProFeatures(features) || wantsDebug);
   // Any Studio control in the bar means the pro bar: the timeline row and the three-column main row with its slots.
   const proBar =
     features.timecode ||
@@ -218,7 +285,7 @@ export function FramelineSkin({
   return (
     <VideoSkin
       {...skinProps}
-      {...guideAttributes}
+      {...(down ? null : guideAttributes)}
       data-tier={safeTier}
       data-density={safeDensity}
       data-bar={proBar ? 'pro' : undefined}
@@ -229,33 +296,37 @@ export function FramelineSkin({
       toolbarStart={slots?.toolbarStart}
       toolbarEnd={slots?.toolbarEnd}
       overlay={slots?.overlay}
+      proFallback={proFallback}
       extras={
         pro && (
-          <Suspense fallback={null}>
-            <ProRuntime
-              tier={safeTier}
-              density={safeDensity}
-              layout={safeLayout}
-              features={features}
-              debug={wantsDebug}
-              fps={safeFps}
-              startTimecode={startTimecode}
-              dropFrame={dropFrame}
-              markers={markers}
-              linkUrl={linkUrl}
-              onCopyLink={onCopyLink}
-              onFrameGrab={onFrameGrab}
-              onZoomChange={onZoomChange}
-              apiRef={apiRef}
-              skinRenders={renders}
-              onViewAttributes={onViewAttributes}
-              persist={persist}
-              onGuidesChange={onGuidesChange}
-              onRangeChange={onRangeChange}
-              onMarkerSelect={onMarkerSelect}
-              onFrameChange={onFrameChange}
-            />
-          </Suspense>
+          <ChunkBoundary key={attempt} onError={onRuntimeError}>
+            <Suspense fallback={null}>
+              <ProRuntime
+                onStudioError={onProError}
+                tier={safeTier}
+                density={safeDensity}
+                layout={safeLayout}
+                features={features}
+                debug={wantsDebug}
+                fps={safeFps}
+                startTimecode={startTimecode}
+                dropFrame={dropFrame}
+                markers={markers}
+                linkUrl={linkUrl}
+                onCopyLink={onCopyLink}
+                onFrameGrab={onFrameGrab}
+                onZoomChange={onZoomChange}
+                apiRef={apiRef}
+                skinRenders={renders}
+                onViewAttributes={onViewAttributes}
+                persist={persist}
+                onGuidesChange={onGuidesChange}
+                onRangeChange={onRangeChange}
+                onMarkerSelect={onMarkerSelect}
+                onFrameChange={onFrameChange}
+              />
+            </Suspense>
+          </ChunkBoundary>
         )
       }
     >

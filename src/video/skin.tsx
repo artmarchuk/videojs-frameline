@@ -14,6 +14,7 @@ import { FullscreenFocus } from './behaviors/fullscreen-focus';
 import { VideoGestures } from './behaviors/gestures';
 import { VideoHotkeys } from './behaviors/hotkeys';
 import { VideoControls } from './controls';
+import { ProFallbackProvider, ProNotice, type ProFallback } from './pro-fallback';
 import { ProSlotsProvider } from './pro-slots';
 import { ErrorDialog } from './shared/error-dialog';
 import { Indicators } from './shared/indicators';
@@ -52,6 +53,8 @@ export interface VideoSkinProps extends Omit<ContainerPrimitive.Props, 'children
   layout?: 'overlay' | 'dock';
   /** Pro tiers only: `←` / `→` seek 5 s only while playing, leaving them free for frame stepping while paused. */
   arrowSeekWhilePlayingOnly?: boolean;
+  /** Set while the pro code could not load: the message to announce, and the retry for the settings menu. */
+  proFallback?: ProFallback | null;
 }
 
 /**
@@ -74,6 +77,7 @@ export function VideoSkin({
   pictureWrapper = false,
   layout = 'overlay',
   arrowSeekWhilePlayingOnly = false,
+  proFallback = null,
   onBlur,
   onPointerDownCapture,
   ...props
@@ -137,6 +141,7 @@ export function VideoSkin({
       <VideoGestures dock={dock} />
       <FullscreenFocus />
       <StatusAnnouncer />
+      <ProNotice />
       <ShortcutsDialog />
     </>
   );
@@ -172,7 +177,9 @@ export function VideoSkin({
       }}
       {...props}
     >
-      <ShortcutsProvider>{proBar ? <ProSlotsProvider renderThumbnail={renderThumbnail}>{body}</ProSlotsProvider> : body}</ShortcutsProvider>
+      <ProFallbackProvider value={proFallback}>
+        <ShortcutsProvider>{proBar ? <ProSlotsProvider renderThumbnail={renderThumbnail}>{body}</ProSlotsProvider> : body}</ShortcutsProvider>
+      </ProFallbackProvider>
     </ContainerPrimitive>
   );
 }
