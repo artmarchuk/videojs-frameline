@@ -21,6 +21,8 @@ The first public release.
   `>=10.4.0 <10.7.0`, tested at both ends (10.4.0 and 10.6.0). No other dependency.
 - **`className`:** a `className` passed to the skin is added beside the skin's own classes. Nothing is merged: the
   skin is plain CSS and does not resolve conflicts between Tailwind utility classes.
+- **Node.js:** the package runs in the browser and sets no `engines`, so npm does not warn a host about the Node.js
+  version it builds with.
 
 Not there yet: a build for `@videojs/html` (HTML custom elements), and translations of the skin's own strings
 (English only; Video.js's own components follow the player's locale).
