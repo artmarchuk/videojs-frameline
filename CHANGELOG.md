@@ -17,8 +17,10 @@ The first public release.
 - **Loading:** the Viewer loads no Studio code or CSS. The pro runtime, the Studio layer and the debug readout are
   separate chunks loaded with `import()`, and each brings its own stylesheet. There is no CSS to import.
 - **The package:** ESM only (ES2022), type declarations included, `'use client'` on the entry.
-- **Peers:** `react` and `react-dom` `^19.3.0`; `@videojs/react`, `@videojs/core` and `@videojs/utils` `~10.4.0`.
-  One dependency: `cn` `^0.4.0`.
+- **Peers:** `react` and `react-dom` `^19.3.0`; `@videojs/react`, `@videojs/core` and `@videojs/utils`
+  `>=10.4.0 <10.7.0`, tested at both ends (10.4.0 and 10.6.0). No other dependency.
+- **`className`:** a `className` passed to the skin is added beside the skin's own classes. Nothing is merged: the
+  skin is plain CSS and does not resolve conflicts between Tailwind utility classes.
 
 Not there yet: a build for `@videojs/html` (HTML custom elements), and translations of the skin's own strings
 (English only; Video.js's own components follow the player's locale).

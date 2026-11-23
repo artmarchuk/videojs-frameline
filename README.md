@@ -17,7 +17,7 @@ Frameline is a skin for Video.js v10 in React. It needs these next to it, as pee
 | Package | Range | Why this range |
 | --- | --- | --- |
 | `react`, `react-dom` | `^19.3.0` | |
-| `@videojs/react`, `@videojs/core`, `@videojs/utils` | `~10.4.0` | Patch releases only. Video.js 10 has renamed public things between minor versions, so a new minor is added after it has been tested |
+| `@videojs/react`, `@videojs/core`, `@videojs/utils` | `>=10.4.0 <10.7.0` | Tested at both ends, 10.4.0 and 10.6.0. Video.js 10 has renamed public things between minor versions, so the next minor is added after it has been tested |
 
 There is no CSS to import: each part of the skin brings its own stylesheet, and your bundler loads it with that part. The Viewer's stylesheet comes with the skin; the Studio's arrives only when a Studio feature is on.
 
@@ -452,15 +452,15 @@ The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectan
 
 ### Weight
 
-Measured by `npm run check:consumer` on 23 Nov 2026: a Vite 8 production build of a React app, the same Mux stream on each page, and everything the page's scripts and stylesheets weigh before the first frame plays (Chromium's network log; gzip -9).
+Measured by `npm run check:consumer` on 23 Nov 2026 with Video.js 10.6.0: a Vite 8 production build of a React app, the same Mux stream on each page, and everything the page's scripts and stylesheets weigh before the first frame plays (Chromium's network log; gzip -9).
 
 | Page | JS | CSS | Total gzip |
 | --- | --- | --- | --- |
-| Video.js's Default video skin (`VideoSkin`, `@videojs/react/video/skin.css`) | 4 files, 340,540 B gzip | 1 file, 10,691 B gzip | 351,231 B |
-| Frameline, `tier="viewer"` | 5 files, 358,148 B gzip | 1 file, 7,533 B gzip | 365,681 B |
-| Frameline, `tier="studio"` | 7 files, 389,913 B gzip | 2 files, 12,488 B gzip | 402,401 B |
+| Video.js's Default video skin (`VideoSkin`, `@videojs/react/video/skin.css`) | 4 files, 341,762 B gzip | 1 file, 10,691 B gzip | 352,453 B |
+| Frameline, `tier="viewer"` | 5 files, 343,503 B gzip | 1 file, 7,533 B gzip | 351,036 B |
+| Frameline, `tier="studio"` | 7 files, 375,267 B gzip | 2 files, 12,488 B gzip | 387,755 B |
 
-The Viewer adds 14,450 bytes gzip over the stock skin, 4.1%. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,720 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
+The Viewer is 1,417 bytes gzip lighter than the stock skin, 0.4%: about the same weight. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,719 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
 
 ### Browser support
 

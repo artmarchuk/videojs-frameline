@@ -22,7 +22,7 @@ Test for every decision: does it help someone make, check, review or deliver a v
 ## Hard rules
 
 1. **Never invent Video.js APIs.** Check component names, props, CSS variables and file paths against the installed package and the official docs before using them. Docs: `node_modules/@videojs/react/docs/llms.txt`, https://videojs.org/docs/framework/react/llms.txt, https://videojs.org/llms.txt. The installed version wins over docs pages and blog posts (for example "Minimal" is now "Neutral", and the "eject" flow is now Shadcn).
-2. **Video.js v10 only** (`@videojs/react`, `@videojs/html`), never v8. Every dependency and devDependency is pinned exactly in the repo (no `^` or `~`; the one exception is `cn`, the package's own dependency) and the lockfile is committed. The package's peer ranges are separate and cover only tested versions (`@videojs/*` `~10.4.0`, React `^19.3.0`). The `video.js@10.x` package that `@videojs/core` depends on is the v10 pointer package, not v8.
+2. **Video.js v10 only** (`@videojs/react`, `@videojs/html`), never v8. Every dependency and devDependency is pinned exactly in the repo (no `^` or `~`) and the lockfile is committed. The package's peer ranges are separate and cover only tested versions (`@videojs/*` `>=10.4.0 <10.7.0`, React `^19.3.0`). The `video.js@10.x` package that `@videojs/core` depends on is the v10 pointer package, not v8.
 3. **Browser floor:** Chrome and Edge 111, Firefox 121, Safari and iOS 16.4. Nothing beyond it without a fallback.
 4. **Accessibility:** WCAG 2.2 AA. See `specs/PROJECT-OVERVIEW.md` for targets, contrast and overlay rules.
 5. **Frame accuracy is best effort.** Never claim guaranteed frame accuracy or true reverse playback.
