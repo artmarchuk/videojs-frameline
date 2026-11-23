@@ -4,10 +4,13 @@ import { createRoot } from 'react-dom/client';
 
 import '@/skin.css';
 import './embed.css';
+import { reloadOnStaleChunk } from '../reload-on-stale-chunk';
 import { FramelineSkin, TIERS, type FramelineTier } from '@/pro';
 
 import { DemoVideo, useDemoMarkers } from '../frame/demo-video';
 import { MEDIA, posterUrl, SOURCES, type DemoSource } from '../frame/media';
+
+reloadOnStaleChunk();
 
 /**
  * The player alone, for an iframe on another site. No title, no switches, nothing outside the player. It fills the

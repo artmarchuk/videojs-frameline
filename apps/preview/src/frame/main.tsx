@@ -4,10 +4,13 @@ import { createRoot } from 'react-dom/client';
 
 import '@/skin.css';
 import './preview.css';
+import { reloadOnStaleChunk } from '../reload-on-stale-chunk';
 import { playbackProps, playerStyles } from '../shell/params';
 import { initialParams, onParamsChange } from './frame';
 import { MEDIA } from './media';
 import { Player } from './player';
+
+reloadOnStaleChunk();
 
 // The workbench shell, or a link, can fix the player's width (`#width=384`). Without one the monitor uses the window.
 const SIZED = new URLSearchParams(location.hash.slice(1)).has('width');

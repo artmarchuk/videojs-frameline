@@ -8,12 +8,15 @@ import { StrictMode, useMemo, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import '@/skin.css';
+import { reloadOnStaleChunk } from '../reload-on-stale-chunk';
 import { FramelineSkin, type FramelineCopyLinkInfo, type FramelineEffectiveGuides, type FramelineFrameGrabInfo, type FramelineApi, type FramelineRange, type FramelineMarker, type FramelineZoomLevel } from '@/pro';
 import { formatTimecode, framesFromSeconds } from '@/pro/timecode';
 
 import { DemoVideo, useDemoMarkers } from '../frame/demo-video';
 import { MEDIA, posterUrl, stagedSeconds } from '../frame/media';
 import { FLAG_NAMES, overrides, readQuery, snippet, tierConfig, writeQuery, type FlagName, type PageConfig } from './config';
+
+reloadOnStaleChunk();
 
 const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 
