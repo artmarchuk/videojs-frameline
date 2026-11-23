@@ -179,6 +179,18 @@ A host can turn any single feature on over Viewer or off over Studio, for exampl
 
 `guides` takes a list of these ids (the constant `GUIDE_IDS`): `title-safe`, `action-safe`, `thirds`, `center`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `zones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The Guides menu".
 
+### When a chunk fails to load
+
+The Studio code arrives in separate chunks. If one of them cannot load, the player carries on as the Viewer: the overlay bar with play, seek, volume, captions, settings and fullscreen. It announces "Studio tools could not load. The player works without them." once, and the settings menu offers "Retry loading Studio tools" once. Nothing else in your React tree is affected. If only the debug readout fails, Studio stays and the readout is absent.
+
+The usual cause is a deploy: the page a visitor has open belongs to the old build, and the old chunks are gone from the server. A retry cannot fix that; a reload can, and that decision is yours, so the skin never reloads the page. There is no `onError` prop: Frameline's chunks are part of your build, so your bundler's own event covers them. With Vite:
+
+```ts
+window.addEventListener('vite:preloadError', () => {
+  window.location.reload(); // once: guard it with a flag in sessionStorage
+});
+```
+
 ### Debug readout
 
 `debug`, or `?debug` in the page URL, puts a small readout over the picture: tier, layout, the flags that are on, `fps`, the current frame and timecode, the clock source, the range and Loop, and two playback figures. **measured fps** is the number of frames the browser presented over the last second (from `requestVideoFrameCallback`), to compare with the `fps` you passed; **dropped** is the decoder's dropped and total frames (from `getVideoPlaybackQuality()`). Both update twice a second and show "—" where the browser lacks the API. The readout is a development tool in its own lazy chunk; it is not a feature flag.
@@ -457,10 +469,10 @@ Measured by `npm run check:consumer` on 23 Nov 2026 with Video.js 10.6.0: a Vite
 | Page | JS | CSS | Total gzip |
 | --- | --- | --- | --- |
 | Video.js's Default video skin (`VideoSkin`, `@videojs/react/video/skin.css`) | 4 files, 341,762 B gzip | 1 file, 10,691 B gzip | 352,453 B |
-| Frameline, `tier="viewer"` | 5 files, 343,503 B gzip | 1 file, 7,533 B gzip | 351,036 B |
-| Frameline, `tier="studio"` | 7 files, 375,267 B gzip | 2 files, 12,488 B gzip | 387,755 B |
+| Frameline, `tier="viewer"` | 5 files, 344,137 B gzip | 1 file, 7,533 B gzip | 351,670 B |
+| Frameline, `tier="studio"` | 7 files, 376,121 B gzip | 2 files, 12,488 B gzip | 388,609 B |
 
-The Viewer is 1,417 bytes gzip lighter than the stock skin, 0.4%: about the same weight. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,719 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
+The Viewer is 783 bytes gzip lighter than the stock skin, 0.2%: about the same weight. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,939 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
 
 ### Browser support
 

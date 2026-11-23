@@ -16,6 +16,9 @@ The first public release.
   starts with `Frameline`.
 - **Loading:** the Viewer loads no Studio code or CSS. The pro runtime, the Studio layer and the debug readout are
   separate chunks loaded with `import()`, and each brings its own stylesheet. There is no CSS to import.
+- **A chunk that fails to load:** the player falls back to a working Viewer, says so once, and offers one retry in
+  the settings menu. The host's React tree is not affected, and the skin never reloads the page (README, "When a
+  chunk fails to load").
 - **The package:** ESM only (ES2022), type declarations included, `'use client'` on the entry.
 - **Peers:** `react` and `react-dom` `^19.3.0`; `@videojs/react`, `@videojs/core` and `@videojs/utils`
   `>=10.4.0 <10.7.0`, tested at both ends (10.4.0 and 10.6.0). No other dependency.
