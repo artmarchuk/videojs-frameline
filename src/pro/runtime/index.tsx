@@ -72,6 +72,8 @@ export interface ProRuntimeProps extends ProCallbacks {
   persist?: boolean | string | undefined;
   /** The Studio chunk could not load or render: the skin falls back to the Viewer. */
   onStudioError: () => void;
+  /** Every lazy chunk the player needs is on screen (the moment `data-pro-ready` is set). */
+  onReady?: () => void;
 }
 
 /**
@@ -96,6 +98,7 @@ export default function ProRuntime({
   onViewAttributes,
   persist,
   onStudioError,
+  onReady,
   onRangeChange,
   onMarkerSelect,
   onFrameChange,
@@ -112,6 +115,9 @@ export default function ProRuntime({
     return createProStore({ allowedView: allowed, view: remembered.view, timeDisplay: remembered.timeDisplay ?? 'timecode', loop: features.loop });
   });
   const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (ready) onReady?.();
+  }, [ready, onReady]);
   const anchor = useRef<HTMLSpanElement>(null);
   const video = useVideoElement(anchor);
 

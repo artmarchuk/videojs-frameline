@@ -18,6 +18,8 @@ export const strings = {
   proUnavailable: 'Studio tools could not load. The player works without them.',
   /** The settings menu's item for one more try. */
   proRetry: 'Retry loading Studio tools',
+  /** Announced when that retry brought the Studio tools back. */
+  proLoaded: 'Studio tools loaded.',
   transport: 'Transport',
   playback: 'Playback',
   shortcut: {

@@ -37,6 +37,48 @@ let runtimeFailed = false;
  */
 type ProState = 'ok' | 'failed' | 'retrying' | 'gone';
 
+/** What a successful retry puts back once the Studio bar is on screen: the player it came from and its playback. */
+interface RetryReturn {
+  root: HTMLElement | null;
+  video: HTMLVideoElement | null;
+  time: number;
+  paused: boolean;
+}
+
+/**
+ * Puts the playback position and the paused or playing state back on the player's media element after the switch
+ * back to Studio. The bar changes from the overlay to the dock, so the picture moves into the dock's stage and React
+ * mounts the media element anew: a new element starts at 0, paused. When the element is still the same one, nothing
+ * changed and nothing is done.
+ */
+/**
+ * Focuses the settings button of the rebuilt bar. A host page can keep the bar hidden for a moment (the site's landing
+ * page does while it stages its opening state), and a hidden button takes no focus, so this tries again each frame
+ * for up to two seconds. It stops as soon as focus is anywhere but the page body: the user has moved on.
+ */
+function focusSettings(root: HTMLElement): void {
+  const until = performance.now() + 2000;
+  const attempt = () => {
+    const button = root.querySelector<HTMLElement>('.media-settings-button');
+    const active = document.activeElement;
+    if (!button || (active && active !== document.body)) return;
+    button.focus({ preventScroll: true });
+    if (document.activeElement !== button && performance.now() < until) requestAnimationFrame(attempt);
+  };
+  attempt();
+}
+
+function restorePlayback(root: HTMLElement, before: RetryReturn): void {
+  const video = root.querySelector('video');
+  if (!video || video === before.video) return;
+  const apply = () => {
+    if (before.time > 0) video.currentTime = before.time;
+    if (!before.paused) video.play().catch(() => {});
+  };
+  if (video.readyState >= 1) apply();
+  else video.addEventListener('loadedmetadata', apply, { once: true });
+}
+
 /** Spacing of the controls. */
 export type FramelineDensity = 'comfortable' | 'compact';
 
@@ -191,7 +233,9 @@ export function FramelineSkin({
   // flags and overlay bar, with nothing pro mounted, so there is no dock with empty places in it.
   const [proState, setProState] = useState<ProState>('ok');
   const [attempt, setAttempt] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const retried = useRef(false);
+  const returning = useRef<RetryReturn | null>(null);
   const down = proState !== 'ok';
   const safeTier: FramelineTier = down ? 'viewer' : askedTier;
   const onProError = useCallback(() => setProState(retried.current ? 'gone' : 'failed'), []);
@@ -234,7 +278,10 @@ export function FramelineSkin({
     if (retried.current) return;
     retried.current = true;
     setProState('retrying');
+    // The retry is chosen in this player's settings menu, so focus is inside the player.
     const root = document.activeElement?.closest<HTMLElement>('.media-skin') ?? null;
+    const video = root?.querySelector('video') ?? null;
+    returning.current = { root, video, time: video?.currentTime ?? 0, paused: video?.paused ?? true };
     loadRuntime()
       .then((runtime) => runtime.preloadStudio(wantsStudio))
       .then(
@@ -245,18 +292,44 @@ export function FramelineSkin({
           }
           setAttempt((count) => count + 1);
           setProState('ok');
-          // The bar is rebuilt as the pro bar, and the control that had focus goes with the old one.
-          window.setTimeout(() => {
-            if (!document.activeElement || document.activeElement === document.body) root?.focus({ preventScroll: true });
-          }, 0);
+          // The rest happens in `onProReady`, once the Studio bar is on screen.
         },
-        () => setProState('gone')
+        (error: unknown) => {
+          returning.current = null;
+          setProState('gone');
+          // React never sees this failure (the import is ours, not a `lazy()` in the tree), so it is logged here,
+          // once. A failure caught by a `ChunkBoundary` is logged by React itself.
+          console.error(error);
+        }
       );
   }, [wantsStudio]);
 
+  /**
+   * After a successful retry, once the Studio bar and its tools are on screen: focus goes to the settings button (the
+   * user was in that menu, whose button the rebuilt bar replaced), the playback position and state come back, and
+   * "Studio tools loaded." is announced in the same live region.
+   */
+  const onProReady = useCallback(() => {
+    const before = returning.current;
+    if (!before) return;
+    returning.current = null;
+    const root = before.root;
+    if (!root) return;
+    requestAnimationFrame(() => {
+      focusSettings(root);
+      restorePlayback(root, before);
+      setLoaded(true);
+    });
+  }, []);
+
   const proFallback = useMemo<ProFallback | null>(
-    () => (down && wantsStudio ? { notice: strings.proUnavailable, retry: proState === 'failed' ? retry : undefined } : null),
-    [down, wantsStudio, proState, retry]
+    () =>
+      down && wantsStudio
+        ? { notice: strings.proUnavailable, retry: proState === 'failed' ? retry : undefined }
+        : loaded
+          ? { notice: strings.proLoaded }
+          : null,
+    [down, wantsStudio, proState, retry, loaded]
   );
 
   const [guideAttributes, setGuideAttributes] = useState<Record<string, string>>({});
@@ -303,6 +376,7 @@ export function FramelineSkin({
             <Suspense fallback={null}>
               <ProRuntime
                 onStudioError={onProError}
+                onReady={onProReady}
                 tier={safeTier}
                 density={safeDensity}
                 layout={safeLayout}

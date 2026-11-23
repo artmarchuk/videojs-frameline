@@ -13,6 +13,10 @@ interface ChunkBoundaryProps {
  * during render; without a boundary React then unmounts the whole root, the player and everything the host rendered
  * beside it. With this, only the part inside goes away, and the skin is told so it can fall back to the Viewer.
  *
+ * The error is not logged here: React logs every error a boundary catches (`console.error`, also in production
+ * builds, through the root's `onCaughtError`, whose default is `console.error`), so logging it again would print it
+ * twice. A host that set its own `onCaughtError` receives it there.
+ *
  * It lives in the Viewer chunk and imports nothing from the pro chunks.
  */
 export class ChunkBoundary extends Component<ChunkBoundaryProps, { failed: boolean }> {
