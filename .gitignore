@@ -11,5 +11,5 @@ dist
 # Claude Code local settings for this machine.
 .claude/settings.local.json
 
-# The npm package's build output (npm run build:lib).
-lib
+# The npm package's build output (npm run build:lib). Only the folder at the root: scripts/lib/ is source.
+/lib
