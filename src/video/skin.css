@@ -1,5 +1,5 @@
 /*
- * Frameline skin styles. Every colour, size, radius and duration comes from src/styles/tokens.css.
+ * Frameline skin styles. Every colour, size, radius and duration comes from the tokens (styles/tokens.css).
  * No CSS nesting and no @scope, so the rules hold on the browser floor (Chrome 111, Firefox 121, Safari 16.4).
  * Layout responds to the player's own width through container queries on `media-root`:
  *   the Viewer bar is two rows at every width: the seek bar, then the buttons

@@ -1,6 +1,6 @@
 /**
  * Platform UI zones: where an app's own interface covers a vertical (9:16) video. THE ONLY FILE TO EDIT to change a
- * platform's numbers or to add a platform (plus its id in `ZONE_IDS` in `src/pro/view.ts` and its name in the
+ * platform's numbers or to add a platform (plus its id in `ZONE_IDS` in `view.ts` and its name in the
  * strings).
  *
  * Rectangles are in percent of the 9:16 frame: `x`, `y`, `width`, `height` from 0 to 100, with the origin at the top

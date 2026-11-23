@@ -1,0 +1,14 @@
+{
+  // Type declarations for the npm package (`npm run build:lib`). Only the skin: src/, from its public entry, no tests.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./lib/types",
+    "rootDir": "./src",
+    "paths": {}
+  },
+  "include": ["src/pro/index.ts"],
+  "exclude": ["**/*.test.ts"]
+}

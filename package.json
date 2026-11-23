@@ -1,11 +1,49 @@
 {
   "name": "videojs-frameline",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "A Video.js v10 skin for video creators: a clean Viewer and a Studio monitor with frame-accurate transport, timecode, guides and zoom.",
+  "keywords": [
+    "videojs",
+    "video.js",
+    "video-player",
+    "react",
+    "skin",
+    "timecode",
+    "frame-accurate",
+    "video-review",
+    "safe-area",
+    "video-editor"
+  ],
   "homepage": "https://frameline.artmarchuk.me/",
-  "author": "Artem Marchuk",
+  "bugs": {
+    "url": "https://github.com/artmarchuk/videojs-frameline/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artmarchuk/videojs-frameline.git"
+  },
   "license": "Apache-2.0",
-  "private": true,
+  "author": "Artem Marchuk",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/types/pro/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "./lib/index.js",
+  "types": "./lib/types/pro/index.d.ts",
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -19,32 +57,40 @@
     "deploy:netlify": "npx --yes netlify-cli@27 deploy --build",
     "predeploy:cloudflare": "node apps/preview/deploy-guard.mjs",
     "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy dist --project-name videojs-frameline",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/lib/clean-types.mjs"
   },
   "dependencies": {
-    "@videojs/core": "10.4.0",
-    "@videojs/react": "10.4.0",
-    "@videojs/utils": "10.4.0",
-    "cn": "^0.4.0",
-    "react": "^19.3.0"
+    "cn": "^0.4.0"
+  },
+  "peerDependencies": {
+    "@videojs/core": "~10.4.0",
+    "@videojs/react": "~10.4.0",
+    "@videojs/utils": "~10.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.14.0",
-    "@base-ui/react": "^1.6.0",
-    "@heroicons/react": "^2.2.0",
+    "@axe-core/playwright": "4.14.0",
+    "@base-ui/react": "1.9.0",
+    "@heroicons/react": "2.2.0",
     "@phosphor-icons/core": "2.1.1",
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
+    "@tailwindcss/vite": "4.3.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@videojs/core": "10.4.0",
     "@videojs/mux-video": "10.4.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "class-variance-authority": "^0.7.1",
-    "playwright-core": "^1.65.1",
-    "react-dom": "^19.3.0",
+    "@videojs/react": "10.4.0",
+    "@videojs/utils": "10.4.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "class-variance-authority": "0.7.1",
+    "playwright-core": "1.65.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "sharp": "0.35.5",
-    "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.4",
+    "tailwindcss": "4.3.5",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
     "vitest": "5.1.0"
   },
   "engines": {
