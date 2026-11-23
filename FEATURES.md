@@ -23,19 +23,20 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Feature | Tier | How to try |
 | --- | --- | --- |
 | Two tiers: `tier="viewer"` (default) and `tier="studio"` | Both | Tier switch on the page |
-| Feature flags over a tier: `timecode`, `frameStep`, `inOut`, `loop`, `markers`, `shotNav`, `grabFrame`, `copyTimecodeLink`, `guides`, `platformZones`, `zoom` | Both | Features checkboxes on the page; `features={{ zoom: false }}` |
+| Feature flags over a tier: `timecode`, `frameStep`, `range`, `loop`, `markers`, `cuts`, `grabFrame`, `copyLink`, `guides`, `zones`, `zoom` | Both | Features checkboxes on the page; `features={{ zoom: false }}` |
 | `guides` as a list restricts the Guides menu to those ids | Studio | `/preview.html?guides=title-safe,9:16` |
 | Layout: `layout="dock"` or `"overlay"`, in either tier | Both | Layout switch on the page |
 | Density: `density="comfortable"` or `"compact"`; touch always gets 44 px targets | Both | `/preview.html?density=compact` |
 | Pro code loads only when a feature needs it; Viewer downloads none | Viewer | Network panel on `/?tier=viewer` |
 | Source facts as props: `fps`, `startTimecode`, `dropFrame` | Studio | `fps={24}` |
-| Events as callback props: `onInOutChange`, `onMarkerSelect`, `onFrameChange`, `onCopyLink`, `onGuidesChange` | Studio | Event log on the page |
-| Events `onZoomChange` and `onFrameGrab` | Studio | Event log on the page |
+| Events as callback props: `onRangeChange`, `onMarkerSelect`, `onFrameChange`, `onCopyLink`, `onGuidesChange`, `onZoomChange`, `onFrameGrab` | Studio | Event log on the page |
 | A handle for the host's own UI, `apiRef`: `seek`, `step`, `setRange`, `setLoop`, `setGuides`, `setZoom`, `pan`, `grabFrame` | Studio | The "Show me" buttons on the page |
 | Host UI slots: `slots={{ toolbarStart, toolbarEnd, overlay }}` | Both | README, "Props" |
 | Remembered choices per browser (guides, crop, zones, timecode or seconds): `persist` | Studio | Switch a guide on and reload |
 | An iframe embed for any site, no React needed: `/embed.html?src=<video URL>` (or `?mux=<playback ID>`), with `tier`, `fps` and `poster` in the URL | Both | `/embed.html?tier=viewer&src=…` in an `<iframe>` |
-| Tokens: Video.js's public `--media-*` tokens and the skin's `--fl-*` tokens | Both | `--media-accent-color: orange` |
+| Tokens: Video.js's public `--media-*` tokens and nine public `--fl-*` tokens (surfaces, text, font, radius, frame border); the other `--fl-*` tokens are internal | Both | `--media-accent-color: orange`; README, "Tokens" |
+| One naming rule for flags, events, `apiRef` methods and types; exported types start with `Frameline`; the public surface is what `src/pro/index.ts` exports | Both | README, "API conventions" |
+| The configurator still opens URLs that use the flag names from before the rename (`inOut`, `shotNav`, `copyTimecodeLink`, `platformZones`), and rewrites the address bar with the new names | Both | `/?tier=studio&inOut=0&shotNav=0` |
 | The landing page: the Studio player opens staged (a range from 00:00:02:18 to 00:00:50:16, cut to cut, the playhead paused on 00:00:03:02, Title safe, Action safe and the centre cross on, nothing moving while it loads), Configure in one row under it (collapsed; one button opens the tier, flags, layout, live snippet, event log and shareable URL), three things to try, six things Studio checks, each with a screenshot of the real player and a "Show me", the two tiers side by side, the host contract and what the skin leaves out | Both | The site root; `/#t=27.646&tc=00:00:27:15` opens on that frame with the range still staged |
 
 ## Viewer
@@ -96,6 +97,8 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Copy frame image to the clipboard | Studio | `Shift+G`; Capture menu |
 | Copy link at timecode: `#t=<seconds>&tc=<timecode>` in the page URL (`t` in Media Fragments seconds for any tool, `tc` for the exact frame), announced with the timecode | Studio | `S`; the link button beside the timecode (on a narrow dock under 500 px, in its second row; under 340 px, in the More menu) |
 | The Capture menu holds the image actions only, and is not shown without `grabFrame` | Studio | `/?grabFrame=0` |
+| The host decides what Copy link copies, `linkUrl`: a base URL that gets the position in its hash, or a function that builds the whole link from `{ fragment, frame, time, timecode }` or returns `null` to handle sharing itself (the skin then copies and announces nothing) | Studio | README, "Links to a frame" |
+| An embedded player copies its own embed URL with the frame; the copied link opens the same video paused on that frame | Studio | `S` inside an `/embed.html` iframe with `allow="clipboard-write"` |
 | A page opened with a link opens on that frame, paused, also when the host autoplays. It reads `tc`, then `t` as a timecode (links copied before `tc`), as Media Fragments seconds (`62.5`, `0:01:02.5`) or as platform shorthand (`1m2s`); a range opens on its start | Studio | Paste a copied link; `/preview.html?media=cosmicDawn#t=1m2s` |
 | A clear message when the browser refuses the grab (media without CORS) | Studio | `/preview.html?media=nocors`, then `G` |
 
@@ -121,7 +124,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Single pixels drawn as squares from 200% up | Studio | Zoom to 400% |
 | Pan by dragging, or from the keyboard; it stops at the picture's edges | Studio | Drag the picture; `Shift+Alt` + arrows |
 | How to pan, as a note at the top of the Zoom menu, above the levels (the pointer never crosses it) | Studio | Open the Zoom menu |
-| A note when a lower rendition than the best one is playing ("showing 720p") | Studio | Zoom menu, on the chosen level |
+| A note when a lower rendition than the best one is playing ("showing 720p"); it follows the decoded picture, so it is right straight after a quality switch | Studio | Zoom menu, on the chosen level |
 | While zoomed on automatic quality, the player-size cap on the rendition is lifted | Studio | `/preview.html?cap=1`, then `Z` |
 | Guides zoom with the picture; their lines and labels keep their size | Studio | Zoom with title safe on |
 | Zoom always starts at Fit; it is not remembered | Studio | Reload while zoomed |
@@ -149,6 +152,7 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 
 | Feature | Tier | How to try |
 | --- | --- | --- |
+| The media element is not a Tab stop: the first Tab lands on the first control, in every browser | Both | Tab into the player in Firefox |
 | Everything works from the keyboard; the YouTube key map is kept in both tiers | Both | `Shift+?` |
 | Focus order matches the visual order, also when the layout changes | Both | `Tab` through the bar at two widths |
 | A visible focus ring that keeps 3:1 over any footage | Both | `Tab` |
@@ -170,8 +174,9 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | --- | --- | --- |
 | Viewer requests no pro chunk | Viewer | Network panel on `/?tier=viewer` |
 | The pro runtime, the Studio layer and the debug readout are separate lazy chunks | Studio | Network panel on `/` |
-| The skin does not re-render per frame: the frame clock writes to a small store, and only the timecode field subscribes to the frame | Studio | `/preview.html?debug` shows the render count |
+| The skin does not re-render per frame: the frame clock writes to a small store, and only the timecode field subscribes to the frame | Studio | `/?debug` shows the render count (on `/preview.html?debug` the page's own event log re-renders the skin on every frame) |
 | Frame time from `requestVideoFrameCallback` where the browser has it | Studio | `/preview.html?debug` shows the clock source |
+| The debug readout (`debug` or `?debug`) shows the frame rate measured over the last second beside the `fps` passed, and the decoder's dropped and total frames; both update twice a second, and show "—" where the browser lacks the API | Both | `/preview.html?debug`, then play |
 | Plain CSS, no webfont, icons copied into the source (no icon package at runtime): frame step, Loop, Markers, Capture and Link are our own drawings; step, Loop, Markers and Capture are drawn by hand at 18, 20 and 24 px and the dock shows the one drawn for its size | Both | The source |
 
 ## Browser support
@@ -180,11 +185,11 @@ Floor: Chrome and Edge 111, Firefox 121, Safari and iOS 16.4. Checked in Playwri
 
 | Check | Chrome | Firefox | WebKit |
 | --- | --- | --- | --- |
-| Viewer gate, menus, focus order, help dialog | Pass | Pass (the `<video>` element is also a tab stop in Firefox) | Pass |
+| Viewer gate, menus, focus order, help dialog | Pass | Pass (the media element is not a Tab stop) | Pass |
 | Frame clock source, and the frame after ten steps | `requestVideoFrameCallback`, frame 10 | `requestVideoFrameCallback`, frame 10 | `requestVideoFrameCallback`, frame 10 |
 | Zoom: pixelated rendering, guides counter-scale | Pass | Pass | Pass |
 | Grab frame; Copy frame image | Pass | Pass; Copy is disabled with a hint where the browser cannot write images to the clipboard | Pass |
-| Rendition note while zoomed | Pass | Can lag a manual quality switch | Pass through hls.js; native HLS in Safari proper is unverified |
+| Rendition note while zoomed | Pass | Pass | Pass through hls.js; native HLS in Safari proper is unverified |
 | Error dialog Retry on a broken source | Pass | Pass | Pass |
 
 ## Out of scope

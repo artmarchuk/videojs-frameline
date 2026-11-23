@@ -30,7 +30,7 @@ The skin is the source in `src/`. It is not published to npm: copy `src/` into y
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer } from '@videojs/react/video';
 
-import { FramelineSkin } from '@/pro';
+import { FramelineSkin } from '@/pro'; // src/pro/index.ts, the public entry
 
 <VideoPlayer>
   <FramelineSkin tier="studio" fps={24} features={{ grabFrame: false, guides: ['title-safe', '9:16'] }}>
@@ -68,31 +68,44 @@ With `tier="viewer"` (the default) and no flags, it is the clean Viewer player a
 
 Viewer is for watching. Studio is for checking timing and framing: it adds controls and overlays around the picture and never processes the picture.
 
+### API conventions
+
+One rule set decides every public name, now and later:
+
+1. **One noun per concept, the same everywhere.** A feature has the same noun in its flag, its event, its `apiRef` method and its exported type: `range`, `onRangeChange`, `setRange`, `FramelineRange`.
+2. **Flags are nouns** for the feature as the user sees it: `range`, `cuts`, `markers`, `zoom`.
+3. **Events** are `on<Noun>Change` when state changed (`onRangeChange`) and `on<Noun><Verb>` when the user did something (`onMarkerSelect`, `onFrameGrab`).
+4. **`apiRef` methods are verbs:** `set<Noun>` for state, a plain verb for an action (`seek`, `step`, `pan`).
+5. **Exported types start with `Frameline`**, so they never clash with DOM or app types (`Range`, `Marker`, `Layout`).
+6. **Ids use US spelling and plain characters** (`center`). A label on screen may differ from its id ("Centre cross").
+7. **The words on screen stay the same.** "In" and "Out" in the player, "range" in code.
+
+The public surface is what `src/pro/index.ts` exports: `FramelineSkin`, its props and slots types, `FramelineApi`, the event payload types, the id and level types, and the constants `TIERS` and `GUIDE_IDS`. Anything else in `src/` is internal and can change without notice.
+
 ### Props
 
 | Prop | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `tier` | `'viewer' \| 'studio'` | `'viewer'` | The bundle of features to start from |
-| `features` | partial flags (table below) | none | Single features on or off, on top of the tier |
+| `tier` | `FramelineTier`: `'viewer' \| 'studio'` | `'viewer'` | The bundle of features to start from |
+| `features` | `FramelineFeatureOverrides` (see "Feature flags") | none | Single features on or off, on top of the tier |
 | `fps` | `number` | `24` | Frame rate of the source. The browser does not expose it, so frame numbers depend on it. Pass `29.97` or `30000 / 1001` for NTSC rates |
 | `startTimecode` | `string` | `'00:00:00:00'` | Timecode of the first frame |
 | `dropFrame` | `boolean` | `false` | Drop-frame timecode; only for 29.97 and 59.94 |
-| `markers` | `{ time, label, end?, id? }[]` | none | The host's markers, times in seconds. The skin shows and navigates them; it never creates or stores them |
-| `layout` | `'dock' \| 'overlay'` | `'overlay'` for Viewer, `'dock'` for Studio | Where the controls sit: in a dock below the picture, or over it. See "Layout" |
-| `density` | `'comfortable' \| 'compact'` | `'comfortable'` | Control spacing. Touch always gets comfortable, with 44 px targets |
-| `debug` | `boolean` | `false` | Shows the debug readout. `?debug` in the page URL does the same |
-| `slots` | `{ toolbarStart?, toolbarEnd?, overlay? }` | none | Host UI: in the control bar after the transport and time controls, in the control bar before the playback controls, and over the picture (visual only) |
-| `onInOutChange` | `({ in, out }) => void` | none | The in or out point changed. Seconds, or `null` |
-| `onMarkerSelect` | `(marker) => void` | none | The user selected a marker |
-| `onFrameChange` | `({ frame, time }) => void` | none | The current frame number changed |
-| `onCopyLink` | `({ url, frame, time }) => void` | none | A link to the current frame was copied |
-| `onGuidesChange` | `({ guides, crop, zones }) => void` | none | The guides that are drawn changed: `guides` is a list of ids, `crop` and `zones` an id or `null`. Not fired for the remembered set the player starts with |
-| `onZoomChange` | `(level) => void` | none | The zoom level changed: `'fit'`, `'100'`, `'150'`, `'200'` or `'400'` |
-| `onFrameGrab` | `(info) => void` | none | A frame was grabbed. See "Events" |
+| `markers` | `FramelineMarker[]`: `{ time, label, end?, id? }` | none | The host's markers, times in seconds. The skin shows and navigates them; it never creates or stores them |
+| `linkUrl` | `FramelineLinkUrl`: `string \| ((position: FramelineLinkPosition) => string \| null)` | the page's URL | What Copy link copies. See "Links to a frame" |
+| `layout` | `FramelineLayout`: `'dock' \| 'overlay'` | `'overlay'` for Viewer, `'dock'` for Studio | Where the controls sit: in a dock below the picture, or over it. See "Layout" |
+| `density` | `FramelineDensity`: `'comfortable' \| 'compact'` | `'comfortable'` | Control spacing. Touch always gets comfortable, with 44 px targets |
+| `slots` | `FramelineSkinSlots`: `{ toolbarStart?, toolbarEnd?, overlay? }` | none | Host UI: in the control bar after the transport and time controls, in the control bar before the playback controls, and over the picture (visual only) |
 | `apiRef` | `Ref<FramelineApi>` | none | A handle for driving the Studio tools from your own UI. See "Driving the player" |
 | `persist` | `boolean \| string` | `true` | Remember the end user's Guides choices and the time display in `localStorage`. `true` uses the key `frameline:v1`, a string uses that key, `false` turns it off |
+| `debug` | `boolean` | `false` | Shows the debug readout (see "Debug readout"). `?debug` in the page URL does the same |
+| `renderPoster`, `renderThumbnail` | the `render` prop of Video.js's `Poster` image and `Slider.Thumbnail.Image` | none | Draw the poster, or the storyboard frame in the seek preview, yourself |
+| `children` | `ReactNode` | required | The media element, for example `<MuxVideo src="…" />` |
+| `onRangeChange`, `onMarkerSelect`, `onFrameChange`, `onCopyLink`, `onGuidesChange`, `onZoomChange`, `onFrameGrab` | functions | none | See "Events" |
 
-An invalid `fps`, an unknown tier or an unknown feature name logs one warning in development and falls back to the default. Nothing throws.
+Any other prop (`className`, `style`, `data-*`) goes to the Video.js container element.
+
+An invalid `fps`, an unknown tier, an unknown feature name or a `linkUrl` that is not a URL logs one warning in development and falls back to the default. Nothing throws.
 
 `startTimecode` and `dropFrame` shape the timecode display and links.
 
@@ -100,15 +113,15 @@ An invalid `fps`, an unknown tier or an unknown feature name logs one warning in
 
 Events are callback props. The skin dispatches no DOM events.
 
-| Prop | Payload | Fires when |
-| --- | --- | --- |
-| `onInOutChange` | `{ in: number \| null, out: number \| null }`, seconds | The In or Out point changes: on `I` and `O`, when a handle drag is released, on Reset range, on `apiRef.setRange` |
-| `onMarkerSelect` | the marker: `{ time, label, end?, id? }` | The user selects a marker: a pin, the Markers menu, or previous/next cut landing on one |
-| `onFrameChange` | `{ frame: number, time: number }` | The current frame number changes. Every frame while playing, so keep the handler light |
-| `onCopyLink` | `{ url: string, frame: number, time: number }` | A link to the current frame was copied |
-| `onGuidesChange` | `{ guides: string[], crop: string \| null, zones: string \| null }` | The guides that are drawn change. Not fired for the remembered set the player starts with |
-| `onZoomChange` | `'fit' \| '100' \| '150' \| '200' \| '400'` | The zoom level changes |
-| `onFrameGrab` | `{ frame, time, timecode, width, height, target: 'file' \| 'clipboard', fileName? }` | A frame was downloaded as a PNG or copied as an image |
+| Prop | Payload | Default | Fires when |
+| --- | --- | --- | --- |
+| `onRangeChange` | `FramelineRange`: `{ in: number \| null, out: number \| null }`, seconds | none | The In or Out point changes: on `I` and `O`, when a handle drag is released, on Reset range, on `apiRef.setRange` |
+| `onMarkerSelect` | `FramelineMarker`: `{ time, label, end?, id? }` | none | The user selects a marker: a pin, the Markers menu, or previous/next cut landing on one |
+| `onFrameChange` | `FramelineFrameInfo`: `{ frame: number, time: number }` | none | The current frame number changes. Every frame while playing, so keep the handler light |
+| `onCopyLink` | `FramelineCopyLinkInfo`: `{ url: string, frame: number, time: number, timecode: string }` | none | The skin itself copied a link to the current frame. Not fired when the clipboard refused, or when a `linkUrl` function returned `null` |
+| `onGuidesChange` | `FramelineEffectiveGuides`: `{ guides: string[], crop: string \| null, zones: string \| null }` | none | The guides that are drawn change. Not fired for the remembered set the player starts with |
+| `onZoomChange` | `FramelineZoomLevel`: `'fit' \| '100' \| '150' \| '200' \| '400'` | none | The zoom level changes |
+| `onFrameGrab` | `FramelineFrameGrabInfo`: `{ frame, time, timecode, width, height, target: 'file' \| 'clipboard', fileName? }` | none | A frame was downloaded as a PNG or copied as an image |
 
 ### Driving the player
 
@@ -123,32 +136,42 @@ frameline.current?.setRange({ in: 12, out: 16 });
 frameline.current?.setGuides({ guides: ['title-safe'], crop: null, zones: null });
 ```
 
-| Method | What it does |
-| --- | --- |
-| `seek(time)` | Seeks to the frame that contains `time` (seconds) |
-| `step(frames)` | Steps that many frames from the current one; negative steps back. Pauses first. Needs `frameStep` |
-| `setRange({ in, out })` | Sets In and Out in seconds; `null` leaves that side open. Needs `inOut` |
-| `setLoop(on)` | Loop on or off; it is on from the start. Needs `loop` |
-| `setGuides({ guides?, crop?, zones? })` | Sets what is drawn. `guides` is the full list of checkbox guides to have on; fields left out are not changed |
-| `setZoom(level)` | `'fit'`, `'100'`, `'150'`, `'200'` or `'400'`. Needs `zoom` |
-| `pan(direction)` | Moves the zoomed view a tenth of what is visible: `'left'`, `'right'`, `'up'`, `'down'` |
-| `grabFrame()` | Downloads the current frame as a PNG. Needs `grabFrame` |
+| Method | Argument | Needs the flag | What it does |
+| --- | --- | --- | --- |
+| `seek(time)` | `number`, seconds | none | Seeks to the frame that contains `time` |
+| `step(frames)` | `number` | `frameStep` | Steps that many frames from the current one; negative steps back. Pauses first |
+| `setRange({ in, out })` | `{ in: number \| null, out: number \| null }`, seconds | `range` | Sets In and Out; `null` leaves that side open |
+| `setLoop(on)` | `boolean` | `loop` | Loop on or off; it is on from the start |
+| `setGuides({ guides?, crop?, zones? })` | `FramelineGuidesInput` | `guides` (and `zones` for the zones) | Sets what is drawn. `guides` is the full list of checkbox guides to have on; fields left out are not changed |
+| `setZoom(level)` | `FramelineZoomLevel` | `zoom` | `'fit'`, `'100'`, `'150'`, `'200'` or `'400'` |
+| `pan(direction)` | `'left' \| 'right' \| 'up' \| 'down'` | `zoom` | Moves the zoomed view a tenth of what is visible. Does nothing at Fit |
+| `grabFrame()` | none | `grabFrame` | Downloads the current frame as a PNG |
 
 The handle is `null` in the Viewer tier and until the pro code has loaded. A call for a feature that is switched off does nothing. Calls are not announced to screen readers: your own control should say what it did. The matching event fires as it does for the user's own action.
 
 ### Feature flags
 
-| Flag | Viewer | Studio |
-| --- | --- | --- |
-| `timecode`, `frameStep`, `inOut`, `loop`, `markers`, `shotNav`, `grabFrame`, `copyTimecodeLink` | off | on |
-| `guides` | off | all |
-| `platformZones` | off | on |
-| `zoom` | off | on |
-| `debug` | off | off |
+| Flag | Type | Viewer | Studio | What it adds |
+| --- | --- | --- | --- | --- |
+| `timecode` | `boolean` | off | on | The timecode display, with a frames or seconds choice |
+| `frameStep` | `boolean` | off | on | Step one frame, jump ten |
+| `range` | `boolean` | off | on | In and Out points with handles on the timeline; a set range confines playback |
+| `loop` | `boolean` | off | on | Loop the range, or the whole video |
+| `markers` | `boolean` | off | on | The host's markers as pins, and the Markers menu |
+| `cuts` | `boolean` | off | on | Previous and next cut (chapters, or markers) |
+| `grabFrame` | `boolean` | off | on | Grab the current frame as a PNG, or copy it as an image |
+| `copyLink` | `boolean` | off | on | Copy a link to the current frame |
+| `guides` | `boolean \| string[]` | off | all | The Guides menu: `true` (all), `false`, or the list of ids to offer |
+| `zones` | `boolean` | off | on | Platform zones in the Guides menu (needs `guides`) |
+| `zoom` | `boolean` | off | on | Zoom to the source's pixels, and pan |
 
 A host can turn any single feature on over Viewer or off over Studio, for example `<FramelineSkin tier="viewer" features={{ timecode: true, frameStep: true }} />`.
 
-`guides` takes `false`, `true` (all) or a list of ids: `title-safe`, `action-safe`, `thirds`, `centre`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `platformZones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The Guides menu".
+`guides` takes a list of these ids (the constant `GUIDE_IDS`): `title-safe`, `action-safe`, `thirds`, `center`, `9:16`, `4:5`, `1:1`, `2.39`, `1.85`. `zones` offers the zone sets `shorts`, `reels` and `tiktok`. See "The Guides menu".
+
+### Debug readout
+
+`debug`, or `?debug` in the page URL, puts a small readout over the picture: tier, layout, the flags that are on, `fps`, the current frame and timecode, the clock source, the range and Loop, and two playback figures. **measured fps** is the number of frames the browser presented over the last second (from `requestVideoFrameCallback`), to compare with the `fps` you passed; **dropped** is the decoder's dropped and total frames (from `getVideoPlaybackQuality()`). Both update twice a second and show "—" where the browser lacks the API. The readout is a development tool in its own lazy chunk; it is not a feature flag.
 
 ### Keyboard shortcuts
 
@@ -231,7 +254,7 @@ The range lives on the timeline, like the work-area bar of an editor. **Two hand
 
 **Why both.** On most timelines a pixel covers more than one frame (60 s at 24 fps is 1440 frames across about 1250 px), so dragging is the coarse tool. For an exact frame, step to it and press `I` or `O`, or focus a handle and nudge it with the arrow keys.
 
-`onInOutChange` fires when a drag is released, not while it moves, with `{ in, out }` in seconds; a point that is not set is `null`. In is always before Out: a handle dragged past the other swaps the two, and both points cannot sit on one frame.
+`onRangeChange` fires when a drag is released, not while it moves, with `{ in, out }` in seconds; a point that is not set is `null`. In is always before Out: a handle dragged past the other swaps the two, and both points cannot sit on one frame.
 
 **A set range confines playback.** A range is set when In, Out or both are set: only In runs to the end, only Out from the start.
 
@@ -275,7 +298,7 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 | Section | Items | Behaviour |
 | --- | --- | --- |
 | Safe areas | Title safe (`title-safe`), Action safe (`action-safe`) | Independent. Broadcast 16:9 figures: the central 90% and 93% of the picture (EBU R95, ITU-R BT.1848) |
-| Composition | Rule of thirds (`thirds`), Centre cross (`centre`) | Independent |
+| Composition | Rule of thirds (`thirds`), Centre cross (`center`) | Independent |
 | Crop | None, 2.39:1 (`2.39`), 1.85:1 (`1.85`), 1:1, 4:5, 9:16 | One at a time. Dims the picture outside a centred crop of that ratio |
 | Platform zones | None, YouTube Shorts (`shorts`), Instagram Reels (`reels`), TikTok (`tiktok`) | One at a time. Shows where the app's own interface covers a vertical video: a top bar, captions and profile, and the buttons on the right |
 | Footer | Hide guides / Show guides, `Shift+V` | Switches everything off, and brings the same set back |
@@ -285,12 +308,12 @@ Guides are drawn **on the picture**, never on letterbox bars, and never over the
 - Zones are drawn inside the 9:16 frame: the whole picture when the video is 9:16, otherwise a centred 9:16 crop. So **choosing a platform turns on the 9:16 crop**, and choosing another crop clears the zones.
 - Labels (Title safe, Action safe, the zone names) are hidden on a picture narrower than 480 px.
 
-**What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the Guides button. `platformZones: false` removes that section. Zoom is a separate control with its own flag.
+**What the host controls.** `features.guides` restricts the menu: with `guides: ['title-safe', '9:16']` only those two are offered, a section with nothing left disappears, and `guides: false` removes the Guides button. `zones: false` removes that section. Zoom is a separate control with its own flag.
 
 ```tsx
 <FramelineSkin
   tier="studio"
-  features={{ guides: ['title-safe', 'action-safe', '9:16'], platformZones: false }}
+  features={{ guides: ['title-safe', 'action-safe', '9:16'], zones: false }}
   persist="my-app:monitor"
   onGuidesChange={({ guides, crop, zones }) => analytics.track('guides', { guides, crop, zones })}
 >
@@ -320,13 +343,13 @@ Zoom changes how closely you look at the picture, never the picture itself. The 
 
 ### Links to a frame
 
-The link button beside the timecode (or `S`) copies the page URL with the position in its hash, and keeps anything else the host app has in the hash:
+The link button beside the timecode (or `S`) copies a link to the frame on screen. By default that is the page URL (origin, path and query) with the position in its hash, beside anything else the host app keeps in the hash:
 
 ```
 https://example.com/review/42#t=62.104&tc=00:01:02:02
 ```
 
-`t` is the position in seconds as [Media Fragments](https://www.w3.org/TR/media-frags/) defines it (the middle of the frame, to the millisecond), so any tool that reads media fragments opens the right second. `tc` is the timecode on screen, with `startTimecode` applied and `;` before the frames in drop-frame, so Frameline opens the exact frame. The button shows a check for a moment and the copy is announced with the timecode; `onCopyLink` reports it. `copyTimecodeLink: false` removes the button and the key.
+`t` is the position in seconds as [Media Fragments](https://www.w3.org/TR/media-frags/) defines it (the middle of the frame, to the millisecond), so any tool that reads media fragments opens the right second. `tc` is the timecode on screen, with `startTimecode` applied and `;` before the frames in drop-frame, so Frameline opens the exact frame. The button shows a check for a moment and the copy is announced with the timecode; `onCopyLink` reports it. `copyLink: false` removes the button and the key.
 
 A page opened with a link seeks to that frame, paused, also when the host autoplays: a `play()` that isn't the user's is paused again until half a second after that seek has landed (a later one plays as usual). With `preload="none"`, pressing Play plays from the linked frame. It reads, in this order, and takes the first value that falls inside the media:
 
@@ -336,6 +359,42 @@ A page opened with a link seeks to that frame, paused, also when the host autopl
 4. `t` in the shorthand video platforms use: `90s`, `1m42s`, `1h2m3s`.
 
 A range (`t=10,20`) opens on its start. When `tc` and `t` disagree by more than a frame, `tc` wins and a development build logs a warning (usually a wrong `fps` or start offset). Anything it can't read is ignored. The fragment never reaches the server, so a link preview in a chat tool can't show the exact frame.
+
+#### `linkUrl`: the host owns the link
+
+The page a creator is on is often not the page to share: the review lives at another address, the app uses a hash router, or sharing goes through the app's own dialog. `linkUrl` covers all three.
+
+| `linkUrl` | What is copied |
+| --- | --- |
+| not given | The page's URL with the position in its hash, as above |
+| a string | That URL as the base, with the position in its hash beside the hash keys it already has. It is resolved against the page, so a relative path works (`/share/abc`). A string that is not a URL falls back to the page's URL, with one warning in development |
+| a function | It is called with a `FramelineLinkPosition` when the user copies. A string it returns is the full URL, copied as it is. `null` means your app handled the action itself. If it throws or returns anything else, nothing is copied, the failed copy is announced as for a refused clipboard, and development logs a warning |
+
+```tsx
+// Another base: the public page of this video.
+<FramelineSkin tier="studio" linkUrl="https://example.com/watch/42">…</FramelineSkin>
+
+// A hash router: build the whole link.
+<FramelineSkin tier="studio" linkUrl={({ fragment }) => `https://example.com/#/review/42?${fragment}`}>…</FramelineSkin>
+
+// Your own share dialog: take the position and return null.
+<FramelineSkin tier="studio" linkUrl={(position) => { openShareDialog(position); return null; }}>…</FramelineSkin>
+```
+
+`FramelineLinkPosition`, what the function receives:
+
+| Field | Type | Holds |
+| --- | --- | --- |
+| `fragment` | `string` | The finished pair without `#`: `t=62.104&tc=00:01:02:02`. Append it to your own hash (`#${fragment}`, or `&${fragment}` after your own keys). The format is Frameline's; use it as it is and do not rebuild it from the other fields |
+| `frame` | `number` | The frame index, from 0 |
+| `time` | `number` | The frame's start time in seconds, as in `onFrameChange` |
+| `timecode` | `string` | The timecode on screen (start offset and drop-frame applied) |
+
+**The function is synchronous.** A clipboard write must happen within the user's gesture, and Safari refuses one that arrives after an `await`. A function that returns a promise counts as a failed copy.
+
+When your function returns `null`, Frameline announces nothing. Your own control must tell the user what it did, for example by opening a dialog that takes focus, or through a live region. The skin then also shows no check on the link button and does not fire `onCopyLink`.
+
+**Embedded players.** The [embed page](#develop) passes no `linkUrl`: inside an iframe it copies its own URL, with the query that names the video and the tier, plus the position. Opened in a tab, that link shows the same video paused on the same frame, without the page around it. A page that embeds the player should give the iframe `allow="clipboard-write"`: without it browsers may refuse the copy, and the player then says so.
 
 ### Grabbing frames
 
@@ -357,26 +416,27 @@ The skin's CSS lives in cascade layers (`base`, `components`, `utilities`). Unla
 
 ### Tokens
 
-The skin reads Video.js's public tokens, so a host that already themes a Video.js player themes this one: `--media-accent-color`, `--media-accent-text-color`, `--media-border-color`, `--media-border-radius`, `--media-spacing`, `--media-object-fit`, `--media-object-position`, and `--media-controls-before-start: hidden` to hide the bar until playback starts.
+**Public tokens.** These keep their names and meaning between releases. Set them on the player or on any ancestor.
 
-Its own tokens are `--fl-*`, all defined in `src/styles/tokens.css`. The ones a host is most likely to set:
+| Token | Type | Default | What it is |
+| --- | --- | --- | --- |
+| `--media-accent-color` | colour | `#5b9dff` | The one accent, a signal: set In/Out handles, a selected marker, the focus ring, the light of a mode that is on in the dock |
+| `--media-accent-text-color` | colour | `#0b1220` | Text and icons placed on the accent |
+| `--media-border-color` | colour | `#333333` | The hairline around the player (drawn with `--fl-frame-border: 1`) |
+| `--media-border-radius` | length | `0`, or `10px` with `--fl-frame-border: 1` | The player's corner radius |
+| `--media-spacing` | length | `4px` (a quarter of `--media-scale-unit`) | The step every size in the skin is a multiple of. The skin sets it on the player from `--media-scale-unit`, so scale the skin with that |
+| `--media-object-fit` | `contain`, `cover`, … | `contain` | How the picture fits its stage |
+| `--media-object-position` | position | `center` | Where the picture sits in its stage |
+| `--media-controls-before-start` | `hidden` | not set | `hidden` keeps the bar away until playback starts |
+| `--fl-surface-0` … `--fl-surface-3` | colour | `#0c0c0c`, `#171717`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture and the timeline groove; the dock, every menu and dialog; control fill and a highlighted menu item; hover, tooltips |
+| `--fl-text`, `--fl-text-dim` | colour | `#f2f2f2`, `#9c9c9c` | Text and icons; secondary text |
+| `--fl-font-ui` | font family | the system UI stack (or `--media-font-family`) | Every piece of text in the skin |
+| `--fl-radius` | length | `6px` | Buttons |
+| `--fl-frame-border` | `0` or `1` | `0` | `1` draws a hairline and a 10 px radius around the player |
 
-| Token | Default | What it is |
-| --- | --- | --- |
-| `--fl-accent` | `#5b9dff` (or `--media-accent-color`) | The one accent, a signal: set In/Out handles, a selected marker, the focus ring, and the light of a mode that is on in the dock (through `--fl-led`) |
-| `--fl-surface-0` … `--fl-surface-3` | `#0c0c0c`, `#171717`, `#2c2c2c`, `#3a3a3a` | Neutral surfaces: behind the picture and the timeline groove; the dock, every menu and dialog; control fill and a highlighted menu item; hover, tooltips |
-| `--fl-range` | `#606060` | The range band, one solid band |
-| `--fl-on` | `#474747` | Overlay layout only: the fill of a toggle that is on and of a button whose menu is open. The dock does not use it |
-| `--fl-led`, `--fl-led-glow` | `var(--fl-accent)`, `0 0 4px` of it at 60% | The light of a mode that is on in the dock (Loop, Zoom above Fit, captions); set `--fl-led` to change the light without changing the accent |
-| `--fl-handle-idle` | `#a0a0a0` | A range handle whose point is not set (`#b7b7b7` under `prefers-contrast: more`) |
-| `--fl-menu-edge` | `#424242` | The border of a menu in the dock layout |
-| `--fl-legend` | `#d0d0d0` | Icons and words on the dock's keys at rest; full `--fl-text` on hover, focus, pressed and on |
-| `--fl-text`, `--fl-text-dim` | `#f2f2f2`, `#9c9c9c` | Text and secondary text |
-| `--fl-text-timecode`, `--fl-timecode-weight` | `calc(var(--media-spacing) * 5.5)` (22 px), `400` | The size and weight of the timecode display's digits on the wide dock (18 px under 900 px, 14 px on the narrow dock) |
-| `--fl-timecode-lead` | `#7a7a7a` | The leading zeros and separators of the timecode, which step back so the digits that change carry the reading (`--fl-text-dim` under `prefers-contrast: more`, no dimming in forced colours) |
-| `--fl-bevel` | `1` | Strength of the tactile treatment in the dock; `0` is flat |
-| `--fl-stage-ratio` | `16 / 9` | The picture's stage in the dock layout |
-| `--fl-frame-border` | `0` | `1` draws a hairline and a 10 px radius around the player |
+The first eight are Video.js's own tokens, so a host that already themes a Video.js player themes this one. The skin also reads `--media-font-family` and `--media-scale-unit` (default `16px`).
+
+**Internal tokens.** Every other `--fl-*` token in `src/styles/tokens.css` is internal: it may be renamed or removed in any release. The file marks the public block with a comment. Some internal tokens a host may still want to try, at its own risk: `--fl-accent` and `--fl-led` (the accent and the light), `--fl-range` (the range band), `--fl-bevel` (`0` makes the dock flat), `--fl-stage-ratio` (the stage's shape in the dock layout), `--fl-text-timecode` and `--fl-timecode-weight` (the timecode's digits). Changing a colour changes its contrast: `node scripts/contrast.mjs` checks the defaults only.
 
 The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectangle) on the container.
 
@@ -393,11 +453,13 @@ Checked with scripted browser checks (the Viewer gate, every script in `scripts/
 | `prefers-contrast: more` (emulated): `dock-polish`, `phone-transport`, `handle-focus-ring`, `guides-menu-focus`, `range-playback` | Pass | Pass, with the touch limit below | Pass, with the touch limit below |
 | `forced-colors: active` (emulated), the same five | Pass (`dock-polish` checks the keys' shared 1 px system-colour border and Loop's Highlight fill there) | Pass, with the touch limit below | Pass, with the touch limit below |
 | Touch drags on the narrow dock (`phone-transport`) | Pass | Layout passes. The check drives touch through a Chromium-only interface, so the drag was run with synthetic pointer events: the playhead wins over the In handle; the handle drag was not confirmed | As Firefox |
-| Viewer gate, menus, focus order, help dialog | Pass | Pass. Firefox also puts the `<video>` element itself in the tab order, two stops before the seek bar | Pass |
+| Viewer gate, menus, focus order, help dialog | Pass | Pass. The media element is not a Tab stop (Firefox used to add two stops for it) | Pass |
 | Frame clock | `requestVideoFrameCallback` | `requestVideoFrameCallback`; it reports the seek time rather than the frame's start, which the clock allows for. Ten steps land on frame 10 | `requestVideoFrameCallback`; ten steps land on frame 10 |
 | Zoom: `image-rendering: pixelated` on video, guides counter-scale | Pass | Pass | Pass |
 | Grab frame | Pass | Pass. "Copy frame image" is disabled with a hint where `ClipboardItem` is missing (Firefox before 127) | Pass. Two grabs of the same paused frame can differ in a few pixel values |
-| Rendition note while zoomed | Pass until 18 Nov 2026; on 19 Nov it lagged as in Firefox, also on the live site's older build | After a manual switch to the best rendition, Video.js can keep reporting the previous one, so the note can lag | Pass. Playwright's WebKit plays the Mux stream through hls.js, as Chrome does; Safari proper may use native HLS, where the quality list and the note may stay empty |
+| Rendition note while zoomed | Pass | Pass | Pass. Playwright's WebKit plays the Mux stream through hls.js, as Chrome does; Safari's native HLS is not covered. The note follows the decoded picture (`videoHeight`) in every engine |
+| The embed page in a cross-origin iframe (`embed-link`): playback, fullscreen (stubbed), Copy link | Pass. Without `clipboard-write` on the iframe the async clipboard refuses and the skin's selection copy still copies | Pass. Copies with and without `clipboard-write` | Pass. Copies with and without `clipboard-write` |
+| Debug readout: measured fps and dropped frames | Pass | Pass | Pass |
 | Error dialog: Retry on a broken source | Pass | Pass | Pass |
 | A pointer click on a button | Focuses it | Focuses it | Does not focus it (Safari's convention); keyboard focus is unaffected |
 
@@ -458,7 +520,7 @@ In Viewer the video loads without `crossorigin`, so a file plays from a host tha
         allow="fullscreen; picture-in-picture; clipboard-write" title="Showreel"></iframe>
 ```
 
-The page fills the frame's width and fits its height (on a short frame the picture letterboxes). In Viewer an iframe at 16:9 fits the player exactly. For the whole Studio player at 16:9 give the iframe a height of about width × 9/16 plus the dock (117 px at 640 px wide and up, about 180 px below that), with `allow="fullscreen; clipboard-write"` so fullscreen and the copy-link button work.
+The page fills the frame's width and fits its height (on a short frame the picture letterboxes). In Viewer an iframe at 16:9 fits the player exactly. For the whole Studio player at 16:9 give the iframe a height of about width × 9/16 plus the dock (117 px at 640 px wide and up, about 180 px below that), with `allow="fullscreen; clipboard-write"` so fullscreen and the copy-link button work. Copy link copies the embed page's own URL with the frame (see "Links to a frame").
 
 ## Deploy
 

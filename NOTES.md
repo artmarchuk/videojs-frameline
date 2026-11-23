@@ -24,7 +24,7 @@ Only `@videojs/*` and the three pinned tools above have exact versions; the rest
 ## URLs and deploys
 
 - **Canonical:** https://frameline.artmarchuk.me, a custom domain on the Vercel project `videojs-pro`. `videojs-frameline.vercel.app` redirects to it. Repo: https://github.com/artmarchuk/videojs-frameline.
-- **`/`** the landing page with the configurator: `?tier=viewer|studio` always, `?layout=` and one parameter per flag (`zoom=0`, `timecode=1`) where they differ from the tier; `media`, `debug` and a frame link in the hash survive.
+- **`/`** the landing page with the configurator: `?tier=viewer|studio` always, `?layout=` and one parameter per flag (`zoom=0`, `timecode=1`) where they differ from the tier; `media`, `debug` and a frame link in the hash survive. The four flag names from before API 0.1 (`inOut`, `shotNav`, `copyTimecodeLink`, `platformZones`) are still read, as `range`, `cuts`, `copyLink` and `zones`; the page writes only the new names (`OLD_PARAMETERS` in `apps/preview/src/page/config.ts`).
 - **`/preview.html`** the monitor page, opens in Studio: `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (or `0`), `?zones=0`, `?zoom=0`, `?cap=1` (puts the rendition cap back), `?media=cosmicDawn|plain|nocors|error`, `?debug`; in the hash `#width=`, `ratio=`, `autoplay=1&muted=1`.
 - **`/embed.html`** the player alone, for an iframe: `?src=` (or `?mux=<playback ID>`), `tier`, `fps`, `poster`. The README has the table and the iframe snippet. https://artmarchuk.me/videojs-frameline-skin.html (linked from that site's home page) embeds `/embed.html?tier=studio&fps=24&mux=…` in an iframe with `allow="fullscreen; picture-in-picture; clipboard-write"` (read from the page's HTML on 23 Nov 2026).
 - **`/workbench.html`** the CLI's workbench; **`/two-players.html`** two players on one page, for its check.
@@ -34,14 +34,16 @@ Only `@videojs/*` and the three pinned tools above have exact versions; the rest
 
 ## Architecture
 
-- **Loading.** `src/video/skin.tsx` is the Viewer skin and the only code a Viewer loads. `src/pro/frameline-skin.tsx` resolves the tier and flags (`features.ts`) and, when any pro feature or `debug` is on, lazy-loads the pro runtime (`src/pro/runtime/`: store, frame clock, timecode) and then the Studio module (`src/pro/studio/`, one JS and one CSS chunk). The Viewer skin renders empty slots in its bar (`src/video/pro-slots.tsx`) and the Studio module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Viewer path. The dock structure itself (stage above, bar below) is in the Viewer skin, so either tier can use either layout.
+- **Public surface.** `src/pro/index.ts` exports only what a host may use: `FramelineSkin`, its props and slots types, `FramelineApi`, the payload, id and level types (all prefixed `Frameline`), `TIERS` and `GUIDE_IDS`. `TIER_DEFAULTS`, `resolveFeatures` and `resolveLayout` are internal; the site imports them from `@/pro/features`. The naming rules are in the README, "API conventions". The package build is step B.
+- **Loading.** `src/video/skin.tsx` is the Viewer skin and the only code a Viewer loads. `src/pro/frameline-skin.tsx` resolves the tier and flags (`features.ts`) and, when any pro feature or the `debug` prop is on, lazy-loads the pro runtime (`src/pro/runtime/`: store, frame clock, timecode) and then the Studio module (`src/pro/studio/`, one JS and one CSS chunk). The Viewer skin renders empty slots in its bar (`src/video/pro-slots.tsx`) and the Studio module portals its controls into them, so they sit in the bar's layout and focus order while their code stays out of the Viewer path. The dock structure itself (stage above, bar below) is in the Viewer skin, so either tier can use either layout.
 - **Pro state** lives in a small store beside the player (`src/pro/store.ts`), one per `FramelineSkin`, read through context and `useSyncExternalStore` selectors. Video.js has no documented custom-feature API and the skin does not own `createPlayer`. The `<video>` element is found by querying the container (`use-video-element.ts`). Guides, crop, zones and the timecode-or-seconds choice persist under one `localStorage` key, read in the store's initialiser; zoom is never stored.
 - **Frame clock** (`src/pro/frame-clock.ts`): `requestVideoFrameCallback` where the browser has it, otherwise an approximate fallback from `currentTime` (the field then shows `≈`). After a seek or pause it waits 120 ms for a presented frame, then falls back. Chrome's `mediaTime` is the frame's start; Firefox reports the seek time, so `presentedFrame` in `timecode.ts` floors with a quarter-frame tolerance. Seeks go to the middle of a frame, `(frame + 0.5) / fps`, and a `seeking` listener snaps every Studio seek there. The skin does not re-render per frame: only the timecode field subscribes to the frame.
 - **Range engine** (`src/pro/studio/controller.ts`, decision in `playbackDecision`, `studio/logic.ts`): a set range confines playback. Play from outside the range or from the Out frame starts at In; at Out it returns to In, or pauses with Loop off; a user or host seek to outside the range while playing pauses there. The engine tells its own seeks from everyone else's with two flags around `seeking`/`seeked`, so a user seek is never pulled back. Out is reached half a frame early; the Out frame shows for an instant at the loop point.
-- **Frame links** (`studio/logic.ts`: `formatLinkPosition`, `readLinkPosition`, `resolveLinkPosition`): a copied link is `#t=<seconds>&tc=<timecode>`, `t` the middle of the frame. Reading takes `tc`, then `t` as an old four-field timecode, as Media Fragments seconds, or as platform shorthand (`1m2s`); the first value inside the media wins. Applying a link pauses and holds the frame for 500 ms after the seek lands, so an autoplaying host stays paused; a play within a second of a trusted press is never paused. Video.js does not read the page URL at all. The Viewer does not read links.
+- **Frame links** (`studio/logic.ts`: `formatLinkPosition`, `readLinkPosition`, `resolveLinkPosition`): a copied link is `#t=<seconds>&tc=<timecode>`, `t` the middle of the frame. Reading takes `tc`, then `t` as an old four-field timecode, as Media Fragments seconds, or as platform shorthand (`1m2s`); the first value inside the media wins. Applying a link pauses and holds the frame for 500 ms after the seek lands, so an autoplaying host stays paused; a play within a second of a trusted press is never paused. Video.js does not read the page URL at all. The Viewer does not read links. What is copied is the host's to decide (`linkUrl`, resolved by the pure `resolveLinkUrl`): the page's URL by default, a base URL, or a synchronous function that returns the full URL or `null`; `linkFragment` is the one place that writes the `t=…&tc=…` pair, for the skin's own links and for the `fragment` a host's function receives.
 - **Guides** (`src/pro/studio/guides/`): `pictureRect` in `geometry.ts` computes the picture inside the stage for the video's `object-fit`; `usePictureRect` measures the video element, publishes `--fl-picture-x/y/w/h`, and re-measures on resize, metadata, a new source and fullscreen. Each guide is one SVG the size of the picture; every line is drawn twice (dark edge, white line). Zone numbers are in `platform-zones.ts`, the only file to edit for them.
 - **Zoom** (`src/pro/zoom.ts`, `studio/zoom.tsx`): the media, poster and overlay sit in one `div.pro-picture` that takes a `translate() scale()`; the element exists only with the `zoom` flag. 100% is one pixel of the best rendition on offer (`sourceWidth`) per device pixel, so the scale does not change with the playing rendition. Guides scale with the wrapper and divide their strokes by `--fl-zoom-scale`. `useLiftRenditionCap` sets `capRenditionToPlayerSize: false` on the source while zoomed on Auto and puts the host's source back at Fit; it never selects a rendition, so a frame already buffered stays in its rendition.
 - **Dock arrangement** (`useDockArrangement`, thresholds in `studio/logic.ts`): wide from a 740 px player with a mouse; narrow below it and always on touch, as `keys` (500 px and up) or `compact`. It is set in script because the DOM order changes with it and the focus order has to follow; everything else is container queries.
+- **Debug readout** (`src/pro/debug/`, its own lazy chunk): the frame clock counts presented frames in the store without notifying anyone; the readout samples that counter and `getVideoPlaybackQuality()` every 500 ms into `state.stats` and reads them through selectors, so nothing else re-renders. A missing API shows "—".
 - **Site** (`apps/preview/`): `src/frame/media.ts` is the one place that names the demo media (active: `reel`, 56 s, 24 fps, 1920×1072 picture in a 1080 file, no captions; `cosmicDawn` has captions, chapters and 4K). The landing page stages its opening state through `apiRef`, reserves the dock's height before the Studio code arrives, and keeps its global CSS out of the player with `:not(:where(.media-skin *))`.
 
 ## Video.js APIs we rely on
@@ -64,6 +66,8 @@ Checked against the installed `@videojs/react`, `@videojs/core` and `@videojs/hl
 
 **Product**
 - Two tiers: Viewer for watching, Studio for checking timing and framing. Studio adds controls and overlays around the picture and never processes it. Channels, gain and gamma, scopes, an info readout and "Use frame as poster" were removed or never built.
+- Names follow one rule since API 0.1 (flags `range`, `cuts`, `copyLink`, `zones`; `onRangeChange`; the guide id `center`; types prefixed `Frameline`). Nobody installed the skin before, so the skin has no aliases. Two pieces of compatibility exist: a remembered `centre` reads as `center` (`parseStored`), and the configurator page reads the old flag names in a URL. `debug` is a prop and `?debug`, not a flag.
+- Copy link stays off in the Viewer by default; a host can turn it on. `/embed.html` passes no `linkUrl`, so an embedded player copies its own embed URL with the frame.
 - Events are callback props on `FramelineSkin`; the skin dispatches no DOM events. A host drives Studio through `apiRef` (`seek`, `step`, `setRange`, `setLoop`, `setGuides`, `setZoom`, `pan`, `grabFrame`); handle calls are silent for screen readers.
 - The skin's own strings are English only (`src/video/strings.ts`, `studio/strings.ts`); Video.js labels follow the locale. The More button's label is ours, so it is English only too.
 - The backlog is kept outside the repo since 19 Nov 2026. Ideas go into a step's report.
@@ -83,6 +87,7 @@ Checked against the installed `@videojs/react`, `@videojs/core` and `@videojs/hl
 - Wide dock: the row sheds controls by player width (volume slider under 1100 px, duration 1040, captions 940, chevrons 900, badges and divider 820) and becomes the narrow dock under 740 px. Touch is always narrow.
 - Narrow dock: row one is the instrument, row two the flat toolbar. From 500 px: timecode with Link, the transport, Loop as a key; six cells below. Under 500 px: eight cells, Loop and Link among them. Folds: Zoom under 382 px, Link under 340 px, the cut keys under 324 px; it fits down to a 264 px player. The narrow timecode stays 14 px in a 94 px field so row one needs 322 px.
 - Range handles are anchored on their outer edge and always present; hit areas grow away from the range. A press within 10 px of the playhead (22 px on touch) goes to the playhead, also through a pin or handle.
+- The media element is not a Tab stop (`tabindex="-1"`, set by the Viewer skin unless the host set one): Firefox made it two. The hotkeys listen on the container, so they work wherever focus is.
 - The player container is not a Tab stop; a press inside the player that ends with focus on the body focuses the container, so the keys work.
 
 **Look**
@@ -104,13 +109,14 @@ Checked against the installed `@videojs/react`, `@videojs/core` and `@videojs/hl
 **Site and demo**
 - The landing page is dark only, built from the Figma file; `tokens.css` mirrors the Figma variables and `landing.css` uses only those. It opens staged: range 00:00:02:18 to 00:00:50:16, playhead 00:00:03:02, Title safe, Action safe and the centre cross; a frame link or remembered guides win over the staging.
 - The reel's picture is 1920×1072 inside a 1080 file, so the landing and monitor pages give the stage that shape and cover the black rows.
+- The "showing 720p" note follows the decoded picture (`videoHeight`, re-read on the element's `resize`), not Video.js's `activeVideoRendition`, which kept the previous rendition after a manual switch. A height within 16 px under the best rendition counts as the best.
 - `capRenditionToPlayerSize: false` on every demo source; `?cap=1` restores the cap for the checks that need it.
 - The landing page's screenshots come from `scripts/landing-shots.mjs`; after a theme change reaches `main` they are stale until re-shot.
 - Credit: the footer reads "Made by Artem Marchuk, with Claude."; the README credits Claude for design thinking, specs and code, with every decision and review Artem's.
 
 ## Checks
 
-- `npm run typecheck`, `npm test` (233 unit tests), `npm run build`.
+- `npm run typecheck`, `npm test` (251 unit tests), `npm run build`.
 - `node scripts/contrast.mjs`: 82 rows, two columns (default and `prefers-contrast: more`); every row passes.
 - **Browser checks** are in `scripts/browser-checks/`. Each file is the body of an async function with a Playwright `page` in scope; its header names the page, the window sizes and any context options. The runner is not in the repo: serve the production build (`npm run build`, `npx vite preview`, port 4173) or use the live site, and run each script with `playwright-core` in Chromium (the installed Google Chrome, so H.264 plays), Firefox and WebKit. Headless Chrome refuses real fullscreen.
 
@@ -122,33 +128,36 @@ Checked against the installed `@videojs/react`, `@videojs/core` and `@videojs/hl
 | `phone-transport.js` | Narrow row one at phone widths; the playhead wins over a handle |
 | `range-playback.js` | A set range confines playback |
 | `link-open.js` | Frame links open paused on the frame, also when the host autoplays (uses `?media=cosmicDawn`) |
+| `embed-link.js` | The embed page in a cross-origin iframe (hard rule 8): playback, fullscreen (stubbed), Copy link copies the embed's own URL, which opens on the same frame; the same copy without `clipboard-write`. Needs `fixtures/` served on a second port (the header has the command) |
 | `zoom.js` | Levels, scale, pixelated drawing, guides follow, pan, grab equals grab (add `&media=cosmicDawn`; run at 1x and 2x) |
 | `zoom-rendition-cap.js`, `zoom-rendition-note.js` | The cap lift while zoomed; the "showing 720p" note (both with `?cap=1`) |
 | `guides-menu-focus.js`, `handle-focus-ring.js`, `fullscreen-focus.js` | Menu opens on "Title safe" in reading order; a handle's ring after pointer and keys; `F` and focus with the Fullscreen API stubbed |
 | `error-retry.js`, `two-players.js`, `reduced-motion.js`, `axe-audit.js` | Retry on a broken source; two players share nothing; nothing moves under reduced motion; axe with zero violations in seven states |
 
 **Known failures and flaky checks**
-- `configurator.js` in WebKit: `copied` fails (headless WebKit refuses clipboard writes) and `clickFocuses` fails (WebKit does not focus a button on click). In Chromium the runner must grant clipboard permission.
-- `zoom-rendition-note.js`: `bestOk` fails in Firefox, and since 19 Nov in Chromium too, also against the live site: Video.js keeps reporting the previous rendition after a manual switch.
+- `configurator.js` in WebKit: `clickFocuses` fails (WebKit does not focus a button on click), and `copied` fails unless the context is given `clipboard-read` (it passed with it on 23 Nov). In Chromium the runner must grant clipboard permission.
+- `zoom-rendition-note.js` passes in all three engines since the note follows `videoHeight` (23 Nov). Before that `bestOk` failed in Firefox, and from 19 Nov in Chromium: Video.js keeps reporting the previous rendition after a manual switch.
 - `dock-polish.js` in forced colours passes since W.6; under load `keys` (announcements read 150 ms after the key) has failed and passed alone.
 - `phone-transport.js` touch runs fail in Firefox and WebKit: the touch drag uses a CDP call that only Chromium has.
 - `range-playback.js` is intermittent: after the start at In, hls.js's stall recovery sometimes skips forward inside the range. The engine is right and was left alone.
-- `zoom.js` at 2x in WebKit: `grabSame` sometimes differs by a few pixel values. `link-open.js` in WebKit: a seek on load sometimes never lands (1 of 10 on an unchanged player).
+- `zoom.js` in WebKit: `grabSame` sometimes differs by a few pixel values (at 2x, and on 23 Nov at 1x too). `link-open.js` in WebKit: a seek on load sometimes never lands (1 of 10 on an unchanged player).
+- `embed-link.js`: no engine refused the copy without `clipboard-write`. Chromium's async clipboard refuses (`NotAllowedError`) and the skin's selection copy (`execCommand`) still copies, read back from the clipboard; Playwright's Firefox and WebKit take the async write either way. So the announced failure in an iframe was not seen in any engine.
+- An axe run has no `pass` field: read `counts` (zero in every state on 23 Nov, three engines). `guides-menu-focus.js` has none either: read `first` and `back`.
 - The landing hero is staged: `configurator.js` expects the staged range and guides, and screenshots of it show that state, not an empty player.
 
 ## Bundle sizes
 
-Measured on 22 Nov 2026 from the build of `main` at `f74fe1f` (raw / `gzip -9`, bytes).
+Measured on 23 Nov 2026 from the build of `api-names` (raw / `gzip -9`, bytes).
 
 | Chunk | Size | Loaded |
 | --- | --- | --- |
-| Viewer path JS (`demo-video-*.js`: React, Video.js with its streaming engine, the Viewer skin, the flag resolver) | 958,089 / 282,039 | always |
-| Skin CSS (`demo-video-*.css`) | 44,297 / 7,554 | always |
-| Pro runtime (`runtime-*.js`) | 12,788 / 5,046 | any pro feature or `debug` |
-| Studio JS / CSS (`studio-*`) | 75,359 / 25,460 and 28,449 / 4,975 | any Studio feature |
-| Debug readout JS / CSS | 1,388 / 806 and 680 / 353 | `debug` |
-| Landing page JS / CSS / HTML | 10,134 / 4,488, 32,193 / 6,451, 25,869 / 6,270 | `/` |
-| Monitor page JS / CSS | 16,390 / 6,245 and 2,926 / 1,138 | `/preview.html` |
+| Viewer path JS (`demo-video-*.js`: React, Video.js with its streaming engine, the Viewer skin, the flag resolver) | 958,320 / 282,125 | always |
+| Skin CSS (`demo-video-*.css`) | 44,297 / 7,557 | always |
+| Pro runtime (`runtime-*.js`) | 13,181 / 5,201 | any pro feature or `debug` |
+| Studio JS / CSS (`studio-*`) | 76,704 / 25,889 and 28,449 / 4,975 | any Studio feature |
+| Debug readout JS / CSS | 1,981 / 1,098 and 681 / 353 | `debug` |
+| Landing page JS / CSS / HTML | 10,244 / 4,533, 32,193 / 6,451, 25,850 / 6,252 | `/` |
+| Monitor page JS / CSS | 16,382 / 6,236 and 2,926 / 1,138 | `/preview.html` |
 | Embed page JS / CSS | 1,187 / 724 and 378 / 274 | `/embed.html` |
 
 Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not broken down. The Viewer skin's weight alone, against a stock Video.js skin, has not been measured.
@@ -161,7 +170,8 @@ Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not bro
 - Firefox 121 to 126 without `ClipboardItem` (the disabled Copy item), and Firefox before 132 without `requestVideoFrameCallback` (the fallback clock and the `≈` marker, which runs past the narrow field in a wider font).
 - The clipboard in Firefox and WebKit: that `S` and `Shift+G` write was read back in Chrome only.
 - Windows and Linux: that `Alt+←` goes back in the browser while zoomed. Custom properties inside `::cue` in Safari.
-- Why the rendition note lags a manual quality switch (Firefox since step 9, Chromium since 19 Nov).
+- Why Video.js's `activeVideoRendition` lags a manual quality switch (Firefox since step 9, Chromium since 19 Nov). The note no longer depends on it.
+- The media element's Tab stops in a real Firefox, and the focus order with a screen reader after `tabindex="-1"` (Playwright's Firefox: no stop on the media element).
 - The help dialog and tooltips on the site root under forced colours (those runs were on the monitor page).
 
 **Devices and assistive tech**
@@ -184,11 +194,14 @@ Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not bro
 
 **Links and embeds**
 - Other tools reading our `t=` seconds: from the specs, not tried.
-- The embed page has no section in the build log: its behaviour inside a cross-origin iframe (playback, fullscreen, Copy link) has no recorded check, and that artmarchuk.me embeds it comes from the author, not from the repo.
+- The embed in a cross-origin iframe is checked by `embed-link.js` on a local build (two local origins, over http). Not checked: the real page on artmarchuk.me over https, real fullscreen inside an iframe (the API is stubbed), Copy frame image inside an iframe, and Copy link in an iframe without `clipboard-write` in Safari and in a real Firefox.
+- `linkUrl` in the browser: the string and function forms are covered by unit tests of `resolveLinkUrl` only; no page of the site passes one, so the `null` path (no check, no announcement) was not seen on screen.
+- The debug readout's "—" for a missing API: every engine tested has both APIs, so the dash was seen only while paused (measured fps before the first samples).
 - Preview URLs were never opened in a browser (Vercel login); checks ran on the local build of the same commit.
 
 **Layout and data**
 - The platform zone numbers come from secondary sources, and the EBU and ITU documents behind the safe areas were not opened ("Platform zones: numbers and sources").
+- Seen, not fixed: on `/preview.html?debug` the skin re-renders on every frame, because the page's event log stores each `onFrameChange` in the state of the component that renders the skin (the same on the live site; on `/?debug` the count stays at 3).
 - Seen, not fixed: the open Guides menu is cut at its bottom edge on a 760 px and a 390 px player with nothing to show that it scrolls; the Markers menu cuts long names and times on a narrow player.
 - A wide tablet in the narrow arrangement; the landing page at 320 px and in the tablet range; a host with `timecode: false` or `loop: false` on the 500 px dock.
 - The landing page's line "zero violations in six states" was not re-counted (the audit now runs seven states).
@@ -227,3 +240,4 @@ Every page also loads a shared `engine-*.js` (225,136 / 70,813) that was not bro
 | 22 Nov | Landing: the frame-link sentence (branch `landing-frame-links-copy`) | `f74fe1f` |
 | 22 Nov | Docs and repo clean-up: this file split from the build log, finished specs archived (branch `docs-cleanup`) | `44912f1` |
 | 23 Nov | Source comments point at the build log; the Viewer bar's row in `FEATURES.md` matches the code (branch `comment-fixes`; the rest of the docs follow-up is on `api-names`) | `35e5e13` |
+| 23 Nov | API 0.1, step A: names, `linkUrl`, the public surface, playback stats, two fixes (branch `api-names`; preview only until the challenge results) | not merged |
