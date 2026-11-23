@@ -61,9 +61,6 @@
     "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/lib/clean-types.mjs",
     "check:consumer": "node scripts/consumer/check.mjs"
   },
-  "dependencies": {
-    "cn": "^0.4.0"
-  },
   "peerDependencies": {
     "@videojs/core": "~10.4.0",
     "@videojs/react": "~10.4.0",
@@ -85,6 +82,7 @@
     "@videojs/utils": "10.4.0",
     "@vitejs/plugin-react": "6.3.0",
     "class-variance-authority": "0.7.1",
+    "cn": "0.4.0",
     "playwright-core": "1.65.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",

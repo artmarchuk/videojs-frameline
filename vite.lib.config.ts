@@ -6,10 +6,10 @@ import { defineConfig, type Plugin } from 'vite';
 const path = (file: string) => fileURLToPath(new URL(file, import.meta.url));
 
 /**
- * Never bundled: the peers (React, React DOM and every `@videojs/*` package, with all their subpaths) and the one
- * runtime dependency, `cn`, which a host that already uses it can then share.
+ * Never bundled: the peers (React, React DOM and every `@videojs/*` package, with all their subpaths). The package
+ * has no other runtime dependency.
  */
-const isExternal = (id: string) => /^(react|react-dom|cn)(\/|$)/.test(id) || id.startsWith('@videojs/');
+const isExternal = (id: string) => /^(react|react-dom)(\/|$)/.test(id) || id.startsWith('@videojs/');
 
 /**
  * Each JS chunk imports its own CSS, as each module does in the source. Library mode writes the CSS files but leaves
