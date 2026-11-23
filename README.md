@@ -181,7 +181,9 @@ A host can turn any single feature on over Viewer or off over Studio, for exampl
 
 ### When a chunk fails to load
 
-The Studio code arrives in separate chunks. If one of them cannot load, the player carries on as the Viewer: the overlay bar with play, seek, volume, captions, settings and fullscreen. It announces "Studio tools could not load. The player works without them." once, and the settings menu offers "Retry loading Studio tools" once. Nothing else in your React tree is affected. If only the debug readout fails, Studio stays and the readout is absent.
+The Studio code arrives in separate chunks. If one of them cannot load, the player carries on as the Viewer: the overlay bar with play, seek, volume, captions, settings and fullscreen. It announces "Studio tools could not load. The player works without them." once, and the settings menu offers "Retry loading Studio tools" once. A retry that works brings Studio back where the video was, paused or playing, puts focus on the settings button and announces "Studio tools loaded." Nothing else in your React tree is affected. If only the debug readout fails, Studio stays and the readout is absent.
+
+The error is in the console once: React logs what an error boundary catches (through your root's `onCaughtError`, which logs to the console unless you set your own), and the skin logs a failed retry.
 
 The usual cause is a deploy: the page a visitor has open belongs to the old build, and the old chunks are gone from the server. A retry cannot fix that; a reload can, and that decision is yours, so the skin never reloads the page. There is no `onError` prop: Frameline's chunks are part of your build, so your bundler's own event covers them. With Vite:
 
@@ -469,10 +471,10 @@ Measured by `npm run check:consumer` on 23 Nov 2026 with Video.js 10.6.0: a Vite
 | Page | JS | CSS | Total gzip |
 | --- | --- | --- | --- |
 | Video.js's Default video skin (`VideoSkin`, `@videojs/react/video/skin.css`) | 4 files, 341,762 B gzip | 1 file, 10,691 B gzip | 352,453 B |
-| Frameline, `tier="viewer"` | 5 files, 344,137 B gzip | 1 file, 7,533 B gzip | 351,670 B |
-| Frameline, `tier="studio"` | 7 files, 376,121 B gzip | 2 files, 12,488 B gzip | 388,609 B |
+| Frameline, `tier="viewer"` | 5 files, 344,424 B gzip | 1 file, 7,533 B gzip | 351,957 B |
+| Frameline, `tier="studio"` | 7 files, 376,430 B gzip | 2 files, 12,488 B gzip | 388,918 B |
 
-The Viewer is 783 bytes gzip lighter than the stock skin, 0.2%: about the same weight. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,939 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
+The Viewer is 496 bytes gzip lighter than the stock skin, 0.1%: about the same weight. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,961 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
 
 ### Browser support
 

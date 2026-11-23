@@ -174,8 +174,8 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Feature | Tier | How to try |
 | --- | --- | --- |
 | Viewer requests no pro chunk | Viewer | Network panel on `/?tier=viewer` |
-| A pro chunk that fails to load (for example after a deploy removed it) leaves a working Viewer: announced once, with one "Retry loading Studio tools" in the settings menu; the host's page is untouched and the skin never reloads it | Both | README, "When a chunk fails to load"; `scripts/browser-checks/pro-chunk-failure.js` |
-| The Viewer loads about as much JS and CSS as Video.js's stock skin (0.2% less, gzip, measured in a host app), and none of the Studio code or CSS | Viewer | README, "Weight"; `npm run check:consumer` |
+| A pro chunk that fails to load (for example after a deploy removed it) leaves a working Viewer: announced once, with one "Retry loading Studio tools" in the settings menu, which brings Studio back at the same frame, paused or playing; the host's page is untouched and the skin never reloads it | Both | README, "When a chunk fails to load"; `scripts/browser-checks/pro-chunk-failure.js` |
+| The Viewer loads about as much JS and CSS as Video.js's stock skin (0.1% less, gzip, measured in a host app), and none of the Studio code or CSS | Viewer | README, "Weight"; `npm run check:consumer` |
 | The pro runtime, the Studio layer and the debug readout are separate lazy chunks | Studio | Network panel on `/` |
 | The skin does not re-render per frame: the frame clock writes to a small store, and only the timecode field subscribes to the frame | Studio | `/?debug` shows the render count (on `/preview.html?debug` the page's own event log re-renders the skin on every frame) |
 | Frame time from `requestVideoFrameCallback` where the browser has it | Studio | `/preview.html?debug` shows the clock source |
