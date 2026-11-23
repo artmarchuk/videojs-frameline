@@ -8,7 +8,12 @@
 // - "Studio tools could not load. The player works without them." is announced once, in a polite live region;
 // - the settings menu has "Retry loading Studio tools";
 // - a retry while the chunk still answers 404 removes the item and announces nothing more; the player stays a Viewer;
-// - on a fresh load, a retry once the chunk answers again brings Studio back, and focus is not lost to the page.
+// - on a fresh load, paused at 00:00:10:00, a retry once the chunk answers again brings Studio back: focus is on the
+//   settings button once the Studio bar is on screen, "Studio tools loaded." is announced in the same region, and the
+//   player is still paused at 00:00:10:00. For the Studio chunk the chunk answers two seconds late (a slow network),
+//   so focus is checked against a bar that arrives late;
+// - console errors: the first failure is logged once (by React, which logs what a boundary catches), the failed
+//   retry once (by the skin). Network lines ("Failed to load resource") are the browser's and are not counted.
 // For the debug chunk (`?debug`): Studio is there, the readout is absent, nothing is announced, no retry is offered.
 // The site's own answer to a failed chunk is one reload (reload-on-stale-chunk.ts); this check is about the skin, so
 // it sets that module's flag on every load and the page stays put.
@@ -16,6 +21,13 @@
 const out = {};
 const NOTICE = 'Studio tools could not load. The player works without them.';
 const RETRY = 'Retry loading Studio tools';
+const LOADED = 'Studio tools loaded.';
+// How long a chunk that answers again takes to arrive during the successful retry: the Studio retry gets a slow
+// network. Every other request is answered at once.
+const DELAY = { runtime: 0, studio: 2000, debug: 0 };
+let slow = false;
+// console.error lines that name a pro chunk, per load.
+let logged = [];
 const base = new URL(page.url());
 const errors = [];
 const blocked = { runtime: false, studio: false, debug: false };
@@ -29,6 +41,14 @@ const fresh = async () => {
   const context = await browser.newContext({ viewport: size });
   view = await context.newPage();
   view.on('pageerror', (error) => errors.push(String(error).slice(0, 160)));
+  logged = [];
+  // Firefox and WebKit report a logged Error object as "JSHandle@object", so the text is read from the object itself.
+  view.on('console', (message) => {
+    if (message.type() !== 'error' || message.text().startsWith('Failed to load resource')) return;
+    const first = message.args()[0];
+    const text = first ? first.evaluate((value) => String(value?.stack?.split('\n')[0] && value.message ? `${value.name}: ${value.message}` : value)).catch(() => message.text()) : Promise.resolve(message.text());
+    logged.push(text);
+  });
   // Every text the notice region ever held, kept across the page's life.
   await view.addInitScript(() => {
     try { sessionStorage.setItem('frameline:reloaded-for-stale-chunk', '1'); } catch {}
@@ -41,7 +61,8 @@ const fresh = async () => {
   });
   await view.route(/\/assets\/(runtime|studio|debug)-[^/]+\.js$/, (route) => {
     const chunk = route.request().url().match(/\/assets\/(runtime|studio|debug)-/)[1];
-    return blocked[chunk] ? route.fulfill({ status: 404, contentType: 'text/plain', body: 'NOT_FOUND' }) : route.continue();
+    if (blocked[chunk]) return route.fulfill({ status: 404, contentType: 'text/plain', body: 'NOT_FOUND' });
+    return slow && DELAY[chunk] ? new Promise((resolve) => setTimeout(resolve, DELAY[chunk])).then(() => route.continue()) : route.continue();
   });
 };
 const load = async (debug) => {
@@ -108,18 +129,34 @@ for (const chunk of ['runtime', 'studio']) {
   r.itemsAfter = await menu();
   await view.keyboard.press('Escape'); await view.waitForTimeout(300);
   r.failedRetry = isViewer(r.afterFailedRetry) && !r.itemsAfter.includes(RETRY) && r.afterFailedRetry.notices.length === 1 && r.afterFailedRetry.notice === NOTICE;
-  // A fresh load, and the chunk answers again before the retry.
+  // A failed import, in each engine's words; WebKit's names no file ("Importing a module script failed.").
+  r.logged = (await Promise.all(logged)).filter((text) => /(runtime|studio|debug)-[^/]+\.js|Importing a module script failed/.test(text)).map((text) => text.slice(0, 160));
+  r.loggedOnce = r.logged.length === 2;
+  // A fresh load, paused at 00:00:10:00, and the chunk answers again (late, for Studio) before the retry.
   await load(false);
+  await view.evaluate(() => { const v = document.querySelector('video'); v.pause(); v.currentTime = 10 + 0.5 / 24; });
+  await view.waitForFunction(() => { const v = document.querySelector('video'); return !v.seeking && Math.abs(v.currentTime - 10.02) < 0.05; }, null, { timeout: 15000 }).catch(() => {});
+  r.before = await view.evaluate(() => ({ time: +document.querySelector('video').currentTime.toFixed(3), paused: document.querySelector('video').paused }));
   blocked[chunk] = false;
+  slow = true;
   await menu();
   r.chosenAgain = await chooseRetry();
-  r.back = await view.waitForSelector('.pro-tl', { timeout: 15000 }).then(() => true, () => false);
-  await view.waitForTimeout(800);
+  // The Studio bar and its tools: the skin's own signal, then a moment for the focus and the announcement.
+  r.back = await view.waitForSelector('.media-skin[data-pro-ready] .pro-tl', { timeout: 20000 }).then(() => true, () => false);
+  await view.waitForFunction(() => document.querySelector('[data-pro-notice]')?.textContent === 'Studio tools loaded.', null, { timeout: 5000 }).catch(() => {});
+  await view.waitForTimeout(1500);
+  slow = false;
   r.afterRetry = await seen();
-  r.focus = await view.evaluate(() => { const a = document.activeElement; return a === document.body ? 'body' : a?.closest('.media-skin') ? 'player' : a?.tagName; });
-  r.retry = r.back && r.afterRetry.tier === 'studio' && r.afterRetry.ready && r.afterRetry.notice === null && r.focus === 'player';
+  r.focus = await view.evaluate(() => { const a = document.activeElement; return a === document.body ? 'body' : a?.matches('.media-settings-button') ? 'settings button' : a?.closest('.media-skin') ? `player: ${a.className}` : a?.tagName; });
+  r.position = await view.evaluate(() => ({
+    time: +document.querySelector('video').currentTime.toFixed(3),
+    paused: document.querySelector('video').paused,
+    timecode: document.querySelector('[data-pro-timecode]')?.textContent.trim().replace(/^≈/, '').slice(0, 11),
+  }));
+  r.retry = r.back && r.afterRetry.tier === 'studio' && r.afterRetry.ready && r.focus === 'settings button' && r.afterRetry.notice === LOADED && r.afterRetry.notices.at(-1) === LOADED;
+  r.kept = r.before.paused && r.position.paused && r.position.timecode === '00:00:10:00';
   r.playsAfterRetry = r.back ? await view.evaluate(() => { const v = document.querySelector('video'); v.muted = true; return v.play().then(() => { v.pause(); return true; }, () => false); }) : false;
-  r.pass = r.viewer && r.plays && r.announcedOnce && r.item && r.failedRetry && r.retry && r.playsAfterRetry;
+  r.pass = r.viewer && r.plays && r.announcedOnce && r.item && r.failedRetry && r.loggedOnce && r.retry && r.kept && r.playsAfterRetry;
 }
 
 // The debug readout alone.
