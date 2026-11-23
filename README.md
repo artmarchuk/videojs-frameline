@@ -518,7 +518,7 @@ export const ACTIVE_SOURCE: SourceName = 'cosmicDawn'; // was 'reel'
 
 ## Develop
 
-Node 24 (the version the host builds with; newer versions also build) and npm.
+Node.js 26 (the version in `.nvmrc`, and the one the site is built and deployed with) and npm. The tooling needs Node.js 22.12 or later; the package itself runs in the browser and asks nothing of a host's Node.js version.
 
 ```sh
 npm install

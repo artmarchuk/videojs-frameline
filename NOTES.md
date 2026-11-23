@@ -10,7 +10,7 @@ Names: the skin is **Frameline** (`FramelineSkin`, `--fl-*` tokens, storage key 
 
 | What | Version |
 | --- | --- |
-| Node.js | 26.3.0 on the author's machine, which builds the site; the Vercel project's setting is 26.x. `package.json` has no `engines` since 23 Nov 2026 (the author chose 26.x over pinning 24), so npm warns no host about its Node version. Vercel takes the Node.js major from the project setting (Settings, Build and Deployment, Node.js Version), and `engines.node` in `package.json` would override it (https://vercel.com/docs/functions/runtimes/node-js/node-js-versions, read 23 Nov 2026: 26.x is the default, 24.x and 22.x are offered). The site is built on the deploying machine: `vercel build` runs `vite build` with the local Node and `vercel deploy --prebuilt` uploads static files, no functions. The tooling's own floor is Vite 8's `^20.19.0 \|\| >=22.12.0` (its `package.json`); Vitest 5 needs 22.12 or later |
+| Node.js | 26 (`.nvmrc`, for contributors and a future CI; 26.3.0 on the author's machine, which builds the site). `package.json` has no `engines`, so npm warns no host about its Node.js version. Vercel takes the Node.js major from the project setting (Settings, Build and Deployment, Node.js Version; 26.x for this project), and `engines.node` in `package.json` would override it (https://vercel.com/docs/functions/runtimes/node-js/node-js-versions, read 23 Nov 2026: 26.x is the default, 24.x and 22.x are offered). Vercel does not read `.nvmrc`. The site is built on the deploying machine: `vercel build` runs `vite build` with the local Node.js and `vercel deploy --prebuilt` uploads static files, no functions. The tooling's floor is 22.12: Vite 8 needs `^20.19.0 \|\| >=22.12.0`, Vitest 5 `^22.12.0 \|\| ^24.0.0 \|\| >=26.0.0` (their `package.json`) |
 | npm | 11.16.0, `package-lock.json` committed |
 | `@videojs/react`, `@videojs/core`, `@videojs/utils` (peers `>=10.4.0 <10.7.0`, devDependencies for the site), `@videojs/mux-video` (devDependency) | 10.6.0, the latest on npm on 23 Nov 2026; the transitive `@videojs/*` packages and the `video.js` v10 pointer package are 10.6.0 too (`npm ls`). hls.js arrives through them at 1.7.4 |
 | React, React DOM | 19.3.1 (peers `^19.3.0`, devDependencies for the site) |
@@ -157,9 +157,8 @@ Measured on 23 Nov 2026 from the build of `release-readiness` (Video.js 10.6.0, 
 | --- | --- | --- |
 | Viewer path JS (`demo-video-*.js`: Video.js with its streaming engine, the Viewer skin, the flag resolver), then React DOM (`client-*.js`) and React (`react-*.js`) | 906,663 / 273,554, then 211,202 / 65,124 and 7,876 / 3,044 | always |
 | Skin CSS (`demo-video-*.css`) | 44,297 / 7,557 | always |
-| Pro runtime (`runtime-*.js`) | 13,181 / 5,202 | any pro feature or `debug` |
+| Pro runtime (`runtime-*.js`); debug readout JS / CSS | 13,181 / 5,202; 1,981 / 1,097 and 681 / 353 | any pro feature or `debug`; `debug` |
 | Studio JS / CSS (`studio-*`) | 76,704 / 25,891 and 28,449 / 4,975 | any Studio feature |
-| Debug readout JS / CSS | 1,981 / 1,097 and 681 / 353 | `debug` |
 | Landing page JS / CSS / HTML | 10,239 / 4,532, 32,193 / 6,451, 25,850 / 6,253 | `/` |
 | Monitor page JS / CSS | 16,378 / 6,248 and 2,926 / 1,138 | `/preview.html` |
 | Embed page JS / CSS | 1,182 / 723 and 378 / 274 | `/embed.html` |
@@ -248,3 +247,4 @@ The shared chunk that used to be `engine-*.js` (React DOM with 30 KB of `cn`) is
 | 23 Nov | API 0.1, step A: names, `linkUrl`, the public surface, playback stats, two fixes (branch `api-names`) | `8e901c6` |
 | 23 Nov | API 0.1, step B: the library build, `videojs-frameline` 0.1.0 (not published), exact pins, the consumer check, the Viewer weighed against the stock skin (branch `package`) | `24fe256` |
 | 23 Nov | 0.1.0 readiness: Video.js 10.6.0 (peers `>=10.4.0 <10.7.0`), no `cn`, the markup snapshot, the missing `scripts/lib/clean-types.mjs` committed (branch `release-readiness`). `engines` removed; Vercel builds on its 26.x setting | `fad54d2` |
+| 23 Nov | Node.js 26 in `.nvmrc` for contributors and a future CI; the README's Node.js line (branch `node-version`) | `LOGHASH` |
