@@ -247,4 +247,4 @@ The shared chunk that used to be `engine-*.js` (React DOM with 30 KB of `cn`) is
 | 23 Nov | Source comments point at the build log; the Viewer bar's row in `FEATURES.md` matches the code (branch `comment-fixes`; the rest of the docs follow-up is on `api-names`) | `35e5e13` |
 | 23 Nov | API 0.1, step A: names, `linkUrl`, the public surface, playback stats, two fixes (branch `api-names`) | `8e901c6` |
 | 23 Nov | API 0.1, step B: the library build, `videojs-frameline` 0.1.0 (not published), exact pins, the consumer check, the Viewer weighed against the stock skin (branch `package`) | `24fe256` |
-| 23 Nov | 0.1.0 readiness: Video.js 10.6.0 (peers `>=10.4.0 <10.7.0`), no `cn`, the markup snapshot, the missing `scripts/lib/clean-types.mjs` committed (branch `release-readiness`). `engines.node` waits for the author | `LOGHASH` |
+| 23 Nov | 0.1.0 readiness: Video.js 10.6.0 (peers `>=10.4.0 <10.7.0`), no `cn`, the markup snapshot, the missing `scripts/lib/clean-types.mjs` committed (branch `release-readiness`). `engines.node` waits for the author | `fad54d2` |
