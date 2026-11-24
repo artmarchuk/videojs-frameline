@@ -76,21 +76,23 @@ function useWidth(ref: { current: HTMLElement | null }): number {
 /**
  * Frame snapping. In the Studio tier every seek, whatever started it (the timeline, a slider key, `J`,
  * `L`, a number key), is moved to the middle of the frame it lands in: the same half-frame rule the step buttons
- * use. It runs inside the `seeking` event, so the browser performs one seek, not two.
+ * use. It runs inside the `seeking` event, so the browser performs one seek, not two. One exception: while a frame
+ * the skin was asked for has not landed, a seek that isn't the skin's is left as it is (`controller.snapsSeek`);
+ * snapping it would replace the seek to that frame.
  */
-function useFrameSnap(video: HTMLVideoElement | null, fps: number) {
+function useFrameSnap(video: HTMLVideoElement | null, fps: number, controller: StudioController) {
   useEffect(() => {
     if (!video) return;
     const onSeeking = () => {
       const duration = video.duration;
       if (!(duration > 0) || !Number.isFinite(duration)) return;
       const time = video.currentTime;
-      if (isSnapped(time, duration, fps)) return;
+      if (!controller.snapsSeek(isSnapped(time, duration, fps))) return;
       video.currentTime = snapSeekTime(time, duration, fps);
     };
     video.addEventListener('seeking', onSeeking);
     return () => video.removeEventListener('seeking', onSeeking);
-  }, [video, fps]);
+  }, [video, fps, controller]);
 }
 
 /**
@@ -110,7 +112,7 @@ export function Timeline({ controller, fps, markers, range, video, renderThumbna
   const root = useRef<HTMLDivElement>(null);
   const width = useWidth(root);
 
-  useFrameSnap(video, fps);
+  useFrameSnap(video, fps, controller);
 
   // What a position reads as, everywhere on the timeline except the ruler: full timecode, or seconds.
   const format = useCallback(

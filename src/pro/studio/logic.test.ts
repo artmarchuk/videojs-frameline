@@ -21,6 +21,11 @@ import {
   resolveLinkUrl,
   seekTimeForFrame,
   stepTarget,
+  targetStep,
+  TARGET_TRIES,
+  type PendingTarget,
+  type TargetAction,
+  type TargetEvent,
   withLinkPosition,
 } from './logic';
 import { framesFromSeconds, parseTimecode, type TimecodeOptions } from '../timecode';
@@ -193,6 +198,84 @@ describe('playback decision for a range', () => {
     expect(outsideRange(9 - 0.4 / 24, base.range, 60, 24)).toBe(true);
     expect(outsideRange(9 - 1 / 24, base.range, 60, 24)).toBe(false);
     expect(outsideRange(1, { in: null, out: null }, 60, 24)).toBe(false);
+  });
+});
+
+describe('a requested frame is the target until it lands', () => {
+  /** Runs an event order and returns what the skin did at each event, and the target left at the end. */
+  const run = (events: TargetEvent[], start: PendingTarget | null = null) => {
+    let pending = start;
+    const actions: TargetAction[] = [];
+    for (const event of events) {
+      const step = targetStep(pending, event);
+      pending = step.pending;
+      actions.push(step.action);
+    }
+    return { actions, pending };
+  };
+
+  it('seeks to a requested frame and forgets it once a seek ends there', () => {
+    expect(run([{ type: 'request', frame: 605 }, { type: 'seeking', snapped: true }, { type: 'seeked', frame: 605 }])).toEqual({
+      actions: ['seek', 'none', 'none'],
+      pending: null,
+    });
+  });
+
+  it('snaps every seek to its frame while nothing is asked for', () => {
+    expect(targetStep(null, { type: 'seeking', snapped: false }).action).toBe('snap');
+    expect(targetStep(null, { type: 'seeking', snapped: true }).action).toBe('none');
+    expect(targetStep(null, { type: 'seeked', frame: 3 })).toEqual({ pending: null, action: 'none' });
+  });
+
+  // WebKit, a frame link with autoplay: the streaming engine seeks to 0.121 s to skip a gap at the start, the link
+  // asks for frame 605 while that seek runs, and `seeking` then reports 0.121 s. Snapping it would replace the link.
+  it('leaves a seek it did not make alone, and asks for the frame again when that seek ends', () => {
+    const { actions, pending } = run([
+      { type: 'request', frame: 605 },
+      { type: 'seeking', snapped: false },
+      { type: 'seeked', frame: 3 },
+      { type: 'seeking', snapped: true },
+      { type: 'seeked', frame: 605 },
+    ]);
+    expect(actions).toEqual(['seek', 'none', 'seek', 'none', 'none']);
+    expect(pending).toBeNull();
+  });
+
+  // The landing page: the staged frame is asked for, and a seek that was already running ends first.
+  it('holds the frame through a seek that was running before the request', () => {
+    const { actions, pending } = run([{ type: 'request', frame: 92 }, { type: 'seeked', frame: 0 }, { type: 'seeked', frame: 92 }]);
+    expect(actions).toEqual(['seek', 'seek', 'none']);
+    expect(pending).toBeNull();
+  });
+
+  it('gives up after the limit, and snaps seeks again', () => {
+    const elsewhere: TargetEvent = { type: 'seeked', frame: 3 };
+    const { actions, pending } = run([{ type: 'request', frame: 605 }, ...Array<TargetEvent>(TARGET_TRIES + 1).fill(elsewhere), { type: 'seeking', snapped: false }]);
+    expect(actions).toEqual(['seek', ...Array<TargetAction>(TARGET_TRIES).fill('seek'), 'giveUp', 'snap']);
+    expect(pending).toBeNull();
+  });
+
+  it('drops the target on user input: their seek is snapped and nothing pulls them back', () => {
+    const { actions, pending } = run([
+      { type: 'request', frame: 605 },
+      { type: 'user' },
+      { type: 'seeking', snapped: false },
+      { type: 'seeked', frame: 40 },
+    ]);
+    expect(actions).toEqual(['seek', 'none', 'snap', 'none']);
+    expect(pending).toBeNull();
+  });
+
+  it('takes the newest request as the target', () => {
+    const { pending } = run([{ type: 'request', frame: 10 }, { type: 'seeked', frame: 3 }, { type: 'request', frame: 11 }]);
+    expect(pending).toEqual({ frame: 11, tries: 0 });
+  });
+
+  it('while playing, counts a seek that ended just past the frame as landed', () => {
+    const asked = { frame: 100, tries: 0 };
+    expect(targetStep(asked, { type: 'seeked', frame: 102, playing: true })).toEqual({ pending: null, action: 'none' });
+    expect(targetStep(asked, { type: 'seeked', frame: 102 }).action).toBe('seek');
+    expect(targetStep(asked, { type: 'seeked', frame: 99, playing: true }).action).toBe('seek');
   });
 });
 

@@ -172,6 +172,62 @@ export function playbackDecision(input: PlaybackInput): PlaybackDecision {
 }
 
 /**
+ * A frame the skin was asked to show (by a frame link, by the host's `seek`, or by a step) and that is not on screen
+ * yet. `tries` counts how often it was asked for again after another seek ended somewhere else.
+ */
+export interface PendingTarget {
+  frame: number;
+  tries: number;
+}
+
+/** How often a target is asked for again before the skin gives up on it. */
+export const TARGET_TRIES = 3;
+
+/** While playing, a seek counts as landed up to this many frames past the target: the clock moves on at once. */
+const PLAYING_SLACK_FRAMES = 2;
+
+export type TargetEvent =
+  /** The skin is asked for a frame. */
+  | { type: 'request'; frame: number }
+  /** A seek starts. `snapped`: its time already sits in the middle of a frame, as the skin's own seeks do. */
+  | { type: 'seeking'; snapped: boolean }
+  /** A seek ended on `frame`. */
+  | { type: 'seeked'; frame: number; playing?: boolean }
+  /** The user took over: a press on the timeline, a key, or a play they started. */
+  | { type: 'user' };
+
+/**
+ * `seek`: seek to the target (again). `snap`: move the seek that just started to the middle of its frame.
+ * `giveUp`: the target did not land in `TARGET_TRIES` more tries and is dropped. `none`: nothing to do.
+ */
+export type TargetAction = 'none' | 'seek' | 'snap' | 'giveUp';
+
+/**
+ * The rule for a requested frame: it is the target until it lands. A seek the skin didn't make (the streaming
+ * engine skipping a gap, a seek left over from before the request) never replaces it: such a seek is left alone
+ * while it runs, not snapped to a frame, and when it ends somewhere else the target is asked for again, at most
+ * `TARGET_TRIES` times, so the skin never fights a stream that cannot show the frame. The user always wins: their
+ * input drops the target. With no target, every seek is snapped to its frame.
+ */
+export function targetStep(pending: PendingTarget | null, event: TargetEvent): { pending: PendingTarget | null; action: TargetAction } {
+  switch (event.type) {
+    case 'request':
+      return { pending: { frame: event.frame, tries: 0 }, action: 'seek' };
+    case 'user':
+      return { pending: null, action: 'none' };
+    case 'seeking':
+      return { pending, action: pending || event.snapped ? 'none' : 'snap' };
+    case 'seeked': {
+      if (!pending) return { pending: null, action: 'none' };
+      const past = event.frame - pending.frame;
+      if (past === 0 || (event.playing && past > 0 && past <= PLAYING_SLACK_FRAMES)) return { pending: null, action: 'none' };
+      if (pending.tries >= TARGET_TRIES) return { pending: null, action: 'giveUp' };
+      return { pending: { frame: pending.frame, tries: pending.tries + 1 }, action: 'seek' };
+    }
+  }
+}
+
+/**
  * Links to a frame. A link carries two keys in the URL fragment: `t`, the position in seconds as W3C Media Fragments
  * URI 1.0 defines it, so any tool that reads media fragments opens the right second, and `tc`, the timecode on
  * screen, so Frameline opens the exact frame. `#t=62.104&tc=00:01:02:02`. Media Fragments tells players to ignore

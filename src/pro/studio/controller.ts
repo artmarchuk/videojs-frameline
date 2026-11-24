@@ -21,7 +21,9 @@ import {
   resolveLinkUrl,
   seekTimeForFrame,
   stepTarget,
+  targetStep,
   type Cut,
+  type PendingTarget,
 } from './logic';
 import { studioStrings as t } from './strings';
 import { isAtOwnEnd, snapFrame } from './timeline/logic';
@@ -100,6 +102,11 @@ export interface StudioController {
   goToMarker(marker: FramelineMarker): void;
   /** Seeks to a time (a chapter start) and announces the frame. */
   goToTime(time: number): void;
+  /**
+   * For the frame snap, on every `seeking`: whether to move that seek to the middle of its frame. `snapped`: it is
+   * there already. A seek the skin didn't make is left alone while a requested frame has not landed (`targetStep`).
+   */
+  snapsSeek(snapped: boolean): boolean;
 }
 
 /** How long a just-requested frame is trusted over the clock, which needs a moment to catch up after a seek. */
@@ -170,10 +177,13 @@ export function useStudioController(options: StudioOptions): StudioController {
   // The frame last asked for, while it is fresh. Lets held keys keep stepping without waiting for each seek.
   const target = useRef<{ frame: number; at: number } | null>(null);
   const queued = useRef<number | null>(null);
+  // The frame asked for until it is on screen (`targetStep`), and a time asked for before the video element is known.
+  const pending = useRef<PendingTarget | null>(null);
+  const early = useRef<number | null>(null);
   const cutTarget = useRef<{ frame: number; at: number } | null>(null);
   const stepTimer = useRef(0);
 
-  const controller = useMemo(() => createController(store, latest, { target, queued, cutTarget, stepTimer }), [store]);
+  const controller = useMemo(() => createController(store, latest, { target, queued, pending, early, cutTarget, stepTimer }), [store]);
 
   const { video, fps } = options;
 
@@ -185,42 +195,76 @@ export function useStudioController(options: StudioOptions): StudioController {
   useEffect(() => {
     if (!video) return;
     const onPress = (event: Event) => {
-      if (event.isTrusted) pressedAt.current = performance.now();
+      if (!event.isTrusted) return;
+      pressedAt.current = performance.now();
+      // A key, or a press on the player: the user has taken over, and no earlier target pulls them back.
+      if (event.type === 'keydown' || event.type === 'pointerdown') release();
+    };
+    const release = () => {
+      pending.current = targetStep(pending.current, { type: 'user' }).pending;
+      queued.current = null;
+      early.current = null;
     };
     const onPlay = () => {
       const now = performance.now();
       if (now - pressedAt.current < USER_PLAY_MS) {
         userPlayed.current = true;
         linkHeldUntil.current = 0;
+        release();
       } else if (now < linkHeldUntil.current) {
         video.pause();
       }
     };
-    const onSeeked = () => {
-      if (linkHeldUntil.current === Infinity) linkHeldUntil.current = performance.now() + LINK_SETTLE_MS;
-    };
     const presses = ['keydown', 'keyup', 'pointerup', 'click'];
+    const player = video.closest('.media-container');
     for (const type of presses) document.addEventListener(type, onPress, true);
+    player?.addEventListener('pointerdown', onPress, true);
     video.addEventListener('play', onPlay);
-    video.addEventListener('seeked', onSeeked);
     return () => {
       for (const type of presses) document.removeEventListener(type, onPress, true);
+      player?.removeEventListener('pointerdown', onPress, true);
       video.removeEventListener('play', onPlay);
-      video.removeEventListener('seeked', onSeeked);
     };
   }, [video]);
 
   // Coalesce seeks: while one is running only the newest target is kept, and it is applied when the seek ends.
+  // Then the target is held until it lands: a seek that ended somewhere else was not the skin's, and the target is
+  // asked for again (`targetStep`). A frame link's hold starts to run out once its frame is on screen.
   useEffect(() => {
     if (!video) return;
     const onSeeked = () => {
       const next = queued.current;
       queued.current = null;
-      if (next !== null) video.currentTime = seekTimeForFrame(next, fps);
+      if (next !== null) {
+        video.currentTime = seekTimeForFrame(next, fps);
+        return;
+      }
+      if (video.seeking) return; // a newer seek is running; its own `seeked` decides
+      const asked = pending.current;
+      if (asked) {
+        const step = targetStep(asked, { type: 'seeked', frame: framesFromSeconds(video.currentTime, fps), playing: !video.paused });
+        pending.current = step.pending;
+        if (step.action === 'seek') {
+          video.currentTime = seekTimeForFrame(asked.frame, fps);
+          return;
+        }
+        if (step.action === 'giveUp') {
+          warnOnce(`Frame ${asked.frame} was asked for and seeks kept ending on another frame; staying on frame ${framesFromSeconds(video.currentTime, fps)}.`);
+        }
+      }
+      if (linkHeldUntil.current === Infinity) linkHeldUntil.current = performance.now() + LINK_SETTLE_MS;
     };
     video.addEventListener('seeked', onSeeked);
     return () => video.removeEventListener('seeked', onSeeked);
   }, [video, fps]);
+
+  // A seek the host asked for before the video element was known (its handle exists from Studio's first render).
+  useEffect(() => {
+    const time = early.current;
+    if (!video || time === null) return;
+    early.current = null;
+    controller.seekToTime(time);
+  }, [video, controller]);
 
   // Range engine: a set range confines playback. It listens to the store, not to React state, so nothing re-renders
   // per frame. Its own seeks are told apart from everyone else's (the user's and the host's): a seek to outside the
@@ -232,6 +276,7 @@ export function useStudioController(options: StudioOptions): StudioController {
 
     const seekOwn = (time: number) => {
       ownSeek = true;
+      pending.current = null; // the range decides where the playhead goes now
       video.currentTime = seekTimeForFrame(framesFromSeconds(time, fps), fps);
     };
     const current = (mediaTime: number, starting = false) => {
@@ -334,8 +379,7 @@ export function useStudioController(options: StudioOptions): StudioController {
         linkHeldUntil.current = Infinity;
         video.pause();
       }
-      target.current = { frame: link.frame, at: performance.now() };
-      video.currentTime = seekTimeForFrame(link.frame, fps);
+      controller.seekToTime(seekTimeForFrame(link.frame, fps));
     };
 
     apply();
@@ -345,7 +389,7 @@ export function useStudioController(options: StudioOptions): StudioController {
       video.removeEventListener('loadedmetadata', apply);
       video.removeEventListener('durationchange', apply);
     };
-  }, [video, fps, startFrames, dropFrame]);
+  }, [video, fps, startFrames, dropFrame, controller]);
 
   useEffect(() => () => window.clearTimeout(stepTimer.current), []);
 
@@ -355,6 +399,8 @@ export function useStudioController(options: StudioOptions): StudioController {
 interface Refs {
   target: { current: { frame: number; at: number } | null };
   queued: { current: number | null };
+  pending: { current: PendingTarget | null };
+  early: { current: number | null };
   cutTarget: { current: { frame: number; at: number } | null };
   stepTimer: { current: number };
 }
@@ -379,6 +425,7 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     const { video, fps } = opts();
     if (!video) return;
     refs.target.current = { frame, at: performance.now() };
+    refs.pending.current = targetStep(refs.pending.current, { type: 'request', frame }).pending;
     if (video.seeking) {
       refs.queued.current = frame;
       return;
@@ -483,7 +530,11 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
 
   const seekToTime = (time: number) => {
     const { video, fps } = opts();
-    if (!video || !Number.isFinite(time)) return;
+    if (!Number.isFinite(time)) return;
+    if (!video) {
+      refs.early.current = time; // sent as soon as the video element is known
+      return;
+    }
     seekToFrame(snapFrame(Math.max(0, time), video.duration || 0, fps));
   };
 
@@ -492,6 +543,7 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     step,
     currentFrame,
     seekToTime,
+    snapsSeek: (snapped) => targetStep(refs.pending.current, { type: 'seeking', snapped }).action === 'snap',
 
     seekBy(seconds) {
       const { video } = opts();
