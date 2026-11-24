@@ -58,9 +58,9 @@ jobs:
       - run: npm ci
       - name: Google Chrome
         run: test -x /opt/google/chrome/chrome || npx playwright-core install chrome; google-chrome --version
-      # The runner builds the site itself and serves dist/.
+      # The runner builds the site itself and serves dist/. `--slow`: GitHub's runners decode video in software.
       - name: Browser checks
-        run: npm run check:browsers -- --engine chromium --out "$RUNNER_TEMP/browser-checks"
+        run: npm run check:browsers -- --engine chromium --slow --out "$RUNNER_TEMP/browser-checks"
       - name: Keep the summary and the failure screenshots
         if: failure()
         uses: actions/upload-artifact@v7

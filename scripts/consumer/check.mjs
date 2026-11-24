@@ -250,6 +250,8 @@ async function linkChecks(browser) {
     await page.waitForSelector('.pro-tool-link');
     await page.evaluate(() => { const video = document.querySelector('video'); video.pause(); video.currentTime = 14; });
     await page.waitForFunction(() => { const video = document.querySelector('video'); return !video.seeking && Math.abs(video.currentTime - 14) < 0.1; });
+    // The skin reads the frame from the picture on screen, and a slow machine shows it later than the seek ends.
+    await page.waitForFunction(() => document.querySelector('[data-pro-timecode]')?.textContent.includes('00:00:14:00'), null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(500);
     await page.evaluate((text) => navigator.clipboard.writeText(text), MARKER);
     const liveBefore = await page.evaluate(() => [...document.querySelectorAll('.pro-skin [role="status"]')].map((element) => element.textContent).join('|'));
