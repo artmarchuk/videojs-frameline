@@ -35,7 +35,7 @@ Test for every decision: does it help someone make, check, review or deliver a v
 Several sessions work on this project at the same time (the player theme, the landing page), each in its own folder. A deploy builds the files of the folder it runs in, so a deploy from a feature folder takes the other sessions' work off the live site. This has happened. The rules:
 
 1. **Work on your own branch, in your own folder** (a git worktree). Never commit to `main` directly, and never touch another session's folder or its uncommitted files.
-2. **To merge:** `git fetch`, merge `origin/main` into your branch, run typecheck, tests and build, then push the branch to `main` as a fast-forward (`git push origin <branch>:main`). If the push is rejected, `main` has moved: fetch, merge and check again. Never force-push `main`.
+2. **To merge:** `git fetch`, merge `origin/main` into your branch, run typecheck, tests and build, then, once CI is green on that commit (rule 10), push the branch to `main` as a fast-forward (`git push origin <branch>:main`). If the push is rejected, `main` has moved: fetch, merge and check again. Never force-push `main`.
 3. **Production is deployed only from a clean checkout of `origin/main`,** after the merge, and only when the author asks for a production deploy. `npm run deploy vercel` refuses anything else (`apps/preview/deploy-guard.mjs`). Do not go round the guard with a bare `vercel` command.
 4. **A feature branch gets a preview:** `npm run preview:vercel`. It never changes the live site.
 5. **After a deploy, check the live site** for the other workstream's latest work as well as your own, and say what you checked.
@@ -43,6 +43,7 @@ Several sessions work on this project at the same time (the player theme, the la
 7. **The landing page's screenshots show the player.** After a theme change reaches `main`, they are stale until the landing session re-shoots them; say so in the report.
 8. **Clean up after the production deploy.** Once your branch is in `main` and production is deployed and checked, stop any local servers you ran from your folder, remove the folder (`git worktree remove <folder>`), and delete the branch locally (`git branch -d <branch>`) and on GitHub (`git push origin --delete <branch>`). First check that the folder has nothing uncommitted or untracked and that the branch is entirely in `main` (`git merge-base --is-ancestor origin/<branch> origin/main`); if either check fails, stop and report instead. Only your own folder and branch, never another session's. Say in the report that it was done.
 9. **Specs from chat** arrive as untracked files in the main checkout's `specs/`. The session that implements a spec copies it into its own folder and commits it on its branch. After the merge, it removes the untracked copy from the main checkout (only if `origin/main` holds an identical copy) and fast-forwards the main checkout. The main checkout holds no other work.
+10. **CI before main.** Push your branch and open a pull request. Wait until CI is green on your last commit, then fast-forward `main` (`git push origin <branch>:main`). If `main` has moved, merge it into your branch, push, and wait for green again. Never fast-forward a commit that CI hasn't passed.
 
 "Every step ends deployed" (above) means: a preview for a branch, production once it is merged and the author asks.
 
