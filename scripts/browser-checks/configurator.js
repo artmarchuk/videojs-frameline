@@ -2,6 +2,7 @@
 // Tier and flags change the player and the snippet; the query string round-trips with no reload; each "Show me"
 // does what it says through the skin's handle and leaves the keyboard on its button; the event log receives a range
 // change and a frame grab; the room kept for the dock on load is the player's final height.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForFunction(() => document.querySelector('#player video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForTimeout(1500);

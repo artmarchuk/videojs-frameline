@@ -1,6 +1,7 @@
 // Browser check (D2): the pointer mark on a range handle hides its focus ring after a mouse press, and must clear on
 // the next key press and on blur. Body of an async function; `page` is a Playwright page on
 // http://localhost:4173/preview.html?tier=studio (npm run build; npx vite preview) or the public URL, 1440 wide.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForTimeout(1500);
 const state = () => page.evaluate(() => {

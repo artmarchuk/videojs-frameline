@@ -18,6 +18,7 @@
 // Guides, Zoom, More, Fullscreen, Loop flat at rest, and with no fill and its light on while looping; no In or Out buttons; Zoom folds away under 382px and Link under 340px, where "Copy link at timecode"
 // is an item of the More menu; under 300px the side padding is 12px and under 288px the cells are 40px wide,
 // so six fit down to a 264px player; `I`, `O` and `Z` still work.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForSelector('.pro-tl'); await page.waitForTimeout(800);
@@ -178,8 +179,11 @@ if (!out.narrow) {
   checks.noInOutButtons = (await page.evaluate(() => [...document.querySelectorAll('.pro-skin button')].filter((e) => /^Set (In|Out)/.test(e.getAttribute('aria-label') ?? '')).length)) === 0;
   // I and O from a keyboard; Z where the Zoom button is folded away.
   await focusPlayer();
-  await seek(20); await page.keyboard.press('i'); await page.waitForTimeout(150); const inSaid = await said();
-  await seek(40); await page.keyboard.press('o'); await page.waitForTimeout(150); const outSaid = await said();
+  // An announcement is not read after a fixed delay (under load it arrives later than that): the check waits until
+  // the live region holds it, five seconds at most, and then reads the region.
+  const saidAfter = (text) => page.waitForFunction((text) => [...document.querySelectorAll('.pro-skin [role="status"]')].some((e) => e.textContent.includes(text)), text, { timeout: 5000 }).then(said, said);
+  await seek(20); await page.keyboard.press('i'); const inSaid = await saidAfter('In point set');
+  await seek(40); await page.keyboard.press('o'); const outSaid = await saidAfter('Out point set');
   checks.keys = inSaid.includes('In point set') && outSaid.includes('Out point set');
   await page.keyboard.press('z'); await page.waitForTimeout(200);
   checks.z = (await page.getAttribute('.pro-skin', 'data-zoom')) === '100';

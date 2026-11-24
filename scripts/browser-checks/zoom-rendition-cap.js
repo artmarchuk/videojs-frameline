@@ -4,6 +4,7 @@
 // reload; at Fit the source is as the host gave it. A rendition picked by hand is not touched.
 // Step 8.0: 100% is measured against the best rendition on offer, so the scale and the pan do not change when the
 // playing rendition does. Checked twice: when the lifted cap brings a higher rendition in, and with one forced by hand.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForTimeout(3000);
 await page.evaluate(() => {

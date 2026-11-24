@@ -8,6 +8,7 @@
 // Playhead: with In set at the playhead (`I`), a press within 22px of the playhead on touch (10px with a mouse),
 // inside the In handle's target, drags the playhead and leaves In alone; a press further out drags the handle; a
 // double click on the overlap does not unset In. Returns the measurements; `pass` sums it up.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForSelector('.pro-tl'); await page.waitForTimeout(800);
 const out = {};
@@ -56,12 +57,42 @@ const seek = async (t) => {
   await page.waitForTimeout(350);
 };
 let drag;
-if (touch) {
-  const cdp = await page.context().newCDPSession(page);
+// A touch drag. The playhead (the Video.js slider) and the range handles listen to pointer events only, and both
+// capture the pointer on `pointerdown`. Chromium gets a real touch through its DevTools protocol, so the browser makes
+// the pointer events itself. Firefox and WebKit have no such call, and Playwright's touchscreen can only tap, so there
+// the check dispatches the pointer events of a touch (`pointerType: 'touch'`) at the element under the point. A
+// dispatched pointer has no id the browser knows, so `setPointerCapture` would throw: for that one id the check
+// stands in for the capture, and sends the rest of the drag to the element that captured it, as a browser does.
+const cdp = touch ? await page.context().newCDPSession(page).catch(() => null) : null;
+out.touchDrag = !touch ? null : cdp ? 'a real touch (DevTools protocol)' : 'dispatched pointer events';
+if (cdp) {
   drag = async (x, y, dx) => {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
     for (let i = 1; i <= 8; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + (dx * i) / 8, y }] }); await page.waitForTimeout(30); }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForTimeout(400);
+  };
+} else if (touch) {
+  await page.evaluate(() => {
+    const ID = 4321;
+    let captured = null;
+    const { setPointerCapture, releasePointerCapture, hasPointerCapture } = Element.prototype;
+    const event = (type, x, y) => new PointerEvent(type, { pointerId: ID, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, button: type === 'pointermove' ? -1 : 0, buttons: type === 'pointerup' || type === 'lostpointercapture' ? 0 : 1, width: 23, height: 23, pressure: type === 'pointerup' ? 0 : 0.5 });
+    const release = (x, y) => { const element = captured; captured = null; element?.dispatchEvent(event('lostpointercapture', x, y)); };
+    Element.prototype.setPointerCapture = function (id) { if (id !== ID) return setPointerCapture.call(this, id); captured = this; };
+    Element.prototype.releasePointerCapture = function (id) { if (id !== ID) return releasePointerCapture.call(this, id); if (captured === this) release(0, 0); };
+    Element.prototype.hasPointerCapture = function (id) { return id === ID ? captured === this : hasPointerCapture.call(this, id); };
+    window.__touch = (type, x, y) => {
+      (captured ?? document.elementFromPoint(x, y)).dispatchEvent(event(type, x, y));
+      // A browser releases a touch's capture when the finger lifts.
+      if (type === 'pointerup') release(x, y);
+    };
+  });
+  const send = (type, x, y) => page.evaluate(([type, x, y]) => window.__touch(type, x, y), [type, x, y]);
+  drag = async (x, y, dx) => {
+    await send('pointerdown', x, y);
+    for (let i = 1; i <= 8; i++) { await send('pointermove', x + (dx * i) / 8, y); await page.waitForTimeout(30); }
+    await send('pointerup', x + dx, y);
     await page.waitForTimeout(400);
   };
 } else {

@@ -1,0 +1,70 @@
+# Runs on every pull request and on every push to `main`: the unit tests and builds, the npm package in a host app,
+# and every browser check in scripts/browser-checks/manifest.mjs, in Google Chrome.
+#
+# - No secrets and no deploy. The only network use beyond npm is the public demo media (Mux).
+# - Node.js comes from .nvmrc (26); actions/setup-node offers it.
+# - Chromium only: Firefox and WebKit are run locally (`npm run check:browsers`). Their known failures are about
+#   headless limits, not regressions, and they would double the time.
+# - Google Chrome is on GitHub's Ubuntu image, and Playwright drives that one (`channel: 'chrome'`), so no Playwright
+#   browser is downloaded and there is none to cache. npm's cache is kept by setup-node.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Typecheck, tests, builds, consumer check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # A fresh clone: a file the build needs and nobody committed fails here.
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:lib
+      - name: Contrast
+        run: node scripts/contrast.mjs
+      - name: Google Chrome
+        run: test -x /opt/google/chrome/chrome || npx playwright-core install chrome; google-chrome --version
+      - name: Consumer check (Chromium)
+        run: npm run check:consumer -- --engines=chromium
+
+  browsers:
+    name: Browser checks (Chromium)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Google Chrome
+        run: test -x /opt/google/chrome/chrome || npx playwright-core install chrome; google-chrome --version
+      # The runner builds the site itself and serves dist/.
+      - name: Browser checks
+        run: npm run check:browsers -- --engine chromium --out "$RUNNER_TEMP/browser-checks"
+      - name: Keep the summary and the failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-checks
+          path: ${{ runner.temp }}/browser-checks
+          if-no-files-found: ignore

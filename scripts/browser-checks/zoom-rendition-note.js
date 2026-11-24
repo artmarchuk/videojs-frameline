@@ -2,6 +2,7 @@
 // scale factor 1 (`?cap=1`: with the player-size cap on, Auto plays a rendition below the best one on this stream).
 // The zoom note follows the rendition that is playing: under Auto a rendition below the best one adds "showing …p" to
 // the announcement and to the chosen Zoom item; with the best rendition picked by hand there is no note.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForTimeout(2500);
 const quality = async (label) => {

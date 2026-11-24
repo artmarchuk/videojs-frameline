@@ -21,6 +21,7 @@
 // engine refuses, there is no check on the button and "Could not copy" is announced; where the engine still copies
 // (the skin falls back to a selection copy, which the permission policy does not cover), the copy is announced as
 // usual. Either is consistent: the check fails only if the player says one thing and does another.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 const here = new URL(page.url());
 const hostPage = (typeof args !== 'undefined' && args?.hostUrl) || 'http://127.0.0.1:4174/embed-host.html';

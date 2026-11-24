@@ -2,6 +2,7 @@
 // Body of an async function; `page` on the page to scan, context created with reducedMotion: 'reduce'. Opens a menu,
 // shows a toast (G, grab frame) and the volume slide-out where they exist, then lists every element whose computed
 // transition or animation still has a duration, and any smooth scroll behaviour.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 out.reduced = await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 }).catch(() => {});

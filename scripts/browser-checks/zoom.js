@@ -8,6 +8,7 @@
 // state, while a click still does; (4) Shift+Alt+arrows stop at the picture's edges; plus the Z and Shift+Z cycle over
 // five levels, the announcements, the Zoom button and its menu, Alt+arrow on the seek slider (not ours: it seeks as
 // before zoom existed), and the Guides menu's reading order.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.evaluate(() => localStorage.setItem('frameline:v1', JSON.stringify({ v: 1, guides: ['title-safe', 'thirds'], crop: null, zones: null, timeDisplay: 'timecode' })));
 await page.reload(); await page.waitForTimeout(3000);

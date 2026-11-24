@@ -1,5 +1,6 @@
 // Browser check (step 9.6): on a broken source the error dialog shows, Retry reloads the source, and when that fails
 // too the dialog shows again. Body of an async function; `page` on /preview.html?tier=studio&media=error (or viewer).
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 const dialog = () => page.evaluate(() => { const d = document.querySelector('.media-error-dialog, [role="alertdialog"], [role="dialog"][data-error]') ?? [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')].find((e) => /retry/i.test(e.textContent)); return d ? { open: !d.hidden && getComputedStyle(d).display !== 'none' && getComputedStyle(d).visibility !== 'hidden', text: d.textContent.trim().slice(0, 120) } : null; });
 await page.waitForFunction(() => [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')].some((e) => /retry/i.test(e.textContent) && !e.hidden), null, { timeout: 30000 }).catch(() => {});

@@ -5,6 +5,7 @@
 // on the Out frame and the next play starts at In; clearing the range frees playback. Then, with the pointer: dragging
 // the In handle past a playing head sends it to the new In; dragging the Out handle sets Out where it is dropped, also
 // while playing. Returns what was observed; `out.pass` is the verdict.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForTimeout(800);

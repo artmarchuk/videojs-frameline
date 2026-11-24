@@ -1,6 +1,7 @@
 // Browser check (step 9.6): two players on one page do not share state. Body of an async function; `page` on
 // /two-players.html, 1440 wide. In, frame steps, zoom and a guide set in player A leave B alone; `K` with focus in B
 // plays B only; each player remembers guides under its own key; no element id is used twice.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForFunction(() => { const v = document.querySelectorAll('video'); return v.length === 2 && [...v].every((e) => e.duration > 0); }, null, { timeout: 40000 });
 await page.waitForTimeout(1000);

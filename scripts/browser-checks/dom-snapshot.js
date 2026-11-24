@@ -7,6 +7,10 @@
 // There is no verdict: run it on the build before a change and on the build after, with the same URL and window, and
 // compare the two results (`out.states`, one list of lines per state). Identical results mean the change did not touch
 // the markup. `out.count` is the number of elements per state, for a quick look.
+// The runner does the comparison: `npm run check:browsers -- --save <file>` on `main` records every page and window
+// in the manifest, and `npm run check:browsers -- --compare <file>` on the branch lists each difference by engine,
+// page, window, state and element.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = { states: {}, count: {} };
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
 const studio = /tier=studio/.test(page.url()) || !!(await page.$('.pro-tl'));

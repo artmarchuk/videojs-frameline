@@ -7,6 +7,7 @@
 // The same holds when the host autoplays (`autoplay=1&muted=1` in the hash, the monitor page's own option): such a
 // player is still paused on the frame 2.5 s later. Autoplay without a link, or with a link that names no frame, must
 // play, which also proves that the autoplay cases really autoplay.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 const base = new URL('/preview.html?tier=studio&media=cosmicDawn', page.url()).href;
 const cases = [

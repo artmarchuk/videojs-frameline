@@ -1,5 +1,6 @@
 // Browser check (F2): opening the Guides menu by keyboard focuses 'Title safe', and Down walks the menu in reading order.
 // Run with a Playwright page on http://localhost:4173/preview.html?tier=studio (npm run build; npx vite preview). Body of an async function; `page` is in scope.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.focus('[data-pro-menu="guides"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(500);
 const cur = () => page.evaluate(() => document.activeElement.textContent.trim().slice(0, 24));

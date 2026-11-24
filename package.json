@@ -59,7 +59,8 @@
     "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy dist --project-name videojs-frameline",
     "test": "vitest run",
     "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/lib/clean-types.mjs",
-    "check:consumer": "node scripts/consumer/check.mjs"
+    "check:consumer": "node scripts/consumer/check.mjs",
+    "check:browsers": "node scripts/browser-checks/run.mjs"
   },
   "peerDependencies": {
     "@videojs/core": ">=10.4.0 <10.7.0",

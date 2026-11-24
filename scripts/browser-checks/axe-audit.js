@@ -2,6 +2,7 @@
 // chooses what to open first: 'guides' (Guides menu), 'zoom' (Zoom menu), 'help' (the help dialog), or nothing.
 // Returns the violations by impact, with the rule id, the help text and the first target of each.
 // Needs `@axe-core/playwright` resolvable from the runner: const { default: AxeBuilder } = await import('@axe-core/playwright').
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const { default: AxeBuilder } = await import(args.axe ?? '@axe-core/playwright');
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForTimeout(800);

@@ -2,6 +2,7 @@
 // `F` calls requestFullscreen on the player container from a focused control and after a click on the picture, and
 // (b) that when fullscreen ends with focus on the page body, focus returns to the fullscreen button.
 // Body of an async function; `page` on http://localhost:4173/preview.html?tier=studio (or ?tier=viewer).
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForTimeout(1500);
 await page.evaluate(() => {

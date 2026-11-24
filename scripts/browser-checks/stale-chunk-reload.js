@@ -16,6 +16,7 @@
 // and no more.
 // Part three: with nothing wrong, the flag in sessionStorage is cleared as soon as the skin reports its pro code on
 // screen (`data-pro-ready`).
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 const base = (typeof args !== 'undefined' && args?.base) || 'http://127.0.0.1:4179';
 const elsewhere = base.replace(/:(\d+)$/, (_all, port) => `:${Number(port) + 1}`);

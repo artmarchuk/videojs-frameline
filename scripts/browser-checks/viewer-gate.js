@@ -2,6 +2,7 @@
 // `page` on /preview.html?tier=viewer or /?tier=viewer, at 1440x900 and at 320 wide. Keyboard only: tab order,
 // the YouTube key map (Space also with focus on the seek bar), the free pro keys do nothing, the help dialog, 24px targets, no horizontal overflow, and
 // no pro chunk (runtime, studio, debug) requested. Returns the observed values; `out.pass` is the verdict.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForFunction(() => document.querySelector('video')?.duration > 0, null, { timeout: 30000 });
 await page.waitForTimeout(800);

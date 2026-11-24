@@ -18,6 +18,7 @@
 // The site's own answer to a failed chunk is one reload (reload-on-stale-chunk.ts); this check is about the skin, so
 // it sets that module's flag on every load and the page stays put.
 // Nothing reaches the page as an uncaught error. `out.pass` is the verdict; `out.<chunk>` has what was seen.
+// Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 const NOTICE = 'Studio tools could not load. The player works without them.';
 const RETRY = 'Retry loading Studio tools';
