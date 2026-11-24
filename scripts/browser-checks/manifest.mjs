@@ -66,15 +66,8 @@ export default [
     clipboard: true,
     runs: [wide('/')],
     timeout: 300,
-    // The check has one combined verdict; these are the values it combines, so that a known failure can name one.
-    verdict: all('reserveOk', 'stagedOk', 'reviewOk', 'configureToggles', 'configureClosed', 'configureOpens', 'startOk', 'flagOk', 'tierOk', 'viewerPlusOk', 'heroTierOk', 'layoutOk', 'noReload', 'keyboardTier', 'stepOk', 'rangeOk', 'zonesOk', 'safeOk', 'zoomOk', 'cueOk', 'grabOk', 'logOk', 'logCapped', 'logNotLive', 'logCleared', 'copied', 'roundTripOk', 'viewerNoProChunk'),
-    known: [
-      {
-        assertion: 'stagedOk',
-        engine: 'chromium',
-        reason: 'On GitHub’s runners the landing page often opens on 00:00:00:00 instead of its staged frame: when the media is ready within half a second of the load, the page sets the staged range but its seek is never issued. A race in the page or the skin, not in the check; not seen on a Mac. The fix is its own step.',
-      },
-    ],
+    // The check has one combined verdict; these are the values it combines, so that a failure names the part.
+    verdict: all('reserveOk', 'stagedOk', 'stagedFastOk', 'reviewOk', 'configureToggles', 'configureClosed', 'configureOpens', 'startOk', 'flagOk', 'tierOk', 'viewerPlusOk', 'heroTierOk', 'layoutOk', 'noReload', 'keyboardTier', 'stepOk', 'rangeOk', 'zonesOk', 'safeOk', 'zoomOk', 'cueOk', 'grabOk', 'logOk', 'logCapped', 'logNotLive', 'logCleared', 'copied', 'roundTripOk', 'viewerNoProChunk'),
   },
   {
     name: 'dock-polish',
@@ -102,13 +95,6 @@ export default [
     name: 'link-open',
     runs: [wide(`${STUDIO}&media=cosmicDawn`)],
     timeout: 300,
-    known: [
-      {
-        assertion: /^#autoplay=1&muted=1&t=/,
-        engine: 'webkit',
-        reason: 'With autoplay, WebKit sometimes stays near 0 s: the link is applied while the streaming engine’s own seek over the gap at the start is still running, and the skin’s snap-to-frame listener then seeks back to the old position. The skin is wrong; the fix is its own step.',
-      },
-    ],
   },
   {
     name: 'stale-chunk-reload',

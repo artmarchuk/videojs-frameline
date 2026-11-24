@@ -2,6 +2,9 @@
 // Tier and flags change the player and the snippet; the query string round-trips with no reload; each "Show me"
 // does what it says through the skin's handle and leaves the keyboard on its button; the event log receives a range
 // change and a frame grab; the room kept for the dock on load is the player's final height.
+// The staged frame also has to land when the media is ready before the Studio code is (`stagedFast`): the page then
+// asks the skin's handle for the frame the moment the handle exists. The check gets there by answering the media's
+// requests from memory after a first load, as a warm cache does.
 // Pages, windows and options for the runner (`npm run check:browsers`): manifest.mjs.
 const out = {};
 await page.waitForFunction(() => document.querySelector('#player video')?.duration > 0, null, { timeout: 30000 });
@@ -197,5 +200,35 @@ await touch.close();
 await page.setViewportSize({ width: 1440, height: 900 });
 out.reserveOk = out.reserve.every((entry) => Math.abs(entry.reserved - entry.rendered) <= 1);
 
-out.pass = out.reserveOk && out.stagedOk && out.reviewOk && out.configureToggles && out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
+// The staged opening with the media ready first. Every request to another origin is the demo media's: the first
+// load keeps the answers, the next three get them at once.
+const answers = new Map();
+const fromMemory = async (route) => {
+  const request = route.request();
+  const key = `${request.method()} ${request.url()} ${request.headers().range ?? ''}`;
+  if (!answers.has(key)) {
+    try {
+      const response = await route.fetch();
+      answers.set(key, { status: response.status(), headers: response.headers(), body: await response.body() });
+    } catch {
+      return route.abort().catch(() => {});
+    }
+  }
+  await route.fulfill(answers.get(key)).catch(() => {});
+};
+const elsewhere = (requested) => requested.origin !== url.origin;
+await page.route(elsewhere, fromMemory);
+out.stagedFast = [];
+for (let load = 0; load < 4; load += 1) {
+  await page.goto('about:blank');
+  await page.goto(`${url.origin}${url.pathname}?tier=studio`, { waitUntil: 'load' });
+  await page.waitForSelector('#player [data-handle="in"]', { timeout: 30000 });
+  const timecode = () => (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').slice(0, 11);
+  await page.waitForFunction(() => (document.querySelector('#player .pro-timecode-values')?.textContent ?? '').startsWith('00:00:03:02'), null, { timeout: 5000 }).catch(() => {});
+  out.stagedFast.push(await page.evaluate(timecode));
+}
+await page.unroute(elsewhere, fromMemory);
+out.stagedFastOk = out.stagedFast.every((timecode) => timecode === '00:00:03:02');
+
+out.pass = out.stagedFastOk && out.reserveOk && out.stagedOk && out.reviewOk && out.configureToggles && out.configureClosed && out.configureOpens && out.startOk && out.flagOk && out.tierOk && out.viewerPlusOk && out.heroTierOk && out.layoutOk && out.noReload && out.keyboardTier && out.stepOk && out.rangeOk && out.zonesOk && out.safeOk && out.zoomOk && out.cueOk && out.grabOk && out.logOk && out.logCapped && out.logNotLive && out.logCleared && out.copied && out.roundTripOk && out.viewerNoProChunk;
 return out;
