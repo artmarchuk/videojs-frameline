@@ -114,7 +114,8 @@ export default [
     clipboard: true,
     fixture: 'embed-host',
     runs: [wide(STUDIO)],
-    slow: 3,
+    // Not 3: the check looks for the link button's tick 400 ms after `S`, and the tick shows for 1.2 s.
+    slow: 2,
   },
   {
     name: 'zoom',
