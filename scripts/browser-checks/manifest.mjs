@@ -125,7 +125,7 @@ export default [
     runs: [wide(STUDIO)],
     // The check returns what it saw; this is the verdict its header describes.
     verdict: (out) => ({
-      first: out.first?.startsWith('Title safe') === true,
+      first: out.first?.startsWith('Action safe') === true,
       space: out.space?.startsWith('Title safe') === true,
       readingOrder: new Set(out.order).size > 10 && out.order.some((text) => text.startsWith('Hide guides')),
       back: /^Guides/.test(out.back ?? ''),
