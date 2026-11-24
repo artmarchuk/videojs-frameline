@@ -18,6 +18,9 @@
 //           failure does. `NOTES.md`, "Known failures", has the same list in prose.
 // flaky     a reason. A failure of a flaky check is reported and does not fail the run.
 // timeout   seconds for one run (default 180).
+// slow      with `--slow` (CI passes it), every fixed wait of the check is this many times longer. For a check that
+//           reads the timecode a fixed time after a seek: on GitHub's runners, which decode in software, the frame
+//           is shown later than that. Without `--slow` it does nothing.
 //
 // Sizes and options come from each check's header. Where a header names no size, the window is 1440x900.
 
@@ -60,6 +63,7 @@ export default [
     clipboard: true,
     runs: [wide('/')],
     timeout: 300,
+    slow: 3,
   },
   {
     name: 'dock-polish',
@@ -110,6 +114,7 @@ export default [
     clipboard: true,
     fixture: 'embed-host',
     runs: [wide(STUDIO)],
+    slow: 3,
   },
   {
     name: 'zoom',

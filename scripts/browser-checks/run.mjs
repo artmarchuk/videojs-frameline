@@ -9,6 +9,8 @@
 //   npm run check:browsers -- --no-build                     use dist/ as it is
 //   npm run check:browsers -- --workers 3                    runs side by side (default 1: the checks play real media
 //                                                            and read timings, and some fail under load)
+//   npm run check:browsers -- --slow                         a slow machine (CI): a check with `slow: <n>` in the
+//                                                            manifest gets every fixed wait n times longer
 //   npm run check:browsers -- --out <folder>                 where summary.json and failure screenshots go
 //                                                            (default: frameline-browser-checks in the temp folder)
 //
@@ -64,6 +66,7 @@ const only = save || compare ? ['dom-snapshot'] : option('only')?.split(',').fil
 for (const name of only ?? []) if (!manifest.some((entry) => entry.name === name)) fail(`No check named "${name}" in manifest.mjs.`);
 const repeat = Math.max(1, Number(option('repeat') ?? 1) || 1);
 const workers = Math.max(1, Number(option('workers') ?? 1) || 1);
+const slow = has('slow');
 const remote = option('base-url')?.replace(/\/$/, '');
 const outDir = resolve(option('out') ?? join(tmpdir(), 'frameline-browser-checks'));
 const baseline = compare ? JSON.parse(readFileSync(resolve(compare), 'utf8')) : null;
@@ -195,8 +198,16 @@ const runOne = async (browser, engine, entry, run, index, fixtures) => {
       args.base = `http://127.0.0.1:${port}`;
     }
     context = await browser.newContext(contextOptions(entry, run, engine));
+    // On a slow machine the frames of a seek are shown later than a check's fixed waits allow. The checks' bodies
+    // stay as they are: every `waitForTimeout` of a page of this context is made longer instead.
+    if (slow && entry.slow) {
+      context.on('page', (opened) => {
+        const wait = opened.waitForTimeout.bind(opened);
+        opened.waitForTimeout = (ms) => wait(ms * entry.slow);
+      });
+    }
     const page = await context.newPage();
-    const seconds = entry.timeout ?? 180;
+    const seconds = (entry.timeout ?? 180) * (slow && entry.slow ? entry.slow : 1);
     let timer;
     const out = await Promise.race([
       (async () => {
@@ -260,7 +271,7 @@ const main = async () => {
   }
   // The embed check's host page, on another origin than the site.
   fixtures.embedHost = `http://127.0.0.1:${await listen(staticHandler(join(here, 'fixtures')), '127.0.0.1')}/embed-host.html`;
-  console.log(`Site: ${fixtures.base}. Engines: ${engines.join(', ')}.${repeat > 1 ? ` Every run ${repeat} times.` : ''} Results: ${outDir}\n`);
+  console.log(`Site: ${fixtures.base}. Engines: ${engines.join(', ')}.${slow ? ' Slow machine: longer waits where the manifest says so.' : ''}${repeat > 1 ? ` Every run ${repeat} times.` : ''} Results: ${outDir}\n`);
 
   const entries = manifest.filter((entry) => !only || only.includes(entry.name));
   const started = Date.now();

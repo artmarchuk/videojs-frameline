@@ -16,12 +16,14 @@ await page.reload(); await page.waitForTimeout(3000);
 // Every PNG the skin makes goes through canvas.toBlob: record its size and a checksum of its pixels.
 await page.evaluate(() => {
   window.__grabs = [];
+  window.__grabPixels = [];
   const toBlob = HTMLCanvasElement.prototype.toBlob;
   HTMLCanvasElement.prototype.toBlob = function (...args) {
     const data = this.getContext('2d').getImageData(0, 0, this.width, this.height).data;
     let sum = 0;
     for (let i = 0; i < data.length; i += 4) sum = (sum + data[i] * 3 + data[i + 1] * 5 + data[i + 2] * 7 + (i % 8191)) % 2147483647;
     window.__grabs.push({ width: this.width, height: this.height, sum });
+    window.__grabPixels.push(data);
     return toBlob.apply(this, args);
   };
   // No file is wanted from the check.
@@ -133,7 +135,25 @@ out.arrowsDidNotSeek = same(near.time, start.time) || Math.abs(near.time - start
 await press('Shift+Alt+ArrowRight', 3);
 await page.keyboard.press('g'); await page.waitForTimeout(800);
 out.grabs = await page.evaluate(() => window.__grabs);
-out.grabSame = out.grabs.length === 2 && out.grabs[0].sum === out.grabs[1].sum && out.grabs[0].width === videoWidthOf() && out.grabs[1].width === out.grabs[0].width;
+// How far the two images are apart: the number of pixels that differ and the largest difference in one channel.
+out.grabDifference = await page.evaluate(() => {
+  const [a, b] = window.__grabPixels;
+  if (!a || !b || a.length !== b.length) return null;
+  let pixels = 0, most = 0;
+  for (let i = 0; i < a.length; i += 4) {
+    const d = Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2]), Math.abs(a[i + 3] - b[i + 3]));
+    if (d) { pixels += 1; most = Math.max(most, d); }
+  }
+  return { pixels, most, of: a.length / 4 };
+});
+// WebKit only: the two images may differ by one level per channel. The first frame WebKit draws to a canvas after the
+// browser starts is converted to RGB a little differently from every later one: on 24 Nov 2026, with nothing between
+// two draws of the same paused frame (no seek, no zoom), 10.2% of the pixels, spread over the whole frame, differed by
+// exactly 1, and every later draw matched the second. That is the engine's rounding, not the picture: a grab that
+// took the wrong frame, crop or scale differs by far more than 1. The other engines must match exactly.
+const tolerance = page.context().browser().browserType().name() === 'webkit' ? 1 : 0;
+out.grabSame = out.grabs.length === 2 && out.grabs[0].width === videoWidthOf() && out.grabs[1].width === out.grabs[0].width && out.grabs[1].height === out.grabs[0].height
+  && (out.grabs[0].sum === out.grabs[1].sum || (out.grabDifference !== null && out.grabDifference.most <= tolerance));
 function videoWidthOf() { return videoWidth; }
 
 // Alt+arrows are not ours any more: with no focus on the slider nothing moves; on the seek slider Alt+→ is the stock
