@@ -391,6 +391,21 @@ const player = $('#player');
 player.toggleAttribute('data-staging', stagePending);
 const staged = () => requestAnimationFrame(() => requestAnimationFrame(() => player.removeAttribute('data-staging')));
 
+/**
+ * Whether the visitor has played the player's video or moved its playhead (past the first second) before the staging
+ * ran. The Studio code can arrive late, after a retry from the Viewer the skin falls back to when it could not load;
+ * the staging then leaves the playhead where the visitor put it. On the document, because the video element is
+ * replaced when Studio arrives; media events don't bubble, so the listeners catch them on the way down.
+ */
+let playheadTouched = false;
+const notePlayhead = (event: Event) => {
+  const media = event.target;
+  if (!(media instanceof HTMLVideoElement) || !media.closest('#player')) return;
+  if (event.type === 'play' || media.currentTime >= 1) playheadTouched = true;
+};
+document.addEventListener('play', notePlayhead, true);
+document.addEventListener('seeking', notePlayhead, true);
+
 /** Whether this visitor has a remembered set of guides. The skin restores it, and it wins over the staged guide. */
 function hasRememberedGuides(): boolean {
   try {
@@ -403,7 +418,8 @@ function hasRememberedGuides(): boolean {
 /**
  * Sets the range, the guide and the playhead, once, when the Studio player first has a handle and the video has a
  * duration. Paused, silent, no focus, no scrolling. A frame link in the hash (`#t=…`) keeps the playhead: the skin
- * seeks to it itself. Not repeated after the visitor changes the range or comes back from Viewer.
+ * seeks to it itself, and a playhead the visitor has played or moved is kept (`playheadTouched`). Not repeated after
+ * the visitor changes the range or comes back from Viewer.
  */
 function stage() {
   if (!stagePending || !STAGED) return;
@@ -421,7 +437,7 @@ function stage() {
     try {
       handle.setRange({ in: STAGED.in, out: STAGED.out });
       if (!hasRememberedGuides()) handle.setGuides({ guides: STAGED.guides });
-      if (!/(?:^#|&)tc?=/.test(window.location.hash)) handle.seek(STAGED.playhead);
+      if (!playheadTouched && !/(?:^#|&)tc?=/.test(window.location.hash)) handle.seek(STAGED.playhead);
     } finally {
       staging = false;
       staged();
