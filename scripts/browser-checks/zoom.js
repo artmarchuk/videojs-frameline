@@ -135,9 +135,21 @@ out.arrowsDidNotSeek = same(near.time, start.time) || Math.abs(near.time - start
 await press('Shift+Alt+ArrowRight', 3);
 await page.keyboard.press('g'); await page.waitForTimeout(800);
 out.grabs = await page.evaluate(() => window.__grabs);
+// The two grabs are only the same image when they come from the same rendition, and under Auto the rendition can
+// change between them (seen on a CI runner: 1080p at the first grab, 2160p at the second). Then the zoomed grab is
+// compared with a new grab at Fit, taken right after it: 200% -> 400% -> Fit, grab, and back to 200%.
+out.grabRenditionChanged = out.grabs.length === 2 && out.grabs[0].width !== out.grabs[1].width;
+if (out.grabRenditionChanged) {
+  await page.keyboard.press('z'); await page.keyboard.press('z'); await page.waitForTimeout(400);
+  await page.keyboard.press('g'); await page.waitForTimeout(800);
+  await page.keyboard.press('Shift+z'); await page.keyboard.press('Shift+z'); await page.waitForTimeout(400);
+  out.grabs = await page.evaluate(() => window.__grabs);
+}
+const pair = out.grabs.slice(-2);
+const grabbedWidth = out.grabs.length === 2 ? videoWidthOf() : await page.evaluate(() => document.querySelector('video').videoWidth);
 // How far the two images are apart: the number of pixels that differ and the largest difference in one channel.
 out.grabDifference = await page.evaluate(() => {
-  const [a, b] = window.__grabPixels;
+  const [a, b] = window.__grabPixels.slice(-2);
   if (!a || !b || a.length !== b.length) return null;
   let pixels = 0, most = 0;
   for (let i = 0; i < a.length; i += 4) {
@@ -152,8 +164,8 @@ out.grabDifference = await page.evaluate(() => {
 // exactly 1, and every later draw matched the second. That is the engine's rounding, not the picture: a grab that
 // took the wrong frame, crop or scale differs by far more than 1. The other engines must match exactly.
 const tolerance = page.context().browser().browserType().name() === 'webkit' ? 1 : 0;
-out.grabSame = out.grabs.length === 2 && out.grabs[0].width === videoWidthOf() && out.grabs[1].width === out.grabs[0].width && out.grabs[1].height === out.grabs[0].height
-  && (out.grabs[0].sum === out.grabs[1].sum || (out.grabDifference !== null && out.grabDifference.most <= tolerance));
+out.grabSame = pair.length === 2 && pair[0].width === grabbedWidth && pair[1].width === pair[0].width && pair[1].height === pair[0].height
+  && (pair[0].sum === pair[1].sum || (out.grabDifference !== null && out.grabDifference.most <= tolerance));
 function videoWidthOf() { return videoWidth; }
 
 // Alt+arrows are not ours any more: with no focus on the slider nothing moves; on the seek slider Alt+→ is the stock
