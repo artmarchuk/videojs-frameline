@@ -165,7 +165,7 @@ The shared chunk that used to be `engine-*.js` (React DOM with 30 KB of `cn`) is
 ## Unverified
 
 **Browsers**
-- CI runs Chromium only. `configurator.js`'s case with the media ready first fails on the skin before the seek-race fix in Chromium every time, in Firefox now and then, and not in WebKit: there the order of the two chunks and the media differs.
+- CI runs Chromium only. `configurator.js`'s case with the media ready first fails on the skin before the seek-race fix in Chromium every time, in Firefox now and then, and not in WebKit: there the order of the two chunks and the media differs. In WebKit the markup snapshot's Zoom menu sometimes has one `pro-menu-sub` line more or less between two runs of the same build (24 Nov, `main` against its own snapshot); not pinned down.
 - Safari itself and iOS Safari. Playwright's WebKit (a Safari 27.2 build) stood in. The floor versions (Chrome 111, Firefox 121, Safari 16.4) were never run.
 - Native HLS in Safari: the rendition note and the cap lift (Playwright's WebKit played through hls.js).
 - Firefox 121 to 126 without `ClipboardItem` (the disabled Copy item), and Firefox before 132 without `requestVideoFrameCallback` (the fallback clock and the `≈` marker, which runs past the narrow field in a wider font).
