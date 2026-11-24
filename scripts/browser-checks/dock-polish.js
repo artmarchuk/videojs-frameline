@@ -184,6 +184,7 @@ if (!out.narrow) {
   const saidAfter = (text) => page.waitForFunction((text) => [...document.querySelectorAll('.pro-skin [role="status"]')].some((e) => e.textContent.includes(text)), text, { timeout: 5000 }).then(said, said);
   await seek(20); await page.keyboard.press('i'); const inSaid = await saidAfter('In point set');
   await seek(40); await page.keyboard.press('o'); const outSaid = await saidAfter('Out point set');
+  out.keysSaid = [inSaid, outSaid];
   checks.keys = inSaid.includes('In point set') && outSaid.includes('Out point set');
   await page.keyboard.press('z'); await page.waitForTimeout(200);
   checks.z = (await page.getAttribute('.pro-skin', 'data-zoom')) === '100';
