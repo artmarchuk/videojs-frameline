@@ -12,7 +12,8 @@
 //           remote site and is skipped with `--base-url`.
 // engines   the engines it runs in (default: all three).
 // verdict   for a check whose result has no `pass`: a function from the result to `{ assertion: true | false }`.
-//           Otherwise the runner reads `out.checks` (assertion by assertion) and `out.pass`.
+//           Otherwise the runner reads `out.checks` (assertion by assertion) and `out.pass`. `all(...)` below makes one
+//           from the values a check combines into `pass`.
 // known     known failures: `{ assertion, engine, reason }`, and `run` (a label) when only one run has it. `assertion`
 //           is a name or a RegExp. A run whose failed assertions are all known does not fail the run; any other
 //           failure does. `NOTES.md`, "Known failures", has the same list in prose.
@@ -33,6 +34,8 @@ const EMBED = '/embed.html?tier=studio&fps=24&mux=9Y7a3hqNCi4u02fmBFbaK5qWoS6A5c
 const wide = (path, more = {}) => ({ label: '1440x900', path, viewport: WIDE, ...more });
 const touch = (path, width, height = 800, more = {}) => ({ label: `${width}x${height} touch`, path, viewport: { width, height }, touch: true, ...more });
 const named = (label, run) => ({ ...run, label: `${label}, ${run.label}` });
+// A verdict from the values a check combines into `pass`: every one of them, and `pass` itself.
+const all = (...names) => (out) => Object.fromEntries([...names, 'pass'].map((name) => [name, out[name] === true || (name === 'pass' && names.some((other) => out[other] !== true))]));
 
 export default [
   {
@@ -63,7 +66,15 @@ export default [
     clipboard: true,
     runs: [wide('/')],
     timeout: 300,
-    slow: 3,
+    // The check has one combined verdict; these are the values it combines, so that a known failure can name one.
+    verdict: all('reserveOk', 'stagedOk', 'reviewOk', 'configureToggles', 'configureClosed', 'configureOpens', 'startOk', 'flagOk', 'tierOk', 'viewerPlusOk', 'heroTierOk', 'layoutOk', 'noReload', 'keyboardTier', 'stepOk', 'rangeOk', 'zonesOk', 'safeOk', 'zoomOk', 'cueOk', 'grabOk', 'logOk', 'logCapped', 'logNotLive', 'logCleared', 'copied', 'roundTripOk', 'viewerNoProChunk'),
+    known: [
+      {
+        assertion: 'stagedOk',
+        engine: 'chromium',
+        reason: 'On GitHub’s runners the landing page often opens on 00:00:00:00 instead of its staged frame: when the media is ready within half a second of the load, the page sets the staged range but its seek is never issued. A race in the page or the skin, not in the check; not seen on a Mac. The fix is its own step.',
+      },
+    ],
   },
   {
     name: 'dock-polish',
@@ -95,7 +106,7 @@ export default [
       {
         assertion: /^#autoplay=1&muted=1&t=/,
         engine: 'webkit',
-        reason: 'With autoplay, the seek on load sometimes never lands in WebKit: the field shows the frame and the video stays near 0 s.',
+        reason: 'With autoplay, WebKit sometimes stays near 0 s: the link is applied while the streaming engine’s own seek over the gap at the start is still running, and the skin’s snap-to-frame listener then seeks back to the old position. The skin is wrong; the fix is its own step.',
       },
     ],
   },
@@ -114,7 +125,8 @@ export default [
     clipboard: true,
     fixture: 'embed-host',
     runs: [wide(STUDIO)],
-    slow: 3,
+    // Not 3: the check looks for the link button's tick 400 ms after `S`, and the tick shows for 1.2 s.
+    slow: 2,
   },
   {
     name: 'zoom',

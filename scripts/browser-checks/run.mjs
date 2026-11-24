@@ -182,7 +182,15 @@ const print = (result) => {
   for (const line of result.details ?? []) console.log(`         ${line}`);
 };
 
+// The clipboard is one for the whole browser: with several workers, the checks that read it take turns.
+let clipboardFree = Promise.resolve();
 const runOne = async (browser, engine, entry, run, index, fixtures) => {
+  if (!entry.clipboard || workers === 1) return runAlone(browser, engine, entry, run, index, fixtures);
+  const turn = clipboardFree.then(() => runAlone(browser, engine, entry, run, index, fixtures));
+  clipboardFree = turn.catch(() => {});
+  return turn;
+};
+const runAlone = async (browser, engine, entry, run, index, fixtures) => {
   const result = { check: entry.name, engine, run: run.label, repeat: index, outcome: 'pass' };
   const started = Date.now();
   let context;
