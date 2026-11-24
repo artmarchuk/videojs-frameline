@@ -67,7 +67,7 @@ Calm and device-like: neutral dark surfaces (true greys; the dock is a dark matt
 - Submitted to the Video.js Skins Design Challenge on 17 Nov 2026. **The winners are announced on 24 Nov 2026.** Until then, production keeps what the judges may have bookmarked: the configurator's URL parameters, the demo media and its Mux playback ID. Work that changes them stays on a preview.
 - In production: both tiers, the Studio dock, ruler timeline and range, frame-accurate transport, markers and cuts, guides and platform zones, Grab frame, Copy link (`#t=<seconds>&tc=<timecode>`), zoom, the configurator landing page, the embed page. `FEATURES.md` has the full list.
 - The npm package `videojs-frameline` 0.1.0 is built and checked in a separate host app (`npm run check:consumer`), not yet published. The Viewer loads 4.1% more JS and CSS (gzip) than the stock Video.js skin.
-- Not yet: CI.
+- CI on GitHub Actions since 24 Nov: typecheck, tests, builds, the consumer check and the browser checks (Chromium) on every pull request and push to `main`.
 
 ## Roadmap
 

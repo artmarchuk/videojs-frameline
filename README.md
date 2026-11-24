@@ -542,6 +542,7 @@ npm test                 # unit tests (Vitest)
 npm run build            # the site, into dist/
 npm run build:lib        # the npm package, into lib/
 npm run check:consumer   # packs the package, installs it in a new app outside the repo and tests it in three browsers
+npm run check:browsers   # every browser check in scripts/browser-checks/manifest.mjs, in Chrome, Firefox and WebKit
 npm run deploy vercel    # production; only from a clean checkout of origin/main
 npm run preview:vercel   # a Vercel preview of the folder as it is
 ```
@@ -593,6 +594,7 @@ To deploy on every push instead, put the project on GitHub and import it on Verc
   - `public/demo/`: the files of each demo source: chapters, captions, markers.
 - `vite.lib.config.ts`, `tsconfig.lib.json`, `scripts/lib/`: the package build (`npm run build:lib`, output in `lib/`, not committed).
 - `scripts/consumer/`: the consumer check (`npm run check:consumer`) and the host app template it uses.
+- `scripts/browser-checks/`: the browser checks, their manifest and runner (`npm run check:browsers`; `run.mjs` lists the options). `.github/workflows/ci.yml` runs them in Chrome on every pull request.
 - `CHANGELOG.md`: what changed in each published version.
 - `vercel.json`, `netlify.toml`: how those hosts build the workbench.
 - `skin.json`: what this skin is built from. Keep it; it records the Video.js version the skin was created with.
