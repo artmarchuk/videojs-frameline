@@ -228,6 +228,43 @@ export function targetStep(pending: PendingTarget | null, event: TargetEvent): {
 }
 
 /**
+ * What the host asked for through its handle before the media was ready (no video element yet, or no duration): a
+ * time to seek to, and frames to step from there. Sent once the duration is known.
+ */
+export interface EarlyPosition {
+  /** The time of the last `seek()`, in seconds; `null` when none was made: steps then count from where the video opens. */
+  seek: number | null;
+  /** The frames of every `step()` since that seek, added up. */
+  steps: number;
+}
+
+export const NO_EARLY_POSITION: EarlyPosition = Object.freeze({ seek: null, steps: 0 });
+
+export type EarlyCall = { type: 'seek'; time: number } | { type: 'step'; frames: number };
+
+/**
+ * Keeps a position call made before the media is ready. Steps add up; a seek replaces the steps before it, and steps
+ * after a seek count from its frame. A call that is not a finite number changes nothing.
+ */
+export function queueEarlyPosition(early: EarlyPosition, call: EarlyCall): EarlyPosition {
+  if (call.type === 'seek') return Number.isFinite(call.time) ? { seek: call.time, steps: 0 } : early;
+  if (!Number.isFinite(call.frames)) return early;
+  const frames = Math.trunc(call.frames);
+  return frames === 0 ? early : { seek: early.seek, steps: early.steps + frames };
+}
+
+/**
+ * The frame the queued calls come to once the media is ready, or `null` when there is nothing to do. `openFrame` is
+ * the frame the video opened on. The result stays inside the media.
+ */
+export function earlyPositionFrame(early: EarlyPosition, openFrame: number, lastFrame: number, fps: number): number | null {
+  if (early.seek === null && early.steps === 0) return null;
+  const from = early.seek === null ? openFrame : framesFromSeconds(Math.max(0, early.seek), fps);
+  const frame = Math.min(Math.max(0, lastFrame), Math.max(0, from + early.steps));
+  return early.seek === null && frame === openFrame ? null : frame;
+}
+
+/**
  * Links to a frame. A link carries two keys in the URL fragment: `t`, the position in seconds as W3C Media Fragments
  * URI 1.0 defines it, so any tool that reads media fragments opens the right second, and `tc`, the timecode on
  * screen, so Frameline opens the exact frame. `#t=62.104&tc=00:01:02:02`. Media Fragments tells players to ignore

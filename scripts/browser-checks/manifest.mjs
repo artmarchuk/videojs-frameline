@@ -97,6 +97,12 @@ export default [
     timeout: 300,
   },
   {
+    // The handle's methods called before the player is ready: 7 cases at 3 moments, a page load each.
+    name: 'api-before-ready',
+    runs: [wide(STUDIO)],
+    timeout: 400,
+  },
+  {
     name: 'stale-chunk-reload',
     fixture: 'deploy-server',
     runs: ['/?tier=studio', '/preview.html?tier=studio', '/embed.html?tier=studio'].map((path) => ({ label: `${path}, 1440x900`, path: null, viewport: WIDE, args: { path } })),

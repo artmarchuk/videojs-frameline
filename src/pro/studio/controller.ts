@@ -7,6 +7,7 @@ import type { FramelineFrameInfo, FramelineMarker, ProStore } from '../store';
 import { formatTimecode, framesFromSeconds, secondsFromFrames } from '../timecode';
 import type { AnnounceOptions } from './announcer';
 import {
+  earlyPositionFrame,
   effectiveRange,
   findCut,
   formatLinkPosition,
@@ -15,7 +16,9 @@ import {
   JUMP_FRAMES,
   lastFrameOf,
   outsideRange,
+  NO_EARLY_POSITION,
   playbackDecision,
+  queueEarlyPosition,
   readLinkPosition,
   resolveLinkPosition,
   resolveLinkUrl,
@@ -23,6 +26,7 @@ import {
   stepTarget,
   targetStep,
   type Cut,
+  type EarlyPosition,
   type PendingTarget,
 } from './logic';
 import { studioStrings as t } from './strings';
@@ -107,6 +111,17 @@ export interface StudioController {
    * there already. A seek the skin didn't make is left alone while a requested frame has not landed (`targetStep`).
    */
   snapsSeek(snapped: boolean): boolean;
+  /**
+   * The host's `seek()` and `step()`. Before the media is ready (no video element yet, or no duration) the call is
+   * kept (`queueEarlyPosition`) and `sendEarlyPosition` sends the frame it comes to; after that they are
+   * `seekToTime` and `step`.
+   */
+  hostSeek(time: number): void;
+  hostStep(frames: number): void;
+  /** Sends what `hostSeek` and `hostStep` kept, once the duration is known. `drop`: forget it instead. */
+  sendEarlyPosition(drop?: boolean): void;
+  /** The host's `grabFrame()`. Before a frame is decoded it grabs nothing and warns once, in development. */
+  hostGrabFrame(): void;
 }
 
 /** How long a just-requested frame is trusted over the clock, which needs a moment to catch up after a seek. */
@@ -177,13 +192,15 @@ export function useStudioController(options: StudioOptions): StudioController {
   // The frame last asked for, while it is fresh. Lets held keys keep stepping without waiting for each seek.
   const target = useRef<{ frame: number; at: number } | null>(null);
   const queued = useRef<number | null>(null);
-  // The frame asked for until it is on screen (`targetStep`), and a time asked for before the video element is known.
+  // The frame asked for until it is on screen (`targetStep`), and what the host's handle asked for before the media
+  // was ready. `hasFrame`: the video has decoded a frame of its source.
   const pending = useRef<PendingTarget | null>(null);
-  const early = useRef<number | null>(null);
+  const early = useRef<EarlyPosition>(NO_EARLY_POSITION);
+  const hasFrame = useRef(false);
   const cutTarget = useRef<{ frame: number; at: number } | null>(null);
   const stepTimer = useRef(0);
 
-  const controller = useMemo(() => createController(store, latest, { target, queued, pending, early, cutTarget, stepTimer }), [store]);
+  const controller = useMemo(() => createController(store, latest, { target, queued, pending, early, hasFrame, cutTarget, stepTimer }), [store]);
 
   const { video, fps } = options;
 
@@ -203,7 +220,7 @@ export function useStudioController(options: StudioOptions): StudioController {
     const release = () => {
       pending.current = targetStep(pending.current, { type: 'user' }).pending;
       queued.current = null;
-      early.current = null;
+      early.current = NO_EARLY_POSITION;
     };
     const onPlay = () => {
       const now = performance.now();
@@ -258,13 +275,26 @@ export function useStudioController(options: StudioOptions): StudioController {
     return () => video.removeEventListener('seeked', onSeeked);
   }, [video, fps]);
 
-  // A seek the host asked for before the video element was known (its handle exists from Studio's first render).
+  // Whether a frame of the source has been decoded, for the host's `grabFrame()`. `readyState` alone would say no
+  // during every seek.
   useEffect(() => {
-    const time = early.current;
-    if (!video || time === null) return;
-    early.current = null;
-    controller.seekToTime(time);
-  }, [video, controller]);
+    if (!video) return;
+    hasFrame.current = video.readyState >= 2;
+    const seen = () => {
+      if (video.readyState >= 2) hasFrame.current = true;
+    };
+    const gone = () => {
+      hasFrame.current = false;
+    };
+    const events = ['loadeddata', 'seeked', 'playing', 'timeupdate'];
+    for (const type of events) video.addEventListener(type, seen);
+    video.addEventListener('emptied', gone);
+    return () => {
+      for (const type of events) video.removeEventListener(type, seen);
+      video.removeEventListener('emptied', gone);
+      hasFrame.current = false;
+    };
+  }, [video]);
 
   // Range engine: a set range confines playback. It listens to the store, not to React state, so nothing re-renders
   // per frame. Its own seeks are told apart from everyone else's (the user's and the host's): a seek to outside the
@@ -369,6 +399,8 @@ export function useStudioController(options: StudioOptions): StudioController {
       const fields = readLinkPosition(window.location.hash);
       const link = resolveLinkPosition(fields, fps, { startFrames, dropFrame }, lastFrameOf(video.duration, fps));
       if (!link) return;
+      // The link names the frame the page opens on: what the host asked for before the media was ready gives way.
+      controller.sendEarlyPosition(true);
       if (link.disagreement !== null) {
         warnOnce(
           `The link's tc (${fields.tc}) names frame ${link.frame} and its t (${fields.t}) frame ${link.disagreement}. ` +
@@ -391,6 +423,21 @@ export function useStudioController(options: StudioOptions): StudioController {
     };
   }, [video, fps, startFrames, dropFrame, controller]);
 
+  // What the host's handle asked for before the media was ready (its handle exists from Studio's first render, one
+  // render before the video element is known here) is sent once the duration is known. After the link effect, so a
+  // frame link is applied first.
+  useEffect(() => {
+    if (!video) return;
+    const send = () => controller.sendEarlyPosition();
+    send();
+    video.addEventListener('loadedmetadata', send);
+    video.addEventListener('durationchange', send);
+    return () => {
+      video.removeEventListener('loadedmetadata', send);
+      video.removeEventListener('durationchange', send);
+    };
+  }, [video, controller]);
+
   useEffect(() => () => window.clearTimeout(stepTimer.current), []);
 
   return controller;
@@ -400,7 +447,8 @@ interface Refs {
   target: { current: { frame: number; at: number } | null };
   queued: { current: number | null };
   pending: { current: PendingTarget | null };
-  early: { current: number | null };
+  early: { current: EarlyPosition };
+  hasFrame: { current: boolean };
   cutTarget: { current: { frame: number; at: number } | null };
   stepTimer: { current: number };
 }
@@ -530,12 +578,28 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
 
   const seekToTime = (time: number) => {
     const { video, fps } = opts();
-    if (!Number.isFinite(time)) return;
-    if (!video) {
-      refs.early.current = time; // sent as soon as the video element is known
-      return;
-    }
+    if (!video || !Number.isFinite(time)) return;
     seekToFrame(snapFrame(Math.max(0, time), video.duration || 0, fps));
+  };
+
+  /** The media can be seeked: the video element is known and has a duration. */
+  const mediaReady = () => {
+    const { video } = opts();
+    return !!video && video.duration > 0;
+  };
+
+  const grabFrame = () => {
+    void withCapture('file', async (blob, name) => {
+      const url = URL.createObjectURL(await blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      return t.grabbed(timecode(currentFrame()));
+    });
   };
 
   return {
@@ -543,6 +607,40 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
     step,
     currentFrame,
     seekToTime,
+    grabFrame,
+
+    hostSeek(time) {
+      if (mediaReady()) seekToTime(time);
+      else refs.early.current = queueEarlyPosition(refs.early.current, { type: 'seek', time });
+    },
+
+    hostStep(frames) {
+      if (!Number.isFinite(frames) || Math.trunc(frames) === 0) return;
+      if (mediaReady()) step(Math.trunc(frames));
+      else refs.early.current = queueEarlyPosition(refs.early.current, { type: 'step', frames });
+    },
+
+    sendEarlyPosition(drop = false) {
+      const { video, fps } = opts();
+      if (drop) refs.early.current = NO_EARLY_POSITION;
+      if (!video || !(video.duration > 0)) return;
+      const early = refs.early.current;
+      refs.early.current = NO_EARLY_POSITION;
+      const frame = earlyPositionFrame(early, framesFromSeconds(video.currentTime, fps), lastFrameOf(video.duration, fps), fps);
+      if (frame === null) return;
+      // A step pauses first, as it does once the media is ready.
+      if (early.steps !== 0 && !video.paused) video.pause();
+      seekToFrame(frame);
+    },
+
+    hostGrabFrame() {
+      const { video } = opts();
+      if (!video || !video.videoWidth || !refs.hasFrame.current) {
+        warnOnce('grabFrame() was called before the first frame was decoded, and grabbed nothing. Call it once the video shows a frame.');
+        return;
+      }
+      grabFrame();
+    },
     snapsSeek: (snapped) => targetStep(refs.pending.current, { type: 'seeking', snapped }).action === 'snap',
 
     seekBy(seconds) {
@@ -605,20 +703,6 @@ function createController(store: ProStore, latest: { current: StudioOptions }, r
       store.setLoop();
       const mode = store.getState().loopMode;
       opts().announce(mode === 'off' ? t.loopOff : mode === 'range' ? t.loopOnRange : t.loopOnWhole, { toast: true });
-    },
-
-    grabFrame() {
-      void withCapture('file', async (blob, name) => {
-        const url = URL.createObjectURL(await blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-        return t.grabbed(timecode(currentFrame()));
-      });
     },
 
     copyFrameImage() {

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createProStore } from '../store';
 import {
   buildCutList,
+  earlyPositionFrame,
   effectiveRange,
   findCut,
   formatLinkPosition,
@@ -13,7 +14,9 @@ import {
   lastFrameOf,
   timecodeLeadLength,
   outsideRange,
+  NO_EARLY_POSITION,
   playbackDecision,
+  queueEarlyPosition,
   linkSeconds,
   parseLinkSeconds,
   readLinkPosition,
@@ -23,6 +26,7 @@ import {
   stepTarget,
   targetStep,
   TARGET_TRIES,
+  type EarlyCall,
   type PendingTarget,
   type TargetAction,
   type TargetEvent,
@@ -535,5 +539,64 @@ describe('linkUrl: what Copy link copies', () => {
       expect(resolve(() => returned)).toMatchObject({ action: 'fail', warning: expect.any(String) });
     }
     expect((resolve(() => Promise.resolve('x')) as { warning: string }).warning).toContain('synchronous');
+  });
+});
+
+describe('position calls before the media is ready', () => {
+  const FPS = 24;
+  const LAST = 1345; // the reel: 56.083 s
+  const queue = (...calls: EarlyCall[]) => calls.reduce(queueEarlyPosition, NO_EARLY_POSITION);
+  const seek = (time: number): EarlyCall => ({ type: 'seek', time });
+  const step = (frames: number): EarlyCall => ({ type: 'step', frames });
+
+  it('has nothing to send when nothing was asked for', () => {
+    expect(earlyPositionFrame(NO_EARLY_POSITION, 0, LAST, FPS)).toBeNull();
+    expect(earlyPositionFrame(NO_EARLY_POSITION, 73, LAST, FPS)).toBeNull();
+  });
+
+  it('keeps a seek and sends the frame that contains its time', () => {
+    expect(queue(seek(10.02))).toEqual({ seek: 10.02, steps: 0 });
+    expect(earlyPositionFrame(queue(seek(10.02)), 0, LAST, FPS)).toBe(240);
+    // The frame the video opened on does not matter to a seek, also when it is the same frame.
+    expect(earlyPositionFrame(queue(seek(0)), 0, LAST, FPS)).toBe(0);
+    expect(earlyPositionFrame(queue(seek(10.02)), 240, LAST, FPS)).toBe(240);
+  });
+
+  it('adds steps up, from the frame the video opens on', () => {
+    expect(queue(step(1), step(1))).toEqual({ seek: null, steps: 2 });
+    expect(earlyPositionFrame(queue(step(1), step(1)), 0, LAST, FPS)).toBe(2);
+    expect(earlyPositionFrame(queue(step(1), step(1)), 73, LAST, FPS)).toBe(75);
+    expect(earlyPositionFrame(queue(step(5), step(-2)), 73, LAST, FPS)).toBe(76);
+  });
+
+  it('lets a seek replace the steps before it', () => {
+    expect(queue(step(5), seek(10.02))).toEqual({ seek: 10.02, steps: 0 });
+    expect(earlyPositionFrame(queue(step(5), seek(10.02)), 0, LAST, FPS)).toBe(240);
+    expect(earlyPositionFrame(queue(seek(3), step(4), seek(10.02)), 0, LAST, FPS)).toBe(240);
+  });
+
+  it('counts steps after a seek from the seek\'s frame', () => {
+    expect(earlyPositionFrame(queue(seek(10.02), step(1), step(1)), 0, LAST, FPS)).toBe(242);
+    expect(earlyPositionFrame(queue(seek(10.02), step(-3)), 500, LAST, FPS)).toBe(237);
+  });
+
+  it('stays inside the media', () => {
+    expect(earlyPositionFrame(queue(seek(9999)), 0, LAST, FPS)).toBe(LAST);
+    expect(earlyPositionFrame(queue(seek(-4)), 12, LAST, FPS)).toBe(0);
+    expect(earlyPositionFrame(queue(seek(56), step(100)), 0, LAST, FPS)).toBe(LAST);
+    expect(earlyPositionFrame(queue(seek(1), step(-100)), 0, LAST, FPS)).toBe(0);
+  });
+
+  it('sends nothing when the steps end on the frame the video opened on', () => {
+    expect(earlyPositionFrame(queue(step(-3)), 0, LAST, FPS)).toBeNull();
+    expect(earlyPositionFrame(queue(step(2), step(-2)), 40, LAST, FPS)).toBeNull();
+    expect(earlyPositionFrame(queue(step(9)), LAST, LAST, FPS)).toBeNull();
+  });
+
+  it('ignores calls that are not numbers, and keeps whole frames only', () => {
+    expect(queue(seek(Number.NaN))).toBe(NO_EARLY_POSITION);
+    expect(queue(seek(10.02), seek(Number.POSITIVE_INFINITY))).toEqual({ seek: 10.02, steps: 0 });
+    expect(queue(step(Number.NaN), step(0), step(0.9))).toBe(NO_EARLY_POSITION);
+    expect(queue(step(2.9), step(-1.5))).toEqual({ seek: null, steps: 1 });
   });
 });

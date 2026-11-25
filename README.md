@@ -159,6 +159,18 @@ frameline.current?.setGuides({ guides: ['title-safe'], crop: null, zones: null }
 
 The handle is `null` in the Viewer tier and until the pro code has loaded. A call for a feature that is switched off does nothing. Calls are not announced to screen readers: your own control should say what it did. The matching event fires as it does for the user's own action.
 
+**Before the media is ready.** The handle can arrive before the video has a duration or a first frame, and you can call it at once:
+
+| Method | Called before the media is ready |
+| --- | --- |
+| `setRange`, `setLoop`, `setGuides`, `setZoom` | Applies at once. The picture follows when there is one, and a range is fitted to the duration when it is known |
+| `seek` | Waits, and is sent once the duration is known. The last `seek` wins |
+| `step` | Waits. Steps add up and are sent once the duration is known: `step(1)` twice is two frames from where the video opens. A `seek` replaces the steps made before it, and steps after a `seek` count from its frame |
+| `pan` | Does nothing, as at Fit |
+| `grabFrame` | Does nothing until a frame is decoded, and logs one warning in development. A grab that fired later would download a file nobody just asked for |
+
+A frame link in the page URL wins over a `seek` or `step` made before the media is ready. So does the user: a key or a press on the player drops them. The methods return nothing and there is no ready event.
+
 ### Feature flags
 
 | Flag | Type | Viewer | Studio | What it adds |

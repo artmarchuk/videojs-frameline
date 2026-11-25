@@ -176,9 +176,9 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
   useImperativeHandle(
     apiRef,
     (): FramelineApi => ({
-      seek: (time) => controller.seekToTime(time),
+      seek: (time) => controller.hostSeek(time),
       step: (frames) => {
-        if (features.frameStep && Number.isFinite(frames) && frames !== 0) controller.step(Math.trunc(frames));
+        if (features.frameStep) controller.hostStep(frames);
       },
       setRange: (next) => {
         if (features.range) store.setRange(next.in, next.out);
@@ -190,7 +190,7 @@ function Studio({ features, fps, startFrames, dropFrame, markers, video, anchor,
       setZoom: (level) => store.setZoom(level),
       pan: (direction) => zoom.pan(direction),
       grabFrame: () => {
-        if (features.grabFrame) controller.grabFrame();
+        if (features.grabFrame) controller.hostGrabFrame();
       },
     }),
     [controller, store, zoom, features]

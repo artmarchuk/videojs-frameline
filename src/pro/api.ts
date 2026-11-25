@@ -6,6 +6,11 @@
  * Every call follows the feature flags: a call for a feature that is switched off does nothing. Calls are silent:
  * they are not announced to screen readers, so the host's own control should say what it did. The matching event
  * (`onRangeChange`, `onGuidesChange`, `onZoomChange`, `onFrameGrab`) fires as it does for the user's own action.
+ *
+ * The handle can be called before the media is ready (no duration yet, no frame decoded). `setRange`, `setLoop`,
+ * `setGuides` and `setZoom` apply at once. `seek` and `step` wait and are sent once the duration is known: steps add
+ * up, a seek replaces the steps before it, and steps after a seek count from its frame. `pan` and `grabFrame` do
+ * nothing then.
  */
 import type { FramelineZoomLevel } from './zoom';
 

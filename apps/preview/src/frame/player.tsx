@@ -1,7 +1,7 @@
 import { VideoPlayer } from '@videojs/react/video';
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
-import { FramelineSkin, TIERS, type FramelineDensity, type FramelineTier } from '@/pro';
+import { FramelineSkin, TIERS, type FramelineApi, type FramelineDensity, type FramelineTier } from '@/pro';
 
 import type { PlaybackProps } from '../shell/params';
 
@@ -25,6 +25,23 @@ const FEATURES = {
   ...(GUIDES === null ? {} : { guides: GUIDES === '0' ? false : GUIDES.split(',') }),
   ...(QUERY.get('zones') === '0' ? { zones: false } : {}),
   ...(QUERY.get('zoom') === '0' ? { zoom: false } : QUERY.get('zoom') === '1' ? { zoom: true } : {}),
+};
+
+declare global {
+  interface Window {
+    /** The monitor page's handle on the Studio tools; `null` in the Viewer tier and until the Studio code has loaded. */
+    frameline?: FramelineApi | null;
+  }
+}
+
+/**
+ * Puts the skin's handle on `window.frameline`, to drive the player from the console (`frameline.seek(12)`), and
+ * says so with a `frameline:api` event on the window each time a handle arrives. The browser checks call the handle
+ * from there (`scripts/browser-checks/api-before-ready.js`).
+ */
+const exposeApi = (api: FramelineApi | null) => {
+  window.frameline = api;
+  if (api) window.dispatchEvent(new Event('frameline:api'));
 };
 
 const START_DENSITY: FramelineDensity = QUERY.get('density') === 'compact' ? 'compact' : 'comfortable';
@@ -102,7 +119,7 @@ export function Player({ media }: { media?: PlaybackProps }) {
       </header>
       <div className="monitor-stage">
         <VideoPlayer poster={posterUrl(MEDIA)}>
-          <FramelineSkin tier={tier} density={density} layout={LAYOUT} features={FEATURES} fps={MEDIA.fps} markers={markers} {...handlers}>
+          <FramelineSkin tier={tier} density={density} layout={LAYOUT} features={FEATURES} fps={MEDIA.fps} markers={markers} apiRef={exposeApi} {...handlers}>
             <DemoVideo source={MEDIA} playback={media} />
           </FramelineSkin>
         </VideoPlayer>
