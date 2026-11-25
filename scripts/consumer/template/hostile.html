@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Consumer check: studio under a hostile host stylesheet</title>
+    <style>
+      body { margin: 0; padding: 24px; background: #000; }
+      /* The same box for the player as on the plain page, whatever the hostile rules do to `main`. */
+      #root { display: block; box-sizing: border-box; width: 960px; max-width: none; margin: 0 auto; padding: 0; border: 0; }
+    </style>
+  </head>
+  <body>
+    <main id="root"></main>
+    <script type="module" src="./src/hostile.tsx"></script>
+  </body>
+</html>

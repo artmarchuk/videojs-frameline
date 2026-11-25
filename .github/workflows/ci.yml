@@ -40,6 +40,8 @@ jobs:
       - run: npm run build:lib
       - name: Contrast
         run: node scripts/contrast.mjs
+      - name: No selector of the skin matches outside the player
+        run: node scripts/css-scope.mjs
       - name: Google Chrome
         run: test -x /opt/google/chrome/chrome || npx playwright-core install chrome; google-chrome --version
       - name: Consumer check (Chromium)

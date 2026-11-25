@@ -24,13 +24,13 @@ function chunkReport(): Plugin {
   };
 }
 
-// A host app as a developer would set it up: Vite, React, the package from npm. Three pages, one per player.
+// A host app as a developer would set it up: Vite, React, the package from npm. Three pages, one per player, and the Studio page again under a hostile host stylesheet.
 export default defineConfig({
   plugins: [react(), chunkReport()],
   build: {
     manifest: true,
     rolldownOptions: {
-      input: { viewer: 'viewer.html', studio: 'studio.html', stock: 'stock.html' },
+      input: { viewer: 'viewer.html', studio: 'studio.html', stock: 'stock.html', hostile: 'hostile.html' },
     },
   },
 });

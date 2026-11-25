@@ -7,6 +7,10 @@
 // 4. Drives the pages with Playwright in Chromium (the installed Google Chrome, so H.264 plays), Firefox and WebKit,
 //    and measures what each page loads before its first frame plays.
 //
+// A fourth page, `hostile`, is the Studio page under a hostile host stylesheet: the element rules of
+// scripts/browser-checks/fixtures/host-css/unlayered.css, and Tailwind's preflight in its `base` layer. The player
+// there must have the computed styles and boxes it has on the plain Studio page.
+//
 // Options: `--engines=chromium,firefox` (default all three), `--keep` (leave the temp folder; its path is printed),
 // `--videojs=10.4.0` (the version of the `@videojs/*` packages the app installs; default: the one this repo is built
 // with). The peer range in package.json is tested at both of its ends this way.
@@ -49,6 +53,17 @@ log(`packed ${packed.filename}: ${packed.files.length} files, ${packed.size} byt
 
 const app = join(work, 'app');
 cpSync(new URL('./template/', import.meta.url).pathname, app, { recursive: true });
+// The hostile page's stylesheet: Tailwind's preflight as a Tailwind host ships it (compiled from the installed
+// package), then the unlayered element rules.
+{
+  const { compile } = await import('tailwindcss');
+  const sheet = (id) => new URL(import.meta.resolve(id)).pathname;
+  const compiled = await compile('@layer theme, base, components, utilities;\n@import "tailwindcss/theme.css" layer(theme);\n@import "tailwindcss/preflight.css" layer(base);', {
+    base: repo,
+    loadStylesheet: async (id) => ({ path: sheet(id), base: join(sheet(id), '..'), content: readFileSync(sheet(id), 'utf8') }),
+  });
+  writeFileSync(join(app, 'src/hostile.css'), `${compiled.build([])}\n${readFileSync(join(repo, 'scripts/browser-checks/fixtures/host-css/unlayered.css'), 'utf8')}`);
+}
 const tested = (name) => repoPackage.devDependencies[name];
 const appPackage = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'));
 appPackage.dependencies = {
@@ -209,6 +224,66 @@ async function studioChecks(browser, engine) {
 }
 
 /**
+ * The player under a hostile host stylesheet (`hostile.html`) against the same player on the plain page: every
+ * computed property and the box of every element of the skin, idle and with the Guides menu open.
+ */
+async function hostileChecks(browser, engine) {
+  const read = async (path) => {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+    const page = await context.newPage();
+    await open(page, path);
+    await ready(page);
+    await page.waitForSelector('[data-pro-ready] .pro-tl');
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(1000);
+    const collect = () => page.evaluate(() => {
+      const root = document.querySelector('.media-skin');
+      const origin = root.getBoundingClientRect();
+      const rows = [];
+      for (const element of [root, ...root.querySelectorAll('*')]) {
+        for (const pseudo of ['', '::before', '::after']) {
+          const computed = getComputedStyle(element, pseudo || undefined);
+          if (pseudo && ['none', 'normal'].includes(computed.content)) continue;
+          const style = {};
+          // Custom properties are the host's way in; anchor names are generated anew on every load.
+          for (const name of computed) if (!name.startsWith('--') && name !== 'anchor-name' && name !== 'position-anchor') style[name] = computed.getPropertyValue(name);
+          if (!pseudo) {
+            const box = element.getBoundingClientRect();
+            // An element with no box (`display: none`) reports the window's corner: it has no place to compare.
+            style['(box)'] = box.width || box.height ? [box.left - origin.left, box.top - origin.top, box.width, box.height].map((n) => Math.round(n * 100) / 100).join(' ') : 'none';
+          }
+          rows.push({ id: `${element.localName}${pseudo}.${element.getAttribute('class') ?? ''}`, style });
+        }
+      }
+      return rows;
+    });
+    const idle = await collect();
+    await page.locator('[data-pro-menu="guides"]').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(600);
+    const menu = await collect();
+    await page.screenshot({ path: join(work, `${path.replace('.html', '')}-menu-${engine}.png`) });
+    await context.close();
+    return { idle, menu };
+  };
+  const plain = await read('studio.html');
+  const hostile = await read('hostile.html');
+  const differences = [];
+  for (const state of ['idle', 'menu']) {
+    if (plain[state].length !== hostile[state].length) { differences.push(`${state}: ${plain[state].length} and ${hostile[state].length} elements`); continue; }
+    plain[state].forEach((row, index) => {
+      const other = hostile[state][index];
+      if (/buffer/.test(row.id)) return; // how far the media has buffered differs from load to load
+      // A popup is placed from the window's edges, and the player is not at the same height on the two pages; where
+      // the popup sits in the player is in its box, which is compared.
+      const fromWindow = row.style.position === 'fixed' ? /^(top|right|bottom|left|inset-)/ : null;
+      for (const property of Object.keys(row.style)) if (row.style[property] !== other.style[property] && !fromWindow?.test(property)) differences.push(`${state}: ${row.id} { ${property}: ${row.style[property]} → ${other.style[property]} }`);
+    });
+  }
+  record(`${engine} studio under a hostile host stylesheet: the same styles and boxes`, plain.idle.length > 300 && differences.length === 0, { elements: plain.idle.length, differences: differences.length, first: differences.slice(0, 12) });
+}
+
+/**
  * A pro chunk answers 404, as after a deploy that removed it: the host's own content in the same React root stays,
  * and the player is a working Viewer.
  */
@@ -340,6 +415,7 @@ try {
     try {
       await viewerChecks(browser, engine);
       await studioChecks(browser, engine);
+      await hostileChecks(browser, engine);
       await failureChecks(browser, engine);
       if (engine === 'chromium') {
         await linkChecks(browser);
