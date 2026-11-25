@@ -1,4 +1,4 @@
-/* Reset and media sizing for the skin. Low specificity (:where) so component rules always win. */
+/* Reset and media sizing for the skin, and the guard against the host page's CSS. */
 @layer base, components, utilities;
 
 /* Lets slider progress interpolate where @property is supported; harmless elsewhere. */
@@ -14,13 +14,42 @@
   initial-value: 0%;
 }
 
-@layer base {
+/*
+ * The reset is a sub-layer of `components`: above `base`, where a host's own reset lives when it uses these layer
+ * names (Tailwind's preflight does), and below every rule of the skin, whatever its specificity.
+ */
+@layer components.reset {
+  /*
+   * The root takes nothing from the page around it: every property starts from its initial value, so the host's
+   * font, colour, line height, letter spacing, alignment and the rest stop here, and the skin's own rules set what
+   * it needs. What a host sets on purpose still comes through: `direction` (not part of `all`), the language,
+   * hiding or disabling a region of the page (`visibility`, `pointer-events`, `interactivity`), and every custom
+   * property, which is how the tokens arrive.
+   */
   :where(.media-skin) {
-    font-style: normal;
-    font-weight: 400;
-    text-align: start;
-    text-transform: none;
-    letter-spacing: normal;
+    all: initial;
+    visibility: inherit;
+    pointer-events: inherit;
+    interactivity: inherit;
+    /* The page's language (`lang`), which Chrome and Safari keep in a property that `all` would reset. */
+    -webkit-locale: inherit;
+    /* The skin is dark only: its scrollbars and system colours do not follow the page's scheme. */
+    color-scheme: dark;
+    /* No text inflation on a phone held sideways, whatever the page says. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /*
+   * Whatever a lower layer says about an element of the player (a host's reset in `base`) is rolled back to the
+   * browser's own style, and the skin starts from there. Not on SVG, images and the media element: `revert` would drop their
+   * presentation attributes too (an icon's `width`, `fill` and `d`), so those get the listed properties below.
+   * The whole selector is inside `:where()`, so the rules after it win.
+   */
+  :where(.media-skin *:not(svg, svg *, img, video, audio, canvas)),
+  :where(.media-skin *:not(svg, svg *, img, video, audio, canvas))::before,
+  :where(.media-skin *:not(svg, svg *, img, video, audio, canvas))::after {
+    all: revert;
   }
 
   :where(.media-skin),
@@ -31,6 +60,11 @@
     margin: 0;
     padding: 0;
     border: 0 solid;
+  }
+
+  /* A host reset in a lower layer may align replaced elements (`vertical-align: middle`); the skin never does. */
+  :where(.media-skin) :is(svg, svg *, img, video, audio, canvas) {
+    vertical-align: baseline;
   }
 
   :where(.media-skin) button {
@@ -90,4 +124,34 @@
   .media-skin[data-theme="pro"][data-controls-visible] {
     --media-caption-track-y: var(--media-caption-controls-y);
   }
+}
+
+/*
+ * The guard: the one block of the skin outside every layer.
+ *
+ * Styles outside a layer beat layered ones whatever their specificity, so a host page's plain `button { padding: 1rem }`
+ * or `kbd { … }` would reach into the player. `all: revert-layer` hands every property of every element of the skin
+ * back to the layered cascade, where the skin's own rules decide. Presentation attributes (an icon's `fill`, `width`
+ * and `d`) are kept: tried in Chrome, Firefox and Safari's engine. Custom properties are not part of `all`, so the
+ * tokens still come from wherever the host sets them.
+ *
+ * Inside the player the guard has the specificity of one ID, (1,0,0): `#frameline-guard` names nothing, and `:not()`
+ * takes its specificity. It beats any host selector without an ID. A host that means to restyle a part writes a
+ * selector with an ID (`#player .media-button`), or `!important`. The media element the host passes is inside the
+ * player too: it is sized and fitted with the tokens, an inline style, or a selector with an ID.
+ *
+ * On the root the guard is weaker than one class, (0,0,10): `:is()` takes the specificity of its most specific
+ * argument, which is ten type selectors that match nothing. The host's element rules (`div { … }`, `* { … }`) lose
+ * to it; a class the host puts on the player to size or place it wins.
+ */
+:where(.media-skin) *:not(#frameline-guard),
+:where(.media-skin) *:not(#frameline-guard)::before,
+:where(.media-skin) *:not(#frameline-guard)::after {
+  all: revert-layer;
+}
+
+:where(.media-skin):is(*, a a a a a a a a a a),
+:where(.media-skin):is(*, a a a a a a a a a a)::before,
+:where(.media-skin):is(*, a a a a a a a a a a)::after {
+  all: revert-layer;
 }
