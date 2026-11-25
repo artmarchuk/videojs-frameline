@@ -9,10 +9,10 @@
 
 /* ---------- Base ---------- */
 
-/* Not inside the player, which sets its own box sizing (its menus are content-box; see skin.css). */
-*:not(:where(.media-skin *)),
-*:not(:where(.media-skin *))::before,
-*:not(:where(.media-skin *))::after {
+/* The page's own rules. The player guards itself against them (README, "Styling and isolation"). */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -29,11 +29,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/*
- * Not inside the player: these rules are unlayered and would beat the skin's layered styles there (they removed the
- * padding of the Guides and Zoom menu notes). `:where()` keeps each selector's specificity as it was.
- */
-:is(h1, h2, h3, p, ol, ul, dl, dd, fieldset, legend, figure, pre):not(:where(.media-skin *)) {
+h1,
+h2,
+h3,
+p,
+ol,
+ul,
+dl,
+dd,
+fieldset,
+legend,
+figure,
+pre {
   margin: 0;
   padding: 0;
 }
@@ -56,9 +63,9 @@ a,
   text-underline-position: from-font;
 }
 
-/* One focus ring for everything on the page, in the link colour. The player draws its own, so the rule stops at it. */
-a:focus-visible:not(:where(.media-skin *)),
-button:focus-visible:not(:where(.media-skin *)),
+/* One focus ring for everything on the page, in the link colour. The player draws its own. */
+a:focus-visible,
+button:focus-visible,
 .checkbox input:focus-visible,
 .segmented input:focus-visible + span,
 .code:focus-visible {
@@ -513,6 +520,9 @@ button:focus-visible:not(:where(.media-skin *)),
  * shown meanwhile, so the room stays still. Nor is the dock while the page stages the range (`data-staging`,
  * main.tsx): the handles would travel to it and Reset range would push the transport aside. If the Studio code or the
  * video never arrives, the controls are shown after 4 s.
+ *
+ * This is the page restyling a part of the player on purpose, so the selectors carry the player's ID: without one
+ * the skin's guard would undo the rule (README, "Styling and isolation").
  */
 @keyframes player-reveal-bar {
   to {
@@ -520,8 +530,8 @@ button:focus-visible:not(:where(.media-skin *)),
   }
 }
 
-.player[data-reserve]:not(:has([data-dock-size])) .pro-bar,
-.player[data-staging] .pro-bar {
+#player[data-reserve]:not(:has([data-dock-size])) .pro-bar,
+#player[data-staging] .pro-bar {
   visibility: hidden;
   animation: player-reveal-bar 0s linear 4s forwards;
 }
