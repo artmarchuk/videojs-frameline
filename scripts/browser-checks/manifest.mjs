@@ -1,6 +1,6 @@
 // The browser checks, as data: what `npm run check:browsers` (run.mjs) runs. One entry per check file.
 //
-// name      the check's file, without `.js`.
+// name      the check's file, without `.js` (or `file`, when two entries share one).
 // runs      one per page and window. `path` is the page and its query; `viewport` the window; `touch` a touch context
 //           (hasTouch, and isMobile where the engine has it: Firefox does not); `scale` the device scale factor;
 //           `context` any other Playwright context option (reducedMotion, forcedColors, colorScheme);
@@ -10,6 +10,8 @@
 // fixture   a server the check needs, started by the runner on a free port: `embed-host` serves fixtures/ on a second
 //           origin; `deploy-server` runs fixtures/deploy-server.mjs on the build, so the check cannot run against a
 //           remote site and is skipped with `--base-url`.
+//           `host-css` gives host-css.js the hostile stylesheets of fixtures/host-css/, Tailwind's preflight compiled
+//           from the installed package, the host probe, and a screenshot comparison.
 // engines   the engines it runs in (default: all three).
 // verdict   for a check whose result has no `pass`: a function from the result to `{ assertion: true | false }`.
 //           Otherwise the runner reads `out.checks` (assertion by assertion) and `out.pass`. `all(...)` below makes one
@@ -101,6 +103,43 @@ export default [
     name: 'api-before-ready',
     runs: [wide(STUDIO)],
     timeout: 400,
+  },
+  {
+    // A hostile host page: the player under a host's own CSS has the styles and boxes it has on the plain page.
+    name: 'host-css',
+    fixture: 'host-css',
+    runs: [
+      named('studio', wide(STUDIO, { args: { reverse: true } })),
+      named('studio', { label: '390x844', path: STUDIO, viewport: { width: 390, height: 844 } }),
+      named('viewer', wide(VIEWER)),
+      named('viewer', { label: '390x844', path: VIEWER, viewport: { width: 390, height: 844 } }),
+      named('studio, more contrast', wide(STUDIO, { context: { contrast: 'more' }, args: { variants: ['unlayered', 'reboot'], ring: '3px' } })),
+      named('studio, forced colours', wide(STUDIO, { context: { forcedColors: 'active' }, args: { variants: ['unlayered', 'reboot'] } })),
+      named('studio, reduced motion', wide(STUDIO, { context: { reducedMotion: 'reduce' }, args: { variants: ['unlayered'] } })),
+    ],
+    timeout: 600,
+  },
+  {
+    // No verdict of its own, and not part of a normal run: with `--save <file>` and `--compare <file>` it records
+    // the computed styles and boxes of the skin's elements, as `dom-snapshot` records the markup. host-css.js in
+    // its snapshot mode.
+    name: 'style-snapshot',
+    file: 'host-css',
+    snapshotOnly: true,
+    runs: [
+      named('viewer', wide(VIEWER)),
+      named('studio', wide(STUDIO)),
+      named('landing', wide('/?tier=studio')),
+      named('embed', wide(EMBED)),
+      named('studio', { label: '390x844', path: STUDIO, viewport: { width: 390, height: 844 } }),
+      named('viewer', { label: '390x844', path: VIEWER, viewport: { width: 390, height: 844 } }),
+      named('landing', { label: '390x844', path: '/?tier=studio', viewport: { width: 390, height: 844 } }),
+      named('studio, more contrast', wide(STUDIO, { context: { contrast: 'more' } })),
+      named('studio, forced colours', wide(STUDIO, { context: { forcedColors: 'active' } })),
+      named('landing, more contrast', wide('/?tier=studio', { context: { contrast: 'more' } })),
+    ].map((run) => ({ ...run, args: { snapshot: true } })),
+    verdict: (out) => ({ recorded: Object.keys(out.snapshot ?? {}).length > 0 && Object.values(out.count).every((count) => count > 0) }),
+    timeout: 300,
   },
   {
     name: 'stale-chunk-reload',

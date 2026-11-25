@@ -20,8 +20,9 @@
 //   git switch main && npm run check:browsers -- --save /tmp/markup.json
 //   git switch my-branch && npm run check:browsers -- --compare /tmp/markup.json
 //
-// `--save` and `--compare` run only dom-snapshot. A difference is listed by engine, page, window, state and element,
-// and fails the run.
+// `--save` and `--compare` run only dom-snapshot and style-snapshot: the markup, and the computed styles and boxes of
+// the same elements (kept in `<file>.styles.json`). A difference is listed by engine, page, window, state and
+// element, and fails the run.
 //
 // Outcomes: `pass`; `known` (every failed assertion is a known failure in the manifest); `flaky` (the check is marked
 // flaky in the manifest and failed); `FAIL`; `skip` (the check needs the local build and `--base-url` was given).
@@ -62,7 +63,8 @@ for (const engine of engines) if (!ENGINES.includes(engine)) fail(`Unknown engin
 const save = option('save');
 const compare = option('compare');
 if (save && compare) fail('Use --save or --compare, not both.');
-const only = save || compare ? ['dom-snapshot'] : option('only')?.split(',').filter(Boolean);
+const SNAPSHOTS = ['dom-snapshot', 'style-snapshot'];
+const only = save || compare ? SNAPSHOTS : option('only')?.split(',').filter(Boolean);
 for (const name of only ?? []) if (!manifest.some((entry) => entry.name === name)) fail(`No check named "${name}" in manifest.mjs.`);
 const repeat = Math.max(1, Number(option('repeat') ?? 1) || 1);
 const workers = Math.max(1, Number(option('workers') ?? 1) || 1);
@@ -70,6 +72,9 @@ const slow = has('slow');
 const remote = option('base-url')?.replace(/\/$/, '');
 const outDir = resolve(option('out') ?? join(tmpdir(), 'frameline-browser-checks'));
 const baseline = compare ? JSON.parse(readFileSync(resolve(compare), 'utf8')) : null;
+// The computed styles are kept beside the markup, in a file of their own (it is large).
+const stylesFile = (file) => resolve(file).replace(/(\.json)?$/, '.styles.json');
+const styleBaseline = compare && existsSync(stylesFile(compare)) ? JSON.parse(readFileSync(stylesFile(compare), 'utf8')) : null;
 
 /* ---------- Servers ---------- */
 
@@ -116,12 +121,58 @@ const freePort = async (pair = false) => {
 
 /* ---------- The checks ---------- */
 
+// What host-css.js needs from the machine: the hostile stylesheets, Tailwind's preflight as a Tailwind host ships it
+// (compiled from the installed package, in its `base` layer), and a way to compare two screenshots.
+let hostCss;
+const hostCssFixture = async () => {
+  if (hostCss) return hostCss;
+  const folder = join(here, 'fixtures/host-css');
+  const read = (name) => readFileSync(join(folder, name), 'utf8');
+  const { compile } = await import('tailwindcss');
+  const sheet = (id) => fileURLToPath(import.meta.resolve(id));
+  const compiled = await compile('@layer theme, base, components, utilities;\n@import "tailwindcss/theme.css" layer(theme);\n@import "tailwindcss/preflight.css" layer(base);', {
+    base: repo,
+    loadStylesheet: async (id) => ({ path: sheet(id), base: resolve(sheet(id), '..'), content: readFileSync(sheet(id), 'utf8') }),
+  });
+  const { default: sharp } = await import('sharp');
+  const pixels = async (png) => sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  hostCss = {
+    css: { inherited: read('inherited.css'), unlayered: read('unlayered.css'), reboot: read('reboot.css'), tailwind: compiled.build([]) },
+    probe: read('probe.html'),
+    // The share of pixels of two screenshots that have no match in the other one: a pixel within one pixel of the
+    // same place and within `threshold` (of 255) in every channel. Two loads of the same page can draw a line of
+    // text one pixel apart; a leak changes more than that.
+    differ: async (first, second, threshold = 24) => {
+      const [a, b] = [await pixels(first), await pixels(second)];
+      const { width, height } = a.info;
+      if (width !== b.info.width || height !== b.info.height) return { sameSize: false, share: 1, sizes: [`${width}x${height}`, `${b.info.width}x${b.info.height}`] };
+      const near = (from, to, x, y) => {
+        const i = (y * width + x) * 4;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = x + dx, ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+            const j = (ny * width + nx) * 4;
+            if (Math.abs(from[i] - to[j]) <= threshold && Math.abs(from[i + 1] - to[j + 1]) <= threshold && Math.abs(from[i + 2] - to[j + 2]) <= threshold) return true;
+          }
+        }
+        return false;
+      };
+      let count = 0;
+      for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) if (!near(a.data, b.data, x, y) || !near(b.data, a.data, x, y)) count++;
+      return { sameSize: true, share: count / (width * height) };
+    },
+  };
+  return hostCss;
+};
+
 const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 const bodies = new Map();
 const body = (name) => {
   if (!bodies.has(name)) bodies.set(name, new AsyncFunction('page', 'args', readFileSync(join(here, `${name}.js`), 'utf8')));
   return bodies.get(name);
 };
+const fileOf = (entry) => entry.file ?? entry.name;
 const PERMISSIONS = { chromium: ['clipboard-read', 'clipboard-write'], webkit: ['clipboard-read'], firefox: [] };
 const axe = import.meta.resolve('@axe-core/playwright');
 
@@ -173,6 +224,52 @@ const compareSnapshot = (key, states) => {
   return lines;
 };
 
+// The computed styles of a run, state by state: each row is an element and a style, and a style is kept once however
+// many elements have it. A property a row leaves out has the value of a bare element of its tag (`bases`).
+const styleSnapshots = { styles: [], runs: {} };
+const styleIndex = new Map();
+const keepStyles = (key, snapshot) => {
+  const intern = (style) => {
+    const text = JSON.stringify(style);
+    if (!styleIndex.has(text)) { styleIndex.set(text, styleSnapshots.styles.length); styleSnapshots.styles.push(style); }
+    return styleIndex.get(text);
+  };
+  styleSnapshots.runs[key] = Object.fromEntries(Object.entries(snapshot).map(([state, { rows, bases }]) => [state, {
+    rows: rows.map((row) => [row.id, intern(row.style), row.base]),
+    bases: Object.fromEntries(Object.entries(bases).map(([tag, style]) => [tag, intern(style)])),
+  }]));
+};
+const compareStyles = (key, snapshot) => {
+  const old = styleBaseline.runs[key];
+  if (!old) return [`${key}: not in the saved snapshot`];
+  const lines = [];
+  for (const state of new Set([...Object.keys(old), ...Object.keys(snapshot)])) {
+    const before = old[state], after = snapshot[state];
+    if (!before || !after) { lines.push(`state "${state}": ${before ? 'gone' : 'new'}`); continue; }
+    if (before.rows.length !== after.rows.length || before.rows.some((row, index) => row[0] !== after.rows[index].id)) { lines.push(`state "${state}": the markup differs (${before.rows.length} and ${after.rows.length} elements)`); continue; }
+    before.rows.forEach(([id, styleAt, tag], index) => {
+      if (/buffer/.test(id)) return; // how far the media has buffered differs from load to load
+      const was = styleBaseline.styles[styleAt], is = after.rows[index].style;
+      const wasBase = tag ? styleBaseline.styles[before.bases[tag]] : {}, isBase = tag ? after.bases[tag] : {};
+      for (const property of new Set([...Object.keys(was), ...Object.keys(is)])) {
+        let a = was[property] ?? wasBase[property];
+        const b = is[property] ?? isBase[property];
+        // A snapshot saved before 25 Nov 2026 has the window's corner as the box of an element without one.
+        if (property === '(box)' && b === 'none' && / 0 0$/.test(a)) a = 'none';
+        if (a !== b) lines.push(`state "${state}": ${id.trim()} { ${property}: ${a} → ${b} }`);
+      }
+    });
+  }
+  return lines;
+};
+// A long list of style differences, shortened: how many per property, then one example of each.
+const shortStyles = (lines) => {
+  const byProperty = {};
+  for (const line of lines) { const property = line.match(/\{ ([^:]+):/)?.[1] ?? line; (byProperty[property] ??= []).push(line); }
+  const sorted = Object.entries(byProperty).sort((a, b) => b[1].length - a[1].length);
+  return [`${lines.length} differences: ${sorted.map(([property, list]) => `${property} ${list.length}`).join(', ')}`.slice(0, 900), ...sorted.slice(0, 40).map(([, list]) => list[0].slice(0, 320))];
+};
+
 const results = [];
 const print = (result) => {
   const mark = { pass: 'pass ', known: 'known', flaky: 'flaky', FAIL: 'FAIL ', skip: 'skip ' }[result.outcome];
@@ -198,6 +295,11 @@ const runAlone = async (browser, engine, entry, run, index, fixtures) => {
   try {
     const args = { axe, ...run.args };
     if (entry.fixture === 'embed-host') args.hostUrl = fixtures.embedHost;
+    if (entry.fixture === 'host-css') {
+      args.host = await hostCssFixture();
+      args.shots = join(outDir, 'host-css', `${engine}-${run.label.replace(/[^a-z0-9]+/gi, '-')}`);
+      mkdirSync(args.shots, { recursive: true });
+    }
     if (entry.fixture === 'deploy-server') {
       const port = await freePort(true);
       server = spawn(process.execPath, [join(here, 'fixtures/deploy-server.mjs'), dist, String(port)], { stdio: ['ignore', 'pipe', 'inherit'] });
@@ -220,7 +322,7 @@ const runAlone = async (browser, engine, entry, run, index, fixtures) => {
     const out = await Promise.race([
       (async () => {
         if (run.path !== null) await page.goto(fixtures.base + run.path);
-        return body(entry.name)(page, args);
+        return body(fileOf(entry))(page, args);
       })(),
       new Promise((_done, failed) => { timer = setTimeout(() => failed(new Error(`no result after ${seconds} s`)), seconds * 1000); }),
     ]).finally(() => clearTimeout(timer));
@@ -232,6 +334,15 @@ const runAlone = async (browser, engine, entry, run, index, fixtures) => {
       if (baseline) {
         const lines = compareSnapshot(key, out.states);
         if (lines.length) { result.failed.push('sameMarkup'); result.details = lines.slice(0, 60); if (lines.length > 60) result.details.push(`… and ${lines.length - 60} more lines`); result.differences = lines; }
+        else result.note += ', same as the saved snapshot';
+      }
+    } else if (entry.name === 'style-snapshot') {
+      const key = `${engine} | ${run.label}`;
+      result.note = `${Object.keys(out.snapshot).length} states, ${Object.values(out.count).reduce((sum, count) => sum + count, 0)} elements`;
+      if (save) keepStyles(key, out.snapshot);
+      if (styleBaseline) {
+        const lines = compareStyles(key, out.snapshot);
+        if (lines.length) { result.failed.push('sameStyles'); result.details = shortStyles(lines); result.differences = lines; }
         else result.note += ', same as the saved snapshot';
       }
     } else if (result.failed.length) {
@@ -281,7 +392,7 @@ const main = async () => {
   fixtures.embedHost = `http://127.0.0.1:${await listen(staticHandler(join(here, 'fixtures')), '127.0.0.1')}/embed-host.html`;
   console.log(`Site: ${fixtures.base}. Engines: ${engines.join(', ')}.${slow ? ' Slow machine: longer waits where the manifest says so.' : ''}${repeat > 1 ? ` Every run ${repeat} times.` : ''} Results: ${outDir}\n`);
 
-  const entries = manifest.filter((entry) => !only || only.includes(entry.name));
+  const entries = manifest.filter((entry) => (only ? only.includes(entry.name) : !entry.snapshotOnly));
   const started = Date.now();
   for (const engine of engines) {
     const browser = await playwright[engine].launch(engine === 'chromium' ? { channel: 'chrome', headless: true } : { headless: true });
@@ -305,7 +416,11 @@ const main = async () => {
   const totals = { pass: count('pass'), known: count('known'), flaky: count('flaky'), fail: count('FAIL'), skip: count('skip') };
   const summary = { site: fixtures.base, engines, repeat, node: process.version, playwright: JSON.parse(readFileSync(join(repo, 'node_modules/playwright-core/package.json'), 'utf8')).version, seconds: Math.round((Date.now() - started) / 1000), totals, results };
   writeFileSync(join(outDir, 'summary.json'), JSON.stringify(summary, null, 2));
-  if (save) { writeFileSync(resolve(save), JSON.stringify(snapshots, null, 1)); console.log(`\nSnapshot saved: ${resolve(save)}`); }
+  if (save) {
+    writeFileSync(resolve(save), JSON.stringify(snapshots, null, 1));
+    writeFileSync(stylesFile(save), JSON.stringify(styleSnapshots));
+    console.log(`\nSnapshot saved: ${resolve(save)} (markup) and ${stylesFile(save)} (computed styles)`);
+  }
   console.log(`\n${totals.pass} pass, ${totals.known} known, ${totals.flaky} flaky, ${totals.fail} FAIL${totals.skip ? `, ${totals.skip} skipped` : ''} in ${summary.seconds} s. Summary: ${join(outDir, 'summary.json')}`);
   return totals.fail ? 1 : 0;
 };

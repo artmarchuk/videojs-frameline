@@ -1,0 +1,23 @@
+/*
+ * A host page that sets inherited properties on the player's ancestors, as any page with its own typography does.
+ * Nothing here names the player. Used by scripts/browser-checks/host-css.js.
+ */
+html body {
+  color: #b00020;
+  font: italic small-caps 700 20px/2 Georgia, serif;
+  font-feature-settings: "smcp", "tnum" 0;
+  letter-spacing: 0.2em;
+  word-spacing: 0.5em;
+  text-align: center;
+  text-indent: 2em;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #00a;
+  white-space: pre;
+  word-break: break-all;
+  list-style: square inside;
+  cursor: crosshair;
+  tab-size: 2;
+  hyphens: auto;
+  quotes: "«" "»";
+  -webkit-font-smoothing: auto;
+}

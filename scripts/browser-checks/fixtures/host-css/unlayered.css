@@ -1,0 +1,147 @@
+/*
+ * A hostile host page: plain element rules outside any cascade layer, the kind a site's own stylesheet or an old
+ * reset carries. Nothing here names the player, uses an ID or `!important`.
+ * Used by scripts/browser-checks/host-css.js and by the consumer check (scripts/consumer/).
+ */
+html body {
+  color: #b00020;
+  font: 20px/2 Georgia, serif;
+  text-align: center;
+}
+
+* {
+  box-sizing: content-box;
+  margin: 1px;
+  padding: 1px;
+  letter-spacing: 0.05em;
+}
+
+div {
+  display: block;
+  margin: 3px;
+  padding: 2px;
+  border: 1px dotted #0a0;
+  background: #fde;
+  font: 18px/1.9 Georgia, serif;
+  letter-spacing: 0.1em;
+  text-transform: capitalize;
+  box-sizing: content-box;
+}
+
+span {
+  display: inline-block;
+  margin: 0 2px;
+  padding: 1px 3px;
+  border: 1px solid #00a;
+  background: #ffc;
+  font: italic 17px/1.7 "Times New Roman", serif;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+}
+
+button {
+  display: inline-block;
+  margin: 4px;
+  padding: 1rem;
+  border: 2px solid #c00;
+  border-radius: 12px;
+  background: linear-gradient(#fff, #ccc);
+  color: #111;
+  font: bold 19px/1.5 Georgia, serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-sizing: content-box;
+  box-shadow: 0 2px 6px #0008;
+  cursor: wait;
+}
+
+kbd {
+  display: inline-block;
+  margin: 0 4px;
+  padding: 4px 8px;
+  border: 2px solid #999;
+  border-radius: 4px;
+  background: #eee;
+  color: #222;
+  font: 15px/1.2 "Courier New", monospace;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  box-shadow: 0 2px 0 #666;
+}
+
+ul {
+  display: block;
+  margin: 1em 0;
+  padding: 0 0 0 40px;
+  border: 1px solid #0aa;
+  background: #eff;
+  list-style: square inside;
+  line-height: 2.2;
+}
+
+li {
+  display: list-item;
+  margin: 6px 0;
+  padding: 2px 6px;
+  border-bottom: 1px solid #ccc;
+  background: #f8f8f8;
+  list-style: circle;
+  line-height: 2;
+  text-transform: capitalize;
+}
+
+svg {
+  display: inline;
+  margin: 2px;
+  padding: 3px;
+  border: 1px solid #a0a;
+  background: #fef;
+  box-sizing: content-box;
+  vertical-align: baseline;
+}
+
+input {
+  display: block;
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 2px inset #888;
+  background: #fff;
+  color: #000;
+  font: 18px/1.4 Georgia, serif;
+  letter-spacing: 0.05em;
+  box-sizing: content-box;
+}
+
+a {
+  display: inline-block;
+  margin: 2px;
+  padding: 2px 4px;
+  border-bottom: 2px solid #00c;
+  background: #eef;
+  color: #00c;
+  font: 18px/1.6 Georgia, serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: underline wavy;
+}
+
+video {
+  display: inline-block;
+  margin: 5px;
+  padding: 5px;
+  border: 5px ridge #a50;
+  background: #fec;
+  box-sizing: content-box;
+}
+
+p,
+h1,
+h2,
+h3,
+label {
+  margin: 1em 0;
+  padding: 0.25em;
+  font: 22px/1.8 Georgia, serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}

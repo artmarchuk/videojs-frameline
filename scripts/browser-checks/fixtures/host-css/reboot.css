@@ -1,0 +1,222 @@
+/*
+ * A hostile host page: a reset of the kind component frameworks ship ("reboot"), outside any cascade layer. Written
+ * for this check; it follows the shape of such resets (element selectors, a few with attributes and pseudo-classes)
+ * and copies none of them. Nothing here names the player, uses an ID or `!important`.
+ * Used by scripts/browser-checks/host-css.js.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgb(0 0 0 / 0.25);
+}
+
+body {
+  margin: 0;
+  color: #212529;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  background-color: #fff;
+}
+
+hr {
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid;
+  opacity: 0.25;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+ol,
+ul,
+dl {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+small {
+  font-size: 0.875em;
+}
+
+a {
+  color: #0d6efd;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: #0a58ca;
+}
+
+a:not([href]):not([class]),
+a:not([href]):not([class]):hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+pre,
+code,
+kbd,
+samp {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1em;
+}
+
+kbd {
+  padding: 0.1875rem 0.375rem;
+  border-radius: 0.25rem;
+  background-color: #212529;
+  color: #fff;
+  font-size: 0.875em;
+}
+
+img,
+svg {
+  vertical-align: middle;
+}
+
+table {
+  border-collapse: collapse;
+  caption-side: bottom;
+}
+
+label {
+  display: inline-block;
+}
+
+button {
+  border-radius: 0;
+}
+
+button:focus:not(:focus-visible) {
+  outline: 0;
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #86b7fe;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 0.25);
+}
+
+input,
+button,
+select,
+optgroup,
+textarea {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+[role="button"] {
+  cursor: pointer;
+}
+
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  -webkit-appearance: button;
+  appearance: button;
+}
+
+button:not(:disabled),
+[type="button"]:not(:disabled),
+[type="reset"]:not(:disabled),
+[type="submit"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  opacity: 0.65;
+}
+
+[role="menuitem"],
+[role="menuitemradio"],
+[role="menuitemcheckbox"] {
+  padding: 0.25rem 1rem;
+  font-weight: 400;
+}
+
+[role="slider"] {
+  touch-action: manipulation;
+}
+
+textarea {
+  resize: vertical;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: inherit;
+}
+
+iframe {
+  border: 0;
+}
+
+summary {
+  display: list-item;
+  cursor: pointer;
+}
+
+progress {
+  vertical-align: baseline;
+}
+
+[hidden] {
+  display: none;
+}
