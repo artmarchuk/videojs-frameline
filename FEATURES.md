@@ -32,6 +32,8 @@ Frameline is a Video.js v10 skin for video creators, by Artem Marchuk ([artmarch
 | Source facts as props: `fps`, `startTimecode`, `dropFrame` | Studio | `fps={24}` |
 | Events as callback props: `onRangeChange`, `onMarkerSelect`, `onFrameChange`, `onCopyLink`, `onGuidesChange`, `onZoomChange`, `onFrameGrab` | Studio | Event log on the page |
 | A handle for the host's own UI, `apiRef`: `seek`, `step`, `setRange`, `setLoop`, `setGuides`, `setZoom`, `pan`, `grabFrame` | Studio | The "Show me" buttons on the page |
+| The handle can be called before the media is ready: `setRange`, `setLoop`, `setGuides` and `setZoom` apply at once; `seek` and `step` wait for the duration (steps add up, a seek replaces the steps before it); `pan` and `grabFrame` do nothing then | Studio | On `/preview.html`, the handle is `window.frameline`; README, "Driving the player" |
+| Isolated from the host page's CSS, both ways: the page's element rules (in a layer or not), a framework reset, Tailwind's preflight and the typography of the player's ancestors do not change the player, and no selector of the skin matches outside it. Tokens, `dir`, `lang`, `inert` and a class on the player itself still come through; a part is restyled on purpose with an ID or `!important` | Both | README, "Styling and isolation"; `npm run check:browsers -- --only host-css` |
 | Host UI slots: `slots={{ toolbarStart, toolbarEnd, overlay }}` | Both | README, "Props" |
 | Remembered choices per browser (guides, crop, zones, timecode or seconds): `persist` | Studio | Switch a guide on and reload |
 | An iframe embed for any site, no React needed: `/embed.html?src=<video URL>` (or `?mux=<playback ID>`), with `tier`, `fps` and `poster` in the URL | Both | `/embed.html?tier=viewer&src=…` in an `<iframe>` |

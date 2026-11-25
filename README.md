@@ -446,9 +446,38 @@ The player container carries `data-tier`, `data-density`, `data-layout`, `data-b
 
 **Motion.** Nothing that shows time animates: the playhead, the timecode, the ruler, the handles and the band's ends follow the media and the pointer exactly. What does move is short: a press (60 ms in, 90 ms out), the range band fading in when a range is set (160 ms, also when the first point is set by a drag) and out when it is cleared (120 ms), with its handles changing colour over the same 160 ms, hovers and menus (120 ms; a menu closes in 70 ms). `prefers-reduced-motion` sets every duration to zero.
 
-### Host page styles
+### Styling and isolation
 
-The skin's CSS lives in cascade layers (`base`, `components`, `utilities`). Unlayered styles beat layered ones whatever their specificity, so an unlayered element selector on the host page, such as `kbd { … }`, `button:focus-visible { … }`, `p { margin: 0; padding: 0 }` or `* { box-sizing: border-box }`, reaches into the player and overrides it. Scope such rules to your own markup (`.my-help > kbd`), keep them out of the player (`button:focus-visible:not(:where(.media-skin *))`), or put them in a layer of your own. The site's landing page does the second (`apps/preview/src/page/landing.css`). The skin resets every box property on the shortcuts in its tooltips and menus, but that cannot beat an unlayered rule.
+The page around the player does not change the player, and the player does not change the page. You customise it on purpose, through the tokens, and nothing gets in by accident.
+
+**What the player is protected from**
+
+- **Your page's element rules,** in a cascade layer or outside one: `button { padding: 1rem }`, `kbd { … }`, `* { box-sizing: content-box }`, `a:hover`, `button:focus-visible { outline: … }`, a framework's reset, Tailwind's preflight. Any selector without an ID.
+- **Typography on the player's ancestors.** The player's root starts every property from its initial value, so your page's font, colour, line height, letter spacing, text alignment and text transform stop there.
+
+**What your page is protected from.** Every selector in the skin's CSS names the skin's root (`.media-skin`), so no rule of the skin matches an element of yours (`node scripts/css-scope.mjs` checks the built CSS). Three names are global by nature: `@property --media-slider-fill` and `--media-slider-buffer`, and `@keyframes pro-spin`.
+
+**What comes through, on purpose**
+
+- The tokens (below), set on the player or on any ancestor.
+- `dir="rtl"` and `direction`, and the page's language (`lang`).
+- `inert`, `hidden` and `display: none` on a part of the page the player is in. `visibility` and `pointer-events` set on an ancestor reach the player's root, but the control bar sets its own, so they are not a way to hide or disable the player.
+- Classes you put on the player itself (`className`), to size or place it: `.my-player { width: 640px }`. Tailwind utilities on the player work too.
+
+The media element you pass (`<MuxVideo>`, `<video>`) is inside the player, so the same holds for it: fit it with `--media-object-fit` and `--media-object-position`, an inline `style`, or a selector with an ID.
+
+**Restyling a part.** Use a token where there is one. For anything else, name the part by its class and give the selector an ID, or use `!important`. The class names inside the player are not part of the public API and can change between releases. `FramelineSkin` passes `id` to the player's element:
+
+```css
+#review-player .media-button { border-radius: 0; }
+.media-skin .pro-timecode { font-family: "My Mono", monospace !important; }
+```
+
+A rule without either, such as `.media-skin .media-button { … }`, does nothing inside the player.
+
+**Not protected.** Rules of yours with `!important`, with an ID, or in a cascade layer that sits above the skin's (the `utilities` layer, or a layer of your own that your page first names after the skin's stylesheet has loaded). That is the door for deliberate changes, so an element rule written that way (`#content button { … }`) reaches the player.
+
+**How it works.** The skin's rules are in the cascade layers `base`, `components` and `utilities`, the names Tailwind v4 uses, so in a Tailwind app the two line up: preflight sits under the skin, your utilities above it. The skin's own reset is a sub-layer of `components`: it rolls back whatever a lower layer says about an element of the player, and the skin starts from the browser's own style. One block of the skin is outside every layer, the guard: `all: revert-layer` on every element of the player, with the specificity of one ID. It beats your page's unlayered rules and hands each property back to the layers, where the skin's rules decide. On the player's root the guard is weaker than one class, so your own class on the player wins.
 
 ### Tokens
 
@@ -478,15 +507,15 @@ The skin also publishes `--fl-picture-x`, `-y`, `-w`, `-h` (the picture's rectan
 
 ### Weight
 
-Measured by `npm run check:consumer` on 23 Nov 2026 with Video.js 10.6.0: a Vite 8 production build of a React app, the same Mux stream on each page, and everything the page's scripts and stylesheets weigh before the first frame plays (Chromium's network log; gzip -9).
+Measured by `npm run check:consumer` on 25 Nov 2026 with Video.js 10.6.0: a Vite 8 production build of a React app, the same Mux stream on each page, and everything the page's scripts and stylesheets weigh before the first frame plays (Chromium's network log; gzip -9).
 
 | Page | JS | CSS | Total gzip |
 | --- | --- | --- | --- |
 | Video.js's Default video skin (`VideoSkin`, `@videojs/react/video/skin.css`) | 4 files, 341,762 B gzip | 1 file, 10,691 B gzip | 352,453 B |
-| Frameline, `tier="viewer"` | 5 files, 344,424 B gzip | 1 file, 7,533 B gzip | 351,957 B |
-| Frameline, `tier="studio"` | 7 files, 376,430 B gzip | 2 files, 12,488 B gzip | 388,918 B |
+| Frameline, `tier="viewer"` | 5 files, 344,422 B gzip | 1 file, 7,744 B gzip | 352,166 B |
+| Frameline, `tier="studio"` | 7 files, 377,322 B gzip | 2 files, 12,699 B gzip | 390,021 B |
 
-The Viewer is 496 bytes gzip lighter than the stock skin, 0.1%: about the same weight. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 36,961 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
+The Viewer is 287 bytes gzip lighter than the stock skin, 0.1%: about the same weight. Most of every page is the same in all three: hls.js, React DOM and Video.js itself. The Viewer requests none of the Studio code or CSS; Studio adds 37,855 bytes gzip on top of the Viewer, loaded when a Studio feature is on.
 
 ### Browser support
 
@@ -555,13 +584,14 @@ npm run build            # the site, into dist/
 npm run build:lib        # the npm package, into lib/
 npm run check:consumer   # packs the package, installs it in a new app outside the repo and tests it in three browsers
 npm run check:browsers   # every browser check in scripts/browser-checks/manifest.mjs, in Chrome, Firefox and WebKit
+node scripts/css-scope.mjs   # after build:lib: no selector of the skin's CSS matches outside the player
 npm run deploy vercel    # production; only from a clean checkout of origin/main
 npm run preview:vercel   # a Vercel preview of the folder as it is
 ```
 
 The site imports the skin from `src/` through a path alias, so it never needs `build:lib`. The package is built by `vite.lib.config.ts` and `tsconfig.lib.json`; `scripts/consumer/` holds the consumer check and the app it builds.
 
-The site root (`/`) is the configurator page (`apps/preview/index.html`, `src/page/`). The CLI's workbench is at `/workbench.html`: it opens the skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio; `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (the host's guide list; `?guides=0` for none), `?zones=0` and `?debug` (debug readout and event log) set its state. It plays the active demo source (see Demo media). The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/workbench.html?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
+The site root (`/`) is the configurator page (`apps/preview/index.html`, `src/page/`). The CLI's workbench is at `/workbench.html`: it opens the skin in a slimmed-down version of the Video.js sandbox. The page it frames, `/preview.html`, is a monitor: a top bar with the tier and density switches and the player as large as the window allows. It opens in Studio, with the skin's handle on `window.frameline` (try `frameline.seek(12)` in the console); `?tier=viewer`, `?density=compact`, `?layout=dock|overlay`, `?guides=title-safe,9:16` (the host's guide list; `?guides=0` for none), `?zones=0` and `?debug` (debug readout and event log) set its state. It plays the active demo source (see Demo media). The options panel sets the player's width and aspect ratio, the color scheme, text direction, and language, and playback options such as autoplay, muted, loop, and preload. The arrow button opens the preview on its own. The settings live in the URL, so a link such as `/workbench.html?width=384&ratio=9:16&dir=rtl&locale=ar` opens the workbench in that state, and `/preview.html#width=384&ratio=9:16` opens the preview alone.
 
 `/embed.html` is the player alone, for an iframe on another site, including a plain HTML one: comfortable density, no title and no switches. Without parameters it plays the active demo source in Studio. The URL can name your own video and tier:
 

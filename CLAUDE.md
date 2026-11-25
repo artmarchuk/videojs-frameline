@@ -57,6 +57,7 @@ Several sessions work on this project at the same time (the player theme, the la
 | Unit tests | `npm test` |
 | Browser checks | `npm run check:browsers` (every check in `scripts/browser-checks/manifest.mjs`, three engines; `-- --engine chromium`, `--only <name,…>`, `--base-url <url>`, `--repeat <n>`). CI runs them in Chromium on every pull request and push to `main` (`.github/workflows/ci.yml`) |
 | Package in a host app | `npm run check:consumer` |
+| No skin selector matches outside the player | `node scripts/css-scope.mjs` (after `npm run build:lib`) |
 | Preview deploy (any branch) | `npm run preview:vercel` |
 | Production deploy | `npm run deploy vercel`, only from a clean checkout of `origin/main` (fallback `npm run deploy netlify`) |
 
